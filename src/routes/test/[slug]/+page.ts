@@ -35,7 +35,6 @@ export const load: PageLoad = ({ params }) => {
 			completion_message: 'Thank you for completing the test',
 			start_instructions,
 			no_of_questions: 0,
-			subject: 'Maths',
 			total_marks: 20
 		};
 	}

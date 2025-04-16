@@ -9,7 +9,6 @@
 	let isChecked = $state(false);
 
 	const testOverview = [
-		{ label: 'Subject', value: `${data.subject}` },
 		{ label: 'Total questions', value: `${data.no_of_questions} questions` },
 		{ label: 'Total marks', value: `${data.total_marks} marks` },
 		{ label: 'Total duration', value: `${data.time_limit / 60} minutes` },
