@@ -1,8 +1,15 @@
 <script lang="ts">
+	import LandingPage from '$lib/components/LandingPage.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+	let isStarted = $state(false);
 </script>
 
-<h1>{data.name}</h1>
-<div>{@html data.start_instructions}</div>
+<section>
+	{#if !isStarted}
+		<LandingPage {data} bind:isStarted />
+	{:else}
+		<p>question palette</p>
+	{/if}
+</section>
