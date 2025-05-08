@@ -1,8 +1,15 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/index.js';
+	import Button from './ui/button/button.svelte';
 
-	let { question, totalQuestions } = $props();
+	let { question, totalQuestions, selectedQuestions, handleSelection } = $props();
+
 	const options = ['Option A', 'Option B', 'Option C', 'Option D'];
+
+	const isSelected = (optionIndex: number) => {
+		const selected = selectedQuestions.find((item) => item.question === question['S No']);
+		return selected?.selection === optionIndex + 1;
+	};
 </script>
 
 <Card.Root class="mb-5">
@@ -14,21 +21,17 @@
 		<Card.Description class="text-base/normal">{question.Questions}</Card.Description>
 	</Card.Header>
 	<Card.Content>
-		<form
-			class="*:has-checked:bg-accent-foreground *:has-checked:text-accent flex w-full flex-col *:mb-1 *:rounded-lg *:border *:px-4 *:py-4 **:float-end"
-		>
+		<div class="flex flex-col space-y-1">
 			{#each options as option, index (index)}
-				<label for={question[option]}>
+				<Button
+					variant={isSelected(index) ? 'default' : 'secondary'}
+					class="justify-start"
+					onclick={() => handleSelection({ question: question['S No'], selection: index + 1 })}
+				>
 					{String.fromCharCode(65 + index)}.
 					{question[option]}
-					<input
-						type="radio"
-						id={question[option]}
-						value={question[option]}
-						name={question['S No']}
-					/>
-				</label>
+				</Button>
 			{/each}
-		</form>
+		</div>
 	</Card.Content>
 </Card.Root>
