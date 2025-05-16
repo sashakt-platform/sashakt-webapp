@@ -6,29 +6,19 @@
 
 	type TSelection = {
 		question: string;
-		selection: number;
+		response: string;
 	};
 
 	let selectedQuestions = $state<TSelection[]>([]);
 	let currentQuestion = $state(0);
-
-	const handleSelection = ({ question, selection }: TSelection) => {
-		const index = selectedQuestions?.findIndex((item) => item.question === question);
-
-		if (index !== -1) {
-			selectedQuestions[index].selection = selection;
-		} else {
-			selectedQuestions.push({ question, selection });
-		}
-	};
+	let { showResult = $bindable() } = $props();
 </script>
 
 <div class="mx-auto max-w-xl">
 	<QuestionCard
 		question={Questions[currentQuestion]}
 		totalQuestions={Questions.length}
-		{selectedQuestions}
-		{handleSelection}
+		bind:selectedQuestions
 	/>
 	<Pagination.Root
 		onPageChange={(p) => (currentQuestion = p - 1)}
@@ -41,7 +31,7 @@
 				<Pagination.PrevButton />
 
 				{#if currentPage == Questions.length}
-					<Button>Submit</Button>
+					<Button onclick={() => (showResult = true)}>Submit</Button>
 				{:else}
 					<Pagination.NextButton />
 				{/if}
