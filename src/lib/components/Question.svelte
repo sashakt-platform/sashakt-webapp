@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Questions from '../../data/quest-data.json';
-	import QuestionCard from './QuestionCard.svelte';
-	import { Button } from './ui/button';
-	import * as Pagination from './ui/pagination/index.js';
+	import QuestionCard from '$lib/components/QuestionCard.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as Pagination from '$lib/components/ui/pagination/index.js';
 
 	type TSelection = {
 		question: string;
