@@ -1,6 +1,6 @@
 <script>
 	import * as Table from '$lib/components/ui/table/index.js';
-	import Button from './ui/button/button.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 </script>
 
 <section class="mx-auto mt-12 w-xs text-center">
