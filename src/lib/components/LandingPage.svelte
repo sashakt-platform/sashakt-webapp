@@ -3,6 +3,7 @@
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
+	import { Countdown, TimerHeader } from '$lib/components/ui/countdown/index.js';
 
 	let { data, isStarted = $bindable() } = $props();
 	let isChecked = $state(false);
@@ -14,6 +15,10 @@
 		{ label: 'Questions per page', value: '1 question' }
 	];
 </script>
+
+{#if isStarted}
+	<TimerHeader timeLimit={data.time_limit / 60} onTimeout={() => console.log('Time expired!')} />
+{/if}
 
 <section class="mx-auto max-w-xl p-6">
 	<h1 class="mb-4 text-xl font-semibold">{data.name}</h1>
@@ -57,8 +62,14 @@
 					<Dialog.Description class="flex flex-col space-y-2 text-center">
 						<p>Time remaining for the test</p>
 
-						<!-- TODO -->
-						<p>TODO: ADD COUNTDOWN HERE</p>
+						<div class="my-4 flex justify-center">
+							<div class="timer-box">
+								<Countdown 
+									timeLimit={data.time_limit / 60} 
+									onTimeout={() => console.log('Time expired!')} 
+								/>
+							</div>
+						</div>
 
 						<p>
 							The test has not started yet. Please read the instructions carefully before starting
@@ -74,6 +85,24 @@
 		</Dialog.Root>
 	</div>
 </div>
+
+<style>
+	.timer-box {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		background-color: #e74c3c;
+		color: white;
+		border-radius: 8px;
+		padding: 8px 16px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	}
+	
+	.timer-label {
+		font-weight: 600;
+		font-size: 0.875rem;
+	}
+</style>
 
 {#snippet container(item: { title: String; points: String[] })}
 	<div class="mb-10">
