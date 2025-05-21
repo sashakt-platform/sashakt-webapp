@@ -38,11 +38,9 @@
 		</Table.Root>
 	</div>
 	<div>
-		{#if testDetails.start_instructions}
-			<h2 class="text-muted-foreground mb-4 text-xs font-bold">
-				{@html testDetails.start_instructions}
-			</h2>
-		{/if}
+		{#each data.start_instructions as instruction, i (i)}
+			{@render container(instruction)}
+		{/each}
 	</div>
 </section>
 
@@ -67,9 +65,9 @@
 
 						<div class="my-4 flex justify-center">
 							<div class="timer-box">
-								<Countdown 
-									timeLimit={data.time_limit / 60} 
-									onTimeout={() => console.log('Time expired!')} 
+								<Countdown
+									timeLimit={data.time_limit / 60}
+									onTimeout={() => console.log('Time expired!')}
 								/>
 							</div>
 						</div>
@@ -92,6 +90,17 @@
 	</div>
 </div>
 
+{#snippet container(item: { title: string; points: string[] })}
+	<div class="mb-10">
+		<h2 class="text-muted-foreground text-xs font-bold uppercase">{item.title}</h2>
+		<ul class="my-3 rounded-xl border p-3 text-xs font-normal">
+			{#each item.points as point, i (i)}
+				<li>{point}</li>
+			{/each}
+		</ul>
+	</div>
+{/snippet}
+
 <style>
 	.timer-box {
 		display: flex;
@@ -103,20 +112,9 @@
 		padding: 8px 16px;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 	}
-	
+
 	.timer-label {
 		font-weight: 600;
 		font-size: 0.875rem;
 	}
 </style>
-
-{#snippet container(item: { title: String; points: String[] })}
-	<div class="mb-10">
-		<h2 class="text-muted-foreground text-xs font-bold uppercase">{item.title}</h2>
-		<ul class="my-3 rounded-xl border p-3 text-xs font-normal">
-			{#each item.points as point}
-				<li>{point}</li>
-			{/each}
-		</ul>
-	</div>
-{/snippet}
