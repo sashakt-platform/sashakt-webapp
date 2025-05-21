@@ -5,10 +5,10 @@
 
 <section class="mx-auto mt-12 w-xs text-center">
 	<img src="/circle-check.svg" alt="done" class="mx-auto mb-5 w-20" />
-	<h6 class="text-accent-foreground mb-2 text-[10px] font-semibold uppercase">{`Test Name`}</h6>
+	<h6 class="text-accent-foreground mb-2 text-[10px] font-semibold uppercase">Test Name</h6>
 	<h3 class="mb-1 text-lg font-semibold">Submitted Successfully</h3>
 	<p class="text-sm/normal">
-		Congrats on completing the test! You have attempted all the {`number`} questions.
+		Congrats on completing the test! You have attempted all the number questions.
 	</p>
 	<p class="text-accent-foreground mt-8 border-b py-2 text-sm font-bold uppercase">
 		Result summary

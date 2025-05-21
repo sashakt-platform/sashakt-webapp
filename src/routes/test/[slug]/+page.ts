@@ -1,10 +1,10 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = ({ params }) => {
+export const load: PageLoad = () => {
 	// check if test is valid
 	// params.slug will have unique test identifier
-	let testFound = true;
+	const testFound = true;
 	const start_instructions = [
 		{
 			title: 'General Instructions',
