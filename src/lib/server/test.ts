@@ -1,6 +1,6 @@
 import sampleTestData from '../../data/quest-data.json';
 
-export const getTestBySlug = () => {
+export const getTestBySlug = (slug) => {
 	// TODO: we should first check if the data exists in the localstorage
 	// if yes, then return data
 	// else make actual call to backend
