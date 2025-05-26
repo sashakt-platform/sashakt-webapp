@@ -1,6 +1,6 @@
+import * as test from '$lib/server/test';
 import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
-import * as test from '$lib/server/test';
 
 export const handleTest: Handle = async function ({ event, resolve }) {
 	if (event.route.id?.startsWith('/test')) {
@@ -9,14 +9,18 @@ export const handleTest: Handle = async function ({ event, resolve }) {
 			throw redirect(302, '/');
 		}
 
-		// get the data for the particular test
-		const { testData } = test.getTestBySlug(event.params.slug);
-
-		if (!testData) {
-			throw redirect(302, '/');
+		if (event.locals.testData) {
+			// if test data is already loaded, no need to fetch again
+			return resolve(event);
 		}
 
-		event.locals.testData = testData;
+		// get the data for the particular test
+		try {
+			const { testData } = await test.getTestDetailsBySlug(event.params.slug);
+			event.locals.testData = testData;
+		} catch (error) {
+			throw redirect(302, '/');
+		}
 	}
 	return resolve(event);
 };
