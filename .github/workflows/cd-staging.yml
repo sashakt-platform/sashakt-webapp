@@ -39,12 +39,15 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/sashakt-webapp
-            if [ ! -d ".git" ]; then
-              git clone https://github.com/your-org/sashakt-webapp . || exit 1
+            cd /home/ubuntu
+            if [ ! -d "sashakt-webapp/.git" ]; then
+              git clone https://github.com/your-org/sashakt-webapp.git
             else
+              cd sashakt-webapp
               git pull origin main
             fi
+
+            cd sashakt-webapp
 
             corepack enable
             sudo corepack prepare pnpm@latest --activate
@@ -56,4 +59,9 @@ jobs:
               sudo npm install -g pm2
             fi
 
-            pm2 restart sashakt-webapp || pm2 start build/index.js --name sashakt-webapp
+            if [ -f "build/index.js" ]; then
+              pm2 restart sashakt-webapp --update-env || pm2 start build/index.js --name sashakt-webapp
+            else
+              echo "Build output not found: build/index.js"
+              exit 1
+            fi
