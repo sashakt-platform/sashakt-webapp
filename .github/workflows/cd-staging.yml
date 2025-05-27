@@ -1,90 +1,42 @@
-name: CD Staging
+name: Deploy to S3 (Staging)
 
 on:
   push:
     branches: [ main, feature/github-actions ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
+    environment: staging
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repo
+        uses: actions/checkout@v3
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+      - name: Setup Node
+        uses: actions/setup-node@v3
         with:
-          version: 10
+          node-version: 18
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
+      - name: Install pnpm
+        run: npm install -g pnpm
 
       - name: Install dependencies
         run: pnpm install
 
-      - name: Check TypeScript
-        run: pnpm run check
+      - name: Sync SvelteKit
+        run: pnpm exec svelte-kit sync
 
-      - name: Run linter
-        run: pnpm run lint
-
-      - name: Run unit tests
-        run: pnpm run test:unit -- --run
-
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Run e2e tests
-        run: pnpm run test:e2e
-
-      - name: Build
+      - name: Build SvelteKit App
         run: pnpm run build
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - name: Deploy to S3 (Staging)
+        uses: jakejarvis/s3-sync-action@master
         with:
-          name: build
-          path: build/
-
-  deploy-staging:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/github-actions'
-    environment:
-      name: staging
-      url: ${{ steps.deploy.outputs.url }}
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: build
-          path: build/
-
-      - name: Deploy to staging
-        id: deploy
+          args: --delete
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          pnpm install vercel
-          DEPLOYMENT_URL=$(pnpm exec vercel deploy ./build --token ${VERCEL_TOKEN} --yes)
-          echo "url=${DEPLOYMENT_URL}" >> "$GITHUB_OUTPUT"
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SOURCE_DIR: build
