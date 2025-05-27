@@ -1,4 +1,4 @@
-name: Deploy to S3  (Staging)
+name: Deploy to S3 (Staging)
 
 on:
   push:
