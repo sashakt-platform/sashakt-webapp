@@ -1,0 +1,7865 @@
+{
+	"openapi": "3.1.0",
+	"info": {
+		"title": "Sashakt Platform",
+		"version": "0.1.0"
+	},
+	"paths": {
+		"/api/v1/login/access-token": {
+			"post": {
+				"tags": ["login"],
+				"summary": "Login Access Token",
+				"description": "OAuth2 compatible token login, get an access token for future requests",
+				"operationId": "login-login_access_token",
+				"requestBody": {
+					"content": {
+						"application/x-www-form-urlencoded": {
+							"schema": {
+								"$ref": "#/components/schemas/Body_login-login_access_token"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Token"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/login/test-token": {
+			"post": {
+				"tags": ["login"],
+				"summary": "Test Token",
+				"description": "Test access token",
+				"operationId": "login-test_token",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserPublic"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/password-recovery/{email}": {
+			"post": {
+				"tags": ["login"],
+				"summary": "Recover Password",
+				"description": "Password Recovery",
+				"operationId": "login-recover_password",
+				"parameters": [
+					{
+						"name": "email",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Email"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/reset-password/": {
+			"post": {
+				"tags": ["login"],
+				"summary": "Reset Password",
+				"description": "Reset password",
+				"operationId": "login-reset_password",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/NewPassword"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/password-recovery-html-content/{email}": {
+			"post": {
+				"tags": ["login"],
+				"summary": "Recover Password Html Content",
+				"description": "HTML Content for Password Recovery",
+				"operationId": "login-recover_password_html_content",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "email",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Email"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"text/html": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/users/": {
+			"get": {
+				"tags": ["users"],
+				"summary": "Read Users",
+				"description": "Retrieve users.",
+				"operationId": "users-read_users",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "skip",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"default": 0,
+							"title": "Skip"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"default": 100,
+							"title": "Limit"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UsersPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"tags": ["users"],
+				"summary": "Create User",
+				"description": "Create new user.",
+				"operationId": "users-create_user",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UserCreate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/users/me": {
+			"get": {
+				"tags": ["users"],
+				"summary": "Read User Me",
+				"description": "Get current user.",
+				"operationId": "users-read_user_me",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserPublic"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"delete": {
+				"tags": ["users"],
+				"summary": "Delete User Me",
+				"description": "Delete own user.",
+				"operationId": "users-delete_user_me",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"patch": {
+				"tags": ["users"],
+				"summary": "Update User Me",
+				"description": "Update own user.",
+				"operationId": "users-update_user_me",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UserUpdateMe"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/users/me/password": {
+			"patch": {
+				"tags": ["users"],
+				"summary": "Update Password Me",
+				"description": "Update own password.",
+				"operationId": "users-update_password_me",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdatePassword"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/users/signup": {
+			"post": {
+				"tags": ["users"],
+				"summary": "Register User",
+				"description": "Create new user without the need to be logged in.",
+				"operationId": "users-register_user",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UserCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/users/{user_id}": {
+			"get": {
+				"tags": ["users"],
+				"summary": "Read User By Id",
+				"description": "Get a specific user by id.",
+				"operationId": "users-read_user_by_id",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "user_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "User Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"tags": ["users"],
+				"summary": "Update User",
+				"description": "Update a user.",
+				"operationId": "users-update_user",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "user_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "User Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UserUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"tags": ["users"],
+				"summary": "Delete User",
+				"description": "Delete a user.",
+				"operationId": "users-delete_user",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "user_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "User Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/utils/test-email/": {
+			"post": {
+				"tags": ["utils"],
+				"summary": "Test Email",
+				"description": "Test emails.",
+				"operationId": "utils-test_email",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "email_to",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "email",
+							"title": "Email To"
+						}
+					}
+				],
+				"responses": {
+					"201": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/utils/health-check/": {
+			"get": {
+				"tags": ["utils"],
+				"summary": "Health Check",
+				"operationId": "utils-health_check",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "boolean",
+									"title": "Response Utils-Health Check"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/roles/": {
+			"get": {
+				"tags": ["roles"],
+				"summary": "Read Roles",
+				"description": "Retrieve roles.",
+				"operationId": "roles-read_roles",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "skip",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"default": 0,
+							"title": "Skip"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"default": 100,
+							"title": "Limit"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RolesPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"tags": ["roles"],
+				"summary": "Create Role",
+				"description": "Create new role.",
+				"operationId": "roles-create_role",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RoleCreate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RolePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/roles/{id}": {
+			"get": {
+				"tags": ["roles"],
+				"summary": "Read Role",
+				"description": "Get role by ID.",
+				"operationId": "roles-read_role",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RolePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["roles"],
+				"summary": "Update Role",
+				"description": "Update an role.",
+				"operationId": "roles-update_role",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RoleUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RolePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"tags": ["roles"],
+				"summary": "Set Visibility Role",
+				"description": "Set visitibility of the Role",
+				"operationId": "roles-set_visibility_role",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Id"
+						}
+					},
+					{
+						"name": "is_active",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Set visibility of the Role",
+							"default": true,
+							"title": "Is Active"
+						},
+						"description": "Set visibility of the Role"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RolePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"tags": ["roles"],
+				"summary": "Delete Role",
+				"description": "Delete an role.",
+				"operationId": "roles-delete_role",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/permissions/": {
+			"get": {
+				"tags": ["permissions"],
+				"summary": "Read Permissions",
+				"description": "Retrieve permissions.",
+				"operationId": "permissions-read_permissions",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "skip",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"default": 0,
+							"title": "Skip"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"default": 100,
+							"title": "Limit"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PermissionsPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"tags": ["permissions"],
+				"summary": "Create Permission",
+				"description": "Create new permission.",
+				"operationId": "permissions-create_permission",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PermissionCreate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PermissionPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/permissions/{id}": {
+			"get": {
+				"tags": ["permissions"],
+				"summary": "Read Permission",
+				"description": "Get permission by ID.",
+				"operationId": "permissions-read_permission",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PermissionPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["permissions"],
+				"summary": "Update Permission",
+				"description": "Update an permission.",
+				"operationId": "permissions-update_permission",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PermissionUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PermissionPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"tags": ["permissions"],
+				"summary": "Set Visibility Permission",
+				"description": "Set visitibility of the Permission",
+				"operationId": "permissions-set_visibility_permission",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Id"
+						}
+					},
+					{
+						"name": "is_active",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Set visibility of the Permission",
+							"default": true,
+							"title": "Is Active"
+						},
+						"description": "Set visibility of the Permission"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PermissionPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"tags": ["permissions"],
+				"summary": "Delete Permission",
+				"description": "Delete an permission.",
+				"operationId": "permissions-delete_permission",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/organization/": {
+			"get": {
+				"tags": ["Organization"],
+				"summary": "Get Organization",
+				"operationId": "Organization-get_organization",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/OrganizationPublic"
+									},
+									"type": "array",
+									"title": "Response Organization-Get Organization"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["Organization"],
+				"summary": "Create Organization",
+				"operationId": "Organization-create_organization",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/OrganizationCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrganizationPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/organization/{organization_id}": {
+			"get": {
+				"tags": ["Organization"],
+				"summary": "Get Organization By Id",
+				"operationId": "Organization-get_organization_by_id",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "organization_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Organization Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrganizationPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["Organization"],
+				"summary": "Update Organization",
+				"operationId": "Organization-update_organization",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "organization_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Organization Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/OrganizationUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrganizationPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"tags": ["Organization"],
+				"summary": "Visibility Organization",
+				"operationId": "Organization-visibility_organization",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "organization_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Organization Id"
+						}
+					},
+					{
+						"name": "is_active",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Set visibility of organization",
+							"default": false,
+							"title": "Is Active"
+						},
+						"description": "Set visibility of organization"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OrganizationPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"tags": ["Organization"],
+				"summary": "Delete Organization",
+				"operationId": "Organization-delete_organization",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "organization_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Organization Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/location/country/": {
+			"get": {
+				"tags": ["Location", "Country"],
+				"summary": "Get Countries",
+				"operationId": "Location-get_countries",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/CountryPublic"
+									},
+									"type": "array",
+									"title": "Response Location-Get Countries"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["Location", "Country"],
+				"summary": "Create Country",
+				"operationId": "Location-create_country",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CountryCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CountryPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/location/country/{country_id}": {
+			"get": {
+				"tags": ["Location", "Country"],
+				"summary": "Get Country By Id",
+				"operationId": "Location-get_country_by_id",
+				"parameters": [
+					{
+						"name": "country_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Country Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CountryPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["Location", "Country"],
+				"summary": "Update Country",
+				"operationId": "Location-update_country",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "country_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Country Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CountryUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CountryPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/location/state/": {
+			"get": {
+				"tags": ["Location", "State"],
+				"summary": "Get State",
+				"operationId": "Location-get_state",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/StatePublic"
+									},
+									"type": "array",
+									"title": "Response Location-Get State"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["Location", "State"],
+				"summary": "Create State",
+				"operationId": "Location-create_state",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/StateCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/StatePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/location/state/{state_id}": {
+			"get": {
+				"tags": ["Location", "State"],
+				"summary": "Get State By Id",
+				"operationId": "Location-get_state_by_id",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "state_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "State Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/StatePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["Location", "State"],
+				"summary": "Update State",
+				"operationId": "Location-update_state",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "state_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "State Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/StateUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/StatePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/location/district/": {
+			"get": {
+				"tags": ["Location", "District"],
+				"summary": "Get District",
+				"operationId": "Location-get_district",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/DistrictPublic"
+									},
+									"type": "array",
+									"title": "Response Location-Get District"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["Location", "District"],
+				"summary": "Create District",
+				"operationId": "Location-create_district",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/DistrictCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DistrictPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/location/district/{district_id}": {
+			"get": {
+				"tags": ["Location", "District"],
+				"summary": "Get District By Id",
+				"operationId": "Location-get_district_by_id",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "district_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "District Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DistrictPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["Location", "District"],
+				"summary": "Update District",
+				"operationId": "Location-update_district",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "district_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "District Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/DistrictUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DistrictPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/location/block/": {
+			"get": {
+				"tags": ["Location", "Block"],
+				"summary": "Get Block",
+				"operationId": "Location-get_block",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/BlockPublic"
+									},
+									"type": "array",
+									"title": "Response Location-Get Block"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["Location", "Block"],
+				"summary": "Create Block",
+				"operationId": "Location-create_block",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/BlockCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BlockPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/location/block/{block_id}": {
+			"get": {
+				"tags": ["Location", "Block"],
+				"summary": "Get Block By Id",
+				"operationId": "Location-get_block_by_id",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "block_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Block Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BlockPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["Location", "Block"],
+				"summary": "Update Block",
+				"operationId": "Location-update_block",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "block_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Block Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/BlockUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/BlockPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/test/": {
+			"get": {
+				"tags": ["Test"],
+				"summary": "Get Test",
+				"operationId": "Test-get_test",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/TestPublic"
+									},
+									"type": "array",
+									"title": "Response Test-Get Test"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["Test"],
+				"summary": "Create Test",
+				"operationId": "Test-create_test",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TestCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TestPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/test/{test_id}": {
+			"get": {
+				"tags": ["Test"],
+				"summary": "Get Test By Id",
+				"operationId": "Test-get_test_by_id",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "test_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Test Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TestPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["Test"],
+				"summary": "Update Test",
+				"operationId": "Test-update_test",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "test_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Test Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TestUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TestPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"tags": ["Test"],
+				"summary": "Visibility Test",
+				"operationId": "Test-visibility_test",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "test_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Test Id"
+						}
+					},
+					{
+						"name": "is_active",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Set visibility of Test",
+							"default": false,
+							"title": "Is Active"
+						},
+						"description": "Set visibility of Test"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TestPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"tags": ["Test"],
+				"summary": "Delete Test",
+				"operationId": "Test-delete_test",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "test_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Test Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/tag/": {
+			"get": {
+				"tags": ["Tag"],
+				"summary": "Get Tags",
+				"operationId": "Tag-get_tags",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/TagPublic"
+									},
+									"type": "array",
+									"title": "Response Tag-Get Tags"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["Tag"],
+				"summary": "Create Tag",
+				"operationId": "Tag-create_tag",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TagCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TagPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/tag/{tag_id}": {
+			"get": {
+				"tags": ["Tag"],
+				"summary": "Get Tag By Id",
+				"operationId": "Tag-get_tag_by_id",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "tag_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Tag Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TagPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["Tag"],
+				"summary": "Update Tag",
+				"operationId": "Tag-update_tag",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "tag_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Tag Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TagUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TagPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"tags": ["Tag"],
+				"summary": "Visibility Tag",
+				"operationId": "Tag-visibility_tag",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "tag_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Tag Id"
+						}
+					},
+					{
+						"name": "is_active",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Set visibility of Tag",
+							"default": false,
+							"title": "Is Active"
+						},
+						"description": "Set visibility of Tag"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TagPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"tags": ["Tag"],
+				"summary": "Delete Tag",
+				"operationId": "Tag-delete_tag",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "tag_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Tag Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/tagtype/": {
+			"get": {
+				"tags": ["TagType"],
+				"summary": "Get Tagtype",
+				"operationId": "TagType-get_tagtype",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/TagTypePublic"
+									},
+									"type": "array",
+									"title": "Response Tagtype-Get Tagtype"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["TagType"],
+				"summary": "Create Tagtype",
+				"operationId": "TagType-create_tagtype",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TagTypeCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TagTypePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/tagtype/{tagtype_id}": {
+			"get": {
+				"tags": ["TagType"],
+				"summary": "Get Tagtype By Id",
+				"operationId": "TagType-get_tagtype_by_id",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "tagtype_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Tagtype Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TagTypePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["TagType"],
+				"summary": "Update Tagtype",
+				"operationId": "TagType-update_tagtype",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "tagtype_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Tagtype Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TagTypeUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TagTypePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"tags": ["TagType"],
+				"summary": "Visibility Tagtype",
+				"operationId": "TagType-visibility_tagtype",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "tagtype_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Tagtype Id"
+						}
+					},
+					{
+						"name": "is_active",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Set visibility of TagType",
+							"default": false,
+							"title": "Is Active"
+						},
+						"description": "Set visibility of TagType"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TagTypePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"tags": ["TagType"],
+				"summary": "Delete Tagtype",
+				"operationId": "TagType-delete_tagtype",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "tagtype_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Tagtype Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/questions/": {
+			"post": {
+				"tags": ["Questions"],
+				"summary": "Create Question",
+				"description": "Create a new question with its initial revision, optional location, and tags.",
+				"operationId": "Questions-create_question",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/QuestionCreate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/QuestionPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"tags": ["Questions"],
+				"summary": "Get Questions",
+				"description": "Get all questions with optional filtering.",
+				"operationId": "Questions-get_questions",
+				"parameters": [
+					{
+						"name": "skip",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"default": 0,
+							"title": "Skip"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"default": 100,
+							"title": "Limit"
+						}
+					},
+					{
+						"name": "organization_id",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "integer"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"title": "Organization Id"
+						}
+					},
+					{
+						"name": "state_ids",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "array",
+							"items": {
+								"type": "integer"
+							},
+							"title": "State Ids"
+						}
+					},
+					{
+						"name": "district_ids",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "array",
+							"items": {
+								"type": "integer"
+							},
+							"title": "District Ids"
+						}
+					},
+					{
+						"name": "block_ids",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "array",
+							"items": {
+								"type": "integer"
+							},
+							"title": "Block Ids"
+						}
+					},
+					{
+						"name": "tag_ids",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "array",
+							"items": {
+								"type": "integer"
+							},
+							"title": "Tag Ids"
+						}
+					},
+					{
+						"name": "created_by_id",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "integer"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"title": "Created By Id"
+						}
+					},
+					{
+						"name": "is_active",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "boolean"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"title": "Is Active"
+						}
+					},
+					{
+						"name": "is_deleted",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"default": false,
+							"title": "Is Deleted"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/QuestionPublic"
+									},
+									"title": "Response Questions-Get Questions"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/questions/{question_id}/tests": {
+			"get": {
+				"tags": ["Questions"],
+				"summary": "Get Question Tests",
+				"description": "Get all tests that include this question.",
+				"operationId": "Questions-get_question_tests",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/TestInfoDict"
+									},
+									"title": "Response Questions-Get Question Tests"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/questions/{question_id}/candidate-tests": {
+			"get": {
+				"tags": ["Questions"],
+				"summary": "Get Question Candidate Tests",
+				"description": "Get all candidate tests that include this question.",
+				"operationId": "Questions-get_question_candidate_tests",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/CandidateTestInfoDict"
+									},
+									"title": "Response Questions-Get Question Candidate Tests"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/questions/{question_id}": {
+			"delete": {
+				"tags": ["Questions"],
+				"summary": "Delete Question",
+				"description": "Soft delete a question.",
+				"operationId": "Questions-delete_question",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"tags": ["Questions"],
+				"summary": "Get Question By Id",
+				"description": "Get a question by its ID.",
+				"operationId": "Questions-get_question_by_id",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/QuestionPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["Questions"],
+				"summary": "Update Question",
+				"description": "Update question metadata (not content - use revisions for that).",
+				"operationId": "Questions-update_question",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/QuestionUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/QuestionPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/questions/{question_id}/revisions": {
+			"post": {
+				"tags": ["Questions"],
+				"summary": "Create Question Revision",
+				"description": "Create a new revision for an existing question.",
+				"operationId": "Questions-create_question_revision",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/QuestionRevisionCreate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/QuestionPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"tags": ["Questions"],
+				"summary": "Get Question Revisions",
+				"description": "Get all revisions for a question.",
+				"operationId": "Questions-get_question_revisions",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/QuestionRevisionInfo"
+									},
+									"title": "Response Questions-Get Question Revisions"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/questions/revisions/{revision_id}": {
+			"get": {
+				"tags": ["Questions"],
+				"summary": "Get Revision",
+				"description": "Get a specific question revision by its ID.",
+				"operationId": "Questions-get_revision",
+				"parameters": [
+					{
+						"name": "revision_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Revision Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RevisionDetailDict"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/questions/{question_id}/locations": {
+			"post": {
+				"tags": ["Questions"],
+				"summary": "Add Question Location",
+				"description": "Add a new location to a question.",
+				"operationId": "Questions-add_question_location",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/QuestionLocationCreate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/QuestionLocationPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/questions/{question_id}/locations/{location_id}": {
+			"delete": {
+				"tags": ["Questions"],
+				"summary": "Remove Question Location",
+				"description": "Remove a location from a question.",
+				"operationId": "Questions-remove_question_location",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					},
+					{
+						"name": "location_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Location Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/questions/{question_id}/tags": {
+			"get": {
+				"tags": ["Questions"],
+				"summary": "Get Question Tags",
+				"description": "Get all tags associated with a question.",
+				"operationId": "Questions-get_question_tags",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/TagPublic"
+									},
+									"title": "Response Questions-Get Question Tags"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"tags": ["Questions"],
+				"summary": "Add Question Tag",
+				"description": "Add a new tag to a question.",
+				"operationId": "Questions-add_question_tag",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/QuestionTagCreate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/QuestionTagResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/questions/{question_id}/tags/{tag_id}": {
+			"delete": {
+				"tags": ["Questions"],
+				"summary": "Remove Question Tag",
+				"description": "Remove a tag from a question.",
+				"operationId": "Questions-remove_question_tag",
+				"parameters": [
+					{
+						"name": "question_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Question Id"
+						}
+					},
+					{
+						"name": "tag_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Tag Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/candidate/": {
+			"get": {
+				"tags": ["Candidate"],
+				"summary": "Get Candidate",
+				"operationId": "Candidate-get_candidate",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/CandidatePublic"
+									},
+									"type": "array",
+									"title": "Response Candidate-Get Candidate"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["Candidate"],
+				"summary": "Create Candidate",
+				"operationId": "Candidate-create_candidate",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CandidateCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CandidatePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/candidate/{candidate_id}": {
+			"get": {
+				"tags": ["Candidate"],
+				"summary": "Get Candidate By Id",
+				"operationId": "Candidate-get_candidate_by_id",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "candidate_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Candidate Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CandidatePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["Candidate"],
+				"summary": "Update Candidate",
+				"operationId": "Candidate-update_candidate",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "candidate_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Candidate Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CandidateUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CandidatePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"tags": ["Candidate"],
+				"summary": "Visibility Candidate",
+				"operationId": "Candidate-visibility_candidate",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "candidate_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Candidate Id"
+						}
+					},
+					{
+						"name": "is_active",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Set visibility of candidate",
+							"default": false,
+							"title": "Is Active"
+						},
+						"description": "Set visibility of candidate"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CandidatePublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"tags": ["Candidate"],
+				"summary": "Delete Candidate",
+				"operationId": "Candidate-delete_candidate",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "candidate_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Candidate Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Message"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/candidate_test/": {
+			"get": {
+				"tags": ["Candidate Test"],
+				"summary": "Get Candidate Test",
+				"operationId": "Candidate Test-get_candidate_test",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/CandidateTestPublic"
+									},
+									"type": "array",
+									"title": "Response Candidate Test-Get Candidate Test"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["Candidate Test"],
+				"summary": "Create Candidate Test",
+				"operationId": "Candidate Test-create_candidate_test",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CandidateTestCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CandidateTestPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/candidate_test/{candidate_test_id}": {
+			"get": {
+				"tags": ["Candidate Test"],
+				"summary": "Get Candidate Test By Id",
+				"operationId": "Candidate Test-get_candidate_test_by_id",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "candidate_test_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Candidate Test Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CandidateTestPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["Candidate Test"],
+				"summary": "Update Candidate Test",
+				"operationId": "Candidate Test-update_candidate_test",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "candidate_test_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Candidate Test Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CandidateTestUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CandidateTestPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/candidate_test_answer/": {
+			"get": {
+				"tags": ["Candidate-Test Answer"],
+				"summary": "Get Candidate Test Answer",
+				"operationId": "Candidate-Test Answer-get_candidate_test_answer",
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/CandidateTestAnswerPublic"
+									},
+									"type": "array",
+									"title": "Response Candidate-Test Answer-Get Candidate Test Answer"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			},
+			"post": {
+				"tags": ["Candidate-Test Answer"],
+				"summary": "Create Candidate Test Answer",
+				"operationId": "Candidate-Test Answer-create_candidate_test_answer",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CandidateTestAnswerCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CandidateTestAnswerPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				]
+			}
+		},
+		"/api/v1/candidate_test_answer/{candidate_test_answer_id}": {
+			"get": {
+				"tags": ["Candidate-Test Answer"],
+				"summary": "Get Candidate Test Answer By Id",
+				"operationId": "Candidate-Test Answer-get_candidate_test_answer_by_id",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "candidate_test_answer_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Candidate Test Answer Id"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CandidateTestAnswerPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": ["Candidate-Test Answer"],
+				"summary": "Update Candidate Answer Test",
+				"operationId": "Candidate-Test Answer-update_candidate_answer_test",
+				"security": [
+					{
+						"OAuth2PasswordBearer": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "candidate_test_answer_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"title": "Candidate Test Answer Id"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CandidateTestAnswerUpdate"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CandidateTestAnswerPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/private/users/": {
+			"post": {
+				"tags": ["private"],
+				"summary": "Create User",
+				"description": "Create a new user.",
+				"operationId": "private-create_user",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PrivateUserCreate"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserPublic"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"BlockCreate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"district_id": {
+						"type": "integer",
+						"title": "District Id"
+					}
+				},
+				"type": "object",
+				"required": ["name", "district_id"],
+				"title": "BlockCreate"
+			},
+			"BlockPublic": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"district_id": {
+						"type": "integer",
+						"title": "District Id"
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active"
+					}
+				},
+				"type": "object",
+				"required": ["name", "district_id", "id", "created_date", "modified_date", "is_active"],
+				"title": "BlockPublic"
+			},
+			"BlockUpdate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"district_id": {
+						"type": "integer",
+						"title": "District Id"
+					}
+				},
+				"type": "object",
+				"required": ["name", "district_id"],
+				"title": "BlockUpdate"
+			},
+			"Body_login-login_access_token": {
+				"properties": {
+					"grant_type": {
+						"anyOf": [
+							{
+								"type": "string",
+								"pattern": "^password$"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Grant Type"
+					},
+					"username": {
+						"type": "string",
+						"title": "Username"
+					},
+					"password": {
+						"type": "string",
+						"title": "Password"
+					},
+					"scope": {
+						"type": "string",
+						"title": "Scope",
+						"default": ""
+					},
+					"client_id": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Client Id"
+					},
+					"client_secret": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Client Secret"
+					}
+				},
+				"type": "object",
+				"required": ["username", "password"],
+				"title": "Body_login-login_access_token"
+			},
+			"CandidateCreate": {
+				"properties": {
+					"user_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "User Id"
+					}
+				},
+				"type": "object",
+				"title": "CandidateCreate"
+			},
+			"CandidatePublic": {
+				"properties": {
+					"user_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "User Id"
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active"
+					},
+					"is_deleted": {
+						"type": "boolean",
+						"title": "Is Deleted"
+					}
+				},
+				"type": "object",
+				"required": ["id", "created_date", "modified_date", "is_active", "is_deleted"],
+				"title": "CandidatePublic"
+			},
+			"CandidateTestAnswerCreate": {
+				"properties": {
+					"candidate_test_id": {
+						"type": "integer",
+						"title": "Candidate Test Id"
+					},
+					"question_revision_id": {
+						"type": "integer",
+						"title": "Question Revision Id"
+					},
+					"response": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Response"
+					},
+					"visited": {
+						"type": "boolean",
+						"title": "Visited",
+						"default": false
+					},
+					"time_spent": {
+						"type": "integer",
+						"title": "Time Spent",
+						"default": 0
+					}
+				},
+				"type": "object",
+				"required": ["candidate_test_id", "question_revision_id"],
+				"title": "CandidateTestAnswerCreate"
+			},
+			"CandidateTestAnswerPublic": {
+				"properties": {
+					"candidate_test_id": {
+						"type": "integer",
+						"title": "Candidate Test Id"
+					},
+					"question_revision_id": {
+						"type": "integer",
+						"title": "Question Revision Id"
+					},
+					"response": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Response"
+					},
+					"visited": {
+						"type": "boolean",
+						"title": "Visited",
+						"default": false
+					},
+					"time_spent": {
+						"type": "integer",
+						"title": "Time Spent",
+						"default": 0
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					}
+				},
+				"type": "object",
+				"required": [
+					"candidate_test_id",
+					"question_revision_id",
+					"id",
+					"created_date",
+					"modified_date"
+				],
+				"title": "CandidateTestAnswerPublic"
+			},
+			"CandidateTestAnswerUpdate": {
+				"properties": {
+					"response": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Response"
+					},
+					"visited": {
+						"type": "boolean",
+						"title": "Visited"
+					},
+					"time_spent": {
+						"type": "integer",
+						"title": "Time Spent"
+					}
+				},
+				"type": "object",
+				"required": ["response", "visited", "time_spent"],
+				"title": "CandidateTestAnswerUpdate"
+			},
+			"CandidateTestCreate": {
+				"properties": {
+					"test_id": {
+						"type": "integer",
+						"title": "Test Id"
+					},
+					"candidate_id": {
+						"type": "integer",
+						"title": "Candidate Id"
+					},
+					"device": {
+						"type": "string",
+						"title": "Device"
+					},
+					"consent": {
+						"type": "boolean",
+						"title": "Consent",
+						"default": false
+					},
+					"start_time": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Start Time"
+					},
+					"end_time": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "End Time"
+					},
+					"is_submitted": {
+						"type": "boolean",
+						"title": "Is Submitted",
+						"default": false
+					}
+				},
+				"type": "object",
+				"required": ["test_id", "candidate_id", "device", "start_time"],
+				"title": "CandidateTestCreate"
+			},
+			"CandidateTestInfoDict": {
+				"properties": {
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"candidate_id": {
+						"type": "integer",
+						"title": "Candidate Id"
+					},
+					"test_id": {
+						"type": "integer",
+						"title": "Test Id"
+					},
+					"start_time": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Start Time"
+					},
+					"is_submitted": {
+						"type": "boolean",
+						"title": "Is Submitted"
+					}
+				},
+				"type": "object",
+				"required": ["id", "candidate_id", "test_id", "start_time", "is_submitted"],
+				"title": "CandidateTestInfoDict"
+			},
+			"CandidateTestPublic": {
+				"properties": {
+					"test_id": {
+						"type": "integer",
+						"title": "Test Id"
+					},
+					"candidate_id": {
+						"type": "integer",
+						"title": "Candidate Id"
+					},
+					"device": {
+						"type": "string",
+						"title": "Device"
+					},
+					"consent": {
+						"type": "boolean",
+						"title": "Consent",
+						"default": false
+					},
+					"start_time": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Start Time"
+					},
+					"end_time": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "End Time"
+					},
+					"is_submitted": {
+						"type": "boolean",
+						"title": "Is Submitted",
+						"default": false
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					}
+				},
+				"type": "object",
+				"required": [
+					"test_id",
+					"candidate_id",
+					"device",
+					"start_time",
+					"id",
+					"created_date",
+					"modified_date"
+				],
+				"title": "CandidateTestPublic"
+			},
+			"CandidateTestUpdate": {
+				"properties": {
+					"device": {
+						"type": "string",
+						"title": "Device"
+					},
+					"consent": {
+						"type": "boolean",
+						"title": "Consent"
+					},
+					"end_time": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "End Time"
+					},
+					"is_submitted": {
+						"type": "boolean",
+						"title": "Is Submitted"
+					}
+				},
+				"type": "object",
+				"required": ["device", "consent", "end_time", "is_submitted"],
+				"title": "CandidateTestUpdate"
+			},
+			"CandidateUpdate": {
+				"properties": {
+					"user_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "User Id"
+					}
+				},
+				"type": "object",
+				"title": "CandidateUpdate"
+			},
+			"CountryCreate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					}
+				},
+				"type": "object",
+				"required": ["name"],
+				"title": "CountryCreate"
+			},
+			"CountryPublic": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active"
+					}
+				},
+				"type": "object",
+				"required": ["name", "id", "created_date", "modified_date", "is_active"],
+				"title": "CountryPublic"
+			},
+			"CountryUpdate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					}
+				},
+				"type": "object",
+				"required": ["name"],
+				"title": "CountryUpdate"
+			},
+			"DistrictCreate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"state_id": {
+						"type": "integer",
+						"title": "State Id"
+					}
+				},
+				"type": "object",
+				"required": ["name", "state_id"],
+				"title": "DistrictCreate"
+			},
+			"DistrictPublic": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"state_id": {
+						"type": "integer",
+						"title": "State Id"
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active"
+					}
+				},
+				"type": "object",
+				"required": ["name", "state_id", "id", "created_date", "modified_date", "is_active"],
+				"title": "DistrictPublic"
+			},
+			"DistrictUpdate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"state_id": {
+						"type": "integer",
+						"title": "State Id"
+					}
+				},
+				"type": "object",
+				"required": ["name", "state_id"],
+				"title": "DistrictUpdate"
+			},
+			"HTTPValidationError": {
+				"properties": {
+					"detail": {
+						"items": {
+							"$ref": "#/components/schemas/ValidationError"
+						},
+						"type": "array",
+						"title": "Detail"
+					}
+				},
+				"type": "object",
+				"title": "HTTPValidationError"
+			},
+			"MarksLevelEnum": {
+				"type": "string",
+				"enum": ["question", "test"],
+				"title": "MarksLevelEnum"
+			},
+			"Message": {
+				"properties": {
+					"message": {
+						"type": "string",
+						"title": "Message"
+					}
+				},
+				"type": "object",
+				"required": ["message"],
+				"title": "Message"
+			},
+			"NewPassword": {
+				"properties": {
+					"token": {
+						"type": "string",
+						"title": "Token"
+					},
+					"new_password": {
+						"type": "string",
+						"maxLength": 40,
+						"minLength": 8,
+						"title": "New Password"
+					}
+				},
+				"type": "object",
+				"required": ["token", "new_password"],
+				"title": "NewPassword"
+			},
+			"OrganizationCreate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					}
+				},
+				"type": "object",
+				"required": ["name"],
+				"title": "OrganizationCreate"
+			},
+			"OrganizationPublic": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Id"
+					},
+					"created_date": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Modified Date"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active"
+					},
+					"is_deleted": {
+						"type": "boolean",
+						"title": "Is Deleted"
+					}
+				},
+				"type": "object",
+				"required": ["name", "id", "created_date", "modified_date", "is_active", "is_deleted"],
+				"title": "OrganizationPublic"
+			},
+			"OrganizationUpdate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					}
+				},
+				"type": "object",
+				"required": ["name"],
+				"title": "OrganizationUpdate"
+			},
+			"PermissionCreate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"maxLength": 255,
+						"minLength": 1,
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 255
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					}
+				},
+				"type": "object",
+				"required": ["name"],
+				"title": "PermissionCreate"
+			},
+			"PermissionPublic": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"maxLength": 255,
+						"minLength": 1,
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 255
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"is_active": {
+						"type": "boolean",
+						"title": "Is Active"
+					}
+				},
+				"type": "object",
+				"required": ["name", "id", "is_active"],
+				"title": "PermissionPublic"
+			},
+			"PermissionUpdate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"maxLength": 255,
+						"minLength": 1,
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 255
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					}
+				},
+				"type": "object",
+				"required": ["name"],
+				"title": "PermissionUpdate"
+			},
+			"PermissionsPublic": {
+				"properties": {
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/PermissionPublic"
+						},
+						"type": "array",
+						"title": "Data"
+					},
+					"count": {
+						"type": "integer",
+						"title": "Count"
+					}
+				},
+				"type": "object",
+				"required": ["data", "count"],
+				"title": "PermissionsPublic"
+			},
+			"PrivateUserCreate": {
+				"properties": {
+					"email": {
+						"type": "string",
+						"title": "Email"
+					},
+					"password": {
+						"type": "string",
+						"title": "Password"
+					},
+					"full_name": {
+						"type": "string",
+						"title": "Full Name"
+					},
+					"is_verified": {
+						"type": "boolean",
+						"title": "Is Verified",
+						"default": false
+					},
+					"phone": {
+						"type": "string",
+						"title": "Phone"
+					},
+					"role_id": {
+						"type": "integer",
+						"title": "Role Id"
+					},
+					"organization_id": {
+						"type": "integer",
+						"title": "Organization Id"
+					}
+				},
+				"type": "object",
+				"required": ["email", "password", "full_name", "phone", "role_id", "organization_id"],
+				"title": "PrivateUserCreate"
+			},
+			"QuestionCreate": {
+				"properties": {
+					"question_text": {
+						"type": "string",
+						"title": "Question Text",
+						"description": "The actual question text"
+					},
+					"instructions": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Instructions",
+						"description": "Instructions for answering the question"
+					},
+					"question_type": {
+						"$ref": "#/components/schemas/QuestionType",
+						"description": "Type of question (single-choice, multi-choice, etc.)"
+					},
+					"options": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "object"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Options",
+						"description": "Available options for choice-based questions"
+					},
+					"correct_answer": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "integer"
+								},
+								"type": "array"
+							},
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "number"
+							},
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Correct Answer",
+						"description": "The correct answer(s) for this question"
+					},
+					"subjective_answer_limit": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Subjective Answer Limit",
+						"description": "Character limit for subjective answers"
+					},
+					"is_mandatory": {
+						"type": "boolean",
+						"title": "Is Mandatory",
+						"description": "Whether the question must be answered",
+						"default": true
+					},
+					"marking_scheme": {
+						"anyOf": [
+							{
+								"additionalProperties": {
+									"type": "number"
+								},
+								"type": "object"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Marking Scheme",
+						"description": "Scoring rules for this question"
+					},
+					"solution": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Solution",
+						"description": "Explanation of the correct answer"
+					},
+					"media": {
+						"anyOf": [
+							{
+								"type": "object"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Media",
+						"description": "Associated media for this question"
+					},
+					"organization_id": {
+						"type": "integer",
+						"title": "Organization Id",
+						"description": "ID of the organization that will own this question"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id",
+						"description": "ID of the user creating this question"
+					},
+					"state_ids": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "integer"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "State Ids",
+						"description": "IDs of states to associate"
+					},
+					"district_ids": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "integer"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "District Ids",
+						"description": "IDs of districts to associate"
+					},
+					"block_ids": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "integer"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Block Ids",
+						"description": "IDs of blocks to associate"
+					},
+					"tag_ids": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "integer"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Tag Ids",
+						"description": "IDs of tags to associate with the question"
+					}
+				},
+				"type": "object",
+				"required": ["question_text", "question_type", "organization_id", "created_by_id"],
+				"title": "QuestionCreate",
+				"description": "Data needed to create a new question with initial revision"
+			},
+			"QuestionLocationCreate": {
+				"properties": {
+					"question_id": {
+						"type": "integer",
+						"title": "Question Id",
+						"description": "ID of the question to associate with this location"
+					},
+					"state_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "State Id",
+						"description": "ID of the state to associate"
+					},
+					"district_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "District Id",
+						"description": "ID of the district to associate"
+					},
+					"block_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Block Id",
+						"description": "ID of the block to associate"
+					}
+				},
+				"type": "object",
+				"required": ["question_id"],
+				"title": "QuestionLocationCreate",
+				"description": "Data needed to add a location to a question"
+			},
+			"QuestionLocationPublic": {
+				"properties": {
+					"id": {
+						"type": "integer",
+						"title": "Id",
+						"description": "ID of the location"
+					},
+					"state_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "State Id",
+						"description": "ID of the state"
+					},
+					"district_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "District Id",
+						"description": "ID of the district"
+					},
+					"block_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Block Id",
+						"description": "ID of the block"
+					},
+					"state_name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "State Name",
+						"description": "Name of the state"
+					},
+					"district_name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "District Name",
+						"description": "Name of the district"
+					},
+					"block_name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Block Name",
+						"description": "Name of the block"
+					}
+				},
+				"type": "object",
+				"required": ["id"],
+				"title": "QuestionLocationPublic",
+				"description": "Public representation of question location"
+			},
+			"QuestionPublic": {
+				"properties": {
+					"id": {
+						"type": "integer",
+						"title": "Id",
+						"description": "ID of the question"
+					},
+					"organization_id": {
+						"type": "integer",
+						"title": "Organization Id",
+						"description": "ID of the organization that owns this question"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date",
+						"description": "When this question was created"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date",
+						"description": "When this question was last modified"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active",
+						"description": "Whether this question is active"
+					},
+					"is_deleted": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Deleted",
+						"description": "Whether this question is marked as deleted"
+					},
+					"question_text": {
+						"type": "string",
+						"title": "Question Text",
+						"description": "The question text"
+					},
+					"instructions": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Instructions",
+						"description": "Instructions for answering"
+					},
+					"question_type": {
+						"$ref": "#/components/schemas/QuestionType",
+						"description": "Type of question"
+					},
+					"options": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "object"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Options",
+						"description": "Available options for choice questions"
+					},
+					"correct_answer": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "integer"
+								},
+								"type": "array"
+							},
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "number"
+							},
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Correct Answer",
+						"description": "The correct answer(s)"
+					},
+					"subjective_answer_limit": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Subjective Answer Limit",
+						"description": "Character limit for subjective answers"
+					},
+					"is_mandatory": {
+						"type": "boolean",
+						"title": "Is Mandatory",
+						"description": "Whether the question must be answered"
+					},
+					"marking_scheme": {
+						"anyOf": [
+							{
+								"additionalProperties": {
+									"type": "number"
+								},
+								"type": "object"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Marking Scheme",
+						"description": "Scoring rules"
+					},
+					"solution": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Solution",
+						"description": "Explanation of the answer"
+					},
+					"media": {
+						"anyOf": [
+							{
+								"type": "object"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Media",
+						"description": "Associated media"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id",
+						"description": "ID of the user who created the current revision"
+					},
+					"locations": {
+						"anyOf": [
+							{
+								"items": {
+									"$ref": "#/components/schemas/QuestionLocationPublic"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Locations",
+						"description": "Geographic locations associated with this question"
+					},
+					"tags": {
+						"anyOf": [
+							{
+								"items": {},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Tags",
+						"description": "Tags associated with this question"
+					}
+				},
+				"type": "object",
+				"required": [
+					"id",
+					"organization_id",
+					"created_date",
+					"modified_date",
+					"is_active",
+					"is_deleted",
+					"question_text",
+					"instructions",
+					"question_type",
+					"options",
+					"correct_answer",
+					"subjective_answer_limit",
+					"is_mandatory",
+					"marking_scheme",
+					"solution",
+					"media",
+					"created_by_id",
+					"locations",
+					"tags"
+				],
+				"title": "QuestionPublic",
+				"description": "Public representation of a question with its current revision"
+			},
+			"QuestionRevisionCreate": {
+				"properties": {
+					"question_text": {
+						"type": "string",
+						"title": "Question Text",
+						"description": "The actual question text"
+					},
+					"instructions": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Instructions",
+						"description": "Instructions for answering the question"
+					},
+					"question_type": {
+						"$ref": "#/components/schemas/QuestionType",
+						"description": "Type of question (single-choice, multi-choice, etc.)"
+					},
+					"options": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "object"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Options",
+						"description": "Available options for choice-based questions"
+					},
+					"correct_answer": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "integer"
+								},
+								"type": "array"
+							},
+							{
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							},
+							{
+								"type": "number"
+							},
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Correct Answer",
+						"description": "The correct answer(s) for this question"
+					},
+					"subjective_answer_limit": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Subjective Answer Limit",
+						"description": "Character limit for subjective answers"
+					},
+					"is_mandatory": {
+						"type": "boolean",
+						"title": "Is Mandatory",
+						"description": "Whether the question must be answered",
+						"default": true
+					},
+					"marking_scheme": {
+						"anyOf": [
+							{
+								"additionalProperties": {
+									"type": "number"
+								},
+								"type": "object"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Marking Scheme",
+						"description": "Scoring rules for this question"
+					},
+					"solution": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Solution",
+						"description": "Explanation of the correct answer"
+					},
+					"media": {
+						"anyOf": [
+							{
+								"type": "object"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Media",
+						"description": "Associated media for this question"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id",
+						"description": "ID of the user creating this revision"
+					}
+				},
+				"type": "object",
+				"required": ["question_text", "question_type", "created_by_id"],
+				"title": "QuestionRevisionCreate",
+				"description": "Data needed to create a new revision for an existing question"
+			},
+			"QuestionRevisionInfo": {
+				"properties": {
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"text": {
+						"type": "string",
+						"title": "Text"
+					},
+					"type": {
+						"type": "string",
+						"title": "Type"
+					},
+					"is_current": {
+						"type": "boolean",
+						"title": "Is Current"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id"
+					}
+				},
+				"type": "object",
+				"required": ["id", "created_date", "text", "type", "is_current", "created_by_id"],
+				"title": "QuestionRevisionInfo"
+			},
+			"QuestionTagCreate": {
+				"properties": {
+					"tag_id": {
+						"type": "integer",
+						"title": "Tag Id",
+						"description": "ID of the tag to associate with the question"
+					}
+				},
+				"type": "object",
+				"required": ["tag_id"],
+				"title": "QuestionTagCreate",
+				"description": "Data needed to add a tag to a question"
+			},
+			"QuestionTagResponse": {
+				"properties": {
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"question_id": {
+						"type": "integer",
+						"title": "Question Id"
+					},
+					"tag_id": {
+						"type": "integer",
+						"title": "Tag Id"
+					},
+					"tag_name": {
+						"type": "string",
+						"title": "Tag Name"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					}
+				},
+				"type": "object",
+				"required": ["id", "question_id", "tag_id", "tag_name", "created_date"],
+				"title": "QuestionTagResponse"
+			},
+			"QuestionType": {
+				"type": "string",
+				"enum": ["single-choice", "multi-choice", "subjective", "numerical-integer"],
+				"title": "QuestionType",
+				"description": "Types of questions available in the system"
+			},
+			"QuestionUpdate": {
+				"properties": {
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active",
+						"description": "Whether this question is active"
+					},
+					"is_deleted": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Deleted",
+						"description": "Whether this question is marked as deleted"
+					}
+				},
+				"type": "object",
+				"title": "QuestionUpdate",
+				"description": "Fields that can be updated on the question entity itself"
+			},
+			"RevisionDetailDict": {
+				"properties": {
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"question_id": {
+						"type": "integer",
+						"title": "Question Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active"
+					},
+					"is_deleted": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Deleted"
+					},
+					"question_text": {
+						"type": "string",
+						"title": "Question Text"
+					},
+					"instructions": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Instructions"
+					},
+					"question_type": {
+						"type": "string",
+						"title": "Question Type"
+					},
+					"options": {
+						"anyOf": [
+							{
+								"items": {
+									"type": "object"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Options"
+					},
+					"correct_answer": {
+						"title": "Correct Answer"
+					},
+					"subjective_answer_limit": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Subjective Answer Limit"
+					},
+					"is_mandatory": {
+						"type": "boolean",
+						"title": "Is Mandatory"
+					},
+					"marking_scheme": {
+						"anyOf": [
+							{
+								"additionalProperties": {
+									"type": "number"
+								},
+								"type": "object"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Marking Scheme"
+					},
+					"solution": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Solution"
+					},
+					"media": {
+						"anyOf": [
+							{
+								"type": "object"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Media"
+					},
+					"is_current": {
+						"type": "boolean",
+						"title": "Is Current"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id"
+					}
+				},
+				"type": "object",
+				"required": [
+					"id",
+					"question_id",
+					"created_date",
+					"modified_date",
+					"is_active",
+					"is_deleted",
+					"question_text",
+					"instructions",
+					"question_type",
+					"options",
+					"correct_answer",
+					"subjective_answer_limit",
+					"is_mandatory",
+					"marking_scheme",
+					"solution",
+					"media",
+					"is_current",
+					"created_by_id"
+				],
+				"title": "RevisionDetailDict"
+			},
+			"RoleCreate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"maxLength": 255,
+						"minLength": 1,
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 255
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"label": {
+						"type": "string",
+						"title": "Label"
+					},
+					"permissions": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "Permissions",
+						"default": []
+					}
+				},
+				"type": "object",
+				"required": ["name", "label"],
+				"title": "RoleCreate"
+			},
+			"RolePublic": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"maxLength": 255,
+						"minLength": 1,
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 255
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"label": {
+						"type": "string",
+						"title": "Label"
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"is_active": {
+						"type": "boolean",
+						"title": "Is Active"
+					},
+					"permissions": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "Permissions"
+					}
+				},
+				"type": "object",
+				"required": ["name", "label", "id", "is_active", "permissions"],
+				"title": "RolePublic"
+			},
+			"RoleUpdate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"maxLength": 255,
+						"minLength": 1,
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 255
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"label": {
+						"type": "string",
+						"title": "Label"
+					},
+					"permissions": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "Permissions",
+						"default": []
+					}
+				},
+				"type": "object",
+				"required": ["name", "label"],
+				"title": "RoleUpdate"
+			},
+			"RolesPublic": {
+				"properties": {
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/RolePublic"
+						},
+						"type": "array",
+						"title": "Data"
+					},
+					"count": {
+						"type": "integer",
+						"title": "Count"
+					}
+				},
+				"type": "object",
+				"required": ["data", "count"],
+				"title": "RolesPublic"
+			},
+			"StateCreate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"country_id": {
+						"type": "integer",
+						"title": "Country Id"
+					}
+				},
+				"type": "object",
+				"required": ["name", "country_id"],
+				"title": "StateCreate"
+			},
+			"StatePublic": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"country_id": {
+						"type": "integer",
+						"title": "Country Id"
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active"
+					}
+				},
+				"type": "object",
+				"required": ["name", "country_id", "id", "created_date", "modified_date", "is_active"],
+				"title": "StatePublic"
+			},
+			"StateUpdate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"country_id": {
+						"type": "integer",
+						"title": "Country Id"
+					}
+				},
+				"type": "object",
+				"required": ["name", "country_id"],
+				"title": "StateUpdate"
+			},
+			"TagCreate": {
+				"properties": {
+					"tag_type_id": {
+						"type": "integer",
+						"title": "Tag Type Id",
+						"description": "ID of the Tag Type to which the Tag should belong to"
+					},
+					"name": {
+						"type": "string",
+						"title": "Name",
+						"description": "Name of the Tag"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description",
+						"description": "Description of the Tag"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id",
+						"description": "User ID who created the Tag"
+					}
+				},
+				"type": "object",
+				"required": ["tag_type_id", "name", "created_by_id"],
+				"title": "TagCreate"
+			},
+			"TagPublic": {
+				"properties": {
+					"tag_type_id": {
+						"type": "integer",
+						"title": "Tag Type Id"
+					},
+					"name": {
+						"type": "string",
+						"title": "Name",
+						"description": "Name of the Tag"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description",
+						"description": "Description of the Tag"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id"
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active"
+					},
+					"is_deleted": {
+						"type": "boolean",
+						"title": "Is Deleted"
+					},
+					"organization_id": {
+						"type": "integer",
+						"title": "Organization Id"
+					}
+				},
+				"type": "object",
+				"required": [
+					"tag_type_id",
+					"name",
+					"created_by_id",
+					"id",
+					"created_date",
+					"modified_date",
+					"is_active",
+					"is_deleted",
+					"organization_id"
+				],
+				"title": "TagPublic"
+			},
+			"TagTypeCreate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name",
+						"description": "Name of the Tag Type"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description",
+						"description": "Description of the Tag Type"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id",
+						"description": "User ID who created the Tag Type"
+					},
+					"organization_id": {
+						"type": "integer",
+						"title": "Organization Id",
+						"description": "Organization ID to which the Tag Type belongs"
+					}
+				},
+				"type": "object",
+				"required": ["name", "created_by_id", "organization_id"],
+				"title": "TagTypeCreate"
+			},
+			"TagTypePublic": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name",
+						"description": "Name of the Tag Type"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description",
+						"description": "Description of the Tag Type"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id",
+						"description": "User ID who created the Tag Type"
+					},
+					"organization_id": {
+						"type": "integer",
+						"title": "Organization Id",
+						"description": "Organization ID to which the Tag Type belongs"
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active"
+					},
+					"is_deleted": {
+						"type": "boolean",
+						"title": "Is Deleted"
+					}
+				},
+				"type": "object",
+				"required": [
+					"name",
+					"created_by_id",
+					"organization_id",
+					"id",
+					"created_date",
+					"modified_date",
+					"is_active",
+					"is_deleted"
+				],
+				"title": "TagTypePublic"
+			},
+			"TagTypeUpdate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name",
+						"description": "Name of the Tag Type"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description",
+						"description": "Description of the Tag Type"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id",
+						"description": "User ID who created the Tag Type"
+					},
+					"organization_id": {
+						"type": "integer",
+						"title": "Organization Id",
+						"description": "Organization ID to which the Tag Type belongs"
+					}
+				},
+				"type": "object",
+				"required": ["name", "created_by_id", "organization_id"],
+				"title": "TagTypeUpdate"
+			},
+			"TagUpdate": {
+				"properties": {
+					"tag_type_id": {
+						"type": "integer",
+						"title": "Tag Type Id",
+						"description": "ID of the Tag Type to which the Tag should belong to"
+					},
+					"name": {
+						"type": "string",
+						"title": "Name",
+						"description": "Name of the Tag"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description",
+						"description": "Description of the Tag"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id",
+						"description": "User ID who created the Tag"
+					}
+				},
+				"type": "object",
+				"required": ["tag_type_id", "name", "created_by_id"],
+				"title": "TagUpdate"
+			},
+			"TestCreate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"start_time": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Start Time"
+					},
+					"end_time": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "End Time"
+					},
+					"time_limit": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Time Limit"
+					},
+					"marks_level": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/MarksLevelEnum"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"marks": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Marks"
+					},
+					"completion_message": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Completion Message"
+					},
+					"start_instructions": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Start Instructions"
+					},
+					"link": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Link"
+					},
+					"no_of_attempts": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "No Of Attempts",
+						"default": 1
+					},
+					"shuffle": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Shuffle",
+						"default": false
+					},
+					"random_questions": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Random Questions",
+						"default": false
+					},
+					"no_of_questions": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "No Of Questions"
+					},
+					"question_pagination": {
+						"type": "integer",
+						"title": "Question Pagination",
+						"default": 1
+					},
+					"is_template": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Template",
+						"default": false
+					},
+					"template_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Template Id"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id"
+					},
+					"tags": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "Tags",
+						"default": []
+					},
+					"question_revision_ids": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "Question Revision Ids",
+						"default": []
+					},
+					"states": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "States",
+						"default": []
+					}
+				},
+				"type": "object",
+				"required": ["name", "link", "created_by_id"],
+				"title": "TestCreate"
+			},
+			"TestInfoDict": {
+				"properties": {
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					}
+				},
+				"type": "object",
+				"required": ["id", "name", "created_date"],
+				"title": "TestInfoDict"
+			},
+			"TestPublic": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"start_time": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Start Time"
+					},
+					"end_time": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "End Time"
+					},
+					"time_limit": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Time Limit"
+					},
+					"marks_level": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/MarksLevelEnum"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"marks": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Marks"
+					},
+					"completion_message": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Completion Message"
+					},
+					"start_instructions": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Start Instructions"
+					},
+					"link": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Link"
+					},
+					"no_of_attempts": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "No Of Attempts",
+						"default": 1
+					},
+					"shuffle": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Shuffle",
+						"default": false
+					},
+					"random_questions": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Random Questions",
+						"default": false
+					},
+					"no_of_questions": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "No Of Questions"
+					},
+					"question_pagination": {
+						"type": "integer",
+						"title": "Question Pagination",
+						"default": 1
+					},
+					"is_template": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Template",
+						"default": false
+					},
+					"template_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Template Id"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id"
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active"
+					},
+					"is_deleted": {
+						"type": "boolean",
+						"title": "Is Deleted"
+					},
+					"tags": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "Tags"
+					},
+					"question_revision_ids": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "Question Revision Ids"
+					},
+					"states": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "States"
+					}
+				},
+				"type": "object",
+				"required": [
+					"name",
+					"link",
+					"created_by_id",
+					"id",
+					"created_date",
+					"modified_date",
+					"is_active",
+					"is_deleted",
+					"tags",
+					"question_revision_ids",
+					"states"
+				],
+				"title": "TestPublic"
+			},
+			"TestUpdate": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name"
+					},
+					"description": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Description"
+					},
+					"start_time": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Start Time"
+					},
+					"end_time": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "End Time"
+					},
+					"time_limit": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Time Limit"
+					},
+					"marks_level": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/MarksLevelEnum"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"marks": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Marks"
+					},
+					"completion_message": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Completion Message"
+					},
+					"start_instructions": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Start Instructions"
+					},
+					"link": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Link"
+					},
+					"no_of_attempts": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "No Of Attempts",
+						"default": 1
+					},
+					"shuffle": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Shuffle",
+						"default": false
+					},
+					"random_questions": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Random Questions",
+						"default": false
+					},
+					"no_of_questions": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "No Of Questions"
+					},
+					"question_pagination": {
+						"type": "integer",
+						"title": "Question Pagination",
+						"default": 1
+					},
+					"is_template": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Template",
+						"default": false
+					},
+					"template_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Template Id"
+					},
+					"created_by_id": {
+						"type": "integer",
+						"title": "Created By Id"
+					},
+					"tags": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "Tags",
+						"default": []
+					},
+					"question_revision_ids": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "Question Revision Ids",
+						"default": []
+					},
+					"states": {
+						"items": {
+							"type": "integer"
+						},
+						"type": "array",
+						"title": "States",
+						"default": []
+					}
+				},
+				"type": "object",
+				"required": ["name", "link", "created_by_id"],
+				"title": "TestUpdate"
+			},
+			"Token": {
+				"properties": {
+					"access_token": {
+						"type": "string",
+						"title": "Access Token"
+					},
+					"token_type": {
+						"type": "string",
+						"title": "Token Type",
+						"default": "bearer"
+					}
+				},
+				"type": "object",
+				"required": ["access_token"],
+				"title": "Token"
+			},
+			"UpdatePassword": {
+				"properties": {
+					"current_password": {
+						"type": "string",
+						"maxLength": 40,
+						"minLength": 8,
+						"title": "Current Password"
+					},
+					"new_password": {
+						"type": "string",
+						"maxLength": 40,
+						"minLength": 8,
+						"title": "New Password"
+					}
+				},
+				"type": "object",
+				"required": ["current_password", "new_password"],
+				"title": "UpdatePassword"
+			},
+			"UserCreate": {
+				"properties": {
+					"full_name": {
+						"type": "string",
+						"maxLength": 255,
+						"title": "Full Name of the User",
+						"description": "Enter Full Name of the User"
+					},
+					"email": {
+						"type": "string",
+						"maxLength": 255,
+						"format": "email",
+						"title": "Email of the User",
+						"description": "Enter Email Address"
+					},
+					"phone": {
+						"type": "string",
+						"maxLength": 255,
+						"title": "Phone"
+					},
+					"role_id": {
+						"type": "integer",
+						"title": "Role Id"
+					},
+					"organization_id": {
+						"type": "integer",
+						"title": "Organization Id"
+					},
+					"created_by_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Created By Id"
+					},
+					"password": {
+						"type": "string",
+						"maxLength": 40,
+						"minLength": 8,
+						"title": "Enter Password",
+						"description": "Create password of minumum 8 charaters and maximum 40 characters"
+					}
+				},
+				"type": "object",
+				"required": ["full_name", "email", "phone", "role_id", "organization_id", "password"],
+				"title": "UserCreate"
+			},
+			"UserPublic": {
+				"properties": {
+					"full_name": {
+						"type": "string",
+						"maxLength": 255,
+						"title": "Full Name of the User",
+						"description": "Enter Full Name of the User"
+					},
+					"email": {
+						"type": "string",
+						"maxLength": 255,
+						"format": "email",
+						"title": "Email of the User",
+						"description": "Enter Email Address"
+					},
+					"phone": {
+						"type": "string",
+						"maxLength": 255,
+						"title": "Phone"
+					},
+					"role_id": {
+						"type": "integer",
+						"title": "Role Id"
+					},
+					"organization_id": {
+						"type": "integer",
+						"title": "Organization Id"
+					},
+					"created_by_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Created By Id"
+					},
+					"id": {
+						"type": "integer",
+						"title": "Id"
+					},
+					"created_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created Date"
+					},
+					"modified_date": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Modified Date"
+					},
+					"is_active": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Is Active"
+					},
+					"is_deleted": {
+						"type": "boolean",
+						"title": "Is Deleted"
+					}
+				},
+				"type": "object",
+				"required": [
+					"full_name",
+					"email",
+					"phone",
+					"role_id",
+					"organization_id",
+					"id",
+					"created_date",
+					"modified_date",
+					"is_active",
+					"is_deleted"
+				],
+				"title": "UserPublic"
+			},
+			"UserUpdate": {
+				"properties": {
+					"full_name": {
+						"type": "string",
+						"maxLength": 255,
+						"title": "Full Name of the User",
+						"description": "Enter Full Name of the User"
+					},
+					"email": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 255,
+								"format": "email"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Email"
+					},
+					"phone": {
+						"type": "string",
+						"maxLength": 255,
+						"title": "Phone"
+					},
+					"role_id": {
+						"type": "integer",
+						"title": "Role Id"
+					},
+					"organization_id": {
+						"type": "integer",
+						"title": "Organization Id"
+					},
+					"created_by_id": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Created By Id"
+					},
+					"password": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 40,
+								"minLength": 8
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Password"
+					}
+				},
+				"type": "object",
+				"required": ["full_name", "phone", "role_id", "organization_id"],
+				"title": "UserUpdate"
+			},
+			"UserUpdateMe": {
+				"properties": {
+					"full_name": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 255
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Full Name"
+					},
+					"email": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 255,
+								"format": "email"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Email"
+					}
+				},
+				"type": "object",
+				"title": "UserUpdateMe"
+			},
+			"UsersPublic": {
+				"properties": {
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/UserPublic"
+						},
+						"type": "array",
+						"title": "Data"
+					},
+					"count": {
+						"type": "integer",
+						"title": "Count"
+					}
+				},
+				"type": "object",
+				"required": ["data", "count"],
+				"title": "UsersPublic"
+			},
+			"ValidationError": {
+				"properties": {
+					"loc": {
+						"items": {
+							"anyOf": [
+								{
+									"type": "string"
+								},
+								{
+									"type": "integer"
+								}
+							]
+						},
+						"type": "array",
+						"title": "Location"
+					},
+					"msg": {
+						"type": "string",
+						"title": "Message"
+					},
+					"type": {
+						"type": "string",
+						"title": "Error Type"
+					}
+				},
+				"type": "object",
+				"required": ["loc", "msg", "type"],
+				"title": "ValidationError"
+			}
+		},
+		"securitySchemes": {
+			"OAuth2PasswordBearer": {
+				"type": "oauth2",
+				"flows": {
+					"password": {
+						"scopes": {},
+						"tokenUrl": "/api/v1/login/access-token"
+					}
+				}
+			}
+		}
+	}
+}

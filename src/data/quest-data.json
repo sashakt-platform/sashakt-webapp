@@ -1,0 +1,46 @@
+[
+	{
+		"S No": "1",
+		"State": "Haryana, Rajasthan, Himachal Pradesh",
+		"Questions": "ग्राम संगठन में आरजीबी की बैठक महीने में कितनी बार आयोजित की जानी चाहिए?",
+		"Option A": "2 बैठक",
+		"Option B": "1 बैठक",
+		"Option C": "4 बैठक",
+		"Option D": "6 बैठक",
+		"Correct Option": "A",
+		"Training Tags": "CLF OB:Discussion on CLF formation to Initial Meetings (1 day), VO OB:Village Organization Concept & Management, VO Acct:Village Organization Concept & Management, VF/AW/SS:Village Organization Concept & Management, CLF Acct:CLF EC Meeting & Meeting Process"
+	},
+	{
+		"S No": "2",
+		"State": "Haryana, Rajasthan, Himachal Pradesh",
+		"Questions": "क्लस्टर लेवल फेडरेशन में अध्यक्ष की अनुपस्थिति में आरजीबी बैठक का अध्यक्ष कौन होता है?",
+		"Option A": "ग्राम सरपंच",
+		"Option B": "बाहरी व्यक्ति",
+		"Option C": "सीएलएफ- RGB द्वारा चुना गया आज की बैठक का अध्यक्ष",
+		"Option D": "बीपीएम",
+		"Correct Option": "D",
+		"Training Tags": "CLF OB:Leadership, Visioning & Planning Exercise"
+	},
+	{
+		"S No": "3",
+		"State": "Haryana",
+		"Questions": "सोसाइटी अधिनियम के तहत, क्लस्टर लेवल फेडरेशन के पदाधिकारियों को कितने वर्षों के बाद बदला जाना चाहिए?",
+		"Option A": "2.5 वर्ष",
+		"Option B": "1 वर्ष",
+		"Option C": "6 महीने",
+		"Option D": "3 वर्ष",
+		"Correct Option": "D",
+		"Training Tags": "CLF OB:Discussion on CLF formation to Initial Meetings (1 day), \"VO OB:Leadership, Visioning & Planning Exercise\""
+	},
+	{
+		"S No": "4",
+		"State": "Rajasthan",
+		"Questions": "सहकारी अधिनियमों के अनुसार, क्लस्टर लेवल फेडरेशन के पदाधिकारियों को कितने वर्षों के बाद बदलना आवश्यक है?",
+		"Option A": " 2.5 वर्षो में ",
+		"Option B": "5 वर्षो में ",
+		"Option C": "6 वर्षो में ",
+		"Option D": "3.5 वर्षो में ",
+		"Correct Option": "B",
+		"Training Tags": "CLF OB:Leadership, Visioning & Planning Exercise"
+	}
+]
