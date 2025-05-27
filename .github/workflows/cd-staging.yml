@@ -50,7 +50,7 @@ jobs:
               git clone https://github.com/your-org/sashakt-webapp.git
             else
               cd sashakt-webapp
-              git pull origin main
+              git pull origin feature/github-actions
             fi
 
             cd sashakt-webapp
