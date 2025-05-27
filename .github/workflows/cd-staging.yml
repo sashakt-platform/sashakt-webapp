@@ -2,7 +2,7 @@ name: Deploy to S3 (Staging)
 
 on:
   push:
-    branches: [ main]
+    branches: [ main, feature/github-actions ]
 
 jobs:
   deploy:
@@ -10,8 +10,10 @@ jobs:
     environment: staging
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout main branch
         uses: actions/checkout@v3
+        with:
+          ref: main
 
       - name: Setup Node
         uses: actions/setup-node@v3
