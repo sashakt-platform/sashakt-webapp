@@ -28,7 +28,7 @@ export const actions = {
 			secure: false // change to true in production
 		});
 		return {
-			candidateData
+			success: true
 		};
 	}
 };
