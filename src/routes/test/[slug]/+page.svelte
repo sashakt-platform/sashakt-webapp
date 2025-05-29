@@ -4,14 +4,17 @@
 	import { setContext } from 'svelte';
 	import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 	setContext('test-data', data);
 	let isStarted = $state(false);
+	if (form?.success) {
+		isStarted = true;
+	}
 </script>
 
 <section>
 	{#if !isStarted}
-		<LandingPage {data} bind:isStarted />
+		<LandingPage />
 	{:else}
 		<Question />
 	{/if}

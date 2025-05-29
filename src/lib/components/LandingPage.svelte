@@ -3,20 +3,17 @@
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
+	import { getContext } from 'svelte';
 
-	let { data, isStarted = $bindable(), form } = $props();
+	const data: any = getContext('test-data');
 	let isChecked = $state(false);
 
 	const testOverview = [
-		{ label: 'Total questions', value: `${data.no_of_questions} questions` },
-		{ label: 'Total marks', value: `${data.total_marks} marks` },
-		{ label: 'Total duration', value: `${data.time_limit / 60} minutes` },
-		{ label: 'Questions per page', value: '1 question' }
+		{ label: 'Total questions', value: `${data.total_questions} questions` },
+		{ label: 'Total marks', value: `${data.marks} marks` },
+		{ label: 'Total duration', value: `${data.time_limit * 60} minutes` },
+		{ label: 'Questions per page', value: `${data.question_pagination} question` }
 	];
-
-	if (form?.success) {
-		isStarted = true;
-	}
 </script>
 
 <section class="mx-auto max-w-xl p-6">
