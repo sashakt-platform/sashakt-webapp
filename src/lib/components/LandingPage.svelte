@@ -4,7 +4,7 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 
-	let { data, isStarted = $bindable() } = $props();
+	let { data, isStarted = $bindable(), form } = $props();
 	let isChecked = $state(false);
 
 	const testOverview = [
@@ -13,6 +13,10 @@
 		{ label: 'Total duration', value: `${data.time_limit / 60} minutes` },
 		{ label: 'Questions per page', value: '1 question' }
 	];
+
+	if (form?.success) {
+		isStarted = true;
+	}
 </script>
 
 <section class="mx-auto max-w-xl p-6">
@@ -68,7 +72,10 @@
 				</Dialog.Header>
 
 				<Dialog.Close>
-					<Button onclick={() => (isStarted = true)}>Okay, got it</Button>
+					<form method="POST" action="?/createCandidate">
+						<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
+						<Button type="submit">Okay, got it</Button>
+					</form>
 				</Dialog.Close>
 			</Dialog.Content>
 		</Dialog.Root>

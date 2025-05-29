@@ -1,5 +1,34 @@
+import { API_ENDPOINT } from '$env/static/private';
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	return locals.testData;
+};
+
+export const actions = {
+	createCandidate: async ({ request, locals, fetch, cookies }) => {
+		const formData = await request.formData();
+		const { deviceInfo } = Object.fromEntries(formData.entries());
+
+		const response = await fetch(`${API_ENDPOINT}/candidate/start_test`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ test_id: locals.testData.id, device_info: deviceInfo })
+		});
+		if (!response.ok) {
+			throw redirect(303, '/test/' + locals.testData.slug);
+		}
+		const candidateData = await response.json();
+		cookies.set('candidate_uuid', candidateData.candidate_uuid, {
+			expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
+			path: '/test/' + locals.testData.slug,
+			httpOnly: true,
+			sameSite: 'strict',
+			secure: false // change to true in production
+		});
+		return {
+			candidateData
+		};
+	}
 };
