@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Questions from '../../data/quest-data.json';
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
@@ -12,6 +11,7 @@
 	let selectedQuestions = $state<TSelection[]>([]);
 	let currentQuestion = $state(0);
 	let { showResult = $bindable() } = $props();
+	let Questions = $state([{}]);
 </script>
 
 <div class="mx-auto max-w-xl">
