@@ -5,11 +5,19 @@
 
 	let { data }: PageProps = $props();
 	let isStarted = $state(false);
+
+	$effect(() => {
+		if (data.candidateId) {
+			isStarted = true;
+		} else {
+			isStarted = false;
+		}
+	});
 </script>
 
 <section>
 	{#if !isStarted}
-		<LandingPage {data} bind:isStarted />
+		<LandingPage testDetails={data.testData} />
 	{:else}
 		<Question />
 	{/if}
