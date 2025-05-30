@@ -1,6 +1,7 @@
 import { API_ENDPOINT } from '$env/static/private';
 
 export const getTestDetailsBySlug = async (slug: string) => {
+
 	// TODO: we should first check if the data exists in the localstorage
 	// if yes, then return data
 	// else make actual call to backend

@@ -1,0 +1,47 @@
+name: Deploy to EC2  (Staging)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          ref: feature/github-actions
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu
+            rm -rf sashakt-webapp
+
+            git clone https://github.com/sashakt-platform/sashakt-webapp.git
+
+            cd sashakt-webapp
+
+            corepack enable
+            sudo corepack prepare pnpm@latest --activate
+
+            pnpm install
+            pnpm run build
+
+            if ! command -v pm2 &> /dev/null; then
+              sudo npm install -g pm2
+            fi
+
+            if [ -f "build/index.js" ]; then
+              pm2 restart sashakt-webapp --update-env || pm2 start build/index.js --name sashakt-webapp
+            else
+              echo "Build output not found: build/index.js"
+              exit 1
+            fi
