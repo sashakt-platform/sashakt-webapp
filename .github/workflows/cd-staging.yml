@@ -1,0 +1,65 @@
+name: Deploy to EC2  (Staging)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          ref: feature/github-actions
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.16.0
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Sync SvelteKit
+        run: pnpm exec svelte-kit sync
+
+      - name: Build SvelteKit App
+        run: pnpm run build
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu
+            if [ ! -d "sashakt-webapp/.git" ]; then
+              git clone https://github.com/sashakt-platform/sashakt-webapp.git
+            fi
+
+            cd sashakt-webapp
+            git pull origin main
+
+            corepack enable
+            sudo corepack prepare pnpm@latest --activate
+
+            pnpm install
+            pnpm run build
+
+            if ! command -v pm2 &> /dev/null; then
+              sudo npm install -g pm2
+            fi
+
+            if [ -f "build/index.js" ]; then
+              pm2 restart sashakt-webapp --update-env || pm2 start build/index.js --name sashakt-webapp
+            else
+              echo "Build output not found: build/index.js"
+              exit 1
+            fi
