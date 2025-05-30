@@ -1,20 +1,23 @@
 <script lang="ts">
 	import LandingPage from '$lib/components/LandingPage.svelte';
 	import Question from '$lib/components/Question.svelte';
-	import { setContext } from 'svelte';
 	import type { PageProps } from './$types';
 
-	let { data, form }: PageProps = $props();
-	setContext('test-data', data);
+	let { data }: PageProps = $props();
 	let isStarted = $state(false);
-	if (form?.success) {
-		isStarted = true;
-	}
+
+	$effect(() => {
+		if (data.candidateId) {
+			isStarted = true;
+		} else {
+			isStarted = false;
+		}
+	});
 </script>
 
 <section>
 	{#if !isStarted}
-		<LandingPage />
+		<LandingPage testDetails={data.testData} />
 	{:else}
 		<Question />
 	{/if}

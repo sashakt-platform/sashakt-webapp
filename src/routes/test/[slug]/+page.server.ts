@@ -2,8 +2,11 @@ import { API_ENDPOINT } from '$env/static/private';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	return locals.testData;
+export const load: PageServerLoad = async ({ locals, cookies }) => {
+	if (cookies.get('sashakt-candidate')) {
+		return { candidateId: cookies.get('sashakt-candidate'), testData: locals.testData };
+	}
+	return { candidateId: null, testData: locals.testData };
 };
 
 export const actions = {
@@ -20,7 +23,7 @@ export const actions = {
 			throw redirect(303, '/test/' + locals.testData.link);
 		}
 		const candidateData = await response.json();
-		cookies.set('candidate_uuid', candidateData.candidate_uuid, {
+		cookies.set('sashakt-candidate', candidateData.candidate_uuid, {
 			expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
 			path: '/test/' + locals.testData.link,
 			httpOnly: true,

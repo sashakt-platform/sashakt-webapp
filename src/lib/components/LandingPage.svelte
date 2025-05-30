@@ -1,23 +1,23 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { Button, buttonVariants } from '$lib/components/ui/button/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
-	import { getContext } from 'svelte';
 
-	const data: any = getContext('test-data');
+	const { testDetails } = $props();
 	let isChecked = $state(false);
 
 	const testOverview = [
-		{ label: 'Total questions', value: `${data.total_questions} questions` },
-		{ label: 'Total marks', value: `${data.marks} marks` },
-		{ label: 'Total duration', value: `${data.time_limit * 60} minutes` },
-		{ label: 'Questions per page', value: `${data.question_pagination} question` }
+		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
+		{ label: 'Total marks', value: `${testDetails.marks} marks` },
+		{ label: 'Total duration', value: `${testDetails.time_limit * 60} minutes` },
+		{ label: 'Questions per page', value: `${testDetails.question_pagination} question` }
 	];
 </script>
 
 <section class="mx-auto max-w-xl p-6">
-	<h1 class="mb-4 text-xl font-semibold">{data.name}</h1>
+	<h1 class="mb-4 text-xl font-semibold">{testDetails.name}</h1>
 	<h2 class="text-muted-foreground mb-4 text-xs font-bold">Test Overview</h2>
 
 	<div class="mb-8 rounded-2xl border">
@@ -33,7 +33,7 @@
 		</Table.Root>
 	</div>
 	<div>
-		{#each data.start_instructions as instruction}
+		{#each testDetails.start_instructions as instruction}
 			{@render container(instruction)}
 		{/each}
 	</div>
@@ -69,7 +69,7 @@
 				</Dialog.Header>
 
 				<Dialog.Close>
-					<form method="POST" action="?/createCandidate">
+					<form method="POST" action="?/createCandidate" use:enhance>
 						<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
 						<Button type="submit">Okay, got it</Button>
 					</form>
