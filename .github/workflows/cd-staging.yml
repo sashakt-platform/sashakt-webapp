@@ -40,12 +40,11 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu
-            if [ ! -d "sashakt-webapp/.git" ]; then
-              git clone https://github.com/sashakt-platform/sashakt-webapp.git
-            fi
+            rm -rf sashakt-webapp
+
+            git clone https://github.com/sashakt-platform/sashakt-webapp.git
 
             cd sashakt-webapp
-            git pull --rebase origin main
 
             corepack enable
             sudo corepack prepare pnpm@latest --activate
