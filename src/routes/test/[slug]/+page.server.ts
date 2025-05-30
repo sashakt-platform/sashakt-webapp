@@ -17,15 +17,15 @@ export const actions = {
 			body: JSON.stringify({ test_id: locals.testData.id, device_info: deviceInfo })
 		});
 		if (!response.ok) {
-			throw redirect(303, '/test/' + locals.testData.slug);
+			throw redirect(303, '/test/' + locals.testData.link);
 		}
 		const candidateData = await response.json();
 		cookies.set('candidate_uuid', candidateData.candidate_uuid, {
 			expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
-			path: '/test/' + locals.testData.slug,
+			path: '/test/' + locals.testData.link,
 			httpOnly: true,
 			sameSite: 'strict',
-			secure: false // change to true in production
+			secure: true
 		});
 		return {
 			success: true
