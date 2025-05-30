@@ -45,7 +45,7 @@ jobs:
             fi
 
             cd sashakt-webapp
-            git pull origin main
+            git pull --rebase origin main
 
             corepack enable
             sudo corepack prepare pnpm@latest --activate
