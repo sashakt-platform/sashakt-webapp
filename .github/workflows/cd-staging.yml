@@ -29,6 +29,8 @@ jobs:
 
             cd sashakt-webapp
 
+            echo "BACKEND_URL=${{ secrets.BACKEND_URL }}" > .env
+
             corepack enable
             sudo corepack prepare pnpm@latest --activate
 
