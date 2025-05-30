@@ -2,7 +2,7 @@ name: Deploy to EC2  (Staging)
 
 on:
   push:
-    branches: [ main, feature/github-actions ]
+    branches: [main]
 
 jobs:
   deploy:
@@ -29,12 +29,6 @@ jobs:
       - name: Sync SvelteKit
         run: pnpm exec svelte-kit sync
 
-      - name: Ensure adapter-node is used
-        run: |
-          pnpm add -D @sveltejs/adapter-node
-          sed -i 's/@sveltejs\/adapter-auto/@sveltejs\/adapter-node/' svelte.config.js
-          sed -i '/adapter-auto/d' svelte.config.js
-
       - name: Build SvelteKit App
         run: pnpm run build
 
@@ -51,7 +45,7 @@ jobs:
             fi
 
             cd sashakt-webapp
-            git pull origin feature/github-actions
+            git pull origin main
 
             corepack enable
             sudo corepack prepare pnpm@latest --activate
