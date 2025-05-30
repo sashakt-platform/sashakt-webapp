@@ -1,4 +1,4 @@
-import { API_ENDPOINT } from '$env/static/private';
+import { BACKEND_URL } from '$env/static/private';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -14,7 +14,7 @@ export const actions = {
 		const formData = await request.formData();
 		const { deviceInfo } = Object.fromEntries(formData.entries());
 
-		const response = await fetch(`${API_ENDPOINT}/candidate/start_test`, {
+		const response = await fetch(`${BACKEND_URL}/candidate/start_test`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ test_id: locals.testData.id, device_info: deviceInfo })
