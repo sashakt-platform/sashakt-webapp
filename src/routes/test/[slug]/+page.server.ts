@@ -1,12 +1,30 @@
 import { BACKEND_URL } from '$env/static/private';
+import { getTestQuestions } from '$lib/server/test';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, cookies }) => {
-	if (cookies.get('sashakt-candidate')) {
-		return { candidateId: cookies.get('sashakt-candidate'), testData: locals.testData };
+	const candidateCookie = cookies.get('sashakt-candidate');
+	const candidate = candidateCookie ? JSON.parse(candidateCookie) : null;
+
+	if (candidate) {
+		try {
+			const testQuestionsResponse = await getTestQuestions(
+				candidate.candidate_test_id,
+				candidate.candidate_uuid
+			);
+
+			return {
+				candidateId: candidate.candidate_uuid,
+				testData: locals.testData,
+				testQuestions: testQuestionsResponse
+			};
+		} catch (error) {
+			console.error('Error fetching candidate data:', error);
+			throw redirect(303, '/test/' + locals.testData.link);
+		}
 	}
-	return { candidateId: null, testData: locals.testData };
+	return { candidateId: null, testData: locals.testData, testQuestions: null };
 };
 
 export const actions = {
@@ -23,7 +41,7 @@ export const actions = {
 			throw redirect(303, '/test/' + locals.testData.link);
 		}
 		const candidateData = await response.json();
-		cookies.set('sashakt-candidate', candidateData.candidate_uuid, {
+		cookies.set('sashakt-candidate', JSON.stringify(candidateData), {
 			expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
 			path: '/test/' + locals.testData.link,
 			httpOnly: true,
