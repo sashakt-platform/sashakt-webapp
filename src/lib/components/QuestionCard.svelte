@@ -3,12 +3,12 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 
-	let { question, totalQuestions, selectedQuestions = $bindable() } = $props();
+	let { question, SNo, totalQuestions, selectedQuestions = $bindable() } = $props();
 
-	const options = ['Option A', 'Option B', 'Option C', 'Option D'];
+	const options = question.options;
 
 	const isSelected = (optionValue: string) => {
-		const selected = selectedQuestions.find((item: any) => item.question === question['S No']);
+		const selected = selectedQuestions.find((item: any) => item.question === question.id);
 		return selected?.response === optionValue;
 	};
 
@@ -25,25 +25,32 @@
 
 <Card.Header>
 	<Card.Title class="mb-6 border-b p-4 text-sm">
-		{question['S No']} <span>OF {totalQuestions}</span>
+		{SNo} <span>OF {totalQuestions}</span>
 		<span class="text-muted-foreground float-end">{`1 Mark`}</span>
 	</Card.Title>
-	<Card.Description class="text-base/normal font-medium">{question.Questions}</Card.Description>
+	<Card.Description class="text-base/normal font-medium"
+		>{question.question_text}{#if question.is_mandatory}<span class="ml-1 text-red-500">*</span>
+		{/if}</Card.Description
+	>
 </Card.Header>
 <Card.Content>
 	<RadioGroup.Root
 		onValueChange={(value) => {
-			handleSelection(question['S No'], value);
+			handleSelection(question.id, value);
 		}}
-		value={selectedQuestions.find((item: any) => item.question === question['S No'])?.response}
+		value={selectedQuestions.find((item: any) => item.question === question.id)?.response}
 	>
 		{#each options as option, index (index)}
 			<Label
-				for={options[index]}
-				class={`cursor-pointer space-x-2 rounded-md border px-4 py-5 ${isSelected(question[option]) ? 'bg-accent-foreground text-muted *:border-muted *:text-muted' : ''}`}
+				for={Object.keys(option)[0]}
+				class={`cursor-pointer space-x-2 rounded-md border px-4 py-5 ${isSelected(Object.values(option)[0]!.toString()) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
 			>
-				{String.fromCharCode(65 + index)}. {question[option]}
-				<RadioGroup.Item value={question[option]} id={options[index]} class="float-end" />
+				{Object.keys(option)[0]}. {Object.values(option)[0]}
+				<RadioGroup.Item
+					value={Object.values(option)[0]!.toString()}
+					id={Object.keys(option)[0]}
+					class="float-end"
+				/>
 			</Label>
 		{/each}
 	</RadioGroup.Root>

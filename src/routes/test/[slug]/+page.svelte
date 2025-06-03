@@ -19,6 +19,6 @@
 	{#if !isStarted}
 		<LandingPage testDetails={data.testData} />
 	{:else}
-		<Question />
+		<Question Questions={data.testQuestions.question_revisions} />
 	{/if}
 </section>

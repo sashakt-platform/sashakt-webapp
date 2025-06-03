@@ -10,12 +10,12 @@
 
 	let selectedQuestions = $state<TSelection[]>([]);
 	let currentQuestion = $state(0);
-	let { showResult = $bindable() } = $props();
-	let Questions = $state([{}]);
+	let { Questions, showResult = $bindable() } = $props();
 </script>
 
 <div class="mx-auto max-w-xl">
 	<QuestionCard
+		SNo={currentQuestion + 1}
 		question={Questions[currentQuestion]}
 		totalQuestions={Questions.length}
 		bind:selectedQuestions
