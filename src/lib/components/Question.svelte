@@ -14,37 +14,49 @@
 	let currentQuestion = $state(0);
 	let { candidate, Questions, showResult = $bindable() } = $props();
 
-	const handleNext = async () =>
-		fetch('/api/submit-answer', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				question_revision_id: Questions[currentQuestion].id,
-				response: selectedQuestions[currentQuestion]?.response || '',
-				visited: true,
-				time_spent: 0,
-				candidate
-			})
-		});
+	const handleNext = async () => {
+		try {
+			return await fetch('/api/submit-answer', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					question_revision_id: Questions[currentQuestion].id,
+					response: selectedQuestions[currentQuestion]?.response || '',
+					visited: true,
+					time_spent: selectedQuestions[currentQuestion]?.time_spent || 0,
+					candidate
+				})
+			});
+		} catch (error) {
+			console.error('Failed to submit answer:', error);
+			throw error;
+		}
+	};
 
 	const submitTest = async () => {
-		handleNext().then(() => {
-			fetch('/api/submit-test', {
+		try {
+			await handleNext();
+			const response = await fetch('/api/submit-test', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({ candidate })
-			})
-				.then((res) => {
-					alert(res.ok ? 'Test submitted successfully!' : 'Already submitted');
-				})
-				.then(() => {
-					showResult = true;
-				});
-		});
+			});
+
+			if (response.ok) {
+				// replace alert with toast
+				alert('Test submitted successfully!');
+			} else {
+				alert('Test already submitted or submission failed');
+			}
+
+			showResult = true;
+		} catch (error) {
+			alert('Failed to submit test:' + error);
+		}
 	};
 </script>
 

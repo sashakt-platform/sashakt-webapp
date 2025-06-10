@@ -3,6 +3,12 @@ import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request }) => {
 	const { candidate } = await request.json();
+	if (!candidate?.candidate_test_id || !candidate?.candidate_uuid) {
+		return new Response(JSON.stringify({ success: false, error: 'Invalid candidate data' }), {
+			status: 400,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
 
 	try {
 		const res = await fetch(
@@ -23,7 +29,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		});
 	} catch (error: any) {
 		return new Response(JSON.stringify({ success: false, error: error.message }), {
-			status: 400,
+			status: 500,
 			headers: { 'Content-Type': 'application/json' }
 		});
 	}

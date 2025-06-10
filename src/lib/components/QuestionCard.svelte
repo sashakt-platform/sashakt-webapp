@@ -41,17 +41,17 @@
 		value={selectedQuestions.find((item: any) => item.question === question.id)?.response}
 	>
 		{#each options as option, index (index)}
-			<Label
-				for={Object.keys(option)[0]}
-				class={`cursor-pointer space-x-2 rounded-md border px-4 py-5 ${isSelected(Object.values(option)[0]!.toString()) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
-			>
-				{Object.keys(option)[0]}. {Object.values(option)[0]}
-				<RadioGroup.Item
-					value={Object.values(option)[0]!.toString()}
-					id={Object.keys(option)[0]}
-					class="float-end"
-				/>
-			</Label>
+			{@const optionKey = Object.keys(option)[0]}
+			{@const optionValue = Object.values(option)[0]}
+			{#if optionKey && optionValue}
+				<Label
+					for={optionKey}
+					class={`cursor-pointer space-x-2 rounded-md border px-4 py-5 ${isSelected(optionValue.toString()) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
+				>
+					{optionKey}. {optionValue}
+					<RadioGroup.Item value={optionValue.toString()} id={optionKey} class="float-end" />
+				</Label>
+			{/if}
 		{/each}
 	</RadioGroup.Root>
 </Card.Content>

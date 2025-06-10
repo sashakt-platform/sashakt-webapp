@@ -20,12 +20,14 @@
 	{#if !isStarted}
 		<LandingPage testDetails={data.testData} />
 	{:else if showResult}
-		<p>Test Result Component Placeholder</p>
-	{:else}
+		<p>Thank You for taking test</p>
+	{:else if data.testQuestions?.question_revisions}
 		<Question
 			Questions={data.testQuestions.question_revisions}
 			candidate={data.candidate}
 			bind:showResult
 		/>
+	{:else}
+		<p>Loading test questions...</p>
 	{/if}
 </section>

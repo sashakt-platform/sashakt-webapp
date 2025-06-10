@@ -5,9 +5,18 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, cookies }) => {
 	const candidateCookie = cookies.get('sashakt-candidate');
-	const candidate = candidateCookie ? JSON.parse(candidateCookie) : null;
+	let candidate = null;
+	if (candidateCookie) {
+		try {
+			candidate = JSON.parse(candidateCookie);
+		} catch (error) {
+			console.error('Invalid candidate cookie format:', error);
+			// Clear the malformed cookie
+			cookies.delete('sashakt-candidate', { path: '/test/' + locals.testData.link });
+		}
+	}
 
-	if (candidate) {
+	if (candidate && candidate.candidate_test_id && candidate.candidate_uuid) {
 		try {
 			const testQuestionsResponse = await getTestQuestions(
 				candidate.candidate_test_id,
