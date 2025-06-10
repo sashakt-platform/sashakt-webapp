@@ -4,9 +4,9 @@
 	let { children } = $props();
 </script>
 
-<nav class="mb-1 bg-gray-50 p-3">
+<nav class="mb-1 p-3 text-center">
 	<h2
-		class="w-ful text-primary scroll-m-20 pb-4 text-3xl font-extrabold tracking-tighter uppercase"
+		class="text-primary w-full scroll-m-20 pb-4 text-3xl font-extrabold tracking-tighter uppercase"
 	>
 		Sashakt
 	</h2>
