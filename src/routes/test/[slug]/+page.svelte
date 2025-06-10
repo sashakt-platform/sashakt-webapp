@@ -6,7 +6,6 @@
 	let { data }: PageProps = $props();
 	let isStarted = $state(false);
 	let showResult = $state(false);
-
 	$effect(() => {
 		if (data.candidate) {
 			isStarted = true;
@@ -20,7 +19,7 @@
 	{#if !isStarted}
 		<LandingPage testDetails={data.testData} />
 	{:else if showResult}
-		<p>Thank You for taking test</p>
+		<div class="w-full text-center">{@html data.testData.completion_message}</div>
 	{:else if data.testQuestions?.question_revisions}
 		<Question
 			Questions={data.testQuestions.question_revisions}
