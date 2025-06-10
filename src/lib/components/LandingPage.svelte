@@ -33,9 +33,11 @@
 		</Table.Root>
 	</div>
 	<div>
-		{#each testDetails.start_instructions as instruction}
-			{@render container(instruction)}
-		{/each}
+		{#if testDetails.start_instructions.length > 0}
+			<h2 class="text-muted-foreground mb-4 text-xs font-bold">
+				{@html testDetails.start_instructions}
+			</h2>
+		{/if}
 	</div>
 </section>
 
