@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			);
 
 			return {
-				candidateId: candidate.candidate_uuid,
+				candidate,
 				testData: locals.testData,
 				testQuestions: testQuestionsResponse
 			};
@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			throw redirect(303, '/test/' + locals.testData.link);
 		}
 	}
-	return { candidateId: null, testData: locals.testData, testQuestions: null };
+	return { candidate: null, testData: locals.testData, testQuestions: null };
 };
 
 export const actions = {

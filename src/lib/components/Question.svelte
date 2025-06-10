@@ -4,13 +4,48 @@
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 
 	type TSelection = {
-		question: string;
+		question_revision_id: number;
 		response: string;
+		visited: boolean;
+		time_spent: number;
 	};
 
 	let selectedQuestions = $state<TSelection[]>([]);
 	let currentQuestion = $state(0);
-	let { Questions, showResult = $bindable() } = $props();
+	let { candidate, Questions, showResult = $bindable() } = $props();
+
+	const handleNext = async () =>
+		fetch('/api/submit-answer', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				question_revision_id: Questions[currentQuestion].id,
+				response: selectedQuestions[currentQuestion]?.response || '',
+				visited: true,
+				time_spent: 0,
+				candidate
+			})
+		});
+
+	const submitTest = async () => {
+		handleNext().then(() => {
+			fetch('/api/submit-test', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ candidate })
+			})
+				.then((res) => {
+					alert(res.ok ? 'Test submitted successfully!' : 'Already submitted');
+				})
+				.then(() => {
+					showResult = true;
+				});
+		});
+	};
 </script>
 
 <div class="mx-auto max-w-xl">
@@ -31,9 +66,9 @@
 				<Pagination.PrevButton />
 
 				{#if currentPage == Questions.length}
-					<Button onclick={() => (showResult = true)}>Submit</Button>
+					<Button onclick={submitTest}>Submit</Button>
 				{:else}
-					<Pagination.NextButton />
+					<Pagination.NextButton onclick={handleNext} />
 				{/if}
 			</Pagination.Content>
 		{/snippet}
