@@ -33,7 +33,7 @@
 		</Table.Root>
 	</div>
 	<div>
-		{#if testDetails.start_instructions.length > 0}
+		{#if testDetails.start_instructions}
 			<h2 class="text-muted-foreground mb-4 text-xs font-bold">
 				{@html testDetails.start_instructions}
 			</h2>
