@@ -12,7 +12,10 @@
 
 	let selectedQuestions = $state<TSelection[]>([]);
 	let currentQuestion = $state(0);
-	let { candidate, Questions, showResult = $bindable() } = $props();
+	let { candidate, testQuestions, showResult = $bindable() } = $props();
+	const Questions = testQuestions.question_revisions || [];
+	const totalQuestions = Questions.length;
+	const perPage = testQuestions.question_pagination || totalQuestions;
 
 	const handleNext = async () => {
 		try {
@@ -60,29 +63,28 @@
 	};
 </script>
 
-<div class="mx-auto max-w-xl">
-	<QuestionCard
-		SNo={currentQuestion + 1}
-		question={Questions[currentQuestion]}
-		totalQuestions={Questions.length}
-		bind:selectedQuestions
-	/>
-	<Pagination.Root
-		onPageChange={(p) => (currentQuestion = p - 1)}
-		count={Questions.length}
-		perPage={1}
-		class="fixed bottom-0 max-w-xl bg-white p-2"
-	>
-		{#snippet children({ currentPage })}
-			<Pagination.Content class="flex w-full items-center justify-between">
-				<Pagination.PrevButton />
+<Pagination.Root count={totalQuestions} {perPage}>
+	{#snippet children({ currentPage, range })}
+		<div class="mb-12">
+			{#each Questions.slice(range.start - 1, range.end) as question, index (question.id)}
+				<QuestionCard
+					SNo={(currentPage - 1) * perPage + index + 1}
+					{question}
+					{totalQuestions}
+					bind:selectedQuestions
+				/>
+			{/each}
+		</div>
+		<Pagination.Content
+			class="fixed bottom-0 z-10 flex w-full items-center justify-between bg-white p-2"
+		>
+			<Pagination.PrevButton />
 
-				{#if currentPage == Questions.length}
-					<Button onclick={submitTest}>Submit</Button>
-				{:else}
-					<Pagination.NextButton onclick={handleNext} />
-				{/if}
-			</Pagination.Content>
-		{/snippet}
-	</Pagination.Root>
-</div>
+			{#if currentPage === Math.ceil(totalQuestions / perPage)}
+				<Button onclick={submitTest}>Submit</Button>
+			{:else}
+				<Pagination.NextButton onclick={handleNext} />
+			{/if}
+		</Pagination.Content>
+	{/snippet}
+</Pagination.Root>
