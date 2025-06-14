@@ -21,11 +21,7 @@
 	{:else if showResult}
 		<div class="w-full text-center">{@html data.testData.completion_message}</div>
 	{:else if data.testQuestions?.question_revisions}
-		<Question
-			Questions={data.testQuestions.question_revisions}
-			candidate={data.candidate}
-			bind:showResult
-		/>
+		<Question testQuestions={data.testQuestions} candidate={data.candidate} bind:showResult />
 	{:else}
 		<p>Loading test questions...</p>
 	{/if}
