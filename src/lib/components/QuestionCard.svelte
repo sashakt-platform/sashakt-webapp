@@ -18,7 +18,12 @@
 		if (index !== -1) {
 			selectedQuestions[index].response = response;
 		} else {
-			selectedQuestions.push({ question, response });
+			selectedQuestions.push({
+				question_revision_id: question,
+				response,
+				visited: true,
+				time_spent: 0
+			});
 		}
 	};
 </script>
@@ -45,13 +50,14 @@
 			{#each options as option, index (index)}
 				{@const optionKey = Object.keys(option)[0]}
 				{@const optionValue = Object.values(option)[0]}
+				{@const uid = `${question.id}-${optionKey}`}
 				{#if optionKey && optionValue}
 					<Label
-						for={optionKey}
+						for={uid}
 						class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${isSelected(optionValue.toString()) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
 					>
 						{optionKey}. {optionValue}
-						<RadioGroup.Item value={optionValue.toString()} id={optionKey} class="float-end" />
+						<RadioGroup.Item value={optionValue.toString()} id={uid} class="float-end" />
 					</Label>
 				{/if}
 			{/each}
