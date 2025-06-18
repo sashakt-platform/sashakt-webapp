@@ -1,19 +1,10 @@
-<script module>
-	export type TSelection = {
-		question_revision_id: number;
-		response: string;
-		visited: boolean;
-		time_spent: number;
-	};
-</script>
-
 <script lang="ts">
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
+	import type { TSelection } from '$lib/types';
 
 	let selectedQuestions = $state<TSelection[]>([]);
-	let currentQuestion = $state(0);
 	let { candidate, testQuestions, showResult = $bindable() } = $props();
 	const questions = testQuestions.question_revisions || [];
 	const totalQuestions = questions.length;

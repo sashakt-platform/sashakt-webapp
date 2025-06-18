@@ -2,7 +2,7 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import { type TSelection } from './Question.svelte';
+	import type { TSelection } from '$lib/types';
 
 	let { question, sNo, candidate, totalQuestions, selectedQuestions = $bindable() } = $props();
 
