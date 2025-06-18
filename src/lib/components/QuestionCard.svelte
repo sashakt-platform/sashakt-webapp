@@ -8,20 +8,20 @@
 
 	const options = question.options;
 
+	const selectedQuestion = (questionId: number) => {
+		return selectedQuestions.find((item: TSelection) => item.question_revision_id === questionId);
+	};
+
 	const isSelected = (optionValue: string) => {
-		const selected = selectedQuestions.find(
-			(item: TSelection) => item.question_revision_id === question.id
-		);
+		const selected = selectedQuestion(question.id);
 		return selected?.response === optionValue;
 	};
 
 	const handleSelection = (questionId: number, response: string) => {
-		const index = selectedQuestions?.findIndex(
-			(item: TSelection) => item.question_revision_id == questionId
-		);
+		const answeredQuestion = selectedQuestion(questionId);
 
-		if (index !== -1) {
-			selectedQuestions[index].response = response;
+		if (answeredQuestion) {
+			answeredQuestion.response = response;
 		} else {
 			selectedQuestions.push({
 				question_revision_id: questionId,
@@ -50,8 +50,7 @@
 			onValueChange={(value) => {
 				handleSelection(question.id, value);
 			}}
-			value={selectedQuestions.find((item: TSelection) => item.question_revision_id === question.id)
-				?.response}
+			value={selectedQuestion(question.id)?.response}
 		>
 			{#each options as option, index (index)}
 				{@const optionKey = Object.keys(option)[0]}
