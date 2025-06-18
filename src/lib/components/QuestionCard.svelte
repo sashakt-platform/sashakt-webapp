@@ -2,24 +2,29 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
+	import { type TSelection } from './Question.svelte';
 
 	let { question, sNo, totalQuestions, selectedQuestions = $bindable() } = $props();
 
 	const options = question.options;
 
 	const isSelected = (optionValue: string) => {
-		const selected = selectedQuestions.find((item: any) => item.question === question.id);
+		const selected = selectedQuestions.find(
+			(item: TSelection) => item.question_revision_id === question.id
+		);
 		return selected?.response === optionValue;
 	};
 
-	const handleSelection = (question: string, response: string) => {
-		const index = selectedQuestions?.findIndex((item: any) => item.question === question);
+	const handleSelection = (questionId: number, response: string) => {
+		const index = selectedQuestions?.findIndex(
+			(item: TSelection) => item.question_revision_id == questionId
+		);
 
 		if (index !== -1) {
 			selectedQuestions[index].response = response;
 		} else {
 			selectedQuestions.push({
-				question_revision_id: question,
+				question_revision_id: questionId,
 				response,
 				visited: true,
 				time_spent: 0
@@ -45,7 +50,8 @@
 			onValueChange={(value) => {
 				handleSelection(question.id, value);
 			}}
-			value={selectedQuestions.find((item: any) => item.question === question.id)?.response}
+			value={selectedQuestions.find((item: TSelection) => item.question_revision_id === question.id)
+				?.response}
 		>
 			{#each options as option, index (index)}
 				{@const optionKey = Object.keys(option)[0]}
