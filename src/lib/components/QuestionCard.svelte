@@ -3,7 +3,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 
-	let { question, SNo, totalQuestions, selectedQuestions = $bindable() } = $props();
+	let { question, sNo, totalQuestions, selectedQuestions = $bindable() } = $props();
 
 	const options = question.options;
 
@@ -31,7 +31,7 @@
 <Card.Root class="mb-4 w-82 rounded-xl shadow-md">
 	<Card.Header class="p-5">
 		<Card.Title class="mb-5 border-b pb-3 text-sm">
-			{SNo} <span>OF {totalQuestions}</span>
+			{sNo} <span>OF {totalQuestions}</span>
 			<span class="text-muted-foreground float-end">{`1 Mark`}</span>
 		</Card.Title>
 		<Card.Description class="text-base/normal font-medium"

@@ -13,8 +13,8 @@
 	let selectedQuestions = $state<TSelection[]>([]);
 	let currentQuestion = $state(0);
 	let { candidate, testQuestions, showResult = $bindable() } = $props();
-	const Questions = testQuestions.question_revisions || [];
-	const totalQuestions = Questions.length;
+	const questions = testQuestions.question_revisions || [];
+	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
 
 	const handleNext = async () => {
@@ -25,7 +25,7 @@
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					question_revision_id: Questions[currentQuestion].id,
+					question_revision_id: questions[currentQuestion].id,
 					response: selectedQuestions[currentQuestion]?.response || '',
 					visited: true,
 					time_spent: selectedQuestions[currentQuestion]?.time_spent || 0,
@@ -66,9 +66,9 @@
 <Pagination.Root count={totalQuestions} {perPage}>
 	{#snippet children({ currentPage, range })}
 		<div class="mb-12">
-			{#each Questions.slice(range.start - 1, range.end) as question, index (question.id)}
+			{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
 				<QuestionCard
-					SNo={(currentPage - 1) * perPage + index + 1}
+					sNo={(currentPage - 1) * perPage + index + 1}
 					{question}
 					{totalQuestions}
 					bind:selectedQuestions
