@@ -19,30 +19,8 @@
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
 
-	const handleNext = async () => {
-		try {
-			return await fetch('/api/submit-answer', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					question_revision_id: questions[currentQuestion].id,
-					response: selectedQuestions[currentQuestion]?.response || '',
-					visited: true,
-					time_spent: selectedQuestions[currentQuestion]?.time_spent || 0,
-					candidate
-				})
-			});
-		} catch (error) {
-			console.error('Failed to submit answer:', error);
-			throw error;
-		}
-	};
-
 	const submitTest = async () => {
 		try {
-			await handleNext();
 			const response = await fetch('/api/submit-test', {
 				method: 'POST',
 				headers: {
@@ -70,6 +48,7 @@
 		<div class="mb-12">
 			{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
 				<QuestionCard
+					{candidate}
 					sNo={(currentPage - 1) * perPage + index + 1}
 					{question}
 					{totalQuestions}
@@ -85,7 +64,7 @@
 			{#if currentPage === Math.ceil(totalQuestions / perPage)}
 				<Button onclick={submitTest}>Submit</Button>
 			{:else}
-				<Pagination.NextButton onclick={handleNext} />
+				<Pagination.NextButton />
 			{/if}
 		</Pagination.Content>
 	{/snippet}

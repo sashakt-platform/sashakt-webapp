@@ -4,7 +4,7 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { type TSelection } from './Question.svelte';
 
-	let { question, sNo, totalQuestions, selectedQuestions = $bindable() } = $props();
+	let { question, sNo, candidate, totalQuestions, selectedQuestions = $bindable() } = $props();
 
 	const options = question.options;
 
@@ -31,6 +31,24 @@
 			});
 		}
 	};
+
+	const submitAnswer = async () => {
+		try {
+			return await fetch('/api/submit-answer', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					...selectedQuestion(question.id),
+					candidate
+				})
+			});
+		} catch (error) {
+			console.error('Failed to submit answer:', error);
+			throw error;
+		}
+	};
 </script>
 
 <Card.Root class="mb-4 w-82 rounded-xl shadow-md">
@@ -49,6 +67,9 @@
 		<RadioGroup.Root
 			onValueChange={(value) => {
 				handleSelection(question.id, value);
+				setTimeout(() => {
+					submitAnswer();
+				}, 500);
 			}}
 			value={selectedQuestion(question.id)?.response}
 		>
