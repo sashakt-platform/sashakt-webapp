@@ -6,17 +6,50 @@
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
-	let isStarted = $state(false);
+	let isStarted = $state(!!data.candidate);
 	let showResult = $state(false);
 
-	let showTimer = $derived(isStarted || data.testData.test_start_time);
-
 	$effect(() => {
-		if (data.candidate) {
-			isStarted = true;
-		} else {
-			isStarted = false;
+		isStarted = !!data.candidate;
+	});
+
+	const targetTime = $derived(() => {
+		const now = new Date();
+		const test = data.testData;
+
+		// The candidate has started the test. Calculate their deadline.
+		if (isStarted && test.time_limit) {
+			// The backend puts candidate-specific test data in `test.candidate_test`
+			const candidateStartTimeStr = test.candidate_test?.start_time;
+
+			if (candidateStartTimeStr) {
+				const candidateStartTime = new Date(candidateStartTimeStr);
+				// Calculate deadline based on when the candidate started and the test duration
+				const deadlineFromDuration = new Date(
+					candidateStartTime.getTime() + test.time_limit * 60 * 1000
+				);
+
+				// The test also has a hard end time
+				const testEndTime = test.end_time ? new Date(test.end_time) : null;
+
+				// The candidate's actual deadline is the earlier of the two
+				const finalDeadline =
+					testEndTime && testEndTime < deadlineFromDuration ? testEndTime : deadlineFromDuration;
+
+				// Only return a target time if it's in the future
+				return finalDeadline > now ? finalDeadline.toISOString() : null;
+			}
 		}
+
+		// The test has not been started, but has a future start time. Show countdown to start.
+		if (!isStarted && test.start_time) {
+			const testStartTime = new Date(test.start_time);
+			// Only return a target time if it's in the future
+			return testStartTime > now ? test.start_time : null;
+		}
+
+		// In all other cases, don't show a timer.
+		return null;
 	});
 
 	function handleTimeout() {
@@ -26,12 +59,8 @@
 	}
 </script>
 
-{#if showTimer}
-	<TimerHeader
-		timeLimit={data.testData.duration}
-		targetTime={isStarted ? null : data.testData.test_start_time}
-		onTimeout={handleTimeout}
-	/>
+{#if targetTime}
+	<TimerHeader targetTime={targetTime} onTimeout={handleTimeout} />
 {/if}
 
 <section>
