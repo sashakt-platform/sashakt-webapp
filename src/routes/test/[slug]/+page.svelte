@@ -2,10 +2,15 @@
 	import LandingPage from '$lib/components/LandingPage.svelte';
 	import Question from '$lib/components/Question.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
+	import { TimerHeader } from '$lib/components/ui/countdown';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
 	let isStarted = $state(false);
+	let showResult = $state(false);
+
+	let showTimer = $derived(isStarted || data.testData.test_start_time);
+
 	$effect(() => {
 		if (data.candidate) {
 			isStarted = true;
@@ -13,7 +18,21 @@
 			isStarted = false;
 		}
 	});
+
+	function handleTimeout() {
+		// Implement timeout logic, e.g., auto-submit the test
+		alert('Time is up!');
+		showResult = true;
+	}
 </script>
+
+{#if showTimer}
+	<TimerHeader
+		timeLimit={data.testData.duration}
+		targetTime={isStarted ? null : data.testData.test_start_time}
+		onTimeout={handleTimeout}
+	/>
+{/if}
 
 <section>
 	{#if !isStarted}

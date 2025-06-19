@@ -30,7 +30,13 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			throw redirect(303, '/test/' + locals.testData.link);
 		}
 	}
-	return { candidate: null, testData: locals.testData, testQuestions: null };
+	// TODO: Replace with actual start time from the backend
+	const testStartTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+	return {
+		candidate: null,
+		testData: { ...locals.testData, test_start_time: testStartTime },
+		testQuestions: null
+	};
 };
 
 export const actions = {

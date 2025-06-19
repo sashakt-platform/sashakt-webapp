@@ -2,86 +2,87 @@
 	import { onDestroy } from 'svelte';
 
 	// Props for the timer
-	let { timeLimit = $bindable(60), onTimeout = $bindable(() => {}) } = $props();
+	let {
+		timeLimit = $bindable(60),
+		onTimeout = $bindable(() => {}),
+		targetTime = $bindable(null)
+	} = $props();
 
 	// State for time tracking
-	let remainingSeconds = $state(timeLimit * 60);
+	let remainingSeconds = $state(0);
 	let intervalId = $state(null);
-	let timerActive = $state(false);
+	let message = $state('');
+
+	function calculateRemainingTime() {
+		const now = new Date().getTime();
+		const target = new Date(targetTime).getTime();
+		const difference = target - now;
+
+		if (difference <= 0) {
+			remainingSeconds = 0;
+			message = 'Test has started';
+			if (intervalId) clearInterval(intervalId);
+			// once the test starts, we can switch to countdown timer
+			// for now let's just clear this interval
+			return;
+		}
+
+		const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+		const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+		const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+		remainingSeconds = hours * 3600 + minutes * 60 + seconds;
+		message = 'Test starts in:';
+	}
 
 	// Format time as HH:MM:SS
 	function formatTime(seconds) {
 		const hours = Math.floor(seconds / 3600);
 		const minutes = Math.floor((seconds % 3600) / 60);
 		const secs = seconds % 60;
-		return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+		return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs
+			.toString()
+			.padStart(2, '0')}`;
 	}
 
-	// Start timer
-	function startTimer() {
-		if (!timerActive && remainingSeconds > 0) {
-			timerActive = true;
+	$effect(() => {
+		if (targetTime) {
+			calculateRemainingTime();
+			intervalId = setInterval(calculateRemainingTime, 1000);
+		} else {
+			remainingSeconds = timeLimit * 60;
 			intervalId = setInterval(() => {
 				remainingSeconds -= 1;
 
 				if (remainingSeconds <= 0) {
-					clearInterval(intervalId);
-					timerActive = false;
+					if (intervalId) clearInterval(intervalId);
 					onTimeout();
 				}
 			}, 1000);
 		}
-	}
 
-	// Pause timer
-	function pauseTimer() {
-		if (timerActive) {
-			clearInterval(intervalId);
-			timerActive = false;
-		}
-	}
-
-	// Reset timer
-	function resetTimer() {
-		clearInterval(intervalId);
-		timerActive = false;
-		remainingSeconds = timeLimit * 60;
-	}
+		return () => {
+			if (intervalId) clearInterval(intervalId);
+		};
+	});
 
 	// Cleanup on component destruction
 	onDestroy(() => {
 		if (intervalId) clearInterval(intervalId);
 	});
-
-	// Make functions available to parent components
-	$effect(() => {
-		if (timeLimit !== remainingSeconds / 60 && !timerActive) {
-			resetTimer();
-		}
-	});
 </script>
 
 <div class="countdown-timer">
 	<div class="timer-display">
-		{#if remainingSeconds <= 180}
+		{#if message}
+			<span class="message">{message}</span>
+		{/if}
+		{#if remainingSeconds <= 180 && !targetTime}
 			<!-- Less than 3 minutes remaining - show in red -->
 			<span class="time-warning">{formatTime(remainingSeconds)}</span>
 		{:else}
 			<span>{formatTime(remainingSeconds)}</span>
 		{/if}
 	</div>
-
-	<!-- Controls visible only in development -->
-	{#if import.meta.env.DEV}
-		<div class="timer-controls">
-			{#if timerActive}
-				<button onclick={pauseTimer}>Pause</button>
-			{:else}
-				<button onclick={startTimer}>Start</button>
-			{/if}
-			<button onclick={resetTimer}>Reset</button>
-		</div>
-	{/if}
 </div>
 
 <style>
@@ -90,6 +91,11 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 0.5rem;
+	}
+
+	.message {
+		font-size: 0.875rem;
+		font-weight: 600;
 	}
 
 	.timer-display {
@@ -102,11 +108,6 @@
 		color: white;
 		font-weight: bold;
 		animation: pulse 1s infinite;
-	}
-
-	.timer-controls {
-		display: flex;
-		gap: 0.5rem;
 	}
 
 	@keyframes pulse {
