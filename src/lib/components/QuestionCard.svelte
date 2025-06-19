@@ -4,7 +4,13 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import type { TSelection } from '$lib/types';
 
-	let { question, sNo, candidate, totalQuestions, selectedQuestions = $bindable() } = $props();
+	let {
+		question,
+		serialNumber,
+		candidate,
+		totalQuestions,
+		selectedQuestions = $bindable()
+	} = $props();
 
 	const options = question.options;
 
@@ -54,7 +60,7 @@
 <Card.Root class="mb-4 w-82 rounded-xl shadow-md">
 	<Card.Header class="p-5">
 		<Card.Title class="mb-5 border-b pb-3 text-sm">
-			{sNo} <span>OF {totalQuestions}</span>
+			{serialNumber} <span>OF {totalQuestions}</span>
 			<span class="text-muted-foreground float-end">{`1 Mark`}</span>
 		</Card.Title>
 		<Card.Description class="text-base/normal font-medium"
@@ -67,9 +73,7 @@
 		<RadioGroup.Root
 			onValueChange={(value) => {
 				handleSelection(question.id, value);
-				setTimeout(() => {
-					submitAnswer();
-				}, 500);
+				submitAnswer();
 			}}
 			value={selectedQuestion(question.id)?.response}
 		>

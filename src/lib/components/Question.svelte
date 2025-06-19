@@ -40,7 +40,7 @@
 			{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
 				<QuestionCard
 					{candidate}
-					sNo={(currentPage - 1) * perPage + index + 1}
+					serialNumber={(currentPage - 1) * perPage + index + 1}
 					{question}
 					{totalQuestions}
 					bind:selectedQuestions
