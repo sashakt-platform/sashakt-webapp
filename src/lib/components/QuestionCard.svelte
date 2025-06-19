@@ -74,18 +74,14 @@
 			value={selectedQuestion(question.id)?.response}
 		>
 			{#each options as option, index (index)}
-				{@const optionKey = Object.keys(option)[0]}
-				{@const optionValue = Object.values(option)[0]}
-				{@const uid = `${question.id}-${optionKey}`}
-				{#if optionKey && optionValue}
-					<Label
-						for={uid}
-						class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${isSelected(optionValue.toString()) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
-					>
-						{optionKey}. {optionValue}
-						<RadioGroup.Item value={optionValue.toString()} id={uid} class="float-end" />
-					</Label>
-				{/if}
+				{@const uid = `${question.id}-${option.key}`}
+				<Label
+					for={uid}
+					class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${isSelected(option.value.toString()) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
+				>
+					{option.key}. {option.value}
+					<RadioGroup.Item value={option.value.toString()} id={uid} class="float-end" />
+				</Label>
 			{/each}
 		</RadioGroup.Root>
 	</Card.Content>
