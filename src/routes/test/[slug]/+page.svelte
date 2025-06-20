@@ -1,11 +1,11 @@
 <script lang="ts">
 	import LandingPage from '$lib/components/LandingPage.svelte';
 	import Question from '$lib/components/Question.svelte';
+	import TestResult from '$lib/components/TestResult.svelte';
 	import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 	let isStarted = $state(false);
-	let showResult = $state(false);
 	$effect(() => {
 		if (data.candidate) {
 			isStarted = true;
@@ -18,10 +18,10 @@
 <section>
 	{#if !isStarted}
 		<LandingPage testDetails={data.testData} />
-	{:else if showResult}
-		<div class="w-full text-center">{@html data.testData.completion_message}</div>
+	{:else if form?.result}
+		<TestResult resultData={form.result} />
 	{:else if data.testQuestions?.question_revisions}
-		<Question testQuestions={data.testQuestions} candidate={data.candidate} bind:showResult />
+		<Question testQuestions={data.testQuestions} candidate={data.candidate} />
 	{:else}
 		<p>Loading test questions...</p>
 	{/if}
