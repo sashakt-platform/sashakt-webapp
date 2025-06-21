@@ -41,7 +41,7 @@
 		</Table.Body>
 	</Table.Root>
 
-	<form action="?/reattempt" method="POST" class="mt-8">
+	<form action="?/reattempt" method="POST" class="mt-8" use:enhance>
 		<Button type="submit">Attempt again</Button>
 	</form>
 </section>
