@@ -2,7 +2,7 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import type { TSelection } from '$lib/types';
+	import type { TCandidate, TQuestion, TSelection } from '$lib/types';
 
 	let {
 		question,
@@ -10,12 +10,18 @@
 		candidate,
 		totalQuestions,
 		selectedQuestions = $bindable()
+	}: {
+		question: TQuestion;
+		candidate: TCandidate;
+		serialNumber: number;
+		totalQuestions: number;
+		selectedQuestions: TSelection[];
 	} = $props();
 
 	const options = question.options;
 
 	const selectedQuestion = (questionId: number) => {
-		return selectedQuestions.find((item: TSelection) => item.question_revision_id === questionId);
+		return selectedQuestions.find((item) => item.question_revision_id === questionId);
 	};
 
 	const isSelected = (optionValue: string) => {

@@ -1,8 +1,15 @@
 import { BACKEND_URL } from '$env/static/private';
+import type { TCandidate } from '$lib/types';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request }) => {
-	const { question_revision_id, response, candidate } = await request.json();
+	const {
+		question_revision_id,
+		response,
+		candidate
+	}: { question_revision_id: number; response: number[]; candidate: TCandidate } =
+		await request.json();
+
 	if (!question_revision_id || !candidate?.candidate_test_id || !candidate?.candidate_uuid) {
 		return new Response(JSON.stringify({ success: false, error: 'Missing required fields' }), {
 			status: 400,
