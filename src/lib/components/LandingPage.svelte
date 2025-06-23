@@ -10,7 +10,7 @@
 
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
-		{ label: 'Total marks', value: `${testDetails.marks} marks` },
+		{ label: 'Total marks', value: `${testDetails.marks ? testDetails.marks + ' marks' : 'N/A'}` },
 		{ label: 'Total duration', value: `${testDetails.time_limit * 60} minutes` },
 		{ label: 'Questions per page', value: `${testDetails.question_pagination} question` }
 	];
