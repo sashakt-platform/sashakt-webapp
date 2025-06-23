@@ -1,37 +1,16 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import type { TSelection } from '$lib/types';
 
 	let selectedQuestions = $state<TSelection[]>([]);
-	let { candidate, testQuestions, showResult = $bindable() } = $props();
+	let { candidate, testQuestions } = $props();
 	const questions = testQuestions.question_revisions || [];
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
-
-	const submitTest = async () => {
-		try {
-			const response = await fetch('/api/submit-test', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ candidate })
-			});
-
-			if (response.ok) {
-				// replace alert with toast
-				alert('Test submitted successfully!');
-			} else {
-				alert('Test already submitted or submission failed');
-			}
-
-			showResult = true;
-		} catch (error) {
-			alert('Failed to submit test:' + error);
-		}
-	};
 </script>
 
 <Pagination.Root count={totalQuestions} {perPage}>
@@ -53,7 +32,26 @@
 			<Pagination.PrevButton />
 
 			{#if currentPage === Math.ceil(totalQuestions / perPage)}
-				<Button onclick={submitTest}>Submit</Button>
+				<Dialog.Root>
+					<Dialog.Trigger>
+						<Button>Submit</Button>
+					</Dialog.Trigger>
+					<Dialog.Content class="w-80 rounded-xl">
+						<Dialog.Title>Submit test?</Dialog.Title>
+						<Dialog.Description>
+							Are you sure you want to submit for final marking? No changes will be allowed after
+							submission.
+						</Dialog.Description>
+						<div class="mt-2 inline-flex items-center justify-between">
+							<Button variant="outline" class="w-32">
+								<Dialog.Close>Cancel</Dialog.Close>
+							</Button>
+							<form action="?/submitTest" method="POST" use:enhance>
+								<Button type="submit" class="w-32">Confirm</Button>
+							</form>
+						</div>
+					</Dialog.Content>
+				</Dialog.Root>
 			{:else}
 				<Pagination.NextButton />
 			{/if}

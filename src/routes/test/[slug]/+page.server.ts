@@ -1,20 +1,11 @@
 import { BACKEND_URL } from '$env/static/private';
+import { getCandidate } from '$lib/helpers/getCandidate';
 import { getTestQuestions } from '$lib/server/test';
-import { redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, cookies }) => {
-	const candidateCookie = cookies.get('sashakt-candidate');
-	let candidate = null;
-	if (candidateCookie) {
-		try {
-			candidate = JSON.parse(candidateCookie);
-		} catch (error) {
-			console.error('Invalid candidate cookie format:', error);
-			// Clear the malformed cookie
-			cookies.delete('sashakt-candidate', { path: '/test/' + locals.testData.link });
-		}
-	}
+	const candidate = getCandidate(cookies);
 
 	if (candidate && candidate.candidate_test_id && candidate.candidate_uuid) {
 		try {
@@ -60,5 +51,45 @@ export const actions = {
 		return {
 			success: true
 		};
+	},
+
+	submitTest: async ({ cookies, fetch }) => {
+		const candidate = getCandidate(cookies);
+		if (!candidate) {
+			return fail(400, { candidate, missing: true });
+		}
+
+		const candidateUrl = (purpose: string) => {
+			return `${BACKEND_URL}/candidate/${purpose}/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`;
+		};
+
+		try {
+			const response = await fetch(candidateUrl('submit_test'), {
+				method: 'POST',
+				headers: { accept: 'application/json' }
+			});
+
+			if (response.status === 200 || response.status === 400) {
+				const result = await fetch(candidateUrl('result'), {
+					method: 'GET',
+					headers: { accept: 'application/json' }
+				});
+
+				if (!result.ok) return fail(400, { result: false });
+
+				return { result: await result.json() };
+			}
+
+			return { submit_test: await response.json() };
+		} catch (error) {
+			console.error('Error in submitTest:', error);
+			return fail(500, { error: 'Failed to submit test' });
+		}
+	},
+
+	reattempt: async ({ cookies, locals }) => {
+		cookies.delete('sashakt-candidate', { path: '/test/' + locals.testData.link });
+
+		redirect(301, `/test/${locals.testData.link}`);
 	}
-};
+} satisfies Actions;

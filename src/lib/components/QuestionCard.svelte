@@ -2,7 +2,7 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import type { TSelection } from '$lib/types';
+	import type { TCandidate, TQuestion, TSelection } from '$lib/types';
 
 	let {
 		question,
@@ -10,28 +10,35 @@
 		candidate,
 		totalQuestions,
 		selectedQuestions = $bindable()
+	}: {
+		question: TQuestion;
+		candidate: TCandidate;
+		serialNumber: number;
+		totalQuestions: number;
+		selectedQuestions: TSelection[];
 	} = $props();
 
 	const options = question.options;
 
 	const selectedQuestion = (questionId: number) => {
-		return selectedQuestions.find((item: TSelection) => item.question_revision_id === questionId);
+		return selectedQuestions.find((item) => item.question_revision_id === questionId);
 	};
 
-	const isSelected = (optionValue: string) => {
+	const isSelected = (optionId: number) => {
 		const selected = selectedQuestion(question.id);
-		return selected?.response === optionValue;
+		return selected?.response.includes(optionId);
 	};
 
-	const handleSelection = (questionId: number, response: string) => {
+	const handleSelection = (questionId: number, response: number) => {
 		const answeredQuestion = selectedQuestion(questionId);
 
 		if (answeredQuestion) {
-			answeredQuestion.response = response;
+			// for single choice type questions
+			answeredQuestion.response = [response];
 		} else {
 			selectedQuestions.push({
 				question_revision_id: questionId,
-				response,
+				response: [response],
 				visited: true,
 				time_spent: 0
 			});
@@ -71,20 +78,20 @@
 
 	<Card.Content class="p-5 pt-1">
 		<RadioGroup.Root
-			onValueChange={(value) => {
-				handleSelection(question.id, value);
+			onValueChange={(optionId) => {
+				handleSelection(question.id, Number(optionId));
 				submitAnswer();
 			}}
-			value={selectedQuestion(question.id)?.response}
+			value={selectedQuestion(question.id)?.response[0].toString()}
 		>
 			{#each options as option, index (index)}
 				{@const uid = `${question.id}-${option.key}`}
 				<Label
 					for={uid}
-					class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${isSelected(option.value.toString()) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
+					class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${isSelected(option.id) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
 				>
 					{option.key}. {option.value}
-					<RadioGroup.Item value={option.value.toString()} id={uid} class="float-end" />
+					<RadioGroup.Item value={option.id.toString()} id={uid} class="float-end" />
 				</Label>
 			{/each}
 		</RadioGroup.Root>
