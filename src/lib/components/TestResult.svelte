@@ -3,15 +3,17 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Table from '$lib/components/ui/table/index.js';
 
-	let { resultData } = $props();
-	const notAttempted = resultData.mandatory_not_attempted + resultData.optional_not_attempted;
+	let { resultData, testDetails } = $props();
+	const totalQuestions = testDetails.total_questions;
 	const attempted = resultData.correct_answer + resultData.incorrect_answer;
-	const totalQuestions = notAttempted + attempted;
+	const notAttempted = totalQuestions - attempted;
 </script>
 
 <section class="mx-auto mt-2 w-xs text-center">
 	<img src="/circle-check.svg" alt="done" class="mx-auto mb-5 w-20" />
-	<h6 class="text-accent-foreground mb-2 text-[10px] font-semibold uppercase">{`Test Name`}</h6>
+	<h6 class="text-accent-foreground mb-2 text-[10px] font-semibold uppercase">
+		{testDetails.name}
+	</h6>
 	<h3 class="mb-1 text-lg font-semibold">Submitted Successfully</h3>
 	<p class="text-sm/normal">
 		Congrats on completing the test! You have attempted {attempted} questions.

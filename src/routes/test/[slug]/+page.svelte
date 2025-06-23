@@ -19,7 +19,7 @@
 	{#if !isStarted}
 		<LandingPage testDetails={data.testData} />
 	{:else if form?.result}
-		<TestResult resultData={form.result} />
+		<TestResult resultData={form.result} testDetails={data.testData} />
 	{:else if data.testQuestions?.question_revisions}
 		<Question testQuestions={data.testQuestions} candidate={data.candidate} />
 	{:else}
