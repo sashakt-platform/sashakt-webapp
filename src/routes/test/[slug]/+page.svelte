@@ -13,8 +13,9 @@
 		isStarted = !!data.candidate;
 	});
 
-	const targetTime = $derived(() => {
-		const now = new Date();
+	const remainingTimeInSeconds = $derived(() => {
+		const now = new Date().getTime();
+		let target = null;
 		const test = data.testData;
 
 		// The candidate has started the test. Calculate their deadline.
@@ -23,29 +24,35 @@
 			const candidateStartTimeStr = test.candidate_test?.start_time;
 
 			if (candidateStartTimeStr) {
-				const candidateStartTime = new Date(candidateStartTimeStr);
+				const candidateStartTime = new Date(candidateStartTimeStr).getTime();
 				// Calculate deadline based on when the candidate started and the test duration
-				const deadlineFromDuration = new Date(
-					candidateStartTime.getTime() + test.time_limit * 60 * 1000
-				);
+				const deadlineFromDuration = candidateStartTime + test.time_limit * 60 * 1000;
 
 				// The test also has a hard end time
-				const testEndTime = test.end_time ? new Date(test.end_time) : null;
+				const testEndTime = test.end_time ? new Date(test.end_time).getTime() : null;
 
 				// The candidate's actual deadline is the earlier of the two
 				const finalDeadline =
 					testEndTime && testEndTime < deadlineFromDuration ? testEndTime : deadlineFromDuration;
 
 				// Only return a target time if it's in the future
-				return finalDeadline > now ? finalDeadline.toISOString() : null;
+				if (finalDeadline > now) {
+					target = finalDeadline;
+				}
 			}
 		}
 
 		// The test has not been started, but has a future start time. Show countdown to start.
 		if (!isStarted && test.start_time) {
-			const testStartTime = new Date(test.start_time);
+			const testStartTime = new Date(test.start_time).getTime();
 			// Only return a target time if it's in the future
-			return testStartTime > now ? test.start_time : null;
+			if (testStartTime > now) {
+				target = testStartTime;
+			}
+		}
+
+		if (target) {
+			return Math.round((target - now) / 1000);
 		}
 
 		// In all other cases, don't show a timer.
@@ -59,8 +66,8 @@
 	}
 </script>
 
-{#if targetTime}
-	<TimerHeader targetTime={targetTime} onTimeout={handleTimeout} />
+{#if remainingTimeInSeconds}
+	<TimerHeader remainingTimeInSeconds={remainingTimeInSeconds} onTimeout={handleTimeout} />
 {/if}
 
 <section>
