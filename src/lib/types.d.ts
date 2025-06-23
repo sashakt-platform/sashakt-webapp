@@ -29,5 +29,5 @@ export type TQuestion = {
 	options: TOptions[];
 	subjective_answer_limit: number;
 	is_mandatory: boolean;
-	media: {} | null;
+	media: Record<string, unknown> | null;
 };

@@ -63,23 +63,28 @@ export const actions = {
 			return `${BACKEND_URL}/candidate/${purpose}/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`;
 		};
 
-		const response = await fetch(candidateUrl('submit_test'), {
-			method: 'POST',
-			headers: { accept: 'application/json' }
-		});
-
-		if (response.status === 200 || response.status === 400) {
-			const result = await fetch(candidateUrl('result'), {
-				method: 'GET',
+		try {
+			const response = await fetch(candidateUrl('submit_test'), {
+				method: 'POST',
 				headers: { accept: 'application/json' }
 			});
 
-			if (!result.ok) return fail(400, { result: false });
+			if (response.status === 200 || response.status === 400) {
+				const result = await fetch(candidateUrl('result'), {
+					method: 'GET',
+					headers: { accept: 'application/json' }
+				});
 
-			return { result: await result.json() };
+				if (!result.ok) return fail(400, { result: false });
+
+				return { result: await result.json() };
+			}
+
+			return { submit_test: await response.json() };
+		} catch (error) {
+			console.error('Error in submitTest:', error);
+			return fail(500, { error: 'Failed to submit test' });
 		}
-
-		return { submit_test: await response.json() };
 	},
 
 	reattempt: async ({ cookies, locals }) => {
