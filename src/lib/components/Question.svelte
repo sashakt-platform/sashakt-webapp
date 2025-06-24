@@ -45,9 +45,7 @@
 								submission.
 							</Dialog.Description>
 							<div class="mt-2 inline-flex items-center justify-between">
-								<Button variant="outline" class="w-32">
-									<Dialog.Close>Cancel</Dialog.Close>
-								</Button>
+								<Dialog.Close><Button variant="outline" class="w-32">Cancel</Button></Dialog.Close>
 								<form action="?/submitTest" method="POST" use:enhance>
 									<Button type="submit" class="w-32">Confirm</Button>
 								</form>
@@ -60,9 +58,7 @@
 								Please make sure you have answered all the mandatory questions to submit the test.
 							</Dialog.Description>
 
-							<Button class="w-32 place-self-center">
-								<Dialog.Close>Okay</Dialog.Close>
-							</Button>
+							<Dialog.Close><Button class="w-32 place-self-center">Okay</Button></Dialog.Close>
 						</Dialog.Content>
 					{/if}
 				</Dialog.Root>
