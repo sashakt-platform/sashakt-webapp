@@ -4,7 +4,7 @@
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
-	import { Countdown, TimerHeader } from '$lib/components/ui/countdown/index.js';
+	import { Countdown } from '$lib/components/ui/countdown/index.js';
 
 	const { testDetails } = $props();
 	let isChecked = $state(false);
@@ -16,10 +16,6 @@
 		{ label: 'Questions per page', value: `${testDetails.question_pagination} question` }
 	];
 </script>
-
-{#if isStarted}
-	<TimerHeader timeLimit={data.time_limit / 60} onTimeout={() => console.log('Time expired!')} />
-{/if}
 
 <section class="mx-auto max-w-xl p-6">
 	<h1 class="mb-4 text-xl font-semibold">{testDetails.name}</h1>
@@ -38,7 +34,7 @@
 		</Table.Root>
 	</div>
 	<div>
-		{#each data.start_instructions as instruction, i (i)}
+		{#each testDetails.start_instructions as instruction, i (i)}
 			{@render container(instruction)}
 		{/each}
 	</div>
@@ -66,7 +62,7 @@
 						<div class="my-4 flex justify-center">
 							<div class="timer-box">
 								<Countdown
-									timeLimit={data.time_limit / 60}
+									remainingTimeInSeconds={testDetails.time_limit * 60}
 									onTimeout={() => console.log('Time expired!')}
 								/>
 							</div>

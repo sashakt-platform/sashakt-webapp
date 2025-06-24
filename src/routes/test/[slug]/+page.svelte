@@ -14,9 +14,18 @@
 	});
 
 	const remainingTimeInSeconds = $derived(() => {
+		const test = data.testData;
+
+		// Expected: test.time_remaining_minutes (number) - time left for current candidate
+		if (isStarted && test.time_remaining_minutes !== undefined && test.time_remaining_minutes !== null) {
+			// Convert minutes to seconds for the countdown component
+			const remainingSeconds = Math.round(test.time_remaining_minutes * 60);
+			return remainingSeconds > 0 ? remainingSeconds : 0;
+		}
+
+		// Fallback: If backend doesn't provide time_remaining_minutes yet, use old logic
 		const now = new Date().getTime();
 		let target = null;
-		const test = data.testData;
 
 		// The candidate has started the test. Calculate their deadline.
 		if (isStarted && test.time_limit) {

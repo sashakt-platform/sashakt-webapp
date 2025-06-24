@@ -27,8 +27,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			status: 200,
 			headers: { 'Content-Type': 'application/json' }
 		});
-	} catch (error: any) {
-		return new Response(JSON.stringify({ success: false, error: error.message }), {
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		return new Response(JSON.stringify({ success: false, error: errorMessage }), {
 			status: 500,
 			headers: { 'Content-Type': 'application/json' }
 		});
