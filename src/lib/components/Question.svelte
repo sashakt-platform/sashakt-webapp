@@ -4,11 +4,12 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
-	import type { TSelection } from '$lib/types';
+	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
+	import type { TQuestion, TSelection } from '$lib/types';
 
 	let selectedQuestions = $state<TSelection[]>([]);
 	let { candidate, testQuestions } = $props();
-	const questions = testQuestions.question_revisions || [];
+	const questions: TQuestion[] = testQuestions.question_revisions;
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
 </script>
@@ -36,21 +37,30 @@
 					<Dialog.Trigger>
 						<Button>Submit</Button>
 					</Dialog.Trigger>
-					<Dialog.Content class="w-80 rounded-xl">
-						<Dialog.Title>Submit test?</Dialog.Title>
-						<Dialog.Description>
-							Are you sure you want to submit for final marking? No changes will be allowed after
-							submission.
-						</Dialog.Description>
-						<div class="mt-2 inline-flex items-center justify-between">
-							<Button variant="outline" class="w-32">
-								<Dialog.Close>Cancel</Dialog.Close>
-							</Button>
-							<form action="?/submitTest" method="POST" use:enhance>
-								<Button type="submit" class="w-32">Confirm</Button>
-							</form>
-						</div>
-					</Dialog.Content>
+					{#if answeredAllMandatory(selectedQuestions, questions)}
+						<Dialog.Content class="w-80 rounded-xl">
+							<Dialog.Title>Submit test?</Dialog.Title>
+							<Dialog.Description>
+								Are you sure you want to submit for final marking? No changes will be allowed after
+								submission.
+							</Dialog.Description>
+							<div class="mt-2 inline-flex items-center justify-between">
+								<Dialog.Close><Button variant="outline" class="w-32">Cancel</Button></Dialog.Close>
+								<form action="?/submitTest" method="POST" use:enhance>
+									<Button type="submit" class="w-32">Confirm</Button>
+								</form>
+							</div>
+						</Dialog.Content>
+					{:else}
+						<Dialog.Content class="w-80 rounded-xl">
+							<Dialog.Title class="mt-4">Answer all mandatory questions!</Dialog.Title>
+							<Dialog.Description>
+								Please make sure you have answered all the mandatory questions to submit the test.
+							</Dialog.Description>
+
+							<Dialog.Close><Button class="w-32 place-self-center">Okay</Button></Dialog.Close>
+						</Dialog.Content>
+					{/if}
 				</Dialog.Root>
 			{:else}
 				<Pagination.NextButton />
