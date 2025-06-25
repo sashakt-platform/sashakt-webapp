@@ -9,6 +9,8 @@ declare global {
 				name: string;
 				time_limit: number;
 				time_remaining_minutes?: number;
+				time_remaining_seconds?: number;
+				pre_test_time_left_seconds?: number;
 				start_time?: string;
 				end_time?: string;
 				candidate_test?: {

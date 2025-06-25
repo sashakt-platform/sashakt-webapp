@@ -5,9 +5,16 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Countdown } from '$lib/components/ui/countdown/index.js';
+	import { onMount } from 'svelte';
 
 	const { testDetails } = $props();
 	let isChecked = $state(false);
+	let preTestTimeLeft = $state<number | null>(null);
+
+	// Initialize pre-test timer
+	onMount(() => {
+		preTestTimeLeft = testDetails.pre_test_time_left_seconds || null;
+	});
 
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
@@ -61,10 +68,17 @@
 
 						<div class="my-4 flex justify-center">
 							<div class="timer-box">
-								<Countdown
-									remainingTimeInSeconds={testDetails.time_limit * 60}
-									onTimeout={() => console.log('Time expired!')}
-								/>
+								{#if preTestTimeLeft !== null && preTestTimeLeft > 0}
+									<Countdown
+										remainingTimeInSeconds={preTestTimeLeft}
+										onTimeout={() => console.log('Pre-test timer expired!')}
+									/>
+								{:else}
+									<Countdown
+										remainingTimeInSeconds={testDetails.time_limit * 60}
+										onTimeout={() => console.log('Time expired!')}
+									/>
+								{/if}
 							</div>
 						</div>
 

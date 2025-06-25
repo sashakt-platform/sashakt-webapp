@@ -4,26 +4,35 @@
 	import TestResult from '$lib/components/TestResult.svelte';
 	import { TimerHeader } from '$lib/components/ui/countdown';
 	import type { PageProps } from './$types';
+	import { onMount } from 'svelte';
 
 	let { data, form }: PageProps = $props();
 	let isStarted = $state(!!data.candidate);
 	let showResult = $state(false);
+	let currentTimeLeft = $state<number | null>(null);
 
 	$effect(() => {
 		isStarted = !!data.candidate;
 	});
 
-	const remainingTimeInSeconds = $derived(() => {
-		const test = data.testData;
+	// Initialize timer from server data
+	onMount(() => {
+		// Set initial timer value from server data
+		if (isStarted && data.testData.time_remaining_seconds !== undefined) {
+			currentTimeLeft = data.testData.time_remaining_seconds;
+		} else if (!isStarted && data.testData.pre_test_time_left_seconds !== undefined) {
+			currentTimeLeft = data.testData.pre_test_time_left_seconds;
+		}
+	});
 
-		// Expected: test.time_remaining_minutes (number) - time left for current candidate
-		if (isStarted && test.time_remaining_minutes !== undefined && test.time_remaining_minutes !== null) {
-			// Convert minutes to seconds for the countdown component
-			const remainingSeconds = Math.round(test.time_remaining_minutes * 60);
-			return remainingSeconds > 0 ? remainingSeconds : 0;
+	const remainingTimeInSeconds = $derived(() => {
+		// Use backend timer data when available
+		if (currentTimeLeft !== null && currentTimeLeft !== undefined) {
+			return currentTimeLeft > 0 ? currentTimeLeft : 0;
 		}
 
-		// Fallback: If backend doesn't provide time_remaining_minutes yet, use old logic
+		// Fallback to old client-side calculation if backend data not available
+		const test = data.testData;
 		const now = new Date().getTime();
 		let target = null;
 

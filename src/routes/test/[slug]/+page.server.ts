@@ -1,10 +1,15 @@
 import { BACKEND_URL } from '$env/static/private';
 import { getCandidate } from '$lib/helpers/getCandidate';
-import { getTestQuestions, getTimeLeft } from '$lib/server/test';
+import { getTestQuestions } from '$lib/server/test';
+import { getCandidateTestTimeLeft, getPreTestTimeLeft } from '$lib/server/timer';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, cookies }) => {
+	if (!locals.testData) {
+		throw redirect(303, '/');
+	}
+
 	const candidate = getCandidate(cookies);
 
 	if (candidate && candidate.candidate_test_id && candidate.candidate_uuid) {
@@ -14,23 +19,49 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 				candidate.candidate_uuid
 			);
 
-			const timerResponse = await getTimeLeft(
-				candidate.candidate_test_id,
-				candidate.candidate_uuid
-			);
+			// Fetch remaining time for in-test timer
+			let timeLeft = null;
+			try {
+				const timerData = await getCandidateTestTimeLeft(
+					candidate.candidate_test_id,
+					candidate.candidate_uuid
+				);
+				timeLeft = timerData.time_left;
+			} catch (error) {
+				console.warn('Could not fetch timer data:', error);
+			}
 
 			return {
 				candidate,
-				testData: locals.testData,
-				timeLeft: timerResponse.time_left,
+				testData: {
+					...locals.testData,
+					time_remaining_seconds: timeLeft // Add timer data in seconds
+				},
 				testQuestions: testQuestionsResponse
 			};
 		} catch (error) {
 			console.error('Error fetching candidate data:', error);
-			throw redirect(303, '/test/' + locals.testData.link);
+			throw redirect(303, '/test/' + locals.testData?.link);
 		}
 	}
-	return { candidate: null, testData: locals.testData, testQuestions: null };
+
+	// For pre-test state, fetch pre-test timer
+	let preTestTimeLeft = null;
+	try {
+		const preTestTimerData = await getPreTestTimeLeft(locals.testData.link);
+		preTestTimeLeft = preTestTimerData.time_left;
+	} catch (error) {
+		console.warn('Could not fetch pre-test timer data:', error);
+	}
+
+	return { 
+		candidate: null, 
+		testData: {
+			...locals.testData,
+			pre_test_time_left_seconds: preTestTimeLeft // Add pre-test timer data
+		}, 
+		testQuestions: null 
+	};
 };
 
 export const actions = {
@@ -94,7 +125,7 @@ export const actions = {
 	},
 
 	reattempt: async ({ cookies, locals }) => {
-		cookies.delete('sashakt-candidate', { path: '/test/' + locals.testData.link });
+		cookies.delete('sashakt-candidate', { path: '/test/' + locals.testData?.link });
 
 		redirect(301, `/test/${locals.testData.link}`);
 	}
