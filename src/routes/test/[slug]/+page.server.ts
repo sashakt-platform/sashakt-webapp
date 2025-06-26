@@ -1,6 +1,6 @@
 import { BACKEND_URL } from '$env/static/private';
 import { getCandidate } from '$lib/helpers/getCandidate';
-import { getTestQuestions } from '$lib/server/test';
+import { getTestQuestions, getTimeLeft } from '$lib/server/test';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -14,9 +14,15 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 				candidate.candidate_uuid
 			);
 
+			const timerResponse = await getTimeLeft(
+				candidate.candidate_test_id,
+				candidate.candidate_uuid
+			);
+
 			return {
 				candidate,
 				testData: locals.testData,
+				timeLeft: timerResponse.time_left,
 				testQuestions: testQuestionsResponse
 			};
 		} catch (error) {
