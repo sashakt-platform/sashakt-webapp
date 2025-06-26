@@ -53,7 +53,7 @@
 			<Dialog.Content class="w-80 rounded-xl">
 				<Dialog.Title>10 mins left!</Dialog.Title>
 				<Dialog.Description>
-					Please note that there is only 30 mins left for the test to complete, hurry up!
+					Please note that there is only 10 mins left for the test to complete, hurry up!
 				</Dialog.Description>
 
 				<Dialog.Close>
