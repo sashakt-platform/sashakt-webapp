@@ -5,6 +5,7 @@
 	import { Timer } from '@lucide/svelte';
 
 	let { timeLeft: initialTime } = $props();
+	let formElement = $state<HTMLFormElement>();
 	let timeLeft = $state(initialTime);
 	let open = $state(false);
 
@@ -12,7 +13,13 @@
 		const intervalId = setInterval(() => {
 			if (timeLeft > 0) {
 				timeLeft--;
-				if (timeLeft === 10 * 60 || timeLeft === 0) open = true;
+				if (timeLeft === 10 * 60) open = true;
+				if (timeLeft === 0) {
+					open = true;
+					setTimeout(() => {
+						formElement?.requestSubmit();
+					}, 5000);
+				}
 			}
 		}, 1000);
 
@@ -58,7 +65,7 @@
 				<Dialog.Title>Time Up!</Dialog.Title>
 				<Dialog.Description>The test has ended and will be auto submitted.</Dialog.Description>
 
-				<form action="?/submitTest" method="POST" use:enhance>
+				<form action="?/submitTest" method="POST" use:enhance bind:this={formElement}>
 					<Button type="submit" class="w-32">Submit</Button>
 				</form>
 			</Dialog.Content>
