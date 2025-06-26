@@ -11,7 +11,7 @@
 		Sashakt
 	</h2>
 	{#if page.data.candidate && !page.form?.result}
-		<TestTimer />
+		<TestTimer timeLeft={page.data?.timeLeft} />
 	{/if}
 </nav>
 
