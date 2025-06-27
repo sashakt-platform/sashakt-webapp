@@ -8,7 +8,6 @@
 
 	let { data, form }: PageProps = $props();
 	let isStarted = $state(!!data.candidate);
-	let showResult = $state(false);
 	let currentTimeLeft = $state<number | null>(null);
 
 	$effect(() => {
@@ -80,7 +79,6 @@
 	function handleTimeout() {
 		// Implement timeout logic, e.g., auto-submit the test
 		alert('Time is up!');
-		showResult = true;
 		
 		// Auto-submit the test if possible
 		if (isStarted) {
