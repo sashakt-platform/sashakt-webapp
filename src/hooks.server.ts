@@ -18,7 +18,7 @@ export const handleTest: Handle = async function ({ event, resolve }) {
 		try {
 			const { testData } = await test.getTestDetailsBySlug(event.params.slug);
 			event.locals.testData = testData;
-		} catch (error) {
+		} catch {
 			throw redirect(302, '/');
 		}
 	}

@@ -4,9 +4,17 @@
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
+	import { Countdown } from '$lib/components/ui/countdown/index.js';
+	import { onMount } from 'svelte';
 
 	const { testDetails } = $props();
 	let isChecked = $state(false);
+	let preTestTimeLeft = $state<number | null>(null);
+
+	// Initialize pre-test timer
+	onMount(() => {
+		preTestTimeLeft = testDetails.pre_test_time_left_seconds || null;
+	});
 
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
@@ -33,11 +41,9 @@
 		</Table.Root>
 	</div>
 	<div>
-		{#if testDetails.start_instructions}
-			<h2 class="text-muted-foreground mb-4 text-xs font-bold">
-				{@html testDetails.start_instructions}
-			</h2>
-		{/if}
+		{#each testDetails.start_instructions as instruction, i (i)}
+			{@render container(instruction)}
+		{/each}
 	</div>
 </section>
 
@@ -60,8 +66,21 @@
 					<Dialog.Description class="flex flex-col space-y-2 text-center">
 						<p>Time remaining for the test</p>
 
-						<!-- TODO -->
-						<p>TODO: ADD COUNTDOWN HERE</p>
+						<div class="my-4 flex justify-center">
+							<div class="timer-box">
+								{#if preTestTimeLeft !== null && preTestTimeLeft > 0}
+									<Countdown
+										remainingTimeInSeconds={preTestTimeLeft}
+										onTimeout={() => console.log('Pre-test timer expired!')}
+									/>
+								{:else}
+									<Countdown
+										remainingTimeInSeconds={testDetails.time_limit * 60}
+										onTimeout={() => console.log('Time expired!')}
+									/>
+								{/if}
+							</div>
+						</div>
 
 						<p>
 							The test has not started yet. Please read the instructions carefully before starting
@@ -81,13 +100,26 @@
 	</div>
 </div>
 
-{#snippet container(item: { title: String; points: String[] })}
+{#snippet container(item: { title: string; points: string[] })}
 	<div class="mb-10">
 		<h2 class="text-muted-foreground text-xs font-bold uppercase">{item.title}</h2>
 		<ul class="my-3 rounded-xl border p-3 text-xs font-normal">
-			{#each item.points as point}
+			{#each item.points as point, i (i)}
 				<li>{point}</li>
 			{/each}
 		</ul>
 	</div>
 {/snippet}
+
+<style>
+	.timer-box {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		background-color: #e74c3c;
+		color: white;
+		border-radius: 8px;
+		padding: 8px 16px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	}
+</style>
