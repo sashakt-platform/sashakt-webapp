@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { Countdown } from './index.js';
 
-	let { timeLimit = $bindable(60), onTimeout = $bindable(() => {}) } = $props();
+	let { remainingTimeInSeconds = $bindable(60), onTimeout = $bindable(() => {}) } = $props();
 </script>
 
 <div class="timer-header">
 	<div class="container">
 		<div class="timer-content">
 			<div class="timer-box">
-				<Countdown {timeLimit} {onTimeout} />
+				<Countdown remainingTimeInSeconds={remainingTimeInSeconds} {onTimeout} />
 			</div>
 		</div>
 	</div>
@@ -47,10 +47,5 @@
 		border-radius: 8px;
 		padding: 8px 16px;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-	}
-
-	.timer-label {
-		font-weight: 600;
-		font-size: 0.875rem;
 	}
 </style>

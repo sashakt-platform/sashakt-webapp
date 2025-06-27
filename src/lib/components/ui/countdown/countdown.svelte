@@ -4,6 +4,7 @@
 	// Props for the timer
 	let {
 		timeLimit = $bindable(60),
+		remainingTimeInSeconds = $bindable(null),
 		onTimeout = $bindable(() => {}),
 		targetTime = $bindable(null)
 	} = $props();
@@ -46,9 +47,22 @@
 
 	$effect(() => {
 		if (targetTime) {
+			// Handle countdown to a specific target time (pre-test)
 			calculateRemainingTime();
 			intervalId = setInterval(calculateRemainingTime, 1000);
+		} else if (remainingTimeInSeconds !== null && remainingTimeInSeconds !== undefined) {
+			// Handle countdown with specific remaining seconds from backend
+			remainingSeconds = remainingTimeInSeconds;
+			intervalId = setInterval(() => {
+				remainingSeconds -= 1;
+
+				if (remainingSeconds <= 0) {
+					if (intervalId) clearInterval(intervalId);
+					onTimeout();
+				}
+			}, 1000);
 		} else {
+			// Fallback to timeLimit in minutes (legacy behavior)
 			remainingSeconds = timeLimit * 60;
 			intervalId = setInterval(() => {
 				remainingSeconds -= 1;

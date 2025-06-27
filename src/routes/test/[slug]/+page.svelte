@@ -26,7 +26,7 @@
 	});
 
 	const remainingTimeInSeconds = $derived(() => {
-		// Use backend timer data when available
+		// Use backend timer data when available (prioritize server time)
 		if (currentTimeLeft !== null && currentTimeLeft !== undefined) {
 			return currentTimeLeft > 0 ? currentTimeLeft : 0;
 		}
@@ -81,6 +81,14 @@
 		// Implement timeout logic, e.g., auto-submit the test
 		alert('Time is up!');
 		showResult = true;
+		
+		// Auto-submit the test if possible
+		if (isStarted) {
+			const form = document.querySelector('form[action*="submitTest"]') as HTMLFormElement;
+			if (form) {
+				form.requestSubmit();
+			}
+		}
 	}
 </script>
 
