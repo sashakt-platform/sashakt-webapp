@@ -1,135 +1,94 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 
-	let { candidateTestId, candidateUuid, open = $bindable() } = $props();
-	let timeLeft = $state(0);
-	let loading = $state(true);
-	let intervalId: number | null = null;
+	const startTime = new Date(page.data.testData.start_time);
+	const startTimeString = startTime.toString().split(' GMT')[0];
 
-	$effect(() => {
-		if (candidateTestId && candidateUuid && open) {
-			fetchPreTestTime();
-		}
-		
-		return () => {
-			if (intervalId) {
-				clearInterval(intervalId);
-			}
-		};
-	});
-
-	const fetchPreTestTime = async () => {
-		try {
-			loading = true;
-			const response = await fetch(`/api/pretest-timer/${candidateTestId}?candidate_uuid=${candidateUuid}`);
-			if (response.ok) {
-				const data = await response.json();
-				timeLeft = data.time_left * 60; // Convert minutes to seconds
-				loading = false;
-				startCountdown();
-			} else {
-				// Test might have already started
-				loading = false;
-				timeLeft = 0;
-			}
-		} catch (error) {
-			console.error('Error fetching pre-test time:', error);
-			loading = false;
-			timeLeft = 0;
-		}
-	};
-
-	const startCountdown = () => {
-		if (intervalId) clearInterval(intervalId);
-		
-		intervalId = setInterval(() => {
-			if (timeLeft > 0) {
-				timeLeft--;
-			} else {
-				if (intervalId) clearInterval(intervalId);
-				// Auto-close when time is up
-				setTimeout(() => {
-					open = false;
-				}, 1000);
-			}
-		}, 1000);
-	};
+	const { timeLeft: initialTime } = $props();
+	let timeLeft = $state(6);
 
 	const formatTime = (seconds: number) => {
-		const mins = Math.floor(seconds / 60);
+		const mins = Math.floor((seconds % 3600) / 60);
 		const secs = seconds % 60;
-		return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+		return [mins.toString().padStart(2, '0'), secs.toString().padStart(2, '0')].join(':');
 	};
 
-	const handleOkay = () => {
-		if (intervalId) clearInterval(intervalId);
-		open = false;
-	};
+	$effect(() => {
+		const intervalId = setInterval(() => {
+			if (timeLeft > 0) {
+				timeLeft--;
+			}
+		}, 1000);
+
+		return () => clearInterval(intervalId);
+	});
 </script>
 
-<Dialog.Root bind:open>
-	<Dialog.Content class="w-96 rounded-xl p-8">
-		<div class="flex flex-col items-center space-y-6">
-			<Dialog.Title class="text-xl font-semibold text-center">
-				Your test will begin shortly!
-			</Dialog.Title>
-			
-			<Dialog.Description class="text-center text-gray-600">
-				Time remaining for the test
-			</Dialog.Description>
+<Dialog.Content class="w-80 rounded-xl">
+	{#if timeLeft <= 10 * 60}
+		<Dialog.Header>
+			<Dialog.Title class="text-center text-base/normal font-semibold"
+				>Your test will begin shortly!</Dialog.Title
+			>
+			<Dialog.Description class="flex flex-col space-y-5 text-center text-xs/normal font-normal">
+				<p>Time remaining for the test</p>
 
-			{#if loading}
-				<div class="w-32 h-32 flex items-center justify-center">
-					<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-				</div>
-			{:else}
-				<div class="relative w-32 h-32 flex items-center justify-center">
+				<div class="relative mx-auto flex items-center justify-center">
 					<!-- Circular progress -->
-					<svg class="w-32 h-32 transform -rotate-90" viewBox="0 0 144 144">
+					<svg class="h-36 w-36 -rotate-90 transform" viewBox="0 0 144 144">
+						<circle cx="72" cy="72" r="73" fill="none" />
 						<circle
 							cx="72"
 							cy="72"
 							r="64"
 							fill="none"
-							stroke="#e5e7eb"
-							stroke-width="8"
-						/>
-						<circle
-							cx="72"
-							cy="72"
-							r="64"
-							fill="none"
-							stroke="#2563eb"
-							stroke-width="8"
+							stroke="currentColor"
+							stroke-width="4"
 							stroke-dasharray="402"
 							stroke-dashoffset={402 - (timeLeft / (10 * 60)) * 402}
 							stroke-linecap="round"
-							class="transition-all duration-1000"
+							class="text-primary transition-all duration-1000"
 						/>
 					</svg>
-					
+
 					<!-- Timer text -->
-					<div class="absolute inset-0 flex items-center justify-center">
-						<span class="text-2xl font-bold text-blue-600">
+					<div class="absolute flex items-center justify-center">
+						<span class="text-primary text-3xl font-bold">
 							{formatTime(timeLeft)}
 						</span>
 					</div>
 				</div>
-			{/if}
 
-			<Dialog.Description class="text-center text-sm text-gray-500 max-w-sm">
-				The test has not commenced yet. Kindly ensure that you thoroughly review the provided instructions before beginning the test.
+				<p>
+					The test has not commenced yet. Kindly ensure that you thoroughly review the provided
+					instructions before beginning the test.
+				</p>
 			</Dialog.Description>
-
-			<Button 
-				class="w-32 bg-blue-600 hover:bg-blue-700"
-				onclick={handleOkay}
-				disabled={loading}
+		</Dialog.Header>
+	{:else}
+		<Dialog.Header>
+			<Dialog.Title class="text-center text-base/normal font-semibold"
+				>Test has not started!</Dialog.Title
 			>
-				Okay, got it
-			</Button>
-		</div>
-	</Dialog.Content>
-</Dialog.Root> 
+			<Dialog.Description class="flex flex-col space-y-5 text-center text-sm/normal font-normal">
+				<span>Test will start on</span>
+				<div class="text-primary text-2xl font-semibold">{startTimeString}</div>
+
+				<p>
+					The test has not commenced yet. Kindly ensure that you thoroughly review the provided
+					instructions before beginning the test.
+				</p>
+			</Dialog.Description>
+		</Dialog.Header>
+	{/if}
+
+	<Dialog.Close>
+		<form method="POST" action="?/createCandidate" use:enhance>
+			<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
+			<Button type="submit" disabled={timeLeft > 10} class="mt-4 w-full">Okay, got it</Button>
+		</form>
+	</Dialog.Close>
+</Dialog.Content>

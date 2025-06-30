@@ -1,7 +1,7 @@
 import { BACKEND_URL } from '$env/static/private';
 import { getCandidate } from '$lib/helpers/getCandidate';
 import { getTestQuestions, getTimeLeft } from '$lib/server/test';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, cookies }) => {
@@ -34,6 +34,25 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 };
 
 export const actions = {
+	preTestTimer: async ({ locals, fetch }) => {
+		const test_uuid = locals.testData?.link;
+
+		try {
+			const response = await fetch(`${BACKEND_URL}/test/public/time_left/${test_uuid}`, {
+				method: 'GET',
+				headers: { accept: 'application/json' }
+			});
+			if (!response.ok) {
+				throw error(response.status, `Failed to fetch pre-test time: ${response.statusText}`);
+			}
+			const data = await response.json();
+			return { preTestTimer: data.time_left };
+		} catch (err) {
+			console.error('Error fetching pre-test time:', err);
+			throw error(500, 'Internal server error');
+		}
+	},
+
 	createCandidate: async ({ request, locals, fetch, cookies }) => {
 		const formData = await request.formData();
 		const { deviceInfo } = Object.fromEntries(formData.entries());
