@@ -4,11 +4,13 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 
+	let formElement = $state<HTMLFormElement>();
+
 	const startTime = new Date(page.data.testData.start_time);
 	const startTimeString = startTime.toString().split(' GMT')[0];
 
 	const { timeLeft: initialTime } = $props();
-	let timeLeft = $state(6);
+	let timeLeft = $state(initialTime);
 
 	const formatTime = (seconds: number) => {
 		const mins = Math.floor((seconds % 3600) / 60);
@@ -17,6 +19,8 @@
 	};
 
 	$effect(() => {
+		if (timeLeft === 0) formElement?.requestSubmit();
+
 		const intervalId = setInterval(() => {
 			if (timeLeft > 0) {
 				timeLeft--;
@@ -86,9 +90,14 @@
 	{/if}
 
 	<Dialog.Close>
-		<form method="POST" action="?/createCandidate" use:enhance>
+		<form method="POST" action="?/createCandidate" use:enhance bind:this={formElement}>
 			<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
-			<Button type="submit" disabled={timeLeft > 10} class="mt-4 w-full">Okay, got it</Button>
+			{#if timeLeft < 10}
+				<!-- prompt candidate to start the test when last 10 secs left before test starts -->
+				<Button type="submit" class="mt-4 w-full">Start Test</Button>
+			{:else}
+				<Button class="mt-4 w-full">Okay, got it</Button>
+			{/if}
 		</form>
 	</Dialog.Close>
 </Dialog.Content>
