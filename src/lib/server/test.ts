@@ -45,7 +45,7 @@ export const getTimeLeft = async (candidate_test_id: number, candidate_uuid: str
 		throw new Error('candidate_test_id and candidate_uuid are required');
 	}
 
-	const apiEndpoint = `${BACKEND_URL}/candidate/time_left/${candidate_test_id}/?candidate_uuid=${candidate_uuid}`;
+	const apiEndpoint = `${BACKEND_URL}/candidate/timer/${candidate_test_id}/?candidate_uuid=${candidate_uuid}`;
 
 	const response = await fetch(apiEndpoint, {
 		method: 'GET',

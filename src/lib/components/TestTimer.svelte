@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { Timer } from '@lucide/svelte';
+	import { Clock } from '@lucide/svelte';
 
 	let { timeLeft: initialTime } = $props();
 	let formElement = $state<HTMLFormElement>();
@@ -45,7 +45,7 @@
 <div
 	class={`inline-flex items-center gap-x-1 rounded-full ${lessTime() ? 'bg-red-700' : 'bg-green-700'} px-2 py-1.5 text-sm text-white`}
 >
-	<Timer size={18} />
+	<Clock size={18} />
 	{formatTime(timeLeft)}
 
 	<Dialog.Root bind:open>

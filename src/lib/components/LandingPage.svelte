@@ -4,9 +4,12 @@
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
+	import PreTestTimer from './PreTestTimer.svelte';
 
 	const { testDetails } = $props();
 	let isChecked = $state(false);
+	let showPreTestTimer = $state(false);
+	let candidateData = $state<any>(null);
 
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
@@ -49,37 +52,29 @@
 				I have read and understood the instructions as given
 			</label>
 		</div>
-		<Dialog.Root>
-			<Dialog.Trigger
-				disabled={!isChecked}
-				class={buttonVariants({ variant: 'default', size: 'sm' })}>Start</Dialog.Trigger
-			>
-			<Dialog.Content class="sm:max-w-[425px]">
-				<Dialog.Header>
-					<Dialog.Title class="my-3 text-center">Your test will begin shortly!</Dialog.Title>
-					<Dialog.Description class="flex flex-col space-y-2 text-center">
-						<p>Time remaining for the test</p>
-
-						<!-- TODO -->
-						<p>TODO: ADD COUNTDOWN HERE</p>
-
-						<p>
-							The test has not started yet. Please read the instructions carefully before starting
-							the test.
-						</p>
-					</Dialog.Description>
-				</Dialog.Header>
-
-				<Dialog.Close>
-					<form method="POST" action="?/createCandidate" use:enhance>
-						<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
-						<Button type="submit">Okay, got it</Button>
-					</form>
-				</Dialog.Close>
-			</Dialog.Content>
-		</Dialog.Root>
+		<form method="POST" action="?/createCandidate" use:enhance={() => {
+			return async ({ result }) => {
+				if (result.type === 'success' && result.data && 'candidateData' in result.data) {
+					candidateData = result.data.candidateData;
+					showPreTestTimer = true;
+				}
+			};
+		}}>
+			<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
+			<Button type="submit" disabled={!isChecked} class={buttonVariants({ variant: 'default', size: 'sm' })}>
+				Start
+			</Button>
+		</form>
 	</div>
 </div>
+
+{#if candidateData}
+	<PreTestTimer 
+		candidateTestId={candidateData.candidate_test_id}
+		candidateUuid={candidateData.candidate_uuid}
+		bind:open={showPreTestTimer}
+	/>
+{/if}
 
 {#snippet container(item: { title: String; points: String[] })}
 	<div class="mb-10">

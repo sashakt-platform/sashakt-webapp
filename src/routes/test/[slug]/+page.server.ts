@@ -55,7 +55,8 @@ export const actions = {
 			secure: true
 		});
 		return {
-			success: true
+			success: true,
+			candidateData: candidateData
 		};
 	},
 
