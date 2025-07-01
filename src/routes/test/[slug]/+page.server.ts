@@ -46,7 +46,7 @@ export const actions = {
 				throw error(response.status, `Failed to fetch pre-test time: ${response.statusText}`);
 			}
 			const data = await response.json();
-			return { preTestTimer: data.time_left };
+			return { timeToBegin: data.time_left };
 		} catch (err) {
 			console.error('Error fetching pre-test time:', err);
 			throw error(500, 'Internal server error');

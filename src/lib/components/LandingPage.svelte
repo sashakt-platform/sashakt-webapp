@@ -13,7 +13,7 @@
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
 		{ label: 'Total marks', value: `${testDetails.marks ? testDetails.marks + ' marks' : 'N/A'}` },
-		{ label: 'Total duration', value: `${testDetails.time_limit * 60} minutes` },
+		{ label: 'Total duration', value: `${testDetails.time_limit} minutes` },
 		{ label: 'Questions per page', value: `${testDetails.question_pagination} question` }
 	];
 </script>
@@ -61,7 +61,9 @@
 					Start
 				</Dialog.Trigger>
 			</form>
-			<PreTestTimer timeLeft={page.form?.preTestTimer} />
+			{#if page.form?.timeToBegin !== undefined}
+				<PreTestTimer timeLeft={page.form?.timeToBegin} />
+			{/if}
 		</Dialog.Root>
 	</div>
 </div>

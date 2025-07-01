@@ -3,11 +3,14 @@
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import { convertUTCToIST } from '$lib/helpers/formatTime';
 
 	let formElement = $state<HTMLFormElement>();
 
 	const startTime = new Date(page.data.testData.start_time);
-	const startTimeString = startTime.toString().split(' GMT')[0];
+	const endTime = new Date(page.data.testData.end_time);
+	const currentTime = new Date();
+	const startTimeString = convertUTCToIST(page.data.testData.start_time);
 
 	const { timeLeft: initialTime } = $props();
 	let timeLeft = $state(initialTime);
@@ -19,12 +22,10 @@
 	};
 
 	$effect(() => {
-		if (timeLeft === 0) formElement?.requestSubmit();
-
 		const intervalId = setInterval(() => {
 			if (timeLeft > 0) {
 				timeLeft--;
-			}
+			} else if (timeLeft === 0 && currentTime < endTime) formElement?.requestSubmit();
 		}, 1000);
 
 		return () => clearInterval(intervalId);
@@ -32,7 +33,7 @@
 </script>
 
 <Dialog.Content class="w-80 rounded-xl">
-	{#if timeLeft <= 10 * 60}
+	{#if currentTime < endTime && timeLeft <= 10 * 60}
 		<Dialog.Header>
 			<Dialog.Title class="text-center text-base/normal font-semibold"
 				>Your test will begin shortly!</Dialog.Title
@@ -72,18 +73,36 @@
 				</p>
 			</Dialog.Description>
 		</Dialog.Header>
-	{:else}
+	{:else if currentTime < startTime}
 		<Dialog.Header>
 			<Dialog.Title class="text-center text-base/normal font-semibold"
 				>Test has not started!</Dialog.Title
 			>
 			<Dialog.Description class="flex flex-col space-y-5 text-center text-sm/normal font-normal">
 				<span>Test will start on</span>
-				<div class="text-primary text-2xl font-semibold">{startTimeString}</div>
+				<div class="text-primary text-2xl font-semibold">
+					{startTime.toDateString()}
+					{startTimeString}
+				</div>
 
 				<p>
 					The test has not commenced yet. Kindly ensure that you thoroughly review the provided
 					instructions before beginning the test.
+				</p>
+			</Dialog.Description>
+		</Dialog.Header>
+	{:else}
+		<Dialog.Header>
+			<Dialog.Title class="text-center text-base/normal font-semibold">
+				Test has ended!
+			</Dialog.Title>
+			<Dialog.Description class="flex flex-col space-y-5 text-center text-sm/normal font-normal">
+				<span>The test ended on</span>
+				<div class="text-primary text-2xl font-semibold">{endTime.toDateString()}</div>
+
+				<p>
+					The test has concluded. You may now review your responses or exit the test environment.
+					Thank you for participating.
 				</p>
 			</Dialog.Description>
 		</Dialog.Header>
@@ -92,7 +111,7 @@
 	<Dialog.Close>
 		<form method="POST" action="?/createCandidate" use:enhance bind:this={formElement}>
 			<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
-			{#if timeLeft < 10}
+			{#if currentTime < endTime && timeLeft < 10}
 				<!-- prompt candidate to start the test when last 10 secs left before test starts -->
 				<Button type="submit" class="mt-4 w-full">Start Test</Button>
 			{:else}
