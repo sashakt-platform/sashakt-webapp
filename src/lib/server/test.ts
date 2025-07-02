@@ -15,6 +15,10 @@ export const getTestDetailsBySlug = async (slug: string) => {
 };
 
 export const getPreTestTimer = async (test_uuid: string) => {
+	if (!test_uuid) {
+		throw new Error('test_uuid is required');
+	}
+
 	const apiEndpoint = `${BACKEND_URL}/test/public/time_left/${test_uuid}`;
 
 	const response = await fetch(apiEndpoint, {

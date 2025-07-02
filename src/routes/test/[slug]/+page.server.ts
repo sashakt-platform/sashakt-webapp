@@ -1,7 +1,7 @@
 import { BACKEND_URL } from '$env/static/private';
 import { getCandidate } from '$lib/helpers/getCandidate';
 import { getTestQuestions, getTimeLeft } from '$lib/server/test';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, cookies }) => {
