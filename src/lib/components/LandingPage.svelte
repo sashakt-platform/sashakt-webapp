@@ -1,7 +1,8 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import { buttonVariants } from '$lib/components/ui/button/index.js';
+	import { Button, buttonVariants } from '$lib/components/ui/button/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
@@ -9,6 +10,9 @@
 
 	const { testDetails } = $props();
 	let isChecked = $state(false);
+
+	const endTime = page.data.testData.end_time ? new Date(page.data.testData.end_time) : null;
+	const currentTime = new Date();
 
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
@@ -51,20 +55,28 @@
 				I have read and understood the instructions as given
 			</label>
 		</div>
-		<Dialog.Root>
-			<form action="?/preTestTimer" method="post" use:enhance>
+		{#if page.data?.timeToBegin === 0 && (!endTime || currentTime < endTime)}
+			<form method="POST" action="?/createCandidate" use:enhance>
+				<input
+					name="deviceInfo"
+					value={() => {
+						if (browser) return JSON.stringify(navigator.userAgent);
+					}}
+					hidden
+				/>
+				<Button type="submit" size="sm" disabled={!isChecked} class="w-full">Start</Button>
+			</form>
+		{:else}
+			<Dialog.Root>
 				<Dialog.Trigger
 					disabled={!isChecked}
 					class={buttonVariants({ variant: 'default', size: 'sm' })}
-					type="submit"
 				>
 					Start
 				</Dialog.Trigger>
-			</form>
-			{#if page.form?.timeToBegin !== undefined}
-				<PreTestTimer timeLeft={page.form?.timeToBegin} />
-			{/if}
-		</Dialog.Root>
+				<PreTestTimer timeLeft={page.data?.timeToBegin} {endTime} {currentTime} />
+			</Dialog.Root>
+		{/if}
 	</div>
 </div>
 
