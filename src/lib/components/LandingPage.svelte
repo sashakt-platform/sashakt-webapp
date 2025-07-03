@@ -11,9 +11,6 @@
 	const { testDetails } = $props();
 	let isChecked = $state(false);
 
-	const endTime = page.data.testData.end_time ? new Date(page.data.testData.end_time) : null;
-	const currentTime = new Date();
-
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
 		{ label: 'Total marks', value: `${testDetails.marks ? testDetails.marks + ' marks' : 'N/A'}` },
@@ -55,7 +52,7 @@
 				I have read and understood the instructions as given
 			</label>
 		</div>
-		{#if page.data?.timeToBegin === 0 && (!endTime || currentTime < endTime)}
+		{#if page.data?.timeToBegin === 0}
 			<form method="POST" action="?/createCandidate" use:enhance>
 				<input
 					name="deviceInfo"
@@ -74,7 +71,7 @@
 				>
 					Start
 				</Dialog.Trigger>
-				<PreTestTimer timeLeft={page.data?.timeToBegin} {endTime} {currentTime} />
+				<PreTestTimer timeLeft={page.data?.timeToBegin} />
 			</Dialog.Root>
 		{/if}
 	</div>
