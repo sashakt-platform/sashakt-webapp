@@ -3,12 +3,10 @@
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { convertUTCToIST } from '$lib/helpers/formatTime';
+	import { formatUTCToISTDate } from '$lib/helpers/formatTime';
 
 	let formElement = $state<HTMLFormElement>();
-
-	const startTime = new Date(page.data.testData.start_time);
-	const startTimeString = convertUTCToIST(page.data.testData.start_time);
+	const startTimeString = formatUTCToISTDate(page.data.testData.start_time);
 
 	const { timeLeft: initialTime } = $props();
 	let timeLeft = $state(initialTime);
@@ -32,7 +30,6 @@
 
 <Dialog.Content class="w-80 rounded-xl">
 	{#if timeLeft >= 10 * 60}
-		// Test start date and time is rendered if timeLeft is more than 10 mins
 		<Dialog.Header>
 			<Dialog.Title class="text-center text-base/normal font-semibold"
 				>Test has not started!</Dialog.Title
@@ -40,8 +37,8 @@
 			<Dialog.Description class="flex flex-col space-y-5 text-center text-sm/normal font-normal">
 				<span>Test will start on</span>
 				<div class="text-primary text-2xl font-semibold">
-					{startTime.toDateString()}
-					{startTimeString}
+					{startTimeString.date} <br />
+					{startTimeString.time}
 				</div>
 
 				<p>

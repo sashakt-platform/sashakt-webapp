@@ -1,4 +1,4 @@
-export function convertUTCToIST(utcString: string) {
+export function formatUTCToISTDate(utcString: string) {
 	const utcDate = new Date(utcString);
 
 	// Get IST offset in milliseconds (UTC +5:30)
@@ -6,11 +6,15 @@ export function convertUTCToIST(utcString: string) {
 
 	const istDate = new Date(utcDate.getTime() + IST_OFFSET);
 
-	return istDate.toLocaleString('en-IN', {
-		timeZone: 'Asia/Kolkata',
+	const day = istDate.getDate();
+	const month = istDate.toLocaleString('en-IN', { month: 'long', timeZone: 'Asia/Kolkata' });
+	const year = istDate.getFullYear();
+	const time = istDate.toLocaleString('en-IN', {
 		hour: '2-digit',
 		minute: '2-digit',
-		second: '2-digit',
-		hour12: true
+		hour12: true,
+		timeZone: 'Asia/Kolkata'
 	});
+
+	return { date: `${day} ${month} ${year}`, time };
 }
