@@ -7,11 +7,13 @@
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import type { TQuestion, TSelection } from '$lib/types';
 
-	let selectedQuestions = $state<TSelection[]>([]);
 	let { candidate, testQuestions } = $props();
 	const questions: TQuestion[] = testQuestions.question_revisions;
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
+
+	const localStore = localStorage.getItem('sashakt-selections');
+	let selectedQuestions = $state<TSelection[]>(localStore ? JSON.parse(localStore) : []);
 </script>
 
 <Pagination.Root count={totalQuestions} {perPage}>
