@@ -3,10 +3,9 @@
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { formatUTCToISTDate } from '$lib/helpers/formatTime';
 
 	let formElement = $state<HTMLFormElement>();
-	const startTimeString = formatUTCToISTDate(page.data.testData.start_time);
+	const startTime = new Date(page.data.testData.start_time);
 
 	const { timeLeft: initialTime } = $props();
 	let timeLeft = $state(initialTime);
@@ -37,8 +36,8 @@
 			<Dialog.Description class="flex flex-col space-y-5 text-center text-sm/normal font-normal">
 				<span>Test will start on</span>
 				<div class="text-primary text-2xl font-semibold">
-					{startTimeString.date} <br />
-					{startTimeString.time}
+					{startTime.toLocaleDateString()} <br />
+					{startTime.toLocaleTimeString()}
 				</div>
 
 				<p>
