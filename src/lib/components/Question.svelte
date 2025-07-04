@@ -5,6 +5,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
+	import { selections } from '$lib/stores/selectionStore';
 	import type { TQuestion, TSelection } from '$lib/types';
 
 	let { candidate, testQuestions } = $props();
@@ -12,8 +13,7 @@
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
 
-	const localStore = localStorage.getItem('sashakt-selections');
-	let selectedQuestions = $state<TSelection[]>(localStore ? JSON.parse(localStore) : []);
+	let selectedQuestions = $state<TSelection[]>($selections);
 </script>
 
 <Pagination.Root count={totalQuestions} {perPage}>

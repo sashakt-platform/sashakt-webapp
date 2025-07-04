@@ -4,26 +4,31 @@ import { writable } from 'svelte/store';
 
 export function localStorageStore(key: string, initialValue: TSelection[]) {
 	let storedValue;
+	const isLocalStorageAvailable = typeof Storage !== 'undefined';
 
 	try {
-		const json = localStorage.getItem(key);
+		const json = isLocalStorageAvailable ? localStorage.getItem(key) : null;
 		storedValue = json ? JSON.parse(json) : initialValue;
-	} catch (err) {
+	} catch {
 		storedValue = initialValue;
 	}
 
 	const store = writable(storedValue);
 
 	// Persist changes
-	store.subscribe((value) => {
+	const unsubscribe = store.subscribe((value) => {
+		if (!isLocalStorageAvailable) return;
 		try {
 			localStorage.setItem(key, JSON.stringify(value));
-		} catch (err) {
-			console.error(`Could not write ${key} to localStorage`, err);
+		} catch {
+			console.error(`Could not write ${key} to localStorage`);
 		}
 	});
 
-	return store;
+	return {
+		...store,
+		destroy: unsubscribe
+	};
 }
 
 export const selections = localStorageStore('sashakt-selections', []);
