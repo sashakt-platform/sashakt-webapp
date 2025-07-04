@@ -14,6 +14,24 @@ export const getTestDetailsBySlug = async (slug: string) => {
 	return { testData };
 };
 
+export const getPreTestTimer = async (test_uuid: string) => {
+	if (!test_uuid) {
+		throw new Error('test_uuid is required');
+	}
+
+	const apiEndpoint = `${BACKEND_URL}/test/public/time_left/${test_uuid}`;
+
+	const response = await fetch(apiEndpoint, {
+		method: 'GET',
+		headers: { accept: 'application/json' }
+	});
+
+	if (!response.ok) throw new Error('failed to fetch pre-test timer');
+
+	const data = await response.json();
+	return { timeToBegin: data.time_left };
+};
+
 /**
  * Fetches test questions for a candidate
  * @param candidate_test_id - The candidate's test ID

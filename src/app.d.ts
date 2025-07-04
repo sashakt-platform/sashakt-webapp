@@ -5,6 +5,7 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			testData?: any;
+			timeToBegin?: number;
 		}
 		// interface PageData {}
 		// interface PageState {}

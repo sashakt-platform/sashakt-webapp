@@ -17,7 +17,10 @@ export const handleTest: Handle = async function ({ event, resolve }) {
 		// get the data for the particular test
 		try {
 			const { testData } = await test.getTestDetailsBySlug(event.params.slug);
+			const { timeToBegin } = await test.getPreTestTimer(event.params.slug);
+
 			event.locals.testData = testData;
+			event.locals.timeToBegin = timeToBegin;
 		} catch (error) {
 			throw redirect(302, '/');
 		}
