@@ -66,7 +66,7 @@
 							stroke="currentColor"
 							stroke-width="4"
 							stroke-dasharray="402"
-							stroke-dashoffset={402 - (timeLeft / (10 * 60)) * 402}
+							stroke-dashoffset={(timeLeft / (10 * 60)) * 402 - 402}
 							stroke-linecap="round"
 							class="text-primary transition-all duration-1000"
 						/>
