@@ -1,9 +1,12 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import { Button, buttonVariants } from '$lib/components/ui/button/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
+	import PreTestTimer from './PreTestTimer.svelte';
 
 	const { testDetails } = $props();
 	let isChecked = $state(false);
@@ -11,7 +14,10 @@
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
 		{ label: 'Total marks', value: `${testDetails.marks ? testDetails.marks + ' marks' : 'N/A'}` },
-		{ label: 'Total duration', value: `${testDetails.time_limit * 60} minutes` },
+		{
+			label: 'Total duration',
+			value: `${testDetails.time_limit ? testDetails.time_limit + ' minutes' : 'N/A'} `
+		},
 		{ label: 'Questions per page', value: `${testDetails.question_pagination} question` }
 	];
 </script>
@@ -49,35 +55,28 @@
 				I have read and understood the instructions as given
 			</label>
 		</div>
-		<Dialog.Root>
-			<Dialog.Trigger
-				disabled={!isChecked}
-				class={buttonVariants({ variant: 'default', size: 'sm' })}>Start</Dialog.Trigger
-			>
-			<Dialog.Content class="sm:max-w-[425px]">
-				<Dialog.Header>
-					<Dialog.Title class="my-3 text-center">Your test will begin shortly!</Dialog.Title>
-					<Dialog.Description class="flex flex-col space-y-2 text-center">
-						<p>Time remaining for the test</p>
-
-						<!-- TODO -->
-						<p>TODO: ADD COUNTDOWN HERE</p>
-
-						<p>
-							The test has not started yet. Please read the instructions carefully before starting
-							the test.
-						</p>
-					</Dialog.Description>
-				</Dialog.Header>
-
-				<Dialog.Close>
-					<form method="POST" action="?/createCandidate" use:enhance>
-						<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
-						<Button type="submit">Okay, got it</Button>
-					</form>
-				</Dialog.Close>
-			</Dialog.Content>
-		</Dialog.Root>
+		{#if page.data?.timeToBegin === 0}
+			<form method="POST" action="?/createCandidate" use:enhance>
+				<input
+					name="deviceInfo"
+					value={() => {
+						if (browser) return JSON.stringify(navigator.userAgent);
+					}}
+					hidden
+				/>
+				<Button type="submit" size="sm" disabled={!isChecked} class="w-full">Start</Button>
+			</form>
+		{:else}
+			<Dialog.Root>
+				<Dialog.Trigger
+					disabled={!isChecked}
+					class={buttonVariants({ variant: 'default', size: 'sm' })}
+				>
+					Start
+				</Dialog.Trigger>
+				<PreTestTimer timeLeft={page.data?.timeToBegin} />
+			</Dialog.Root>
+		{/if}
 	</div>
 </div>
 
