@@ -40,9 +40,12 @@
 	</div>
 	<div>
 		{#if testDetails.start_instructions}
-			<h2 class="text-muted-foreground mb-4 text-xs font-bold">
-				{@html testDetails.start_instructions}
-			</h2>
+			<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">GENERAL INSTRUCTIONS</h2>
+			<p
+				class="text-accent-foreground mt-3 rounded-lg px-4 py-5 text-[13px]/relaxed font-normal shadow"
+			>
+				{testDetails.start_instructions}
+			</p>
 		{/if}
 	</div>
 </section>
@@ -79,14 +82,3 @@
 		{/if}
 	</div>
 </div>
-
-{#snippet container(item: { title: String; points: String[] })}
-	<div class="mb-10">
-		<h2 class="text-muted-foreground text-xs font-bold uppercase">{item.title}</h2>
-		<ul class="my-3 rounded-xl border p-3 text-xs font-normal">
-			{#each item.points as point}
-				<li>{point}</li>
-			{/each}
-		</ul>
-	</div>
-{/snippet}
