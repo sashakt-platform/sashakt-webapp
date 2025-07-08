@@ -1,29 +1,35 @@
-// src/lib/utils/LocalStorage.ts
 import type { TSelection } from '$lib/types';
-import { tick } from 'svelte';
 
 export class LocalStorage<T> {
 	#key: string;
-	#listeners = 0;
-
-	#handler = (e: StorageEvent) => {
-		if (e.storageArea !== localStorage) return;
-		if (e.key !== this.#key) return;
-	};
 
 	constructor(key: string, initial: T) {
 		this.#key = key;
 
 		if (typeof localStorage !== 'undefined') {
 			if (localStorage.getItem(key) === null) {
-				localStorage.setItem(key, JSON.stringify(initial));
+				try {
+					localStorage.setItem(key, JSON.stringify(initial));
+				} catch (error) {
+					console.error(`Failed to initialize localStorage for key "${key}":`, error);
+				}
 			}
 		}
 	}
 
 	get current(): T {
-		const root =
-			typeof localStorage !== 'undefined' ? JSON.parse(localStorage.getItem(this.#key)!) : [];
+		let root: T;
+		if (typeof localStorage !== 'undefined') {
+			try {
+				const stored = localStorage.getItem(this.#key);
+				root = stored ? JSON.parse(stored) : ([] as T);
+			} catch (error) {
+				console.error(`Failed to parse localStorage for key "${this.#key}":`, error);
+				root = [] as T;
+			}
+		} else {
+			root = [] as T;
+		}
 
 		const proxies = new WeakMap();
 
@@ -39,7 +45,11 @@ export class LocalStorage<T> {
 					set: (target, property, val) => {
 						Reflect.set(target, property, val);
 						if (typeof localStorage !== 'undefined') {
-							localStorage.setItem(this.#key, JSON.stringify(root));
+							try {
+								localStorage.setItem(this.#key, JSON.stringify(root));
+							} catch (error) {
+								console.error(`Failed to update localStorage for key "${this.#key}":`, error);
+							}
 						}
 						return true;
 					}
@@ -49,30 +59,17 @@ export class LocalStorage<T> {
 			return p;
 		};
 
-		if ($effect.tracking()) {
-			$effect(() => {
-				if (this.#listeners === 0) {
-					window.addEventListener('storage', this.#handler);
-				}
-				this.#listeners += 1;
-
-				return () => {
-					tick().then(() => {
-						this.#listeners -= 1;
-						if (this.#listeners === 0) {
-							window.removeEventListener('storage', this.#handler);
-						}
-					});
-				};
-			});
-		}
-
 		return proxy(root);
 	}
 
 	set current(value: T) {
 		if (typeof localStorage !== 'undefined') {
-			localStorage.setItem(this.#key, JSON.stringify(value));
+			try {
+				localStorage.setItem(this.#key, JSON.stringify(value));
+			} catch (error) {
+				console.error(`Failed to set localStorage for key "${this.#key}":`, error);
+				throw error;
+			}
 		}
 	}
 }
