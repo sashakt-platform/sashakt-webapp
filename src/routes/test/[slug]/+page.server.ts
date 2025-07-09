@@ -87,9 +87,9 @@ export const actions = {
 					headers: { accept: 'application/json' }
 				});
 
-				if (!result.ok) return fail(400, { result: false });
+				if (!result.ok) return fail(400, { result: false, submit_test: true });
 
-				return { result: await result.json() };
+				return { result: await result.json(), submit_test: true };
 			}
 
 			return { submit_test: await response.json() };

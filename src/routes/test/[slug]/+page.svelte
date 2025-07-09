@@ -18,7 +18,7 @@
 <section>
 	{#if !isStarted}
 		<LandingPage testDetails={data.testData} />
-	{:else if form?.result}
+	{:else if form?.submit_test}
 		<TestResult resultData={form.result} testDetails={data.testData} />
 	{:else if data.testQuestions?.question_revisions}
 		<Question testQuestions={data.testQuestions} candidate={data.candidate} />
