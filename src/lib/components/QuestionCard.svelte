@@ -2,6 +2,7 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
+	import { selections } from '$lib/stores/selectionStore.svelte';
 	import type { TCandidate, TQuestion, TSelection } from '$lib/types';
 
 	let {
@@ -43,6 +44,8 @@
 				time_spent: 0
 			});
 		}
+
+		selections.current = [...selectedQuestions];
 	};
 
 	const submitAnswer = async () => {

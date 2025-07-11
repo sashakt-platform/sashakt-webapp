@@ -5,18 +5,13 @@
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
-	let isStarted = $state(false);
-	$effect(() => {
-		if (data.candidate) {
-			isStarted = true;
-		} else {
-			isStarted = false;
-		}
-	});
 </script>
 
 <section>
-	{#if !isStarted}
+	{#if data.candidate === undefined}
+		<!-- Show nothing or a loading spinner while candidate is loading -->
+		<p>Loading...</p>
+	{:else if !data.candidate}
 		<LandingPage testDetails={data.testData} />
 	{:else if form?.result}
 		<TestResult resultData={form.result} testDetails={data.testData} />
