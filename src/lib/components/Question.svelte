@@ -63,7 +63,7 @@
 								Please make sure you have answered all the mandatory questions to submit the test.
 							</Dialog.Description>
 
-							<Dialog.Close><Button class="w-32 place-self-center">Okay</Button></Dialog.Close>
+							<Dialog.Close><Button class="mt-2 w-full">Okay</Button></Dialog.Close>
 						</Dialog.Content>
 					{/if}
 				</Dialog.Root>

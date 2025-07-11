@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import Button from '$lib/components/ui/button/button.svelte';
+	// import { enhance } from '$app/forms';
+	// import Button from '$lib/components/ui/button/button.svelte';
 	import * as Table from '$lib/components/ui/table/index.js';
 
 	let { resultData, testDetails } = $props();
@@ -49,7 +49,7 @@
 		</Table.Root>
 	{/if}
 
-	<form action="?/reattempt" method="POST" class="mt-8" use:enhance>
+	<!-- <form action="?/reattempt" method="POST" class="mt-8" use:enhance>
 		<Button type="submit">Attempt again</Button>
-	</form>
+	</form> -->
 </section>
