@@ -13,12 +13,18 @@
 
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
-		{ label: 'Total marks', value: `${testDetails.marks ? testDetails.marks + ' marks' : 'N/A'}` },
+		{
+			label: 'Total marks',
+			value: `${testDetails.marks ? testDetails.marks + ' marks' : 'N/A'}`
+		},
 		{
 			label: 'Total duration',
-			value: `${testDetails.time_limit ? testDetails.time_limit + ' minutes' : 'N/A'} `
+			value: `${testDetails.time_limit ? testDetails.time_limit + ' minutes' : 'N/A'}`
 		},
-		{ label: 'Questions per page', value: `${testDetails.question_pagination} question` }
+		{
+			label: 'Questions per page',
+			value: `${testDetails.question_pagination ? testDetails.question_pagination + ' question(s)' : 'All questions'}`
+		}
 	];
 </script>
 
@@ -40,14 +46,17 @@
 	</div>
 	<div>
 		{#if testDetails.start_instructions}
-			<h2 class="text-muted-foreground mb-4 text-xs font-bold">
-				{@html testDetails.start_instructions}
-			</h2>
+			<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">GENERAL INSTRUCTIONS</h2>
+			<p
+				class="text-accent-foreground mt-3 rounded-lg px-4 py-5 text-[13px]/relaxed font-normal shadow"
+			>
+				{testDetails.start_instructions}
+			</p>
 		{/if}
 	</div>
 </section>
 
-<div class="fixed bottom-0 z-20 w-screen bg-white p-3">
+<div class="fixed bottom-0 z-20 w-screen bg-white p-4">
 	<div class="mx-auto flex items-center justify-around space-x-3 sm:w-3/5">
 		<div class="flex items-center space-x-2">
 			<Checkbox id="terms" aria-labelledby="terms-label" bind:checked={isChecked} />
@@ -64,13 +73,13 @@
 					}}
 					hidden
 				/>
-				<Button type="submit" size="sm" disabled={!isChecked} class="w-full">Start</Button>
+				<Button type="submit" class="w-32" disabled={!isChecked}>Start</Button>
 			</form>
 		{:else}
 			<Dialog.Root>
 				<Dialog.Trigger
 					disabled={!isChecked}
-					class={buttonVariants({ variant: 'default', size: 'sm' })}
+					class={`w-45 ${buttonVariants({ variant: 'default' })}`}
 				>
 					Start
 				</Dialog.Trigger>
@@ -79,14 +88,3 @@
 		{/if}
 	</div>
 </div>
-
-{#snippet container(item: { title: String; points: String[] })}
-	<div class="mb-10">
-		<h2 class="text-muted-foreground text-xs font-bold uppercase">{item.title}</h2>
-		<ul class="my-3 rounded-xl border p-3 text-xs font-normal">
-			{#each item.points as point}
-				<li>{point}</li>
-			{/each}
-		</ul>
-	</div>
-{/snippet}
