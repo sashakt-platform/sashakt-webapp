@@ -42,11 +42,11 @@
 						<Dialog.Content class="w-80 rounded-xl">
 							<Dialog.Title>Submit test?</Dialog.Title>
 							<Dialog.Description>
-								{#if page.form?.submitTest === true}
+								{#if page.form?.submitTest === false}
+									Please try submitting again. There was an issue with your previous submission.
+								{:else}
 									Are you sure you want to submit for final marking? No changes will be allowed
 									after submission.
-								{:else}
-									Please try submitting again. There was an issue with your previous submission.
 								{/if}
 							</Dialog.Description>
 							<div class="mt-2 inline-flex items-center justify-between">
