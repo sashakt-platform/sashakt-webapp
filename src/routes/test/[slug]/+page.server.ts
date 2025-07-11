@@ -87,12 +87,12 @@ export const actions = {
 					headers: { accept: 'application/json' }
 				});
 
-				if (!result.ok) return fail(400, { result: false });
+				if (!result.ok) return fail(400, { result: false, submitTest: true });
 
-				return { result: await result.json() };
+				return { result: await result.json(), submitTest: true };
 			}
 
-			return { submit_test: await response.json() };
+			return { submitTest: false };
 		} catch (error) {
 			console.error('Error in submitTest:', error);
 			return fail(500, { error: 'Failed to submit test' });
