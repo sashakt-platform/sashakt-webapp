@@ -16,32 +16,38 @@
 	</h6>
 	<h3 class="mb-1 text-lg font-semibold">Submitted Successfully</h3>
 	<p class="text-sm/normal">
-		Congrats on completing the test! You have attempted {attempted} questions.
+		Congrats on completing the test! {#if resultData}
+			You have attempted {attempted} questions.
+		{:else}
+			Your test has been submitted successfully.
+		{/if}
 	</p>
-	<p class="text-accent-foreground mt-4 border-b py-2 text-sm font-bold uppercase">
-		Result summary
-	</p>
+	{#if resultData}
+		<p class="text-accent-foreground mt-4 border-b py-2 text-sm font-bold uppercase">
+			Result summary
+		</p>
 
-	<Table.Root class="bg-accent mt-4 rounded-xl">
-		<Table.Body>
-			<Table.Row>
-				<Table.Cell class="border-r">Correct Answers</Table.Cell>
-				<Table.Cell>{resultData.correct_answer}</Table.Cell>
-			</Table.Row>
-			<Table.Row>
-				<Table.Cell class="border-r">Incorrect Answers</Table.Cell>
-				<Table.Cell>{resultData.incorrect_answer}</Table.Cell>
-			</Table.Row>
-			<Table.Row>
-				<Table.Cell class="border-r">Not Attempted</Table.Cell>
-				<Table.Cell>{notAttempted}</Table.Cell>
-			</Table.Row>
-			<Table.Row class="font-semibold">
-				<Table.Cell class="border-r">Total marks obtained</Table.Cell>
-				<Table.Cell>{resultData.correct_answer} / {totalQuestions}</Table.Cell>
-			</Table.Row>
-		</Table.Body>
-	</Table.Root>
+		<Table.Root class="bg-accent mt-4 rounded-xl">
+			<Table.Body>
+				<Table.Row>
+					<Table.Cell class="border-r">Correct Answers</Table.Cell>
+					<Table.Cell>{resultData.correct_answer}</Table.Cell>
+				</Table.Row>
+				<Table.Row>
+					<Table.Cell class="border-r">Incorrect Answers</Table.Cell>
+					<Table.Cell>{resultData.incorrect_answer}</Table.Cell>
+				</Table.Row>
+				<Table.Row>
+					<Table.Cell class="border-r">Not Attempted</Table.Cell>
+					<Table.Cell>{notAttempted}</Table.Cell>
+				</Table.Row>
+				<Table.Row class="font-semibold">
+					<Table.Cell class="border-r">Total marks obtained</Table.Cell>
+					<Table.Cell>{resultData.correct_answer} / {totalQuestions}</Table.Cell>
+				</Table.Row>
+			</Table.Body>
+		</Table.Root>
+	{/if}
 
 	<!-- <form action="?/reattempt" method="POST" class="mt-8" use:enhance>
 		<Button type="submit">Attempt again</Button>

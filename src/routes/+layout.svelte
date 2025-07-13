@@ -10,7 +10,7 @@
 	<h2 class="text-primary w-full scroll-m-20 text-3xl font-extrabold tracking-tighter uppercase">
 		Sashakt
 	</h2>
-	{#if page.data?.timeLeft !== null && page.data.candidate && !page.form?.result}
+	{#if page.data?.timeLeft !== null && page.data.candidate && !page.form?.submitTest}
 		<TestTimer timeLeft={page.data?.timeLeft} />
 	{/if}
 </nav>
