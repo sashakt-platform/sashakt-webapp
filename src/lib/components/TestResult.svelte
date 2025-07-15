@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	// import { enhance } from '$app/forms';
 	// import Button from '$lib/components/ui/button/button.svelte';
 	import * as Table from '$lib/components/ui/table/index.js';
@@ -7,6 +8,12 @@
 	const totalQuestions = testDetails.total_questions;
 	const attempted = resultData.correct_answer + resultData.incorrect_answer;
 	const notAttempted = totalQuestions - attempted;
+
+	$effect(() => {
+		if (typeof localStorage !== 'undefined') {
+			localStorage.removeItem('sashakt-answers');
+		}
+	});
 </script>
 
 <section class="mx-auto mt-2 w-xs text-center">
