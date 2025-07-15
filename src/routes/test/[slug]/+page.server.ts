@@ -30,7 +30,12 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			throw redirect(303, '/test/' + locals.testData.link);
 		}
 	}
-	return { candidate: null, testData: locals.testData, testQuestions: null };
+	return {
+		candidate: null,
+		timeToBegin: locals.timeToBegin,
+		testData: locals.testData,
+		testQuestions: null
+	};
 };
 
 export const actions = {
@@ -55,7 +60,8 @@ export const actions = {
 			secure: true
 		});
 		return {
-			success: true
+			success: true,
+			candidateData: candidateData
 		};
 	},
 
@@ -81,12 +87,12 @@ export const actions = {
 					headers: { accept: 'application/json' }
 				});
 
-				if (!result.ok) return fail(400, { result: false });
+				if (!result.ok) return fail(400, { result: false, submitTest: true });
 
-				return { result: await result.json() };
+				return { result: await result.json(), submitTest: true };
 			}
 
-			return { submit_test: await response.json() };
+			return { submitTest: false };
 		} catch (error) {
 			console.error('Error in submitTest:', error);
 			return fail(500, { error: 'Failed to submit test' });

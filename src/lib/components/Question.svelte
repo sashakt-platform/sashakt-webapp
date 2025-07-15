@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -43,8 +44,12 @@
 						<Dialog.Content class="w-80 rounded-xl">
 							<Dialog.Title>Submit test?</Dialog.Title>
 							<Dialog.Description>
-								Are you sure you want to submit for final marking? No changes will be allowed after
-								submission.
+								{#if page.form?.submitTest === false}
+									Please try submitting again. There was an issue with your previous submission.
+								{:else}
+									Are you sure you want to submit for final marking? No changes will be allowed
+									after submission.
+								{/if}
 							</Dialog.Description>
 							<div class="mt-2 inline-flex items-center justify-between">
 								<Dialog.Close><Button variant="outline" class="w-32">Cancel</Button></Dialog.Close>
@@ -60,7 +65,7 @@
 								Please make sure you have answered all the mandatory questions to submit the test.
 							</Dialog.Description>
 
-							<Dialog.Close><Button class="w-32 place-self-center">Okay</Button></Dialog.Close>
+							<Dialog.Close><Button class="mt-2 w-full">Okay</Button></Dialog.Close>
 						</Dialog.Content>
 					{/if}
 				</Dialog.Root>
