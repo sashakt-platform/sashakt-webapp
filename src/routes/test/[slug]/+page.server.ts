@@ -65,7 +65,7 @@ export const actions = {
 		};
 	},
 
-	submitTest: async ({ cookies, fetch }) => {
+	submitTest: async ({ cookies, fetch, locals }) => {
 		const candidate = getCandidate(cookies);
 		if (!candidate) {
 			return fail(400, { candidate, missing: true });
@@ -88,6 +88,14 @@ export const actions = {
 				});
 
 				if (!result.ok) return fail(400, { result: false, submitTest: true });
+
+				cookies.delete('sashakt-candidate', {
+					expires: new Date(Date.now() - 3 * 60 * 60 * 1000),
+					path: '/test/' + locals.testData.link,
+					httpOnly: true,
+					sameSite: 'strict',
+					secure: true
+				});
 
 				return { result: await result.json(), submitTest: true };
 			}

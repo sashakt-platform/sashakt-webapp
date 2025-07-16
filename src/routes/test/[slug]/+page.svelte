@@ -11,10 +11,10 @@
 	{#if data.candidate === undefined}
 		<!-- Show nothing or a loading spinner while candidate is loading -->
 		<p>Loading...</p>
-	{:else if !data.candidate}
-		<LandingPage testDetails={data.testData} />
 	{:else if form?.submitTest}
 		<TestResult resultData={form.result} testDetails={data.testData} />
+	{:else if !data.candidate}
+		<LandingPage testDetails={data.testData} />
 	{:else if data.testQuestions?.question_revisions}
 		<Question testQuestions={data.testQuestions} candidate={data.candidate} />
 	{:else}
