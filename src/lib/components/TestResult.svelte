@@ -5,7 +5,7 @@
 
 	let { resultData, testDetails } = $props();
 	const totalQuestions = testDetails.total_questions;
-	const attempted = resultData.correct_answer + resultData.incorrect_answer;
+	const attempted = resultData?.correct_answer + resultData?.incorrect_answer;
 	const notAttempted = totalQuestions - attempted;
 </script>
 
