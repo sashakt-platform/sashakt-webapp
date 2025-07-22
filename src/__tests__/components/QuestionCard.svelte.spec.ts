@@ -24,7 +24,6 @@ describe('Question Card', () => {
 	it('should render question details', () => {
 		render(QuestionCard, { props: mockProps });
 
-		screen.debug();
 		expect(screen.getByText(mockProps.serialNumber)).toBeInTheDocument();
 		expect(screen.getByText(/of 1/i)).toBeInTheDocument();
 		expect(screen.getByText(mockProps.question.question_text)).toBeInTheDocument();
