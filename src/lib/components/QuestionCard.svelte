@@ -1,18 +1,17 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import type { TCandidate, TQuestion, TSelection } from '$lib/types';
+	import type { TQuestion, TSelection } from '$lib/types';
 
 	let {
 		question,
 		serialNumber,
-		candidate,
 		totalQuestions,
 		selectedQuestions = $bindable()
 	}: {
 		question: TQuestion;
-		candidate: TCandidate;
 		serialNumber: number;
 		totalQuestions: number;
 		selectedQuestions: TSelection[];
@@ -54,7 +53,7 @@
 				},
 				body: JSON.stringify({
 					...selectedQuestion(question.id),
-					candidate
+					candidate: page.data.candidate
 				})
 			});
 		} catch (error) {
