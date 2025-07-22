@@ -4,6 +4,7 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import type { TQuestion, TSelection } from '$lib/types';
+	import { redirect } from '@sveltejs/kit';
 
 	let {
 		question,
@@ -45,6 +46,9 @@
 	};
 
 	const submitAnswer = async () => {
+		if (!page.data?.candidate) {
+			redirect(301, '/');
+		}
 		try {
 			return await fetch('/api/submit-answer', {
 				method: 'POST',
@@ -53,7 +57,7 @@
 				},
 				body: JSON.stringify({
 					...selectedQuestion(question.id),
-					candidate: page.data.candidate
+					candidate: page.data?.candidate
 				})
 			});
 		} catch (error) {

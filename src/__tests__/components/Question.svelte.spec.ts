@@ -11,7 +11,7 @@ vi.mock('$lib/helpers/testFunctionalities', () => ({
 const mockQuestions = Array.from({ length: 5 }, (_, i) => ({
 	id: i + 1,
 	question_text: `Question ${i + 1}`,
-	mandatory: i % 2 === 0 // every other question is mandatory
+	is_mandatory: i % 2 === 0 // every other question is mandatory
 }));
 
 const testQuestions = {

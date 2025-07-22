@@ -27,7 +27,7 @@ describe('Question Card', () => {
 		expect(screen.getByText(mockProps.serialNumber)).toBeInTheDocument();
 		expect(screen.getByText(/of 1/i)).toBeInTheDocument();
 		expect(screen.getByText(mockProps.question.question_text)).toBeInTheDocument();
-		expect(screen.getByTestId('mandatory')).toBeInTheDocument();
+		expect(screen.getByText('*')).toBeInTheDocument();
 
 		expect(screen.getByLabelText(label)).toBeInTheDocument();
 	});
@@ -42,6 +42,6 @@ describe('Question Card', () => {
 		};
 		render(QuestionCard, { props });
 
-		expect(screen.queryByTestId('mandatory')).not.toBeInTheDocument();
+		expect(screen.queryByText('*')).not.toBeInTheDocument();
 	});
 });
