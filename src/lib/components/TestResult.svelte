@@ -12,7 +12,6 @@
 	$effect(() => {
 		if (typeof localStorage !== 'undefined') {
 			localStorage.removeItem('sashakt-answers');
-			localStorage.removeItem('sashakt-test-page');
 		}
 	});
 </script>
