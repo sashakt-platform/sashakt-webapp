@@ -1,6 +1,5 @@
 import TestResult from '$lib/components/TestResult.svelte';
 import { render, screen } from '@testing-library/svelte';
-import { describe, expect, it } from 'vitest';
 
 describe('Test Result Component', () => {
 	const resultData = {
