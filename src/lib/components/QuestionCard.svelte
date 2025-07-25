@@ -2,7 +2,7 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import { selectionStore } from '$lib/stores/store';
+	import { selections } from '$lib/stores/selectionStore.svelte';
 	import type { TCandidate, TQuestion, TSelection } from '$lib/types';
 
 	let {
@@ -45,7 +45,7 @@
 			});
 		}
 
-		selectionStore.current = [...selectedQuestions];
+		selections.current = [...selectedQuestions];
 	};
 
 	const submitAnswer = async () => {

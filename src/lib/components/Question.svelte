@@ -6,7 +6,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
-	import { pageStore, selectionStore } from '$lib/stores/store';
+	import { selections } from '$lib/stores/selectionStore.svelte';
 	import type { TQuestion, TSelection } from '$lib/types';
 
 	let { candidate, testQuestions } = $props();
@@ -14,15 +14,10 @@
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
 
-	let selectedQuestions = $state<TSelection[]>(selectionStore.current);
+	let selectedQuestions = $state(selections.current);
 </script>
 
-<Pagination.Root
-	count={totalQuestions}
-	{perPage}
-	page={pageStore.current}
-	onPageChange={(val) => (pageStore.current = val)}
->
+<Pagination.Root count={totalQuestions} {perPage}>
 	{#snippet children({ currentPage, range })}
 		<div class="mb-12">
 			{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}

@@ -1,3 +1,4 @@
+import type { TSelection } from '$lib/types';
 import { tick } from 'svelte';
 
 export class LocalStorage<T> {
@@ -95,3 +96,5 @@ export class LocalStorage<T> {
 		this.#version += 1;
 	}
 }
+
+export const selections = new LocalStorage<TSelection[]>('sashakt-answers', []);
