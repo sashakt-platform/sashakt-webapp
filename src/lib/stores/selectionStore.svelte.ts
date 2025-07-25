@@ -97,4 +97,5 @@ export class SessionStorage<T> {
 	}
 }
 
-export const selections = new SessionStorage<TSelection[]>('sashakt-answers', []);
+export const createSelectionsStore = (candidateTestId: number) =>
+	new SessionStorage<TSelection[]>(`sashakt-answers-${candidateTestId}`, []);
