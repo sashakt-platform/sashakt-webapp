@@ -6,13 +6,16 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
+	import { createSelectionsStore } from '$lib/stores/selectionStore.svelte';
 	import type { TQuestion, TSelection } from '$lib/types';
 
-	let selectedQuestions = $state<TSelection[]>([]);
 	let { candidate, testQuestions } = $props();
 	const questions: TQuestion[] = testQuestions.question_revisions;
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
+
+	const selections = createSelectionsStore(candidate.candidate_test_id);
+	let selectedQuestions = $state(selections.current);
 </script>
 
 <Pagination.Root count={totalQuestions} {perPage}>
@@ -52,7 +55,13 @@
 							<div class="mt-2 inline-flex items-center justify-between">
 								<Dialog.Close><Button variant="outline" class="w-32">Cancel</Button></Dialog.Close>
 								<form action="?/submitTest" method="POST" use:enhance>
-									<Button type="submit" class="w-32">Confirm</Button>
+									<Button
+										type="submit"
+										class="w-32"
+										onclick={() =>
+											sessionStorage.removeItem(`sashakt-answers-${candidate.candidate_test_id}`)}
+										>Confirm</Button
+									>
 								</form>
 							</div>
 						</Dialog.Content>
