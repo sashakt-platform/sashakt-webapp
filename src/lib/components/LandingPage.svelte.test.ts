@@ -1,3 +1,4 @@
+import { page } from '$app/state';
 import LandingPage from '$lib/components/LandingPage.svelte';
 import { fireEvent, render, screen } from '@testing-library/svelte';
 
@@ -11,29 +12,17 @@ vi.mock('$app/forms', () => ({
 	enhance: vi.fn()
 }));
 
-// Mock $app/state
-// Step 1: Define a mutable value to simulate store state
-let mockPageData = {
-	data: {
-		timeToBegin: 0
-	}
-};
+// mock $app/state
+vi.mock('$app/state', async () => {
+	const original = await vi.importActual('$app/state');
 
-// Step 2: Mock $app/state using subscribe pattern
-vi.mock('$app/state', () => ({
-	page: {
-		subscribe: (fn: any) => {
-			fn(mockPageData);
-			return () => {};
-		}
-	}
-}));
+	return {
+		...original,
+		page: {}
+	};
+});
 
-vi.mock('$lib/components/PreTestTimer.svelte', () => ({
-	default: (props: any) => ({
-		$$render: () => `<div>Timer: ${props.timeLeft}</div>`
-	})
-}));
+vi.mock('$lib/components/PreTestTimer.svelte');
 
 // Sample testDetails
 const testDetails = {
@@ -44,12 +33,10 @@ const testDetails = {
 	question_pagination: 2
 };
 
-describe('LandingPage', () => {
+describe('Landing Page', () => {
 	it('should render test name and overview', () => {
 		render(LandingPage, {
-			props: {
-				testDetails: { ...testDetails, start_instructions: 'Follow the instructions carefully.' }
-			}
+			testDetails: { ...testDetails, start_instructions: 'Follow the instructions carefully.' }
 		});
 
 		expect(screen.getByText(testDetails.name)).toBeInTheDocument();
@@ -67,7 +54,7 @@ describe('LandingPage', () => {
 		expect(screen.queryByText('Follow the instructions carefully.')).not.toBeInTheDocument();
 	});
 
-	it('should toggle start button enable state with checkbox (when timeToBegin is 0)', async () => {
+	it('should toggle start button enable state with checkbox', async () => {
 		render(LandingPage, { props: { testDetails } });
 
 		const checkbox = screen.getByLabelText(/have read and understood the instructions/i);
@@ -77,5 +64,33 @@ describe('LandingPage', () => {
 
 		await fireEvent.click(checkbox);
 		expect(startButton).not.toBeDisabled();
+	});
+
+	it('should start test if timeToBegin is zero', async () => {
+		page.data = { timeToBegin: 0 };
+
+		render(LandingPage, { props: { testDetails } });
+
+		expect(screen.getByTestId('start-test')).toBeInTheDocument();
+
+		const checkbox = screen.getByLabelText(/have read and understood the instructions/i);
+		const startButton = screen.getByRole('button', { name: /start/i });
+
+		await fireEvent.click(checkbox);
+		await fireEvent.submit(startButton);
+	});
+
+	it('should open countdown dialog if timeToBegin is greater than zero', async () => {
+		page.data = { timeToBegin: 45 };
+
+		render(LandingPage, { props: { testDetails } });
+
+		const checkbox = screen.getByLabelText(/have read and understood the instructions/i);
+		const startButton = screen.getByRole('button', { name: /start/i });
+
+		await fireEvent.click(checkbox);
+		await fireEvent.click(startButton);
+
+		expect(screen.getByTestId('open-dialog')).toBeInTheDocument();
 	});
 });

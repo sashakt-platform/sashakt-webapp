@@ -73,13 +73,16 @@
 					}}
 					hidden
 				/>
-				<Button type="submit" class="w-32" disabled={!isChecked}>Start</Button>
+				<Button type="submit" class="w-32" disabled={!isChecked} data-testid="start-test"
+					>Start</Button
+				>
 			</form>
 		{:else}
 			<Dialog.Root>
 				<Dialog.Trigger
 					disabled={!isChecked}
 					class={`w-45 ${buttonVariants({ variant: 'default' })}`}
+					data-testid="open-dialog"
 				>
 					Start
 				</Dialog.Trigger>
