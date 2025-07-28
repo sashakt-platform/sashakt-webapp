@@ -52,7 +52,7 @@ describe('Fetch test details', () => {
 
 describe('Fetch PreTestTimer', () => {
 	it('should throw error if test uuid is not passed', async () => {
-		await expect(getPreTestTimer()).rejects.toThrow(/is\s+required/i);
+		await expect(getPreTestTimer('')).rejects.toThrow(/is\s+required/i);
 	});
 
 	it('should fetch time left to test start', async () => {
@@ -95,7 +95,7 @@ describe('Fetch Questions using candidate', () => {
 	const candidate_uuid = 'candidate_uuid';
 
 	it('should throw error if candidate test id and uuid are not passed', async () => {
-		await expect(getTestQuestions()).rejects.toThrow(/are\s+required/i);
+		await expect(getTestQuestions(null as any, '')).rejects.toThrow(/are\s+required/i);
 	});
 
 	it('should fetch test questions if candidate exists', async () => {
@@ -146,7 +146,7 @@ describe('Fetch test timer', () => {
 	const candidate_uuid = 'candidate_uuid';
 
 	it('should throw error if candidate test id and uuid are not passed', async () => {
-		await expect(getTimeLeft()).rejects.toThrow(/are\s+required/i);
+		await expect(getTimeLeft(null as any, '')).rejects.toThrow(/are\s+required/i);
 	});
 
 	it('should fetch time left for test timer if candidate exists', async () => {
