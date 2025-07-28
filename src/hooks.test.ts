@@ -1,6 +1,6 @@
 import { getPreTestTimer, getTestDetailsBySlug } from '$lib/server/test';
 import '@sveltejs/kit';
-import { handleTest } from '../hooks.server';
+import { handleTest } from './hooks.server';
 
 vi.mock('@sveltejs/kit', (original) => {
 	const actual = original;
