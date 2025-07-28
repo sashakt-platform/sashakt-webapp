@@ -16,6 +16,11 @@
 
 	const selections = createSelectionsStore(candidate.candidate_test_id);
 	let selectedQuestions = $state(selections.current);
+
+	$effect(() => {
+		// clear the session on un-mount of the component, which takes place only if the test is submitted successfully
+		return () => sessionStorage.removeItem(`sashakt-answers-${candidate.candidate_test_id}`);
+	});
 </script>
 
 <Pagination.Root count={totalQuestions} {perPage}>
@@ -55,13 +60,7 @@
 							<div class="mt-2 inline-flex items-center justify-between">
 								<Dialog.Close><Button variant="outline" class="w-32">Cancel</Button></Dialog.Close>
 								<form action="?/submitTest" method="POST" use:enhance>
-									<Button
-										type="submit"
-										class="w-32"
-										onclick={() =>
-											sessionStorage.removeItem(`sashakt-answers-${candidate.candidate_test_id}`)}
-										>Confirm</Button
-									>
+									<Button type="submit" class="w-32">Confirm</Button>
 								</form>
 							</div>
 						</Dialog.Content>
