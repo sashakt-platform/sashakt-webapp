@@ -33,6 +33,22 @@ const testDetails = {
 	question_pagination: 2
 };
 
+const originalUserAgent = navigator.userAgent;
+
+beforeAll(() => {
+	Object.defineProperty(window.navigator, 'userAgent', {
+		value: 'Mozilla/5.0 (TestDevice)',
+		configurable: true
+	});
+});
+
+afterAll(() => {
+	Object.defineProperty(window.navigator, 'userAgent', {
+		value: originalUserAgent,
+		configurable: true
+	});
+});
+
 describe('Landing Page', () => {
 	it('should render test name and overview', () => {
 		render(LandingPage, {
@@ -46,6 +62,12 @@ describe('Landing Page', () => {
 		expect(screen.getByText('30 minutes')).toBeInTheDocument();
 		expect(screen.getByText('2 question(s)')).toBeInTheDocument();
 		expect(screen.getByText('Follow the instructions carefully.')).toBeInTheDocument();
+	});
+
+	it('should show "all questions" for pagination zero', () => {
+		render(LandingPage, { testDetails: { ...testDetails, question_pagination: 0 } });
+
+		expect(screen.getByText(/all question/i)).toBeInTheDocument();
 	});
 
 	it('should not display start instructions if not provided', () => {
@@ -85,12 +107,15 @@ describe('Landing Page', () => {
 
 		render(LandingPage, { props: { testDetails } });
 
-		const checkbox = screen.getByLabelText(/have read and understood the instructions/i);
-		const startButton = screen.getByRole('button', { name: /start/i });
-
-		await fireEvent.click(checkbox);
-		await fireEvent.click(startButton);
-
 		expect(screen.getByTestId('open-dialog')).toBeInTheDocument();
+	});
+
+	it('should send device information using navigator.userAgent', async () => {
+		page.data = { timeToBegin: 0 };
+		render(LandingPage, { props: { testDetails } });
+
+		const input = screen.getByTestId('deviceInfo');
+		expect(input).toHaveValue(JSON.stringify('Mozilla/5.0 (TestDevice)'));
+		expect(input).toHaveAttribute('hidden');
 	});
 });

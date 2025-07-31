@@ -68,9 +68,8 @@
 			<form method="POST" action="?/createCandidate" use:enhance>
 				<input
 					name="deviceInfo"
-					value={() => {
-						if (browser) return JSON.stringify(navigator.userAgent);
-					}}
+					data-testid="deviceInfo"
+					value={browser ? JSON.stringify(navigator.userAgent) : ''}
 					hidden
 				/>
 				<Button type="submit" class="w-32" disabled={!isChecked} data-testid="start-test"
