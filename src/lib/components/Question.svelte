@@ -6,20 +6,20 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
-	import { createSelectionsStore } from '$lib/stores/selectionStore.svelte';
-	import type { TQuestion, TSelection } from '$lib/types';
+	import { createTestSessionStore } from '$lib/helpers/testSession';
+	import type { TQuestion } from '$lib/types';
 
 	let { candidate, testQuestions } = $props();
 	const questions: TQuestion[] = testQuestions.question_revisions;
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
 
-	const selections = createSelectionsStore(candidate.candidate_test_id);
-	let selectedQuestions = $state(selections.current);
+	const sessionStore = createTestSessionStore(candidate);
+	let selectedQuestions = $state(sessionStore.current.selections);
 
 	$effect(() => {
-		// clear the session on un-mount of the component, which takes place only if the test is submitted successfully
-		return () => sessionStorage.removeItem(`sashakt-answers-${candidate.candidate_test_id}`);
+		// clear the localStorage on un-mount of the component, which takes place only if the test is submitted successfully
+		return () => localStorage.removeItem(`sashakt-session-${candidate.candidate_test_id}`);
 	});
 </script>
 

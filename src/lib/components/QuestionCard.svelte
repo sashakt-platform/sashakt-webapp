@@ -2,7 +2,7 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import { createSelectionsStore } from '$lib/stores/selectionStore.svelte';
+	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import type { TCandidate, TQuestion, TSelection } from '$lib/types';
 
 	let {
@@ -44,8 +44,11 @@
 				time_spent: 0
 			});
 		}
-		const selections = createSelectionsStore(candidate.candidate_test_id);
-		selections.current = [...selectedQuestions];
+		const sessionStore = createTestSessionStore(candidate);
+		sessionStore.current = {
+			candidate,
+			selections: [...selectedQuestions]
+		};
 	};
 
 	const submitAnswer = async () => {

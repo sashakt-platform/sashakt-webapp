@@ -1,14 +1,13 @@
-import type { TSelection } from '$lib/types';
 import { tick } from 'svelte';
 
-export class SessionStorage<T> {
+export class LocalStorage<T> {
 	#key: string;
 	#version = $state(0);
 	#listeners = 0;
 	#value: T | undefined;
 
 	#handler = (e: StorageEvent) => {
-		if (e.storageArea !== sessionStorage) return;
+		if (e.storageArea !== localStorage) return;
 		if (e.key !== this.#key) return;
 
 		this.#version += 1;
@@ -18,9 +17,9 @@ export class SessionStorage<T> {
 		this.#key = key;
 		this.#value = initial;
 
-		if (typeof sessionStorage !== 'undefined') {
-			if (sessionStorage.getItem(key) === null) {
-				sessionStorage.setItem(key, JSON.stringify(initial));
+		if (typeof localStorage !== 'undefined') {
+			if (localStorage.getItem(key) === null) {
+				localStorage.setItem(key, JSON.stringify(initial));
 			}
 		}
 	}
@@ -29,8 +28,8 @@ export class SessionStorage<T> {
 		this.#version;
 
 		const root =
-			typeof sessionStorage !== 'undefined'
-				? JSON.parse(sessionStorage.getItem(this.#key) as any)
+			typeof localStorage !== 'undefined'
+				? JSON.parse(localStorage.getItem(this.#key) as any)
 				: this.#value;
 
 		const proxies = new WeakMap();
@@ -52,8 +51,8 @@ export class SessionStorage<T> {
 						this.#version += 1;
 						Reflect.set(target, property, value);
 
-						if (typeof sessionStorage !== 'undefined') {
-							sessionStorage.setItem(this.#key, JSON.stringify(root));
+						if (typeof localStorage !== 'undefined') {
+							localStorage.setItem(this.#key, JSON.stringify(root));
 						}
 
 						return true;
@@ -89,13 +88,10 @@ export class SessionStorage<T> {
 	}
 
 	set current(value) {
-		if (typeof sessionStorage !== 'undefined') {
-			sessionStorage.setItem(this.#key, JSON.stringify(value));
+		if (typeof localStorage !== 'undefined') {
+			localStorage.setItem(this.#key, JSON.stringify(value));
 		}
 
 		this.#version += 1;
 	}
 }
-
-export const createSelectionsStore = (candidateTestId: number) =>
-	new SessionStorage<TSelection[]>(`sashakt-answers-${candidateTestId}`, []);

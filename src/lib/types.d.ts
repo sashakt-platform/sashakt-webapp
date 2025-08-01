@@ -10,6 +10,11 @@ export type TSelection = {
 	time_spent: number;
 };
 
+export type TTestSession = {
+	candidate: TCandidate;
+	selections: TSelection[];
+};
+
 export type TOptions = {
 	id: number;
 	key: string;
