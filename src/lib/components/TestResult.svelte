@@ -16,10 +16,14 @@
 	</h6>
 	<h3 class="mb-1 text-lg font-semibold">Submitted Successfully</h3>
 	<p class="text-sm/normal">
-		Congrats on completing the test! {#if resultData}
-			You have attempted {attempted} questions.
+		{#if testDetails.completion_message}
+			{testDetails.completion_message}
 		{:else}
-			Your test has been submitted successfully.
+			Congrats on completing the test! {#if resultData}
+				You have attempted {attempted} questions.
+			{:else}
+				Your test has been submitted successfully.
+			{/if}
 		{/if}
 	</p>
 	{#if resultData}
