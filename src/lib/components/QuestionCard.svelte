@@ -46,6 +46,7 @@
 		}
 		const sessionStore = createTestSessionStore(candidate);
 		sessionStore.current = {
+			...sessionStore.current,
 			candidate,
 			selections: [...selectedQuestions]
 		};

@@ -13,6 +13,7 @@ export type TSelection = {
 export type TTestSession = {
 	candidate: TCandidate;
 	selections: TSelection[];
+	currentPage: number;
 };
 
 export type TOptions = {
