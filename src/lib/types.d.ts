@@ -27,6 +27,12 @@ enum question_type_enum {
 	MULTIPLE = 'multiple-select'
 }
 
+export type TMarks = {
+	correct: number;
+	wrong: number;
+	skipped: number;
+};
+
 export type TQuestion = {
 	id: number;
 	question_text: string;
@@ -35,5 +41,6 @@ export type TQuestion = {
 	options: TOptions[];
 	subjective_answer_limit: number;
 	is_mandatory: boolean;
+	marking_scheme: TMarks;
 	media: Record<string, unknown> | null;
 };

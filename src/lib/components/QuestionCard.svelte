@@ -75,7 +75,8 @@
 	<Card.Header class="p-5">
 		<Card.Title class="mb-5 border-b pb-3 text-sm">
 			{serialNumber} <span>OF {totalQuestions}</span>
-			<!-- <span class="text-muted-foreground float-end">{`1 Mark`}</span> -->
+			{@const mark = question?.marking_scheme.correct}
+			<span class="text-muted-foreground float-end">{mark === 1 ? '1 Mark' : `${mark} Marks`}</span>
 		</Card.Title>
 		<Card.Description class="text-base/normal font-medium"
 			>{question.question_text}{#if question.is_mandatory}<span class="ml-1 text-red-500">*</span>
