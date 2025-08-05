@@ -9,7 +9,7 @@
 	import type { TQuestion, TSelection } from '$lib/types';
 
 	let selectedQuestions = $state<TSelection[]>([]);
-	let { candidate, testQuestions } = $props();
+	let { testQuestions } = $props();
 	const questions: TQuestion[] = testQuestions.question_revisions;
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
@@ -20,7 +20,6 @@
 		<div class="mb-12">
 			{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
 				<QuestionCard
-					{candidate}
 					serialNumber={(currentPage - 1) * perPage + index + 1}
 					{question}
 					{totalQuestions}
