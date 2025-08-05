@@ -82,9 +82,11 @@
 			{#if question.is_mandatory}
 				<span class="ml-1 text-red-500">*</span>
 			{/if}
-			<p class="text-muted-foreground mt-2 text-sm">
-				{question.instructions}
-			</p>
+			{#if question.instructions}
+				<span class="text-muted-foreground mt-2 block text-sm">
+					{question.instructions}
+				</span>
+			{/if}
 		</Card.Description>
 	</Card.Header>
 
