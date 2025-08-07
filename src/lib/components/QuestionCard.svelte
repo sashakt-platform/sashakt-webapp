@@ -77,10 +77,17 @@
 			{serialNumber} <span>OF {totalQuestions}</span>
 			<!-- <span class="text-muted-foreground float-end">{`1 Mark`}</span> -->
 		</Card.Title>
-		<Card.Description class="text-base/normal font-medium"
-			>{question.question_text}{#if question.is_mandatory}<span class="ml-1 text-red-500">*</span>
-			{/if}</Card.Description
-		>
+		<Card.Description class="text-base/normal font-medium">
+			{question.question_text}
+			{#if question.is_mandatory}
+				<span class="ml-1 text-red-500">*</span>
+			{/if}
+			{#if question.instructions}
+				<span class="text-muted-foreground mt-2 block text-sm">
+					{question.instructions}
+				</span>
+			{/if}
+		</Card.Description>
 	</Card.Header>
 
 	<Card.Content class="p-5 pt-1">
