@@ -40,13 +40,17 @@
 		};
 	};
 
-	const removeOption = (questionId: number, response: number) => {
-		const answeredQuestion = selectedQuestion(questionId);
-		if (answeredQuestion) {
-			answeredQuestion.response = answeredQuestion.response.filter((option) => option !== response);
-		}
-		if (answeredQuestion?.response.length === 0)
-			selectedQuestions = selectedQuestions.filter((question) => question.response.length !== 0);
+	const removeOption = (questionId: number, optionId: number) => {
+		const next = selectedQuestions
+			.map((q) =>
+				q.question_revision_id === questionId
+					? { ...q, response: q.response.filter((id) => id !== optionId) }
+					: q
+			)
+			// prune the question if response became empty
+			.filter((q) => q.question_revision_id !== questionId || q.response.length > 0);
+
+		selectedQuestions = next;
 		updateStore();
 	};
 
@@ -122,7 +126,7 @@
 					handleSelection(question.id, Number(optionId));
 					submitAnswer();
 				}}
-				value={selectedQuestion(question.id)?.response[0].toString()}
+				value={selectedQuestion(question.id)?.response[0]?.toString()}
 			>
 				{#each options as option, index (index)}
 					{@const uid = `${question.id}-${option.key}`}
@@ -151,9 +155,9 @@
 							value={option.id.toString()}
 							class="float-end"
 							{checked}
-							onCheckedChange={async (check) => {
-								if (!check) removeOption(question.id, option.id);
-								else handleSelection(question.id, option.id);
+							onCheckedChange={(check) => {
+								if (check === false) removeOption(question.id, option.id);
+								else if (check === true) handleSelection(question.id, option.id);
 
 								submitAnswer();
 							}}
