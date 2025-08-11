@@ -77,16 +77,19 @@
 	};
 
 	const submitAnswer = async () => {
+		const data = {
+			...selectedQuestion(question.id),
+			candidate
+		};
+		if (!data.question_revision_id) return;
+
 		try {
 			return await fetch('/api/submit-answer', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({
-					...selectedQuestion(question.id),
-					candidate
-				})
+				body: JSON.stringify(data)
 			});
 		} catch (error) {
 			console.error('Failed to submit answer:', error);
