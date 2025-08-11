@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/index.js';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
@@ -21,6 +22,7 @@
 
 	const options = question.options;
 
+	const sessionStore = createTestSessionStore(candidate);
 	const selectedQuestion = (questionId: number) => {
 		return selectedQuestions.find((item) => item.question_revision_id === questionId);
 	};
@@ -30,12 +32,35 @@
 		return selected?.response.includes(optionId);
 	};
 
+	const updateStore = () => {
+		sessionStore.current = {
+			...sessionStore.current,
+			candidate,
+			selections: [...selectedQuestions]
+		};
+	};
+
+	const removeOption = (questionId: number, response: number) => {
+		const answeredQuestion = selectedQuestion(questionId);
+		if (answeredQuestion) {
+			answeredQuestion.response = answeredQuestion.response.filter((option) => option !== response);
+		}
+		if (answeredQuestion?.response.length === 0)
+			selectedQuestions = selectedQuestions.filter((question) => question.response.length !== 0);
+		updateStore();
+	};
+
 	const handleSelection = (questionId: number, response: number) => {
 		const answeredQuestion = selectedQuestion(questionId);
 
 		if (answeredQuestion) {
-			// for single choice type questions
-			answeredQuestion.response = [response];
+			if (question.question_type === 'single-choice') {
+				// for single choice type questions
+				answeredQuestion.response = [response];
+			} else {
+				// for multi choice type questions
+				answeredQuestion.response = [...answeredQuestion.response, response];
+			}
 		} else {
 			selectedQuestions.push({
 				question_revision_id: questionId,
@@ -44,12 +69,7 @@
 				time_spent: 0
 			});
 		}
-		const sessionStore = createTestSessionStore(candidate);
-		sessionStore.current = {
-			...sessionStore.current,
-			candidate,
-			selections: [...selectedQuestions]
-		};
+		updateStore();
 	};
 
 	const submitAnswer = async () => {
@@ -96,23 +116,51 @@
 	</Card.Header>
 
 	<Card.Content class="p-5 pt-1">
-		<RadioGroup.Root
-			onValueChange={(optionId) => {
-				handleSelection(question.id, Number(optionId));
-				submitAnswer();
-			}}
-			value={selectedQuestion(question.id)?.response[0].toString()}
-		>
-			{#each options as option, index (index)}
+		{#if question.question_type === 'single-choice'}
+			<RadioGroup.Root
+				onValueChange={async (optionId) => {
+					handleSelection(question.id, Number(optionId));
+					submitAnswer();
+				}}
+				value={selectedQuestion(question.id)?.response[0].toString()}
+			>
+				{#each options as option, index (index)}
+					{@const uid = `${question.id}-${option.key}`}
+					<Label
+						for={uid}
+						class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${isSelected(option.id) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
+					>
+						{option.key}. {option.value}
+						<RadioGroup.Item value={option.id.toString()} id={uid} class="float-end" />
+					</Label>
+				{/each}
+			</RadioGroup.Root>
+		{:else}
+			{#each options as option (option.id)}
 				{@const uid = `${question.id}-${option.key}`}
-				<Label
-					for={uid}
-					class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${isSelected(option.id) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
-				>
-					{option.key}. {option.value}
-					<RadioGroup.Item value={option.id.toString()} id={uid} class="float-end" />
-				</Label>
+
+				{@const checked = isSelected(option.id)}
+				<div class="flex flex-row items-start space-x-3">
+					<Label
+						for={uid}
+						class={`mb-2 w-full cursor-pointer rounded-xl border px-4 py-5 ${isSelected(option.id) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
+					>
+						{option.key}. {option.value}
+						<Checkbox
+							id={uid}
+							value={option.id.toString()}
+							class="float-end"
+							{checked}
+							onCheckedChange={async (check) => {
+								if (!check) removeOption(question.id, option.id);
+								else handleSelection(question.id, option.id);
+
+								submitAnswer();
+							}}
+						/>
+					</Label>
+				</div>
 			{/each}
-		</RadioGroup.Root>
+		{/if}
 	</Card.Content>
 </Card.Root>
