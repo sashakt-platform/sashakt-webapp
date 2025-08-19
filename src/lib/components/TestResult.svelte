@@ -45,10 +45,12 @@
 					<Table.Cell class="border-r">Not Attempted</Table.Cell>
 					<Table.Cell>{notAttempted}</Table.Cell>
 				</Table.Row>
-				<Table.Row class="font-semibold">
-					<Table.Cell class="border-r">Total marks obtained</Table.Cell>
-					<Table.Cell>{resultData.correct_answer} / {totalQuestions}</Table.Cell>
-				</Table.Row>
+				{#if resultData.marks_obtained !== null && resultData.marks_maximum !== null}
+					<Table.Row class="font-semibold">
+						<Table.Cell class="border-r">Total marks obtained</Table.Cell>
+						<Table.Cell>{resultData.marks_obtained} / {resultData.marks_maximum}</Table.Cell>
+					</Table.Row>
+				{/if}
 			</Table.Body>
 		</Table.Root>
 	{/if}
