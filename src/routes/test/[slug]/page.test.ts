@@ -128,7 +128,7 @@ describe('Action', () => {
 			candidate_test_id: '123',
 			candidate_uuid: 'uuid123'
 		};
-		const cookies = { get: vi.fn(), getAll: vi.fn() };
+		const cookies = { get: vi.fn(), getAll: vi.fn(), delete: vi.fn() };
 
 		beforeEach(() => {
 			vi.spyOn(getCandidateHelper, 'getCandidate').mockReturnValue(candidate);
@@ -139,28 +139,48 @@ describe('Action', () => {
 				.mockResolvedValueOnce({ status: 200 }) // submit_test
 				.mockResolvedValueOnce({ ok: true, json: async () => ({ score: 85 }) }); // result
 
-			const result = await actions.submitTest({ cookies, fetch: mockFetch });
+			const result = await actions.submitTest({
+				cookies,
+				fetch: mockFetch,
+				locals: { testData: { link: 'test-link' } }
+			});
 			expect(result).toEqual({ result: { score: 85 }, submitTest: true });
+			expect(cookies.delete).toHaveBeenCalledWith(
+				'sashakt-candidate',
+				expect.objectContaining({ path: '/test/test-link' })
+			);
 		});
 
 		it('should return fail if result fetch fails', async () => {
 			mockFetch.mockResolvedValueOnce({ status: 200 }).mockResolvedValueOnce({ ok: false });
 
-			const result = await actions.submitTest({ cookies, fetch: mockFetch });
+			const result = await actions.submitTest({
+				cookies,
+				fetch: mockFetch,
+				locals: { testData: { link: 'test-link' } }
+			});
 			expect(result).toEqual(fail(400, { result: false, submitTest: true }));
 		});
 
 		it('should return fail if candidate is missing', async () => {
 			vi.spyOn(getCandidateHelper, 'getCandidate').mockReturnValue(null);
 
-			const result = await actions.submitTest({ cookies, fetch: mockFetch });
+			const result = await actions.submitTest({
+				cookies,
+				fetch: mockFetch,
+				locals: { testData: { link: 'test-link' } }
+			});
 			expect(result).toEqual(fail(400, { candidate: null, missing: true }));
 		});
 
 		it('should handle fetch errors', async () => {
 			mockFetch.mockRejectedValue(new Error('Network Error'));
 
-			const result = await actions.submitTest({ cookies, fetch: mockFetch });
+			const result = await actions.submitTest({
+				cookies,
+				fetch: mockFetch,
+				locals: { testData: { link: 'test-link' } }
+			});
 			expect(result).toEqual(fail(500, { error: 'Failed to submit test' }));
 		});
 	});
