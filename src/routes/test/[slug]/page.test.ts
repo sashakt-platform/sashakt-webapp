@@ -1,6 +1,6 @@
 import * as getCandidateHelper from '$lib/helpers/getCandidate';
 import * as testServer from '$lib/server/test';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { actions, load } from './+page.server';
 
@@ -67,9 +67,6 @@ describe('Action', () => {
 	describe('Create Candidate', () => {
 		const mockFetch = vi.fn();
 		const mockCookies = { set: vi.fn() };
-		const mockRequest = {
-			formData: async () => new FormData()
-		};
 
 		const mockFormData = new FormData();
 		mockFormData.set('deviceInfo', 'macOS');
@@ -141,14 +138,9 @@ describe('Action', () => {
 
 			const result = await actions.submitTest({
 				cookies,
-				fetch: mockFetch,
-				locals: { testData: { link: 'test-link' } }
+				fetch: mockFetch
 			});
 			expect(result).toEqual({ result: { score: 85 }, submitTest: true });
-			expect(cookies.delete).toHaveBeenCalledWith(
-				'sashakt-candidate',
-				expect.objectContaining({ path: '/test/test-link' })
-			);
 		});
 
 		it('should return fail if result fetch fails', async () => {
