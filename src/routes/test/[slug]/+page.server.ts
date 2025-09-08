@@ -41,12 +41,30 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 export const actions = {
 	createCandidate: async ({ request, locals, fetch, cookies }) => {
 		const formData = await request.formData();
-		const { deviceInfo } = Object.fromEntries(formData.entries());
+		const deviceInfo = formData.get('deviceInfo') as string;
+		const entity = formData.get('entity') as string;
+
+		const requestBody: {
+			test_id: number;
+			device_info: unknown;
+			candidate_profile?: {
+				entity: string;
+			};
+		} = {
+			test_id: locals.testData.id,
+			device_info: deviceInfo
+		};
+
+		if (entity) {
+			requestBody.candidate_profile = {
+				entity
+			};
+		}
 
 		const response = await fetch(`${BACKEND_URL}/candidate/start_test`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ test_id: locals.testData.id, device_info: deviceInfo })
+			body: JSON.stringify(requestBody)
 		});
 		if (!response.ok) {
 			throw redirect(303, '/test/' + locals.testData.link);

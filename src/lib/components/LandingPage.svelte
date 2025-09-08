@@ -8,8 +8,18 @@
 	import * as Table from '$lib/components/ui/table/index.js';
 	import PreTestTimer from './PreTestTimer.svelte';
 
-	const { testDetails } = $props();
+	let { testDetails, showProfileForm = $bindable() } = $props();
+
+	// TODO: Temporarily enable candidate profile for testing
+	testDetails.candidate_profile = true;
+
 	let isChecked = $state(false);
+
+	function handleStart() {
+		if (testDetails.candidate_profile && page.data?.timeToBegin === 0) {
+			showProfileForm = true;
+		}
+	}
 
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
@@ -26,7 +36,7 @@
 
 <section class="mx-auto max-w-xl p-6">
 	<h1 class="mb-4 text-xl font-semibold">{testDetails.name}</h1>
-	<h2 class="text-muted-foreground mb-4 text-xs font-bold">Test Overview</h2>
+	<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">Test Overview</h2>
 
 	<div class="mb-8 rounded-2xl border">
 		<Table.Root>
@@ -42,7 +52,7 @@
 	</div>
 	<div>
 		{#if testDetails.start_instructions}
-			<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">GENERAL INSTRUCTIONS</h2>
+			<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">General Instructions</h2>
 			<p
 				class="text-accent-foreground mt-3 rounded-lg px-4 py-5 text-[13px]/relaxed font-normal shadow"
 			>
@@ -61,16 +71,20 @@
 			</label>
 		</div>
 		{#if page.data?.timeToBegin === 0}
-			<form method="POST" action="?/createCandidate" use:enhance>
-				<input
-					name="deviceInfo"
-					value={() => {
-						if (browser) return JSON.stringify(navigator.userAgent);
-					}}
-					hidden
-				/>
-				<Button type="submit" class="w-32" disabled={!isChecked}>Start</Button>
-			</form>
+			{#if testDetails.candidate_profile}
+				<Button onclick={handleStart} class="w-32" disabled={!isChecked}>Start</Button>
+			{:else}
+				<form method="POST" action="?/createCandidate" use:enhance>
+					<input
+						name="deviceInfo"
+						value={() => {
+							if (browser) return JSON.stringify(navigator.userAgent);
+						}}
+						hidden
+					/>
+					<Button type="submit" class="w-32" disabled={!isChecked}>Start</Button>
+				</form>
+			{/if}
 		{:else}
 			<Dialog.Root>
 				<Dialog.Trigger
@@ -79,7 +93,11 @@
 				>
 					Start
 				</Dialog.Trigger>
-				<PreTestTimer timeLeft={page.data?.timeToBegin} />
+				{#if testDetails.candidate_profile}
+					<PreTestTimer timeLeft={page.data?.timeToBegin} bind:showProfileForm />
+				{:else}
+					<PreTestTimer timeLeft={page.data?.timeToBegin} />
+				{/if}
 			</Dialog.Root>
 		{/if}
 	</div>

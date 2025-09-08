@@ -7,7 +7,7 @@
 	let formElement = $state<HTMLFormElement>();
 	const startTime = new Date(page.data.testData.start_time);
 
-	const { timeLeft: initialTime } = $props();
+	let { timeLeft: initialTime, showProfileForm = $bindable() } = $props();
 	let timeLeft = $state(initialTime);
 
 	const formatTime = (seconds: number) => {
@@ -20,7 +20,13 @@
 		const intervalId = setInterval(() => {
 			if (timeLeft > 0) {
 				timeLeft--;
-			} else if (timeLeft === 0) formElement?.requestSubmit();
+			} else if (timeLeft === 0) {
+				if (showProfileForm !== undefined && page.data.testData.candidate_profile) {
+					showProfileForm = true;
+				} else {
+					formElement?.requestSubmit();
+				}
+			}
 		}, 1000);
 
 		return () => clearInterval(intervalId);
@@ -93,7 +99,13 @@
 			<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
 			{#if timeLeft <= 10}
 				<!-- prompt candidate to start the test when last 10 secs left before test starts -->
-				<Button type="submit" class="mt-4 w-full">Start Test</Button>
+				{#if showProfileForm !== undefined && page.data.testData.candidate_profile}
+					<Button type="button" class="mt-4 w-full" onclick={() => (showProfileForm = true)}>
+						Start Test
+					</Button>
+				{:else}
+					<Button type="submit" class="mt-4 w-full">Start Test</Button>
+				{/if}
 			{:else}
 				<Button class="mt-4 w-full">Okay, got it</Button>
 			{/if}
