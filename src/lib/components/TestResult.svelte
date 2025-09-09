@@ -15,9 +15,9 @@
 		{testDetails.name}
 	</h6>
 	<h3 class="mb-1 text-lg font-semibold">Submitted Successfully</h3>
-	<p class="text-sm/normal">
+	<p class="text-sm/normal [&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-800">
 		{#if testDetails.completion_message}
-			{testDetails.completion_message}
+			{@html testDetails.completion_message}
 		{:else}
 			Congrats on completing the test! {#if resultData}
 				You have attempted {attempted} questions.
