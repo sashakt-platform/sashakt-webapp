@@ -10,9 +10,6 @@
 
 	let { testDetails, showProfileForm = $bindable() } = $props();
 
-	// TODO: Temporarily enable candidate profile for testing
-	testDetails.candidate_profile = true;
-
 	let isChecked = $state(false);
 
 	function handleStart() {

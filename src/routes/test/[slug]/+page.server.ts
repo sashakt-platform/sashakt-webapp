@@ -48,7 +48,7 @@ export const actions = {
 			test_id: number;
 			device_info: unknown;
 			candidate_profile?: {
-				entity: string;
+				entity_id: string;
 			};
 		} = {
 			test_id: locals.testData.id,
@@ -57,7 +57,7 @@ export const actions = {
 
 		if (entity) {
 			requestBody.candidate_profile = {
-				entity
+				entity_id: entity
 			};
 		}
 

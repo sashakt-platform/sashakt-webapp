@@ -5,22 +5,25 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
 
+	interface EntityOption {
+		label: string;
+		value: number;
+	}
+
 	let { testDetails } = $props();
+	let selectedEntity = $state(0);
 
-	let selectedEntity = $state('');
+	const entityOptions: EntityOption[] = [];
 
-	const entityOptions = [
-		{ value: 'Ujjala Mahila Mahasangh', label: 'Ujjala Mahila Mahasangh' },
-		{ value: 'Prerana Mahila Cluster Sangthan', label: 'Prerana Mahila Cluster Sangthan' },
-		{ value: 'Nari Shakti', label: 'Nari Shakti' },
-		{ value: 'Anmol Mahila Block Federation', label: 'Anmol Mahila Block Federation' }
-	];
+	testDetails.profile_list.forEach((entity: { id: number; name: string }) => {
+		entityOptions.push({ value: entity.id, label: entity.name });
+	});
 
 	const triggerContent = $derived(
 		entityOptions.find((g) => g.value === selectedEntity)?.label ?? 'Select your CLF'
 	);
 
-	let isFormValid = $derived(selectedEntity.trim().length > 0);
+	let isFormValid = $derived(selectedEntity > 0);
 </script>
 
 <section class="mx-auto max-w-xl p-6">
