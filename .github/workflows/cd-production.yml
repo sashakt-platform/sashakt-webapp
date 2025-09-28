@@ -30,27 +30,30 @@ jobs:
             cd /home/ubuntu
             rm -rf sashakt-webapp
 
-            # Determine tag to deploy: prefer manual input, then event tag
-            DISPATCH_TAG="${{ github.event.inputs.tag }}"
-            GITHUB_REF="${{ github.ref }}"
-            TARGET_TAG="$DISPATCH_TAG"
+            git clone https://github.com/sashakt-platform/sashakt-webapp.git
 
-            if [ -z "$TARGET_TAG" ]; then
-              if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-                TARGET_TAG="${GITHUB_REF#refs/tags/}"
-              fi
+            cd sashakt-webapp
+
+            echo "Ensuring pnpm is installed..."
+            if ! command -v pnpm &> /dev/null; then
+              npm install -g pnpm
             fi
 
-            if [ -z "$TARGET_TAG" ]; then
-              echo "No tag supplied via workflow_dispatch and this event is not a tag push. Aborting."
+            echo "Ensuring pm2 is installed..."
+            if ! command -v pm2 &> /dev/null; then
+              npm install -g pm2
+            fi
+
+            echo "Setting up environment variables..."
+            if [ -z "${{ vars.BACKEND_URL }}" ]; then
+              echo "Error: BACKEND_URL is not defined."
               exit 1
             fi
 
-            echo "Cloning tag: $TARGET_TAG"
-            git clone --branch "$TARGET_TAG" --depth 1 https://github.com/sashakt-platform/sashakt-webapp.git sashakt-webapp || \
-            (git clone https://github.com/sashakt-platform/sashakt-webapp.git sashakt-webapp && cd sashakt-webapp && git fetch --all --tags && git checkout -f "$TARGET_TAG")
-
-            cd sashakt-webapp
+            if [ -z "${{ vars.TEST_TAKER_URL }}" ]; then
+              echo "Error: TEST_TAKER_URL is not defined."
+              exit 1
+            fi
 
             echo "BACKEND_URL=${{ vars.BACKEND_URL }}" > .env
 
