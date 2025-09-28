@@ -27,49 +27,111 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -euo pipefail
+
+            # Runner-injected values (expanded on the runner before sending)
+            DISPATCH_TAG="${{ github.event.inputs.tag }}"
+            GITHUB_REF="${{ github.ref }}"        # e.g. refs/tags/v1.2.3 or refs/heads/main
+            REF_NAME="${{ github.ref_name }}"     # friendly name when available
+
+            echo "DEBUG: DISPATCH_TAG='${DISPATCH_TAG}'"
+            echo "DEBUG: GITHUB_REF='${GITHUB_REF}'"
+            echo "DEBUG: REF_NAME='${REF_NAME}'"
+
+            # Resolve deploy ref: prefer manual input -> tag push -> branch -> REF_NAME -> main
+            TARGET_REF="${DISPATCH_TAG:-}"
+            if [ -z "$TARGET_REF" ]; then
+              if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+                TARGET_REF="${GITHUB_REF#refs/tags/}"
+              elif [[ "$GITHUB_REF" == refs/heads/* ]]; then
+                TARGET_REF="${GITHUB_REF#refs/heads/}"
+              elif [ -n "$REF_NAME" ]; then
+                TARGET_REF="$REF_NAME"
+              else
+                TARGET_REF="main"
+              fi
+            fi
+
+            echo "Deploying ref: $TARGET_REF"
+
+            # Prepare workspace
             cd /home/ubuntu
             rm -rf sashakt-webapp
 
-            git clone https://github.com/sashakt-platform/sashakt-webapp.git
+            REPO_URL="https://github.com/sashakt-platform/sashakt-webapp.git"
 
-            cd sashakt-webapp
-
-            echo "Ensuring pnpm is installed..."
-            if ! command -v pnpm &> /dev/null; then
-              npm install -g pnpm
+            # Try shallow clone of the requested ref; fall back to full clone + checkout
+            if git clone --branch "$TARGET_REF" --depth 1 "$REPO_URL" sashakt-webapp 2>/dev/null; then
+              cd sashakt-webapp
+            else
+              git clone "$REPO_URL" sashakt-webapp
+              cd sashakt-webapp
+              git fetch --all --tags
+              git checkout -f "$TARGET_REF"
             fi
 
-            echo "Ensuring pm2 is installed..."
-            if ! command -v pm2 &> /dev/null; then
-              npm install -g pm2
-            fi
-
-            echo "Setting up environment variables..."
+            # Ensure required repo vars exist
             if [ -z "${{ vars.BACKEND_URL }}" ]; then
-              echo "Error: BACKEND_URL is not defined."
+              echo "Error: BACKEND_URL is not defined as a repo variable."
               exit 1
             fi
 
-            if [ -z "${{ vars.TEST_TAKER_URL }}" ]; then
-              echo "Error: TEST_TAKER_URL is not defined."
-              exit 1
-            fi
-
+            echo "Writing .env"
             echo "BACKEND_URL=${{ vars.BACKEND_URL }}" > .env
 
+            # Ensure Node 20+ is installed (system-wide) to avoid pnpm engine errors
+            NEED_INSTALL_NODE=false
+            if ! command -v node >/dev/null 2>&1; then
+              NEED_INSTALL_NODE=true
+            else
+              MAJOR="$(node -v | sed 's/^v//' | cut -d. -f1)"
+              if [ "${MAJOR:-0}" -lt 20 ]; then
+                NEED_INSTALL_NODE=true
+              fi
+            fi
+
+            if [ "$NEED_INSTALL_NODE" = true ]; then
+              echo "Installing Node 20..."
+              curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+              sudo apt-get update
+              sudo apt-get install -y nodejs build-essential
+            else
+              echo "Node OK: $(node -v)"
+            fi
+
+            # Ensure corepack/pnpm available
             corepack enable
             sudo corepack prepare pnpm@latest --activate
 
-            pnpm install
-            pnpm run build
+            if ! command -v pnpm >/dev/null 2>&1; then
+              echo "Installing pnpm system-wide..."
+              sudo npm install -g pnpm
+            fi
+            echo "pnpm: $(pnpm -v)"
 
-            if ! command -v pm2 &> /dev/null; then
+            # Ensure pm2 is available system-wide
+            if ! command -v pm2 >/dev/null 2>&1; then
+              echo "Installing pm2 system-wide..."
               sudo npm install -g pm2
             fi
+            echo "pm2: $(pm2 -v)"
 
+            # Install deps & build
+            echo "Installing dependencies..."
+            pnpm install --frozen-lockfile
+
+            echo "Building project..."
+            pnpm run build
+
+            # Start / Restart via pm2
             if [ -f "build/index.js" ]; then
-              pm2 restart sashakt-webapp --update-env || pm2 start build/index.js --name sashakt-webapp
+              pm2 restart sashakt-webapp --update-env || pm2 start build/index.js --name sashakt-webapp --update-env
             else
               echo "Build output not found: build/index.js"
               exit 1
             fi
+
+            # Persist pm2 and print startup command (run the printed command once on the server)
+            pm2 save
+            echo "To enable pm2 at boot run the command printed below (requires sudo):"
+            pm2 startup systemd -u $USER --hp /home/$USER || true
