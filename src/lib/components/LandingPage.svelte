@@ -53,7 +53,7 @@
 			<p
 				class="text-accent-foreground mt-3 rounded-lg px-4 py-5 text-[13px]/relaxed font-normal shadow"
 			>
-				{testDetails.start_instructions}
+				{@html testDetails.start_instructions}
 			</p>
 		{/if}
 	</div>
