@@ -12,7 +12,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	try {
 		const res = await fetch(
-			`${BACKEND_URL}/candidate/submit_test/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`,
+			`${BACKEND_URL}/candidate/submit_test/${candidate.candidate_test_id}/?candidate_uuid=${candidate.candidate_uuid}`,
 			{
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' }
