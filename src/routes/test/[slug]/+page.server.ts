@@ -61,7 +61,7 @@ export const actions = {
 			};
 		}
 
-		const response = await fetch(`${BACKEND_URL}/candidate/start_test`, {
+		const response = await fetch(`${BACKEND_URL}/candidate/start_test/`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(requestBody)
@@ -90,7 +90,7 @@ export const actions = {
 		}
 
 		const candidateUrl = (purpose: string) => {
-			return `${BACKEND_URL}/candidate/${purpose}/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`;
+			return `${BACKEND_URL}/candidate/${purpose}/${candidate.candidate_test_id}/?candidate_uuid=${candidate.candidate_uuid}`;
 		};
 
 		try {
