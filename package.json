@@ -54,5 +54,8 @@
 		"onlyBuiltDependencies": [
 			"esbuild"
 		]
+	},
+	"dependencies": {
+		"@sentry/sveltekit": "^10.17.0"
 	}
 }

@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/sveltekit';
 import * as test from '$lib/server/test';
 import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
@@ -28,4 +29,5 @@ export const handleTest: Handle = async function ({ event, resolve }) {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(handleTest);
+export const handle: Handle = sequence(Sentry.sentryHandle(), sequence(handleTest));
+export const handleError = Sentry.handleErrorWithSentry();

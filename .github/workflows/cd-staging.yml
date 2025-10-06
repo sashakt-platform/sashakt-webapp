@@ -28,6 +28,7 @@ jobs:
             cd sashakt-webapp
 
             echo "BACKEND_URL=${{ vars.BACKEND_URL }}" > .env
+            echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN}}" >> .env
 
             corepack enable
             sudo corepack prepare pnpm@latest --activate

@@ -3,7 +3,7 @@ name: Deploy Sashakt webapp to production
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
 
 jobs:
   deploy:
@@ -31,7 +31,7 @@ jobs:
             git checkout ${{ github.ref_name }}
 
             echo "BACKEND_URL=${{ vars.BACKEND_URL }}" > .env
-            echo "TEST_TAKER_URL=${{ vars.TEST_TAKER_URL }}" >> .env
+            echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN}}" >> .env
 
             corepack enable
             sudo corepack prepare pnpm@latest --activate
