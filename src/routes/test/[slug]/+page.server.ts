@@ -1,4 +1,5 @@
 import { BACKEND_URL } from '$env/static/private';
+import { dev } from '$app/environment';
 import { getCandidate } from '$lib/helpers/getCandidate';
 import { getTestQuestions, getTimeLeft } from '$lib/server/test';
 import { fail, redirect } from '@sveltejs/kit';
@@ -27,6 +28,10 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			};
 		} catch (error) {
 			console.error('Error fetching candidate data:', error);
+			cookies.delete('sashakt-candidate', {
+				path: '/test/' + locals.testData.link,
+				secure: !dev
+			});
 			throw redirect(303, '/test/' + locals.testData.link);
 		}
 	}
@@ -75,7 +80,7 @@ export const actions = {
 			path: '/test/' + locals.testData.link,
 			httpOnly: true,
 			sameSite: 'lax',
-			secure: true
+			secure: !dev
 		});
 		return {
 			success: true,
@@ -108,11 +113,8 @@ export const actions = {
 				if (!result.ok) return fail(400, { result: false, submitTest: true });
 
 				cookies.delete('sashakt-candidate', {
-					expires: new Date(Date.now() - 3 * 60 * 60 * 1000),
 					path: '/test/' + locals.testData.link,
-					httpOnly: true,
-					sameSite: 'lax',
-					secure: true
+					secure: !dev
 				});
 
 				return { result: await result.json(), submitTest: true };
@@ -126,7 +128,10 @@ export const actions = {
 	},
 
 	reattempt: async ({ cookies, locals }) => {
-		cookies.delete('sashakt-candidate', { path: '/test/' + locals.testData.link });
+		cookies.delete('sashakt-candidate', {
+			path: '/test/' + locals.testData.link,
+			secure: !dev
+		});
 
 		redirect(301, `/test/${locals.testData.link}`);
 	}
