@@ -75,7 +75,7 @@ export const actions = {
 			path: '/test/' + locals.testData.link,
 			httpOnly: true,
 			sameSite: 'lax',
-			secure: false
+			secure: true
 		});
 		return {
 			success: true,
@@ -112,7 +112,7 @@ export const actions = {
 					path: '/test/' + locals.testData.link,
 					httpOnly: true,
 					sameSite: 'lax',
-					secure: false
+					secure: true
 				});
 
 				return { result: await result.json(), submitTest: true };
