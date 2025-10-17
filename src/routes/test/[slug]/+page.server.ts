@@ -74,8 +74,8 @@ export const actions = {
 			expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
 			path: '/test/' + locals.testData.link,
 			httpOnly: true,
-			sameSite: 'strict',
-			secure: true
+			sameSite: 'lax',
+			secure: false
 		});
 		return {
 			success: true,
@@ -111,8 +111,8 @@ export const actions = {
 					expires: new Date(Date.now() - 3 * 60 * 60 * 1000),
 					path: '/test/' + locals.testData.link,
 					httpOnly: true,
-					sameSite: 'strict',
-					secure: true
+					sameSite: 'lax',
+					secure: false
 				});
 
 				return { result: await result.json(), submitTest: true };
