@@ -4,7 +4,11 @@ export const getCandidate = (cookies: Cookies) => {
 	const candidateCookie = cookies.get('sashakt-candidate');
 	let candidate = null;
 	if (candidateCookie) {
-		candidate = JSON.parse(candidateCookie);
+		try {
+			candidate = JSON.parse(candidateCookie);
+		} catch (error) {
+			console.error('Failed to parse candidate cookie:', error);
+		}
 	}
 	return candidate;
 };
