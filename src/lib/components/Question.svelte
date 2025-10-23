@@ -46,7 +46,7 @@
 	});
 </script>
 
-{#snippet mandatoryQuestionDialog(lastPage: Boolean)}
+{#snippet mandatoryQuestionDialog(lastPage: boolean)}
 	<Dialog.Content class="w-80 rounded-xl">
 		<Dialog.Title class="mt-4">Answer all mandatory questions!</Dialog.Title>
 		<Dialog.Description class="text-center"
