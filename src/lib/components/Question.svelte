@@ -44,6 +44,10 @@
 		// only if the test is submitted successfully
 		return () => localStorage.removeItem(`sashakt-session-${candidate.candidate_test_id}`);
 	});
+
+	function scrollToTop() {
+		window.scrollTo({ top: 0, behavior: 'instant' });
+	}
 </script>
 
 {#if paginationReady}
@@ -63,7 +67,7 @@
 			<Pagination.Content
 				class="fixed bottom-0 z-10 flex w-full items-center justify-between bg-white p-2"
 			>
-				<Pagination.PrevButton />
+				<Pagination.PrevButton onclick={scrollToTop} />
 
 				{#if currentPage === Math.ceil(totalQuestions / perPage)}
 					<Dialog.Root>
@@ -101,7 +105,7 @@
 						{/if}
 					</Dialog.Root>
 				{:else}
-					<Pagination.NextButton />
+					<Pagination.NextButton onclick={scrollToTop} />
 				{/if}
 			</Pagination.Content>
 		{/snippet}
