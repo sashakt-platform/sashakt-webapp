@@ -112,7 +112,11 @@
 				{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
 					<Dialog.Root>
 						<Dialog.Trigger>
-							<Pagination.NextButton disabled={true} />
+							<Pagination.NextButton
+								onclick={(e) => {
+									e.preventDefault();
+								}}
+							/>
 						</Dialog.Trigger>
 						{@render mandatoryQuestionDialog(false)}
 					</Dialog.Root>
