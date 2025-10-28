@@ -5,7 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
-	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
+	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import type { TQuestion } from '$lib/types';
 
@@ -49,6 +49,22 @@
 		window.scrollTo({ top: 0, behavior: 'instant' });
 	}
 </script>
+
+{#snippet mandatoryQuestionDialog(lastPage: boolean)}
+	<Dialog.Content class="w-80 rounded-xl">
+		<Dialog.Title class="mt-4">Answer all mandatory questions!</Dialog.Title>
+		<Dialog.Description class="text-center"
+			>Please make sure all mandatory questions are answered
+			{#if !lastPage}
+				before proceeding to the next page
+			{:else}
+				before submitting the test
+			{/if}.
+		</Dialog.Description>
+
+		<Dialog.Close><Button class="mt-2 w-full">Okay</Button></Dialog.Close>
+	</Dialog.Content>
+{/snippet}
 
 {#if paginationReady}
 	<Pagination.Root count={totalQuestions} {perPage} bind:page={paginationPage}>
@@ -94,15 +110,19 @@
 								</div>
 							</Dialog.Content>
 						{:else}
-							<Dialog.Content class="w-80 rounded-xl">
-								<Dialog.Title class="mt-4">Answer all mandatory questions!</Dialog.Title>
-								<Dialog.Description>
-									Please make sure you have answered all the mandatory questions to submit the test.
-								</Dialog.Description>
-
-								<Dialog.Close><Button class="mt-2 w-full">Okay</Button></Dialog.Close>
-							</Dialog.Content>
+							{@render mandatoryQuestionDialog(true)}
 						{/if}
+					</Dialog.Root>
+				{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
+					<Dialog.Root>
+						<Dialog.Trigger>
+							<Pagination.NextButton
+								onclick={(e) => {
+									e.preventDefault();
+								}}
+							/>
+						</Dialog.Trigger>
+						{@render mandatoryQuestionDialog(false)}
 					</Dialog.Root>
 				{:else}
 					<Pagination.NextButton onclick={scrollToTop} />

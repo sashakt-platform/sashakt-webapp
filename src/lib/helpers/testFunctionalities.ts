@@ -16,3 +16,17 @@ export const answeredAllMandatory = (
 
 	return answeredMandatoryQuestions.length === mandatoryQuestionIds.length;
 };
+
+export const answeredCurrentMandatory = (
+	currentPage: number,
+	questionsPerPage: number,
+	answeredQuestions: TSelection[],
+	allQuestions: TQuestion[]
+) => {
+	const start = (currentPage - 1) * questionsPerPage;
+	const end = start + questionsPerPage;
+
+	const selectedQuestions = answeredQuestions.slice(start, end);
+	const currentQuestions = allQuestions.slice(start, end);
+	return answeredAllMandatory(selectedQuestions, currentQuestions);
+};
