@@ -5,14 +5,18 @@
 
 	let { resultData, testDetails } = $props();
 
-	const totalQuestions = [
-		resultData.correct_answer,
-		resultData.incorrect_answer,
-		resultData.mandatory_not_attempted,
-		resultData.optional_not_attempted
-	].reduce((sum, count) => sum + (count || 0), 0);
+	const totalQuestions = resultData
+		? [
+				resultData.correct_answer,
+				resultData.incorrect_answer,
+				resultData.mandatory_not_attempted,
+				resultData.optional_not_attempted
+			].reduce((sum, count) => sum + (count || 0), 0)
+		: 0;
 
-	const attempted = resultData.correct_answer + resultData.incorrect_answer;
+	const attempted = resultData
+		? (resultData.correct_answer || 0) + (resultData.incorrect_answer || 0)
+		: 0;
 	const notAttempted = totalQuestions - attempted;
 </script>
 
