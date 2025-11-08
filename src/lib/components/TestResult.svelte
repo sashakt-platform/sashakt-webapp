@@ -4,7 +4,14 @@
 	import * as Table from '$lib/components/ui/table/index.js';
 
 	let { resultData, testDetails } = $props();
-	const totalQuestions = testDetails.total_questions;
+
+	const totalQuestions = [
+		resultData.correct_answer,
+		resultData.incorrect_answer,
+		resultData.mandatory_not_attempted,
+		resultData.optional_not_attempted
+	].reduce((sum, count) => sum + (count || 0), 0);
+
 	const attempted = resultData.correct_answer + resultData.incorrect_answer;
 	const notAttempted = totalQuestions - attempted;
 </script>
