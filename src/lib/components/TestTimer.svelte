@@ -11,15 +11,14 @@
 
 	$effect(() => {
 		const intervalId = setInterval(() => {
-			if (timeLeft > 0) {
+			if (timeLeft === 10 * 60) open = true;
+			if (timeLeft === 0) {
+				open = true;
+				setTimeout(() => {
+					formElement?.requestSubmit();
+				}, 5000);
+			} else {
 				timeLeft--;
-				if (timeLeft === 10 * 60) open = true;
-				if (timeLeft === 0) {
-					open = true;
-					setTimeout(() => {
-						formElement?.requestSubmit();
-					}, 5000);
-				}
 			}
 		}, 1000);
 
@@ -61,7 +60,11 @@
 				</Dialog.Close>
 			</Dialog.Content>
 		{:else}
-			<Dialog.Content class="w-80 rounded-xl">
+			<Dialog.Content
+				class="w-80 rounded-xl text-center [&>button]:hidden"
+				interactOutsideBehavior="ignore"
+				escapeKeydownBehavior="ignore"
+			>
 				<Dialog.Title>Time Up!</Dialog.Title>
 				<Dialog.Description>The test has ended and will be auto submitted.</Dialog.Description>
 
