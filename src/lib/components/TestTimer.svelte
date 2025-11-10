@@ -14,6 +14,7 @@
 			if (timeLeft === 10 * 60) open = true;
 			if (timeLeft === 0) {
 				open = true;
+				clearInterval(intervalId);
 				setTimeout(() => {
 					formElement?.requestSubmit();
 				}, 5000);
