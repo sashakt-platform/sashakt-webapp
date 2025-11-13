@@ -105,6 +105,11 @@
 									<Dialog.Close><Button variant="outline" class="w-32">Cancel</Button></Dialog.Close
 									>
 									<form action="?/submitTest" method="POST" use:enhance>
+										<input
+											type="hidden"
+											name="selectedQuestions"
+											value={JSON.stringify(selectedQuestions)}
+										/>
 										<Button type="submit" class="w-32">Confirm</Button>
 									</form>
 								</div>
