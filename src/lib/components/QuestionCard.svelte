@@ -40,57 +40,94 @@
 		};
 	};
 
-	const removeOption = (questionId: number, optionId: number) => {
-		const next = selectedQuestions
-			.map((q) =>
-				q.question_revision_id === questionId
-					? { ...q, response: q.response.filter((id) => id !== optionId) }
-					: q
-			)
-			// prune the question if response became empty
-			.filter((q) => q.question_revision_id !== questionId || q.response.length > 0);
+	const removeOption = async (questionId: number, optionId: number) => {
+		const answeredQuestion = selectedQuestion(questionId);
+		if (!answeredQuestion) return;
 
-		selectedQuestions = next;
-		updateStore();
+		// calculate new response after removing the option
+		const newResponse = answeredQuestion.response.filter((id) => id !== optionId);
+
+		try {
+			// submit to backend first
+			await submitAnswer(questionId, newResponse);
+
+			// only update local state on success
+			const next = selectedQuestions
+				.map((q) =>
+					q.question_revision_id === questionId
+						? { ...q, response: q.response.filter((id) => id !== optionId) }
+						: q
+				)
+				// prune the question if response became empty
+				.filter((q) => q.question_revision_id !== questionId || q.response.length > 0);
+
+			selectedQuestions = next;
+			updateStore();
+		} catch (error) {
+			alert('Failed to save your answer. Please try again.');
+		}
 	};
 
-	const handleSelection = (questionId: number, response: number) => {
+	const handleSelection = async (questionId: number, optionId: number) => {
 		const answeredQuestion = selectedQuestion(questionId);
+		let newResponse: number[];
 
+		// calculate what the new response will be
 		if (answeredQuestion) {
 			if (question.question_type === 'single-choice') {
 				// for single choice type questions
-				answeredQuestion.response = [response];
+				newResponse = [optionId];
 			} else {
 				// for multi choice type questions
-				answeredQuestion.response = [...answeredQuestion.response, response];
+				newResponse = [...answeredQuestion.response, optionId];
 			}
 		} else {
-			selectedQuestions.push({
-				question_revision_id: questionId,
-				response: [response],
-				visited: true,
-				time_spent: 0
-			});
+			newResponse = [optionId];
 		}
-		updateStore();
-	};
-
-	const submitAnswer = async () => {
-		const data = {
-			...selectedQuestion(question.id),
-			candidate
-		};
-		if (!data.question_revision_id) return;
 
 		try {
-			return await fetch('/api/submit-answer', {
+			// submit to backend first
+			await submitAnswer(questionId, newResponse);
+
+			// only update local state on success
+			if (answeredQuestion) {
+				answeredQuestion.response = newResponse;
+			} else {
+				selectedQuestions.push({
+					question_revision_id: questionId,
+					response: newResponse,
+					visited: true,
+					time_spent: 0
+				});
+			}
+			updateStore();
+		} catch (error) {
+			alert('Failed to save your answer. Please try again.');
+		}
+	};
+
+	const submitAnswer = async (questionId: number, response: number[]) => {
+		const data = {
+			question_revision_id: questionId,
+			response,
+			candidate
+		};
+
+		try {
+			const res = await fetch('/api/submit-answer', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify(data)
 			});
+
+			if (!res.ok) {
+				const errorData = await res.json();
+				throw new Error(errorData.error || 'Failed to submit answer');
+			}
+
+			return await res.json();
 		} catch (error) {
 			console.error('Failed to submit answer:', error);
 			throw error;
@@ -126,8 +163,7 @@
 		{#if question.question_type === 'single-choice'}
 			<RadioGroup.Root
 				onValueChange={async (optionId) => {
-					handleSelection(question.id, Number(optionId));
-					submitAnswer();
+					await handleSelection(question.id, Number(optionId));
 				}}
 				value={selectedQuestion(question.id)?.response[0]?.toString()}
 			>
@@ -158,11 +194,9 @@
 							value={option.id.toString()}
 							class="float-end"
 							{checked}
-							onCheckedChange={(check) => {
-								if (check === false) removeOption(question.id, option.id);
-								else if (check === true) handleSelection(question.id, option.id);
-
-								submitAnswer();
+							onCheckedChange={async (check) => {
+								if (check === false) await removeOption(question.id, option.id);
+								else if (check === true) await handleSelection(question.id, option.id);
 							}}
 						/>
 					</Label>
