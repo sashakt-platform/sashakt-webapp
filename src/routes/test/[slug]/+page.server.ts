@@ -66,26 +66,31 @@ export const actions = {
 			};
 		}
 
-		const response = await fetch(`${BACKEND_URL}/candidate/start_test/`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(requestBody)
-		});
-		if (!response.ok) {
-			throw redirect(303, '/test/' + locals.testData.link);
+		try {
+			const response = await fetch(`${BACKEND_URL}/candidate/start_test/`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(requestBody)
+			});
+			if (!response.ok) {
+				return fail(response.status, { error: 'Failed to start test' });
+			}
+			const candidateData = await response.json();
+			cookies.set('sashakt-candidate', JSON.stringify(candidateData), {
+				expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
+				path: '/test/' + locals.testData.link,
+				httpOnly: true,
+				sameSite: 'lax',
+				secure: !dev
+			});
+			return {
+				success: true,
+				candidateData: candidateData
+			};
+		} catch (error) {
+			console.error('Error in createCandidate:', error);
+			return fail(500, { error: 'Cannot start test. Please check your internet connection.' });
 		}
-		const candidateData = await response.json();
-		cookies.set('sashakt-candidate', JSON.stringify(candidateData), {
-			expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
-			path: '/test/' + locals.testData.link,
-			httpOnly: true,
-			sameSite: 'lax',
-			secure: !dev
-		});
-		return {
-			success: true,
-			candidateData: candidateData
-		};
 	},
 
 	submitTest: async ({ cookies, fetch, locals }) => {
