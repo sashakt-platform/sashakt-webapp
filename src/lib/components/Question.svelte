@@ -12,6 +12,14 @@
 
 	let { candidate, testQuestions } = $props();
 	let isSubmittingTest = $state(false);
+
+	// show error alert when test submission fails
+	$effect(() => {
+		if (page.form?.error && page.form?.submitTest === false) {
+			alert('No internet connection. Please check your connection and try submitting again.');
+		}
+	});
+
 	const questions: TQuestion[] = testQuestions.question_revisions;
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
