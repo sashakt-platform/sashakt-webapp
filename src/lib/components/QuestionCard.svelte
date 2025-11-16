@@ -22,6 +22,9 @@
 
 	const options = question.options;
 
+	// key to force remount of RadioGroup on error, this is to prevent radio button from being checked
+	let radioGroupKey = $state(0);
+
 	const sessionStore = createTestSessionStore(candidate);
 	const selectedQuestion = (questionId: number) => {
 		return selectedQuestions.find((item) => item.question_revision_id === questionId);
@@ -41,57 +44,86 @@
 	};
 
 	const handleSelection = async (questionId: number, optionId: number, isRemoving = false) => {
-		// store the current state before making changes
-		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
-
-		// update UI first
 		const answeredQuestion = selectedQuestion(questionId);
-		let newResponse: number[];
 
+		// calculate the new response
+		let newResponse: number[];
 		if (isRemoving) {
-			// for removing option (multi-choice checkbox uncheck)
 			if (!answeredQuestion) return;
 			newResponse = answeredQuestion.response.filter((id) => id !== optionId);
-
-			const next = selectedQuestions
-				.map((q) =>
-					q.question_revision_id === questionId
-						? { ...q, response: q.response.filter((id) => id !== optionId) }
-						: q
-				)
-				// prune the question if response became empty
-				.filter((q) => q.question_revision_id !== questionId || q.response.length > 0);
-
-			selectedQuestions = next;
 		} else {
-			// for adding/selecting option
-			if (answeredQuestion) {
-				if (question.question_type === 'single-choice') {
-					answeredQuestion.response = [optionId];
-					newResponse = [optionId];
-				} else {
-					answeredQuestion.response = [...answeredQuestion.response, optionId];
-					newResponse = answeredQuestion.response;
-				}
-			} else {
+			if (question.question_type === 'single-choice') {
 				newResponse = [optionId];
-				selectedQuestions.push({
-					question_revision_id: questionId,
-					response: [optionId],
-					visited: true,
-					time_spent: 0
-				});
+			} else {
+				newResponse = answeredQuestion ? [...answeredQuestion.response, optionId] : [optionId];
 			}
 		}
-		updateStore();
 
-		try {
-			await submitAnswer(questionId, newResponse);
-		} catch (error) {
-			// revert to previous state on error
-			selectedQuestions = previousState;
+		if (question.question_type === 'single-choice' && !isRemoving) {
+			try {
+				await submitAnswer(questionId, newResponse);
+
+				// only update state on success
+				if (answeredQuestion) {
+					selectedQuestions = selectedQuestions.map((q) =>
+						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
+					);
+				} else {
+					selectedQuestions = [
+						...selectedQuestions,
+						{
+							question_revision_id: questionId,
+							response: newResponse,
+							visited: true,
+							time_spent: 0
+						}
+					];
+				}
+				updateStore();
+			} catch (error) {
+				// force complete remount of RadioGroup
+				radioGroupKey++;
+				alert('Failed to save your answer. Please try again.');
+			}
+		} else {
+			const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+
+			if (isRemoving) {
+				const next = selectedQuestions
+					.map((q) =>
+						q.question_revision_id === questionId
+							? { ...q, response: q.response.filter((id) => id !== optionId) }
+							: q
+					)
+					.filter((q) => q.question_revision_id !== questionId || q.response.length > 0);
+				selectedQuestions = next;
+			} else {
+				if (answeredQuestion) {
+					selectedQuestions = selectedQuestions.map((q) =>
+						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
+					);
+				} else {
+					selectedQuestions = [
+						...selectedQuestions,
+						{
+							question_revision_id: questionId,
+							response: newResponse,
+							visited: true,
+							time_spent: 0
+						}
+					];
+				}
+			}
 			updateStore();
-			alert('Failed to save your answer. Please try again.');
+
+			try {
+				await submitAnswer(questionId, newResponse);
+			} catch (error) {
+				// revert on error
+				selectedQuestions = previousState;
+				updateStore();
+				alert('Failed to save your answer. Please try again.');
+			}
 		}
 	};
 
@@ -150,28 +182,28 @@
 
 	<Card.Content class="p-5 pt-1">
 		{#if question.question_type === 'single-choice'}
-			<RadioGroup.Root
-				onValueChange={async (optionId) => {
-					await handleSelection(question.id, Number(optionId));
-				}}
-				value={selectedQuestion(question.id)?.response[0]?.toString()}
-			>
-				{#each options as option, index (index)}
-					{@const uid = `${question.id}-${option.key}`}
-					<Label
-						for={uid}
-						class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${isSelected(option.id) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
-					>
-						{option.key}. {option.value}
-						<RadioGroup.Item value={option.id.toString()} id={uid} class="float-end" />
-					</Label>
-				{/each}
-			</RadioGroup.Root>
+			{#key radioGroupKey}
+				<RadioGroup.Root
+					onValueChange={async (optionId) => {
+						await handleSelection(question.id, Number(optionId));
+					}}
+					value={selectedQuestion(question.id)?.response[0]?.toString()}
+				>
+					{#each options as option, index (index)}
+						{@const uid = `${question.id}-${option.key}`}
+						<Label
+							for={uid}
+							class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${isSelected(option.id) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
+						>
+							{option.key}. {option.value}
+							<RadioGroup.Item value={option.id.toString()} id={uid} class="float-end" />
+						</Label>
+					{/each}
+				</RadioGroup.Root>
+			{/key}
 		{:else}
 			{#each options as option (option.id)}
 				{@const uid = `${question.id}-${option.key}`}
-
-				{@const checked = isSelected(option.id)}
 				<div class="flex flex-row items-start space-x-3">
 					<Label
 						for={uid}
