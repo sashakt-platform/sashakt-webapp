@@ -123,7 +123,7 @@ export const actions = {
 			return { submitTest: false };
 		} catch (error) {
 			console.error('Error in submitTest:', error);
-			return fail(500, { error: 'Failed to submit test' });
+			return fail(500, { error: 'Failed to submit test', submitTest: false });
 		}
 	},
 
