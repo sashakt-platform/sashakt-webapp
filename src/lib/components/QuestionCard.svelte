@@ -40,63 +40,53 @@
 		};
 	};
 
-	const removeOption = async (questionId: number, optionId: number) => {
-		const answeredQuestion = selectedQuestion(questionId);
-		if (!answeredQuestion) return;
-
+	const handleSelection = async (questionId: number, optionId: number, isRemoving = false) => {
 		// store the current state before making changes
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 
 		// update UI first
-		const next = selectedQuestions
-			.map((q) =>
-				q.question_revision_id === questionId
-					? { ...q, response: q.response.filter((id) => id !== optionId) }
-					: q
-			)
-			// prune the question if response became empty
-			.filter((q) => q.question_revision_id !== questionId || q.response.length > 0);
+		const answeredQuestion = selectedQuestion(questionId);
+		let newResponse: number[];
 
-		selectedQuestions = next;
+		if (isRemoving) {
+			// for removing option (multi-choice checkbox uncheck)
+			if (!answeredQuestion) return;
+			newResponse = answeredQuestion.response.filter((id) => id !== optionId);
+
+			const next = selectedQuestions
+				.map((q) =>
+					q.question_revision_id === questionId
+						? { ...q, response: q.response.filter((id) => id !== optionId) }
+						: q
+				)
+				// prune the question if response became empty
+				.filter((q) => q.question_revision_id !== questionId || q.response.length > 0);
+
+			selectedQuestions = next;
+		} else {
+			// for adding/selecting option
+			if (answeredQuestion) {
+				if (question.question_type === 'single-choice') {
+					answeredQuestion.response = [optionId];
+					newResponse = [optionId];
+				} else {
+					answeredQuestion.response = [...answeredQuestion.response, optionId];
+					newResponse = answeredQuestion.response;
+				}
+			} else {
+				newResponse = [optionId];
+				selectedQuestions.push({
+					question_revision_id: questionId,
+					response: [optionId],
+					visited: true,
+					time_spent: 0
+				});
+			}
+		}
 		updateStore();
-
-		// calculate new response after removing the option
-		const newResponse = answeredQuestion.response.filter((id) => id !== optionId);
 
 		try {
 			await submitAnswer(questionId, newResponse);
-		} catch (error) {
-			// revert to previous state on error
-			selectedQuestions = previousState;
-			updateStore();
-			alert('Failed to save your answer. Please try again.');
-		}
-	};
-
-	const handleSelection = async (questionId: number, optionId: number) => {
-		// store the current state before making changes
-		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
-
-		// update UI first
-		const answeredQuestion = selectedQuestion(questionId);
-		if (answeredQuestion) {
-			if (question.question_type === 'single-choice') {
-				answeredQuestion.response = [optionId];
-			} else {
-				answeredQuestion.response = [...answeredQuestion.response, optionId];
-			}
-		} else {
-			selectedQuestions.push({
-				question_revision_id: questionId,
-				response: [optionId],
-				visited: true,
-				time_spent: 0
-			});
-		}
-		updateStore();
-
-		try {
-			await submitAnswer(questionId, answeredQuestion?.response || [optionId]);
 		} catch (error) {
 			// revert to previous state on error
 			selectedQuestions = previousState;
@@ -194,8 +184,7 @@
 							class="float-end"
 							checked={isSelected(option.id)}
 							onCheckedChange={async (check) => {
-								if (check === false) await removeOption(question.id, option.id);
-								else if (check === true) await handleSelection(question.id, option.id);
+								await handleSelection(question.id, option.id, check === false);
 							}}
 						/>
 					</Label>
