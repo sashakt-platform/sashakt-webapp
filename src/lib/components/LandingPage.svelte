@@ -71,12 +71,7 @@
 		</div>
 		{#if page.data?.timeToBegin === 0}
 			{#if testDetails.candidate_profile}
-				<Button onclick={handleStart} class="w-32" disabled={!isChecked || isStarting}>
-					{#if isStarting}
-						<Spinner />
-					{/if}
-					Start
-				</Button>
+				<Button onclick={handleStart} class="w-32" disabled={!isChecked}>Start</Button>
 			{:else}
 				<form
 					method="POST"
