@@ -3,6 +3,7 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import type { TCandidate, TQuestion, TSelection } from '$lib/types';
 
@@ -93,6 +94,10 @@
 				isSubmitting = false;
 			}
 		} else {
+			if (isSubmitting) {
+				return;
+			}
+			isSubmitting = true;
 			const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 
 			if (isRemoving) {
@@ -130,6 +135,8 @@
 				selectedQuestions = previousState;
 				updateStore();
 				alert('Failed to save your answer. Please try again.');
+			} finally {
+				isSubmitting = false;
 			}
 		}
 	};
@@ -163,7 +170,9 @@
 	};
 </script>
 
-<Card.Root class="mb-4 w-82 rounded-xl shadow-md">
+<Card.Root
+	class="mb-4 w-82 rounded-xl shadow-md {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
+>
 	<Card.Header class="p-5">
 		<Card.Title class="mb-5 border-b pb-3 text-sm">
 			{serialNumber} <span>OF {totalQuestions}</span>
@@ -172,6 +181,9 @@
 				<span class="text-muted-foreground float-end"
 					>{mark === 1 ? '1 Mark' : `${mark} Marks`}</span
 				>
+			{/if}
+			{#if isSubmitting}
+				<span class="float-end mr-2"><Spinner /></span>
 			{/if}
 		</Card.Title>
 		<Card.Description class="text-base/normal font-medium">
