@@ -4,6 +4,7 @@ import { getCandidate } from '$lib/helpers/getCandidate';
 import { getTestQuestions, getTimeLeft } from '$lib/server/test';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import type { TSelection } from '$lib/types';
 
 export const load: PageServerLoad = async ({ locals, cookies }) => {
 	const candidate = getCandidate(cookies);
@@ -88,7 +89,9 @@ export const actions = {
 		};
 	},
 
-	submitTest: async ({ cookies, fetch, locals }) => {
+	submitTest: async ({ cookies, fetch, locals, request }) => {
+		const data = await request.formData();
+		const selectedQuestions = data.get('selectedQuestions') as string;
 		const candidate = getCandidate(cookies);
 		if (!candidate) {
 			return fail(400, { candidate, missing: true });
@@ -99,31 +102,49 @@ export const actions = {
 		};
 
 		try {
-			const response = await fetch(candidateUrl('submit_test'), {
+			const response = await fetch(candidateUrl('submit_answers'), {
 				method: 'POST',
-				headers: { accept: 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					answers: JSON.parse(selectedQuestions).map((question: TSelection) => ({
+						question_revision_id: question.question_revision_id,
+						response: JSON.stringify(question.response),
+						visited: question.visited ?? false,
+						time_spent: question.time_spent ?? 0
+					}))
+				})
 			});
+			if (response.ok) {
+				try {
+					const response = await fetch(candidateUrl('submit_test'), {
+						method: 'POST',
+						headers: { accept: 'application/json' }
+					});
 
-			if (response.status === 200 || response.status === 400) {
-				const result = await fetch(candidateUrl('result'), {
-					method: 'GET',
-					headers: { accept: 'application/json' }
-				});
+					if (response.status === 200 || response.status === 400) {
+						const result = await fetch(candidateUrl('result'), {
+							method: 'GET',
+							headers: { accept: 'application/json' }
+						});
 
-				if (!result.ok) return fail(400, { result: false, submitTest: true });
+						if (!result.ok) return fail(400, { result: false, submitTest: true });
 
-				cookies.delete('sashakt-candidate', {
-					path: '/test/' + locals.testData.link,
-					secure: !dev
-				});
+						cookies.delete('sashakt-candidate', {
+							path: '/test/' + locals.testData.link,
+							secure: !dev
+						});
 
-				return { result: await result.json(), submitTest: true };
+						return { result: await result.json(), submitTest: true };
+					}
+
+					return { submitTest: false };
+				} catch (error) {
+					console.error('Error in submitTest:', error);
+					return fail(500, { error: 'Failed to submit test' });
+				}
 			}
-
-			return { submitTest: false };
 		} catch (error) {
-			console.error('Error in submitTest:', error);
-			return fail(500, { error: 'Failed to submit test' });
+			console.error('Error in submitAnswers:', error);
 		}
 	},
 
