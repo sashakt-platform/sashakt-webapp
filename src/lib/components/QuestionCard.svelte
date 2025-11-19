@@ -45,6 +45,7 @@
 
 	const handleSelection = async (questionId: number, optionId: number, isRemoving = false) => {
 		const answeredQuestion = selectedQuestion(questionId);
+		let isSubmitting = false;
 
 		// calculate the new response
 		let newResponse: number[];
@@ -60,11 +61,19 @@
 		}
 
 		if (question.question_type === 'single-choice' && !isRemoving) {
+			if (isSubmitting) {
+				return;
+			}
+
+			isSubmitting = true;
+
 			try {
 				await submitAnswer(questionId, newResponse);
 
-				// only update state on success
-				if (answeredQuestion) {
+				// Re-check after async operation completes
+				const answeredQuestionAfterSubmit = selectedQuestion(questionId);
+
+				if (answeredQuestionAfterSubmit) {
 					selectedQuestions = selectedQuestions.map((q) =>
 						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
 					);
@@ -84,6 +93,8 @@
 				// force complete remount of RadioGroup
 				radioGroupKey++;
 				alert('Failed to save your answer. Please try again.');
+			} finally {
+				isSubmitting = false;
 			}
 		} else {
 			const previousState = JSON.parse(JSON.stringify(selectedQuestions));
