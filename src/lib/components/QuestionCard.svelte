@@ -24,6 +24,7 @@
 
 	// key to force remount of RadioGroup on error, this is to prevent radio button from being checked
 	let radioGroupKey = $state(0);
+	let isSubmitting = $state(false);
 
 	const sessionStore = createTestSessionStore(candidate);
 	const selectedQuestion = (questionId: number) => {
@@ -60,6 +61,10 @@
 		}
 
 		if (question.question_type === 'single-choice' && !isRemoving) {
+			if (isSubmitting) {
+				return;
+			}
+			isSubmitting = true;
 			try {
 				await submitAnswer(questionId, newResponse);
 
@@ -84,6 +89,8 @@
 				// force complete remount of RadioGroup
 				radioGroupKey++;
 				alert('Failed to save your answer. Please try again.');
+			} finally {
+				isSubmitting = false;
 			}
 		} else {
 			const previousState = JSON.parse(JSON.stringify(selectedQuestions));
