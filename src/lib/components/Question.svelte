@@ -27,6 +27,13 @@
 		}
 	});
 
+	// let's clear the error when dialog is closed or canceled
+	$effect(() => {
+		if (!submitDialogOpen) {
+			submitError = null;
+		}
+	});
+
 	const questions: TQuestion[] = testQuestions.question_revisions;
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
