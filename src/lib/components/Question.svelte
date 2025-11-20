@@ -8,6 +8,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
+	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import type { TQuestion } from '$lib/types';
 
 	let { candidate, testQuestions } = $props();
@@ -66,27 +67,12 @@
 	}
 
 	// enhance handler for submit test action
-	function handleSubmitTestEnhance() {
-		isSubmittingTest = true;
-		submitError = null;
-
-		return async ({ result, update }: any) => {
-			if (result.type === 'failure') {
-				// server returned an error - let SvelteKit handle it normally
-				await update();
-				isSubmittingTest = false;
-			} else if (result.type === 'error') {
-				// network error or other error - prevent navigation
-				submitError = 'Something went wrong. Please check your connection and try again.';
-				submitDialogOpen = true;
-				isSubmittingTest = false;
-			} else {
-				// success - let SvelteKit handle it normally
-				await update();
-				isSubmittingTest = false;
-			}
-		};
-	}
+	const handleSubmitTestEnhance = createFormEnhanceHandler({
+		setLoading: (loading) => (isSubmittingTest = loading),
+		setError: (error) => (submitError = error),
+		setDialogOpen: (open) => (submitDialogOpen = open),
+		networkErrorMessage: 'Something went wrong. Please check your connection and try again.'
+	});
 </script>
 
 {#snippet mandatoryQuestionDialog(lastPage: boolean)}
