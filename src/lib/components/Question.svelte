@@ -67,11 +67,10 @@
 
 	// enhance handler for submit test action
 	function handleSubmitTestEnhance() {
-		return async ({ result, update }: any) => {
-			// clear previous errors on new submission attempt
-			submitError = null;
-			isSubmittingTest = true;
+		isSubmittingTest = true;
+		submitError = null;
 
+		return async ({ result, update }: any) => {
 			if (result.type === 'failure') {
 				// server returned an error - let SvelteKit handle it normally
 				await update();
