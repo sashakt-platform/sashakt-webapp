@@ -47,6 +47,7 @@ export function createFormEnhanceHandler(options: FormEnhanceOptions = {}) {
 				setLoading?.(false);
 			} else {
 				// success
+				setError?.(null);
 				await update();
 				setLoading?.(false);
 			}
