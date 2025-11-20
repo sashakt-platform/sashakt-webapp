@@ -66,12 +66,11 @@
 		window.scrollTo({ top: 0, behavior: 'instant' });
 	}
 
-	// enhance handler for submit test action
+	// enhance handler for submitTest form action
 	const handleSubmitTestEnhance = createFormEnhanceHandler({
 		setLoading: (loading) => (isSubmittingTest = loading),
 		setError: (error) => (submitError = error),
-		setDialogOpen: (open) => (submitDialogOpen = open),
-		networkErrorMessage: 'Something went wrong. Please check your connection and try again.'
+		setDialogOpen: (open) => (submitDialogOpen = open)
 	});
 </script>
 

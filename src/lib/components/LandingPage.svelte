@@ -7,18 +7,26 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import PreTestTimer from './PreTestTimer.svelte';
 
 	let { testDetails, showProfileForm = $bindable() } = $props();
 
 	let isChecked = $state(false);
 	let isStarting = $state(false);
+	let createError = $state<string | null>(null);
 
 	function handleStart() {
 		if (testDetails.candidate_profile && page.data?.timeToBegin === 0) {
 			showProfileForm = true;
 		}
 	}
+
+	// enhance handler for createCandidate form action
+	const handleCreateCandidateEnhance = createFormEnhanceHandler({
+		setLoading: (loading) => (isStarting = loading),
+		setError: (error) => (createError = error)
+	});
 
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
@@ -73,31 +81,26 @@
 			{#if testDetails.candidate_profile}
 				<Button onclick={handleStart} class="w-32" disabled={!isChecked}>Start</Button>
 			{:else}
-				<form
-					method="POST"
-					action="?/createCandidate"
-					use:enhance={() => {
-						isStarting = true;
-						return async ({ update }) => {
-							await update();
-							isStarting = false;
-						};
-					}}
-				>
-					<input
-						name="deviceInfo"
-						value={() => {
-							if (browser) return JSON.stringify(navigator.userAgent);
-						}}
-						hidden
-					/>
-					<Button type="submit" class="w-32" disabled={!isChecked || isStarting}>
-						{#if isStarting}
-							<Spinner />
-						{/if}
-						Start
-					</Button>
-				</form>
+				<div class="flex flex-col items-end gap-2">
+					{#if createError}
+						<p class="text-destructive text-sm">{createError}</p>
+					{/if}
+					<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
+						<input
+							name="deviceInfo"
+							value={() => {
+								if (browser) return JSON.stringify(navigator.userAgent);
+							}}
+							hidden
+						/>
+						<Button type="submit" class="w-32" disabled={!isChecked || isStarting}>
+							{#if isStarting}
+								<Spinner />
+							{/if}
+							Start
+						</Button>
+					</form>
+				</div>
 			{/if}
 		{:else}
 			<Dialog.Root>
