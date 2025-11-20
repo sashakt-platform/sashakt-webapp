@@ -6,11 +6,13 @@
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import PreTestTimer from './PreTestTimer.svelte';
 
 	let { testDetails, showProfileForm = $bindable() } = $props();
 
 	let isChecked = $state(false);
+	let isStarting = $state(false);
 
 	function handleStart() {
 		if (testDetails.candidate_profile && page.data?.timeToBegin === 0) {
@@ -71,7 +73,17 @@
 			{#if testDetails.candidate_profile}
 				<Button onclick={handleStart} class="w-32" disabled={!isChecked}>Start</Button>
 			{:else}
-				<form method="POST" action="?/createCandidate" use:enhance>
+				<form
+					method="POST"
+					action="?/createCandidate"
+					use:enhance={() => {
+						isStarting = true;
+						return async ({ update }) => {
+							await update();
+							isStarting = false;
+						};
+					}}
+				>
 					<input
 						name="deviceInfo"
 						value={() => {
@@ -79,7 +91,12 @@
 						}}
 						hidden
 					/>
-					<Button type="submit" class="w-32" disabled={!isChecked}>Start</Button>
+					<Button type="submit" class="w-32" disabled={!isChecked || isStarting}>
+						{#if isStarting}
+							<Spinner />
+						{/if}
+						Start
+					</Button>
 				</form>
 			{/if}
 		{:else}

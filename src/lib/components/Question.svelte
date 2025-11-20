@@ -5,11 +5,13 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import type { TQuestion } from '$lib/types';
 
 	let { candidate, testQuestions } = $props();
+	let isSubmittingTest = $state(false);
 	const questions: TQuestion[] = testQuestions.question_revisions;
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
@@ -102,10 +104,28 @@
 									{/if}
 								</Dialog.Description>
 								<div class="mt-2 inline-flex items-center justify-between">
-									<Dialog.Close><Button variant="outline" class="w-32">Cancel</Button></Dialog.Close
+									<Dialog.Close
+										><Button variant="outline" class="w-32" disabled={isSubmittingTest}
+											>Cancel</Button
+										></Dialog.Close
 									>
-									<form action="?/submitTest" method="POST" use:enhance>
-										<Button type="submit" class="w-32">Confirm</Button>
+									<form
+										action="?/submitTest"
+										method="POST"
+										use:enhance={() => {
+											isSubmittingTest = true;
+											return async ({ update }) => {
+												await update();
+												isSubmittingTest = false;
+											};
+										}}
+									>
+										<Button type="submit" class="w-32" disabled={isSubmittingTest}>
+											{#if isSubmittingTest}
+												<Spinner />
+											{/if}
+											Confirm
+										</Button>
 									</form>
 								</div>
 							</Dialog.Content>

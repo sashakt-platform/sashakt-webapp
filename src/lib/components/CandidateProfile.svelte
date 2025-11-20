@@ -4,6 +4,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Card from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
+	import { Spinner } from '$lib/components/ui/spinner';
 
 	interface EntityOption {
 		label: string;
@@ -12,6 +13,7 @@
 
 	let { testDetails } = $props();
 	let selectedEntity = $state(0);
+	let isSubmitting = $state(false);
 
 	const entityOptions: EntityOption[] = [];
 
@@ -36,10 +38,26 @@
 			<Card.Description></Card.Description>
 		</Card.Header>
 		<Card.Content>
-			<form method="POST" action="?/createCandidate" use:enhance class="space-y-4">
+			<form
+				method="POST"
+				action="?/createCandidate"
+				use:enhance={() => {
+					isSubmitting = true;
+					return async ({ update }) => {
+						await update();
+						isSubmitting = false;
+					};
+				}}
+				class="space-y-4"
+			>
 				<div class="space-y-2">
 					<Label for="entity">CLF *</Label>
-					<Select.Root type="single" name="entity" bind:value={selectedEntity}>
+					<Select.Root
+						type="single"
+						name="entity"
+						bind:value={selectedEntity}
+						disabled={isSubmitting}
+					>
 						<Select.Trigger class="w-full">
 							{triggerContent}
 						</Select.Trigger>
@@ -58,7 +76,12 @@
 				<input name="deviceInfo" value={JSON.stringify(navigator?.userAgent || '')} hidden />
 
 				<div class="pt-4">
-					<Button type="submit" class="w-full" disabled={!isFormValid}>Continue to Test</Button>
+					<Button type="submit" class="w-full" disabled={!isFormValid || isSubmitting}>
+						{#if isSubmitting}
+							<Spinner />
+						{/if}
+						Continue to Test
+					</Button>
 				</div>
 			</form>
 		</Card.Content>
