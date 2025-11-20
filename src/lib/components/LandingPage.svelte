@@ -69,6 +69,16 @@
 	</div>
 </section>
 
+{#if createError}
+	<div class="fixed right-0 bottom-20 left-0 z-20 mx-auto w-3/5 px-4">
+		<div
+			class="text-destructive border-destructive bg-destructive/10 rounded-lg border p-3 text-sm"
+		>
+			{createError}
+		</div>
+	</div>
+{/if}
+
 <div class="fixed bottom-0 z-20 w-screen bg-white p-4">
 	<div class="mx-auto flex items-center justify-around space-x-3 sm:w-3/5">
 		<div class="flex items-center space-x-2">
@@ -81,26 +91,21 @@
 			{#if testDetails.candidate_profile}
 				<Button onclick={handleStart} class="w-32" disabled={!isChecked}>Start</Button>
 			{:else}
-				<div class="flex flex-col items-end gap-2">
-					{#if createError}
-						<p class="text-destructive text-sm">{createError}</p>
-					{/if}
-					<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
-						<input
-							name="deviceInfo"
-							value={() => {
-								if (browser) return JSON.stringify(navigator.userAgent);
-							}}
-							hidden
-						/>
-						<Button type="submit" class="w-32" disabled={!isChecked || isStarting}>
-							{#if isStarting}
-								<Spinner />
-							{/if}
-							Start
-						</Button>
-					</form>
-				</div>
+				<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
+					<input
+						name="deviceInfo"
+						value={() => {
+							if (browser) return JSON.stringify(navigator.userAgent);
+						}}
+						hidden
+					/>
+					<Button type="submit" class="w-32" disabled={!isChecked || isStarting}>
+						{#if isStarting}
+							<Spinner />
+						{/if}
+						Start
+					</Button>
+				</form>
 			{/if}
 		{:else}
 			<Dialog.Root>
