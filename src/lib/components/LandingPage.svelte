@@ -7,18 +7,26 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import PreTestTimer from './PreTestTimer.svelte';
 
 	let { testDetails, showProfileForm = $bindable() } = $props();
 
 	let isChecked = $state(false);
 	let isStarting = $state(false);
+	let createError = $state<string | null>(null);
 
 	function handleStart() {
 		if (testDetails.candidate_profile && page.data?.timeToBegin === 0) {
 			showProfileForm = true;
 		}
 	}
+
+	// enhance handler for createCandidate form action
+	const handleCreateCandidateEnhance = createFormEnhanceHandler({
+		setLoading: (loading) => (isStarting = loading),
+		setError: (error) => (createError = error)
+	});
 
 	const testOverview = [
 		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
@@ -61,6 +69,16 @@
 	</div>
 </section>
 
+{#if createError}
+	<div class="fixed right-0 bottom-20 left-0 z-20 mx-auto w-3/5 px-4">
+		<div
+			class="text-destructive border-destructive bg-destructive/10 rounded-lg border p-3 text-sm"
+		>
+			{createError}
+		</div>
+	</div>
+{/if}
+
 <div class="fixed bottom-0 z-20 w-screen bg-white p-4">
 	<div class="mx-auto flex items-center justify-around space-x-3 sm:w-3/5">
 		<div class="flex items-center space-x-2">
@@ -73,17 +91,7 @@
 			{#if testDetails.candidate_profile}
 				<Button onclick={handleStart} class="w-32" disabled={!isChecked}>Start</Button>
 			{:else}
-				<form
-					method="POST"
-					action="?/createCandidate"
-					use:enhance={() => {
-						isStarting = true;
-						return async ({ update }) => {
-							await update();
-							isStarting = false;
-						};
-					}}
-				>
+				<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
 					<input
 						name="deviceInfo"
 						value={() => {

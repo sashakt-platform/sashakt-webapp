@@ -2,12 +2,16 @@
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { Clock } from '@lucide/svelte';
 
 	let { timeLeft: initialTime } = $props();
 	let formElement = $state<HTMLFormElement>();
 	let timeLeft = $state(initialTime);
 	let open = $state(false);
+	let isSubmitting = $state(false);
+	let submitError = $state<string | null>(null);
 
 	$effect(() => {
 		const intervalId = setInterval(() => {
@@ -40,6 +44,13 @@
 			secs.toString().padStart(2, '0')
 		].join(':');
 	};
+
+	// enhance handler for auto-submit form action
+	const handleSubmitTestEnhance = createFormEnhanceHandler({
+		setLoading: (loading) => (isSubmitting = loading),
+		setError: (error) => (submitError = error),
+		setDialogOpen: (openState) => (open = openState)
+	});
 </script>
 
 <div
@@ -62,11 +73,36 @@
 			</Dialog.Content>
 		{:else}
 			<Dialog.Content class="w-80 rounded-xl">
-				<Dialog.Title>Time Up!</Dialog.Title>
-				<Dialog.Description>The test has ended and will be auto submitted.</Dialog.Description>
+				<Dialog.Title>
+					{#if submitError}
+						Submission Failed
+					{:else}
+						Time Up!
+					{/if}
+				</Dialog.Title>
+				<Dialog.Description>
+					{#if submitError}
+						<div class="text-destructive">
+							<p class="mb-2">{submitError}</p>
+							<p class="text-muted-foreground">Please click Submit again to retry.</p>
+						</div>
+					{:else}
+						The test has ended and will be auto submitted.
+					{/if}
+				</Dialog.Description>
 
-				<form action="?/submitTest" method="POST" use:enhance bind:this={formElement}>
-					<Button type="submit" class="w-32">Submit</Button>
+				<form
+					action="?/submitTest"
+					method="POST"
+					use:enhance={handleSubmitTestEnhance}
+					bind:this={formElement}
+				>
+					<Button type="submit" class="w-32" disabled={isSubmitting}>
+						{#if isSubmitting}
+							<Spinner />
+						{/if}
+						Submit
+					</Button>
 				</form>
 			</Dialog.Content>
 		{/if}

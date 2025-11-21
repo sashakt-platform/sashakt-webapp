@@ -26,6 +26,7 @@
 	// key to force remount of RadioGroup on error, this is to prevent radio button from being checked
 	let radioGroupKey = $state(0);
 	let isSubmitting = $state(false);
+	let saveError = $state<string | null>(null);
 
 	const sessionStore = createTestSessionStore(candidate);
 	const selectedQuestion = (questionId: number) => {
@@ -66,6 +67,7 @@
 				return;
 			}
 			isSubmitting = true;
+			saveError = null;
 			try {
 				await submitAnswer(questionId, newResponse);
 
@@ -89,7 +91,9 @@
 			} catch (error) {
 				// force complete remount of RadioGroup
 				radioGroupKey++;
-				alert('Failed to save your answer. Please try again.');
+				saveError = 'Failed to save your answer. Please try again.';
+				// clear error after 5 seconds
+				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
 			}
@@ -98,6 +102,7 @@
 				return;
 			}
 			isSubmitting = true;
+			saveError = null;
 			const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 
 			if (isRemoving) {
@@ -134,7 +139,9 @@
 				// revert on error
 				selectedQuestions = previousState;
 				updateStore();
-				alert('Failed to save your answer. Please try again.');
+				saveError = 'Failed to save your answer. Please try again.';
+				// clear error after 5 seconds
+				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
 			}
@@ -200,6 +207,13 @@
 	</Card.Header>
 
 	<Card.Content class="p-5 pt-1">
+		{#if saveError}
+			<div
+				class="border-destructive bg-destructive/10 text-destructive mb-4 rounded-lg border p-3 text-sm"
+			>
+				{saveError}
+			</div>
+		{/if}
 		{#if question.question_type === 'single-choice'}
 			{#key radioGroupKey}
 				<RadioGroup.Root

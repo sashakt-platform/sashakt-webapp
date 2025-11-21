@@ -8,10 +8,32 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
+	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import type { TQuestion } from '$lib/types';
 
 	let { candidate, testQuestions } = $props();
 	let isSubmittingTest = $state(false);
+
+	// for controlling confirmation dialog display
+	let submitDialogOpen = $state(false);
+
+	// track network/submission errors
+	let submitError = $state<string | null>(null);
+
+	// let's keep dialog open when we get a submission error (from server or network)
+	$effect(() => {
+		if (page.form?.submitTest === false || page.form?.error || submitError) {
+			submitDialogOpen = true;
+		}
+	});
+
+	// let's clear the error when dialog is closed or canceled
+	$effect(() => {
+		if (!submitDialogOpen) {
+			submitError = null;
+		}
+	});
+
 	const questions: TQuestion[] = testQuestions.question_revisions;
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
@@ -50,6 +72,13 @@
 	function scrollToTop() {
 		window.scrollTo({ top: 0, behavior: 'instant' });
 	}
+
+	// enhance handler for submitTest form action
+	const handleSubmitTestEnhance = createFormEnhanceHandler({
+		setLoading: (loading) => (isSubmittingTest = loading),
+		setError: (error) => (submitError = error),
+		setDialogOpen: (open) => (submitDialogOpen = open)
+	});
 </script>
 
 {#snippet mandatoryQuestionDialog(lastPage: boolean)}
@@ -88,16 +117,31 @@
 				<Pagination.PrevButton onclick={scrollToTop} />
 
 				{#if currentPage === Math.ceil(totalQuestions / perPage)}
-					<Dialog.Root>
+					<Dialog.Root bind:open={submitDialogOpen}>
 						<Dialog.Trigger>
 							<Button>Submit</Button>
 						</Dialog.Trigger>
 						{#if answeredAllMandatory(selectedQuestions, questions)}
 							<Dialog.Content class="w-80 rounded-xl">
-								<Dialog.Title>Submit test?</Dialog.Title>
+								<Dialog.Title>
+									{#if submitError || page.form?.submitTest === false || page.form?.error}
+										Submission Failed
+									{:else}
+										Submit test?
+									{/if}
+								</Dialog.Title>
 								<Dialog.Description>
-									{#if page.form?.submitTest === false}
-										Please try submitting again. There was an issue with your previous submission.
+									{#if submitError || page.form?.submitTest === false || page.form?.error}
+										<div class="text-destructive">
+											{#if submitError}
+												<p class="mb-2">{submitError}</p>
+											{:else if page.form?.error}
+												<p class="mb-2">{page.form.error}</p>
+											{:else}
+												<p class="mb-2">There was an issue with your previous submission.</p>
+											{/if}
+											<p class="text-muted-foreground">Please click Confirm again to retry.</p>
+										</div>
 									{:else}
 										Are you sure you want to submit for final marking? No changes will be allowed
 										after submission.
@@ -109,17 +153,7 @@
 											>Cancel</Button
 										></Dialog.Close
 									>
-									<form
-										action="?/submitTest"
-										method="POST"
-										use:enhance={() => {
-											isSubmittingTest = true;
-											return async ({ update }) => {
-												await update();
-												isSubmittingTest = false;
-											};
-										}}
-									>
+									<form action="?/submitTest" method="POST" use:enhance={handleSubmitTestEnhance}>
 										<Button type="submit" class="w-32" disabled={isSubmittingTest}>
 											{#if isSubmittingTest}
 												<Spinner />

@@ -5,6 +5,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 
 	interface EntityOption {
 		label: string;
@@ -14,6 +15,7 @@
 	let { testDetails } = $props();
 	let selectedEntity = $state(0);
 	let isSubmitting = $state(false);
+	let createError = $state<string | null>(null);
 
 	const entityOptions: EntityOption[] = [];
 
@@ -26,6 +28,12 @@
 	);
 
 	let isFormValid = $derived(selectedEntity > 0);
+
+	// enhance handler for createCandidate form action
+	const handleCreateCandidateEnhance = createFormEnhanceHandler({
+		setLoading: (loading) => (isSubmitting = loading),
+		setError: (error) => (createError = error)
+	});
 </script>
 
 <section class="mx-auto max-w-xl p-6">
@@ -41,13 +49,7 @@
 			<form
 				method="POST"
 				action="?/createCandidate"
-				use:enhance={() => {
-					isSubmitting = true;
-					return async ({ update }) => {
-						await update();
-						isSubmitting = false;
-					};
-				}}
+				use:enhance={handleCreateCandidateEnhance}
 				class="space-y-4"
 			>
 				<div class="space-y-2">
@@ -72,6 +74,10 @@
 						</Select.Content>
 					</Select.Root>
 				</div>
+
+				{#if createError}
+					<p class="text-destructive text-sm">{createError}</p>
+				{/if}
 
 				<input name="deviceInfo" value={JSON.stringify(navigator?.userAgent || '')} hidden />
 
