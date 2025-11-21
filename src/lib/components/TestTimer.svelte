@@ -91,7 +91,7 @@
 							<p class="text-muted-foreground">Please click Submit again to retry.</p>
 						</div>
 					{:else}
-						The test has ended and will be auto submitted.
+						The test has ended.
 					{/if}
 				</Dialog.Description>
 
@@ -101,12 +101,14 @@
 					use:enhance={handleSubmitTestEnhance}
 					bind:this={formElement}
 				>
-					<Button type="submit" class="w-32" disabled={isSubmitting}>
-						{#if isSubmitting}
-							<Spinner />
-						{/if}
-						Submit
-					</Button>
+					{#if timeLeft > 0 || submitError}
+						<Button type="submit" class="w-32" disabled={isSubmitting}>
+							{#if isSubmitting}
+								<Spinner />
+							{/if}
+							Submit
+						</Button>
+					{/if}
 				</form>
 			</Dialog.Content>
 		{/if}
