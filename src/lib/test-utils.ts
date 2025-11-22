@@ -2,6 +2,7 @@
  * Test utilities and mock data for unit tests
  */
 
+import { vi } from 'vitest';
 import type { TCandidate, TQuestion, TSelection, TTestSession } from './types';
 
 // Mock candidate data
@@ -126,15 +127,15 @@ export const mockResultData = {
 
 // Mock cookies interface for testing
 export const createMockCookies = (cookieStore: Record<string, string> = {}) => ({
-	get: (name: string) => cookieStore[name] || undefined,
-	set: (name: string, value: string, _options?: any) => {
+	get: vi.fn((name: string) => cookieStore[name] || undefined),
+	set: vi.fn((name: string, value: string, _options?: any) => {
 		cookieStore[name] = value;
-	},
-	delete: (name: string, _options?: any) => {
+	}),
+	delete: vi.fn((name: string, _options?: any) => {
 		delete cookieStore[name];
-	},
-	getAll: () => Object.entries(cookieStore).map(([name, value]) => ({ name, value })),
-	serialize: () => ''
+	}),
+	getAll: vi.fn(() => Object.entries(cookieStore).map(([name, value]) => ({ name, value }))),
+	serialize: vi.fn(() => '')
 });
 
 // Helper to create mock fetch response
