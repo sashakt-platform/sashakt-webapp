@@ -15,15 +15,15 @@
 
 	$effect(() => {
 		const intervalId = setInterval(() => {
-			if (timeLeft > 0) {
+			if (timeLeft === 10 * 60) open = true;
+			if (timeLeft === 0) {
+				open = true;
+				clearInterval(intervalId);
+				setTimeout(() => {
+					formElement?.requestSubmit();
+				}, 5000);
+			} else {
 				timeLeft--;
-				if (timeLeft === 10 * 60) open = true;
-				if (timeLeft === 0) {
-					open = true;
-					setTimeout(() => {
-						formElement?.requestSubmit();
-					}, 5000);
-				}
 			}
 		}, 1000);
 
@@ -72,7 +72,11 @@
 				</Dialog.Close>
 			</Dialog.Content>
 		{:else}
-			<Dialog.Content class="w-80 rounded-xl">
+			<Dialog.Content
+				class="w-80 rounded-xl text-center [&>button]:hidden"
+				interactOutsideBehavior="ignore"
+				escapeKeydownBehavior="ignore"
+			>
 				<Dialog.Title>
 					{#if submitError}
 						Submission Failed
@@ -87,7 +91,7 @@
 							<p class="text-muted-foreground">Please click Submit again to retry.</p>
 						</div>
 					{:else}
-						The test has ended and will be auto submitted.
+						The test has ended.
 					{/if}
 				</Dialog.Description>
 
@@ -97,12 +101,14 @@
 					use:enhance={handleSubmitTestEnhance}
 					bind:this={formElement}
 				>
-					<Button type="submit" class="w-32" disabled={isSubmitting}>
-						{#if isSubmitting}
-							<Spinner />
-						{/if}
-						Submit
-					</Button>
+					{#if timeLeft > 0 || submitError}
+						<Button type="submit" class="w-32" disabled={isSubmitting}>
+							{#if isSubmitting}
+								<Spinner />
+							{/if}
+							Submit
+						</Button>
+					{/if}
 				</form>
 			</Dialog.Content>
 		{/if}

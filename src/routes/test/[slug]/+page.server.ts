@@ -10,15 +10,18 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 
 	if (candidate && candidate.candidate_test_id && candidate.candidate_uuid) {
 		try {
-			const testQuestionsResponse = await getTestQuestions(
-				candidate.candidate_test_id,
-				candidate.candidate_uuid
-			);
-
 			const timerResponse = await getTimeLeft(
 				candidate.candidate_test_id,
 				candidate.candidate_uuid
 			);
+			let testQuestionsResponse = null;
+
+			if (timerResponse.time_left == null || timerResponse.time_left > 0) {
+				testQuestionsResponse = await getTestQuestions(
+					candidate.candidate_test_id,
+					candidate.candidate_uuid
+				);
+			}
 
 			return {
 				candidate,
