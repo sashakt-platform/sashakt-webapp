@@ -1,10 +1,12 @@
 # Sashakt web app
 
-This builds the frontend interface for managing Sashakt platform.
+[![codecov](https://codecov.io/gh/sashakt-platform/sashakt-webapp/graph/badge.svg?token=VI097YR23K)](https://codecov.io/gh/sashakt-platform/sashakt-webapp)  [![Test status](https://github.com/sashakt-platform/sashakt-webapp/actions/workflows/test-run.yml/badge.svg)](https://github.com/sashakt-platform/sashakt-webapp/actions/workflows/test-run.yml)
+
+This builds the test taker's frontend interface for the Sashakt platform.
 
 ## Developing
 
-Clone this repo and installed dependencies with `pnpm install`, start a development server:
+Clone this repo and install dependencies with `pnpm install`, start a development server:
 
 ```bash
 pnpm run dev
@@ -25,4 +27,4 @@ You can preview the production build with `npm run preview`.
 
 ## Deployment
 
-TBD
+This happens via CI/CD
