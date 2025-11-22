@@ -1,15 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockResponse } from '$lib/test-utils';
+import { getTestDetailsBySlug, getPreTestTimer, getTestQuestions, getTimeLeft } from './test';
 
 // Mock the environment variable
 vi.mock('$env/static/private', () => ({
 	BACKEND_URL: 'http://test-backend.com'
 }));
-
-// Import after mocking
-const { getTestDetailsBySlug, getPreTestTimer, getTestQuestions, getTimeLeft } = await import(
-	'./test'
-);
 
 describe('Server API Functions', () => {
 	beforeEach(() => {
@@ -159,9 +155,7 @@ describe('Server API Functions', () => {
 				createMockResponse({}, { ok: false, status: 500 }) as unknown as Response
 			);
 
-			await expect(getTimeLeft(1, 'uuid')).rejects.toThrow(
-				'Failed to fetch test time: 500 Error'
-			);
+			await expect(getTimeLeft(1, 'uuid')).rejects.toThrow('Failed to fetch test time: 500 Error');
 		});
 	});
 });
