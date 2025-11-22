@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockResponse, mockCandidate } from '$lib/test-utils';
+import { POST } from './+server';
 
 // Mock the environment variable
 vi.mock('$env/static/private', () => ({
@@ -16,19 +17,11 @@ describe('POST /api/submit-test', () => {
 		vi.clearAllMocks();
 	});
 
-	// Import the handler dynamically to allow mocking
-	const getHandler = async () => {
-		const module = await import('./+server');
-		return module.POST;
-	};
-
 	const createMockRequest = (body: any) => ({
 		json: () => Promise.resolve(body)
 	});
 
 	it('should submit test successfully', async () => {
-		const POST = await getHandler();
-
 		vi.mocked(fetch).mockResolvedValueOnce(
 			createMockResponse({ success: true }) as unknown as Response
 		);
@@ -49,8 +42,6 @@ describe('POST /api/submit-test', () => {
 	});
 
 	it('should return 400 when candidate_test_id is missing', async () => {
-		const POST = await getHandler();
-
 		const request = createMockRequest({ candidate: { candidate_uuid: 'uuid' } });
 		const response = await POST({ request } as any);
 		const data = await response.json();
@@ -61,8 +52,6 @@ describe('POST /api/submit-test', () => {
 	});
 
 	it('should return 400 when candidate_uuid is missing', async () => {
-		const POST = await getHandler();
-
 		const request = createMockRequest({ candidate: { candidate_test_id: 1 } });
 		const response = await POST({ request } as any);
 		const data = await response.json();
@@ -73,8 +62,6 @@ describe('POST /api/submit-test', () => {
 	});
 
 	it('should return 400 when candidate is null', async () => {
-		const POST = await getHandler();
-
 		const request = createMockRequest({ candidate: null });
 		const response = await POST({ request } as any);
 		const data = await response.json();
@@ -84,8 +71,6 @@ describe('POST /api/submit-test', () => {
 	});
 
 	it('should return 500 when backend API fails', async () => {
-		const POST = await getHandler();
-
 		vi.mocked(fetch).mockResolvedValueOnce(
 			createMockResponse({}, { ok: false, status: 500 }) as unknown as Response
 		);
@@ -100,8 +85,6 @@ describe('POST /api/submit-test', () => {
 	});
 
 	it('should return 500 when fetch throws error', async () => {
-		const POST = await getHandler();
-
 		vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 
 		const request = createMockRequest({ candidate: mockCandidate });
