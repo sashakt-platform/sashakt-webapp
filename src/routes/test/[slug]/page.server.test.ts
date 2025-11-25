@@ -152,6 +152,9 @@ describe('Page Server - createCandidate action', () => {
 	};
 
 	it('should create candidate successfully', async () => {
+		// check no existing candidate
+		vi.mocked(getCandidate).mockReturnValue(null);
+
 		const mockResponse = createMockResponse(mockCandidate);
 		const mockFetch = vi.fn().mockResolvedValue(mockResponse);
 		const mockCookies = createMockCookies();
@@ -184,6 +187,9 @@ describe('Page Server - createCandidate action', () => {
 	});
 
 	it('should include entity in request when provided', async () => {
+		// check no existing candidate
+		vi.mocked(getCandidate).mockReturnValue(null);
+
 		const mockResponse = createMockResponse(mockCandidate);
 		const mockFetch = vi.fn().mockResolvedValue(mockResponse);
 		const mockCookies = createMockCookies();
@@ -212,6 +218,9 @@ describe('Page Server - createCandidate action', () => {
 	});
 
 	it('should return fail when API returns error', async () => {
+		// check no existing candidate
+		vi.mocked(getCandidate).mockReturnValue(null);
+
 		const mockResponse = createMockResponse({}, { ok: false, status: 400 });
 		const mockFetch = vi.fn().mockResolvedValue(mockResponse);
 		const mockCookies = createMockCookies();
@@ -236,6 +245,9 @@ describe('Page Server - createCandidate action', () => {
 	});
 
 	it('should return 500 on network error', async () => {
+		// check no existing candidate
+		vi.mocked(getCandidate).mockReturnValue(null);
+
 		const mockFetch = vi.fn().mockRejectedValue(new Error('Network error'));
 		const mockCookies = createMockCookies();
 
