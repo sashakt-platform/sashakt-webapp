@@ -21,6 +21,8 @@
 		<CandidateProfile testDetails={data.testData} />
 	{:else if data.testQuestions?.question_revisions}
 		<Question testQuestions={data.testQuestions} candidate={data.candidate} />
+	{:else if data.testQuestions === null && data.timeLeft == 0}
+		<p>Sorry, you have exceeded the time limit for this test.</p>
 	{:else}
 		<p>Loading test questions...</p>
 	{/if}
