@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label/index.js';
@@ -156,7 +157,7 @@
 		};
 
 		try {
-			const res = await fetch('/api/submit-answer', {
+			const res = await fetch(`/test/${page.params.slug}/api/submit-answer`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'

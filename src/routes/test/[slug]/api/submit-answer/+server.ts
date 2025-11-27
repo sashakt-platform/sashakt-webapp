@@ -1,14 +1,36 @@
 import { BACKEND_URL } from '$env/static/private';
+import { getCandidate } from '$lib/helpers/getCandidate';
 import type { TCandidate } from '$lib/types';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, cookies }) => {
+	// check if the session cookie exists
+	// this is to prevent submission if the test is already submitted
+	const cookieCandidate = getCandidate(cookies);
+	if (!cookieCandidate) {
+		return new Response(
+			JSON.stringify({ success: false, error: 'Session expired or test already submitted' }),
+			{ status: 401, headers: { 'Content-Type': 'application/json' } }
+		);
+	}
+
 	const {
 		question_revision_id,
 		response,
 		candidate
 	}: { question_revision_id: number; response: number[]; candidate: TCandidate } =
 		await request.json();
+
+	// verify candidate matches cookie
+	if (
+		cookieCandidate.candidate_test_id !== candidate?.candidate_test_id ||
+		cookieCandidate.candidate_uuid !== candidate?.candidate_uuid
+	) {
+		return new Response(JSON.stringify({ success: false, error: 'Session mismatch' }), {
+			status: 401,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
 
 	if (!question_revision_id || !candidate?.candidate_test_id || !candidate?.candidate_uuid) {
 		return new Response(JSON.stringify({ success: false, error: 'Missing required fields' }), {
