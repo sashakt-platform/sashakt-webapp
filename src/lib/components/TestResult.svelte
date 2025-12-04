@@ -2,6 +2,7 @@
 	// import { enhance } from '$app/forms';
 	// import Button from '$lib/components/ui/button/button.svelte';
 	import * as Table from '$lib/components/ui/table/index.js';
+	import { t } from 'svelte-i18n';
 
 	let { resultData, testDetails } = $props();
 
@@ -25,40 +26,41 @@
 	<h6 class="text-accent-foreground mb-2 text-[10px] font-semibold uppercase">
 		{testDetails.name}
 	</h6>
-	<h3 class="mb-1 text-lg font-semibold">Submitted Successfully</h3>
+	<h3 class="mb-1 text-lg font-semibold">{$t('submitted_successfully')}</h3>
 	<p class="text-sm/normal [&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-800">
 		{#if testDetails.completion_message}
 			{@html testDetails.completion_message}
 		{:else}
-			Congrats on completing the test! {#if resultData}
-				You have attempted {attempted} questions.
+			{$t('congrats_message')}
+			{#if resultData}
+				{$t('attempted_questions', { values: { count: attempted } })}
 			{:else}
-				Your test has been submitted successfully.
+				{$t('test_submitted_message')}
 			{/if}
 		{/if}
 	</p>
 	{#if resultData}
 		<p class="text-accent-foreground mt-4 border-b py-2 text-sm font-bold uppercase">
-			Result summary
+			{$t('result_summary')}
 		</p>
 
 		<Table.Root class="bg-accent mt-4 rounded-xl">
 			<Table.Body>
 				<Table.Row>
-					<Table.Cell class="border-r">Correct Answers</Table.Cell>
+					<Table.Cell class="border-r">{$t('correct_answers')}</Table.Cell>
 					<Table.Cell>{resultData.correct_answer}</Table.Cell>
 				</Table.Row>
 				<Table.Row>
-					<Table.Cell class="border-r">Incorrect Answers</Table.Cell>
+					<Table.Cell class="border-r">{$t('incorrect_answers')}</Table.Cell>
 					<Table.Cell>{resultData.incorrect_answer}</Table.Cell>
 				</Table.Row>
 				<Table.Row>
-					<Table.Cell class="border-r">Not Attempted</Table.Cell>
+					<Table.Cell class="border-r">{$t('not_attempted')}</Table.Cell>
 					<Table.Cell>{notAttempted}</Table.Cell>
 				</Table.Row>
 				{#if resultData.marks_obtained !== null && resultData.marks_maximum !== null}
 					<Table.Row class="font-semibold">
-						<Table.Cell class="border-r">Total marks obtained</Table.Cell>
+						<Table.Cell class="border-r">{$t('total_marks_obtained')}</Table.Cell>
 						<Table.Cell>{resultData.marks_obtained} / {resultData.marks_maximum}</Table.Cell>
 					</Table.Row>
 				{/if}

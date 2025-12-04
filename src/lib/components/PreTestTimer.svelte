@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import { t } from 'svelte-i18n';
 
 	let formElement = $state<HTMLFormElement>();
 	const startTime = new Date(page.data.testData.start_time);
@@ -37,28 +38,27 @@
 	{#if timeLeft >= 10 * 60}
 		<Dialog.Header>
 			<Dialog.Title class="text-center text-base/normal font-semibold"
-				>Test has not started!</Dialog.Title
+				>{$t('test_not_started')}</Dialog.Title
 			>
 			<Dialog.Description class="flex flex-col space-y-5 text-center text-sm/normal font-normal">
-				<span>Test will start on</span>
+				<span>{$t('test_will_start_on')}</span>
 				<div class="text-primary text-2xl font-semibold">
 					{startTime.toLocaleDateString()} <br />
 					{startTime.toLocaleTimeString()}
 				</div>
 
 				<p>
-					The test has not commenced yet. Kindly ensure that you thoroughly review the provided
-					instructions before beginning the test.
+					{$t('test_not_commenced_message')}
 				</p>
 			</Dialog.Description>
 		</Dialog.Header>
 	{:else}
 		<Dialog.Header>
 			<Dialog.Title class="text-center text-base/normal font-semibold"
-				>Your test will begin shortly!</Dialog.Title
+				>{$t('test_begin_shortly')}</Dialog.Title
 			>
 			<Dialog.Description class="flex flex-col space-y-5 text-center text-xs/normal font-normal">
-				<p>Time remaining for the test</p>
+				<p>{$t('time_remaining_for_the_test')}</p>
 
 				<div class="relative mx-auto flex items-center justify-center">
 					<!-- Circular progress -->
@@ -87,8 +87,7 @@
 				</div>
 
 				<p>
-					The test has not commenced yet. Kindly ensure that you thoroughly review the provided
-					instructions before beginning the test.
+					{$t('test_not_commenced_message')}
 				</p>
 			</Dialog.Description>
 		</Dialog.Header>
@@ -101,13 +100,13 @@
 				<!-- prompt candidate to start the test when last 10 secs left before test starts -->
 				{#if showProfileForm !== undefined && page.data.testData.candidate_profile}
 					<Button type="button" class="mt-4 w-full" onclick={() => (showProfileForm = true)}>
-						Start Test
+						{$t('start_test')}
 					</Button>
 				{:else}
-					<Button type="submit" class="mt-4 w-full">Start Test</Button>
+					<Button type="submit" class="mt-4 w-full">{$t('start_test')}</Button>
 				{/if}
 			{:else}
-				<Button class="mt-4 w-full">Okay, got it</Button>
+				<Button class="mt-4 w-full">{$t('okay_got_it')}</Button>
 			{/if}
 		</form>
 	</Dialog.Close>

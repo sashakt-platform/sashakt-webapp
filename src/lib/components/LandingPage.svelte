@@ -9,6 +9,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import PreTestTimer from './PreTestTimer.svelte';
+	import { t } from 'svelte-i18n';
 
 	let { testDetails, showProfileForm = $bindable() } = $props();
 
@@ -28,22 +29,24 @@
 		setError: (error) => (createError = error)
 	});
 
-	const testOverview = [
-		{ label: 'Total questions', value: `${testDetails.total_questions} questions` },
+	const testOverview = $derived([
+		{ label: $t('total_questions'), value: `${testDetails.total_questions} ${$t('questions')}` },
 		{
-			label: 'Total duration',
-			value: `${testDetails.time_limit ? testDetails.time_limit + ' minutes' : 'N/A'}`
+			label: $t('total_duration'),
+			value: `${testDetails.time_limit ? testDetails.time_limit + ' ' + $t('minutes') : $t('n_a')}`
 		},
 		{
-			label: 'Questions per page',
-			value: `${testDetails.question_pagination ? testDetails.question_pagination + ' question(s)' : 'All questions'}`
+			label: $t('questions_per_page'),
+			value: `${testDetails.question_pagination ? testDetails.question_pagination + ' ' + $t('question_s') : $t('all_questions')}`
 		}
-	];
+	]);
 </script>
 
 <section class="mx-auto max-w-xl p-6">
 	<h1 class="mb-4 text-xl font-semibold">{testDetails.name}</h1>
-	<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">Test Overview</h2>
+	<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">
+		{$t('test_overview')}
+	</h2>
 
 	<div class="mb-8 rounded-2xl border">
 		<Table.Root>
@@ -59,7 +62,9 @@
 	</div>
 	<div>
 		{#if testDetails.start_instructions}
-			<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">General Instructions</h2>
+			<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">
+				{$t('general_instructions')}
+			</h2>
 			<p
 				class="text-accent-foreground mt-3 rounded-lg px-4 py-5 text-[13px]/relaxed font-normal shadow"
 			>
@@ -84,12 +89,12 @@
 		<div class="flex items-center space-x-2">
 			<Checkbox id="terms" aria-labelledby="terms-label" bind:checked={isChecked} />
 			<label id="terms-label" for="terms" class="text-xs sm:text-sm">
-				I have read and understood the instructions as given
+				{$t('i_have_read_instructions')}
 			</label>
 		</div>
 		{#if page.data?.timeToBegin === 0}
 			{#if testDetails.candidate_profile}
-				<Button onclick={handleStart} class="w-32" disabled={!isChecked}>Start</Button>
+				<Button onclick={handleStart} class="w-32" disabled={!isChecked}>{$t('start')}</Button>
 			{:else}
 				<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
 					<input
@@ -103,7 +108,7 @@
 						{#if isStarting}
 							<Spinner />
 						{/if}
-						Start
+						{$t('start')}
 					</Button>
 				</form>
 			{/if}
@@ -113,7 +118,7 @@
 					disabled={!isChecked}
 					class={`w-45 ${buttonVariants({ variant: 'default' })}`}
 				>
-					Start
+					{$t('start')}
 				</Dialog.Trigger>
 				{#if testDetails.candidate_profile}
 					<PreTestTimer timeLeft={page.data?.timeToBegin} bind:showProfileForm />

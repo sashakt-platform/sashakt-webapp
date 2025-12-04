@@ -10,6 +10,7 @@
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import type { TQuestion } from '$lib/types';
+	import { t } from 'svelte-i18n';
 
 	let { candidate, testQuestions } = $props();
 	let isSubmittingTest = $state(false);
@@ -83,17 +84,17 @@
 
 {#snippet mandatoryQuestionDialog(lastPage: boolean)}
 	<Dialog.Content class="w-80 rounded-xl">
-		<Dialog.Title class="mt-4">Answer all mandatory questions!</Dialog.Title>
+		<Dialog.Title class="mt-4">{$t('answer_all_mandatory')}</Dialog.Title>
 		<Dialog.Description class="text-center"
-			>Please make sure all mandatory questions are answered
+			>{$t('answer_mandatory_message')}
 			{#if !lastPage}
-				before proceeding to the next page
+				{$t('before_proceeding_next')}
 			{:else}
-				before submitting the test
+				{$t('before_submitting_test')}
 			{/if}.
 		</Dialog.Description>
 
-		<Dialog.Close><Button class="mt-2 w-full">Okay</Button></Dialog.Close>
+		<Dialog.Close><Button class="mt-2 w-full">{$t('okay')}</Button></Dialog.Close>
 	</Dialog.Content>
 {/snippet}
 
@@ -119,15 +120,15 @@
 				{#if currentPage === Math.ceil(totalQuestions / perPage)}
 					<Dialog.Root bind:open={submitDialogOpen}>
 						<Dialog.Trigger>
-							<Button>Submit</Button>
+							<Button>{$t('submit')}</Button>
 						</Dialog.Trigger>
 						{#if answeredAllMandatory(selectedQuestions, questions)}
 							<Dialog.Content class="w-80 rounded-xl">
 								<Dialog.Title>
 									{#if submitError || page.form?.submitTest === false || page.form?.error}
-										Submission Failed
+										{$t('submission_failed')}
 									{:else}
-										Submit test?
+										{$t('submit_test')}
 									{/if}
 								</Dialog.Title>
 								<Dialog.Description>
@@ -138,19 +139,18 @@
 											{:else if page.form?.error}
 												<p class="mb-2">{page.form.error}</p>
 											{:else}
-												<p class="mb-2">There was an issue with your previous submission.</p>
+												<p class="mb-2">{$t('previous_submission_issue')}</p>
 											{/if}
-											<p class="text-muted-foreground">Please click Confirm again to retry.</p>
+											<p class="text-muted-foreground">{$t('click_confirm_retry')}</p>
 										</div>
 									{:else}
-										Are you sure you want to submit for final marking? No changes will be allowed
-										after submission.
+										{$t('submit_confirmation')}
 									{/if}
 								</Dialog.Description>
 								<div class="mt-2 inline-flex items-center justify-between">
 									<Dialog.Close
 										><Button variant="outline" class="w-32" disabled={isSubmittingTest}
-											>Cancel</Button
+											>{$t('cancel')}</Button
 										></Dialog.Close
 									>
 									<form action="?/submitTest" method="POST" use:enhance={handleSubmitTestEnhance}>
@@ -158,7 +158,7 @@
 											{#if isSubmittingTest}
 												<Spinner />
 											{/if}
-											Confirm
+											{$t('confirm')}
 										</Button>
 									</form>
 								</div>
