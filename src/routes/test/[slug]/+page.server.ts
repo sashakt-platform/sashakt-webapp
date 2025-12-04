@@ -48,6 +48,19 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 
 export const actions = {
 	createCandidate: async ({ request, locals, fetch, cookies }) => {
+		// check if a candidate session already exists, if yes return it
+		const existingCandidate = getCandidate(cookies);
+		if (
+			existingCandidate &&
+			existingCandidate.candidate_test_id &&
+			existingCandidate.candidate_uuid
+		) {
+			return {
+				success: true,
+				candidateData: existingCandidate
+			};
+		}
+
 		const formData = await request.formData();
 		const deviceInfo = formData.get('deviceInfo') as string;
 		const entity = formData.get('entity') as string;
