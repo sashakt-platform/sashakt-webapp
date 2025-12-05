@@ -4,9 +4,13 @@
 	import Question from '$lib/components/Question.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
 	import type { PageProps } from './$types';
+	import { locale } from 'svelte-i18n';
+	import { DEFAULT_LOCALE } from '$lib/constants';
 
 	let { data, form }: PageProps = $props();
 	let showProfileForm = $state(false);
+
+	locale.set(data.testData.language || DEFAULT_LOCALE);
 </script>
 
 <section>

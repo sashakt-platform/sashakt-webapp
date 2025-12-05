@@ -57,6 +57,7 @@
 		]
 	},
 	"dependencies": {
-		"@sentry/sveltekit": "^10.26.0"
+		"@sentry/sveltekit": "^10.26.0",
+		"svelte-i18n": "^4.0.1"
 	}
 }

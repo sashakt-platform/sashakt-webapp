@@ -2,6 +2,17 @@
 	import { page } from '$app/state';
 	import TestTimer from '$lib/components/TestTimer.svelte';
 	import '../app.css';
+	import { register, init, isLoading } from 'svelte-i18n';
+	import { LOCALES, DEFAULT_LOCALE } from '$lib/constants';
+
+	// Register your translation files
+	register(LOCALES.EN_US, () => import('$lib/locales/en-us.json'));
+	register(LOCALES.HI_IN, () => import('$lib/locales/hi-in.json'));
+
+	init({
+		fallbackLocale: DEFAULT_LOCALE,
+		initialLocale: DEFAULT_LOCALE
+	});
 
 	let { children } = $props();
 </script>
@@ -15,4 +26,8 @@
 	{/if}
 </nav>
 
-{@render children()}
+{#if $isLoading}
+	<div>Loading translations...</div>
+{:else}
+	{@render children()}
+{/if}

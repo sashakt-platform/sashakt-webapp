@@ -6,7 +6,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
-
+	import { t } from 'svelte-i18n';
 	interface EntityOption {
 		label: string;
 		value: number;
@@ -24,7 +24,7 @@
 	});
 
 	const triggerContent = $derived(
-		entityOptions.find((g) => g.value === selectedEntity)?.label ?? 'Select your CLF'
+		entityOptions.find((g) => g.value === selectedEntity)?.label ?? $t('select_your_clf')
 	);
 
 	let isFormValid = $derived(selectedEntity > 0);
@@ -38,11 +38,13 @@
 
 <section class="mx-auto max-w-xl p-6">
 	<h1 class="mb-4 text-xl font-semibold">{testDetails.name}</h1>
-	<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">Candidate Information</h2>
+	<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">
+		{$t('candidate_information')}
+	</h2>
 
 	<Card.Root class="mb-8">
 		<Card.Header>
-			<Card.Title class="text-lg">Please provide your details</Card.Title>
+			<Card.Title class="text-lg">{$t('please_provide_details')}</Card.Title>
 			<Card.Description></Card.Description>
 		</Card.Header>
 		<Card.Content>
@@ -53,7 +55,7 @@
 				class="space-y-4"
 			>
 				<div class="space-y-2">
-					<Label for="entity">CLF *</Label>
+					<Label for="entity">{$t('clf')} *</Label>
 					<Select.Root
 						type="single"
 						name="entity"
@@ -86,7 +88,7 @@
 						{#if isSubmitting}
 							<Spinner />
 						{/if}
-						Continue to Test
+						{$t('continue_to_test')}
 					</Button>
 				</div>
 			</form>
