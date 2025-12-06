@@ -6,7 +6,7 @@
 	let { children } = $props();
 </script>
 
-<nav class="mb-1 flex items-center justify-between p-3">
+<nav class="bg-background sticky top-0 z-50 mb-1 flex items-center justify-between p-5">
 	<h2 class="text-primary w-full scroll-m-20 text-3xl font-extrabold tracking-tighter uppercase">
 		Sashakt
 	</h2>
