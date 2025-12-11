@@ -7,6 +7,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import type { TCandidate, TQuestion, TSelection } from '$lib/types';
+	import { t } from 'svelte-i18n';
 
 	let {
 		question,
@@ -187,7 +188,7 @@
 			{#if question?.marking_scheme}
 				{@const mark = question.marking_scheme.correct}
 				<span class="text-muted-foreground float-end"
-					>{mark === 1 ? '1 Mark' : `${mark} Marks`}</span
+					>{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}</span
 				>
 			{/if}
 			{#if isSubmitting}

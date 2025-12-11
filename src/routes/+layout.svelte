@@ -2,8 +2,17 @@
 	import { page } from '$app/state';
 	import TestTimer from '$lib/components/TestTimer.svelte';
 	import '../app.css';
+	import { register, init, isLoading } from 'svelte-i18n';
+	import { localization_enum, DEFAULT_LOCALE } from '$lib/utils';
 
 	let { children } = $props();
+
+	register(localization_enum.HI_IN, () => import('$lib/locales/hi-in.json'));
+
+	init({
+		fallbackLocale: DEFAULT_LOCALE || NaN,
+		initialLocale: DEFAULT_LOCALE
+	});
 </script>
 
 <nav class="bg-background sticky top-0 z-50 mb-1 flex items-center justify-between p-5">
@@ -15,4 +24,8 @@
 	{/if}
 </nav>
 
-{@render children()}
+{#if $isLoading}
+	<div>Loading Translations...</div>
+{:else}
+	{@render children()}
+{/if}
