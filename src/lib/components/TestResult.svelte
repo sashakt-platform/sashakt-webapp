@@ -24,7 +24,9 @@
 		{:else}
 			{$t('Congrats on completing the test!')}
 			{#if resultData}
-				{$t('You have attempted {attempted} questions.', attempted)}
+				{$t('You have attempted {count} questions.', {
+					values: { count: attempted }
+				})}
 			{:else}
 				{$t('Your test has been submitted successfully.')}
 			{/if}

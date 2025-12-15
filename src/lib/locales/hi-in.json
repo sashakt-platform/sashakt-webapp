@@ -55,7 +55,7 @@
 	"Optional": "वैकल्पिक",
 	"Submitted Successfully": "सफलतापूर्वक जमा किया गया",
 	"Congrats on completing the test!": "परीक्षा पूरी करने पर बधाई!",
-	"You have attempted {attempted} questions.": "आपने {attempted} प्रश्नों का प्रयास किया है।",
+	"You have attempted {count} questions.": "आपने {count} प्रश्नों का प्रयास किया है।",
 	"Your test has been submitted successfully.": "आपकी परीक्षा सफलतापूर्वक जमा की गई है।",
 	"Correct Answers": "सही उत्तर",
 	"Incorrect Answers": "गलत उत्तर",
