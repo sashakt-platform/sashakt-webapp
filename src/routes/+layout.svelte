@@ -7,11 +7,11 @@
 
 	let { children } = $props();
 
-	register(localization_enum.HI_IN, () => import('$lib/locales/hi-in.json'));
+	register(localization_enum.HI_IN, () => import('$lib/locales/hi-IN.json'));
 
 	init({
-		fallbackLocale: DEFAULT_LOCALE || NaN,
-		initialLocale: DEFAULT_LOCALE
+		fallbackLocale: DEFAULT_LOCALE,
+		initialLocale: null
 	});
 </script>
 

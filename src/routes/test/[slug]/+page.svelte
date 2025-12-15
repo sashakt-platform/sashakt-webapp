@@ -5,13 +5,15 @@
 	import TestResult from '$lib/components/TestResult.svelte';
 	import type { PageProps } from './$types';
 	import { locale } from 'svelte-i18n';
-	import { DEFAULT_LOCALE } from '$lib/utils';
 	import { t } from 'svelte-i18n';
+	import { localization_enum, DEFAULT_LOCALE } from '$lib/utils';
 
 	let { data, form }: PageProps = $props();
 	let showProfileForm = $state(false);
 
-	locale.set(data.testData.locale || DEFAULT_LOCALE);
+	locale.set(
+		localization_enum[data.testData.locale as keyof typeof localization_enum] || DEFAULT_LOCALE
+	);
 </script>
 
 <section>
