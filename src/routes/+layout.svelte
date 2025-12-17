@@ -11,7 +11,7 @@
 
 	init({
 		fallbackLocale: DEFAULT_LOCALE,
-		initialLocale: null
+		initialLocale: DEFAULT_LOCALE
 	});
 </script>
 
