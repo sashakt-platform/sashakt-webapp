@@ -161,7 +161,7 @@ export const createMockFetchError = (message = 'Network error') => {
 export function initializeI18nForTests() {
 	// Register locales
 	register(localization_enum.EN_US, () => Promise.resolve({})); // Empty for English (default)
-	register(localization_enum.HI_IN, () => import('$lib/locales/hi-IN.json'));
+	register(localization_enum.HI_IN, () => import('$lib/locales/hi-in.json'));
 
 	// Initialize
 	init({
