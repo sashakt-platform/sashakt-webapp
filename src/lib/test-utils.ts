@@ -4,6 +4,8 @@
 
 import { vi } from 'vitest';
 import type { TCandidate, TQuestion, TSelection, TTestSession } from './types';
+import { init, register, waitLocale, locale } from 'svelte-i18n';
+import { localization_enum, DEFAULT_LOCALE } from './utils';
 
 // Mock candidate data
 export const mockCandidate: TCandidate = {
@@ -106,7 +108,8 @@ export const mockTestData = {
 	start_instructions: '<p>Read all questions carefully before answering.</p>',
 	completion_message: 'Thank you for completing the test!',
 	candidate_profile: null,
-	profile_list: []
+	profile_list: [],
+	locale: 'EN_US'
 };
 
 // Mock test questions response (from backend)
@@ -154,3 +157,22 @@ export const createMockResponse = (data: any, options: { ok?: boolean; status?: 
 export const createMockFetchError = (message = 'Network error') => {
 	return () => Promise.reject(new Error(message));
 };
+
+export function initializeI18nForTests() {
+	// Register locales
+	register(localization_enum.EN_US, () => Promise.resolve({})); // Empty for English (default)
+	register(localization_enum.HI_IN, () => import('$lib/locales/hi-IN.json'));
+
+	// Initialize
+	init({
+		fallbackLocale: DEFAULT_LOCALE,
+		initialLocale: DEFAULT_LOCALE
+	});
+}
+
+export async function setLocaleForTests(currentLocale: string) {
+	locale.set(localization_enum[currentLocale as keyof typeof localization_enum] || DEFAULT_LOCALE);
+
+	// Wait for locale to load
+	await waitLocale();
+}
