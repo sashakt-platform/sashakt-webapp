@@ -2,20 +2,26 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
+	import QuestionPaletteModal from '$lib/components/QuestionPaletteModal.svelte';
+	import QuestionPaletteToggleButton from '$lib/components/QuestionPaletteToggleButton.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { countQuestionStatuses } from '$lib/helpers/questionPaletteHelpers';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import type { TQuestion } from '$lib/types';
 
-	let { candidate, testQuestions } = $props();
+	let { candidate, testQuestions, testDetails } = $props();
 	let isSubmittingTest = $state(false);
 
 	// for controlling confirmation dialog display
 	let submitDialogOpen = $state(false);
+
+	// question palette state
+	let paletteOpen = $state(false);
 
 	// track network/submission errors
 	let submitError = $state<string | null>(null);
@@ -44,6 +50,17 @@
 	// set paginiation related properties
 	let paginationPage = $state(sessionStore.current.currentPage || 1);
 	let paginationReady = $state(false);
+
+	// question palette derived values
+	const currentQuestionIndex = $derived((paginationPage - 1) * perPage);
+	const paletteStats = $derived(countQuestionStatuses(questions, selectedQuestions));
+
+	// navigate to a specific question by index
+	function navigateToQuestion(questionIndex: number) {
+		const targetPage = Math.floor(questionIndex / perPage) + 1;
+		paginationPage = targetPage;
+		scrollToTop();
+	}
 
 	// sync page number to localStorage when page changes
 	// using snapshot to avoid unnecessary updates and prevent looping issue
@@ -184,4 +201,19 @@
 			</Pagination.Content>
 		{/snippet}
 	</Pagination.Root>
+
+	<QuestionPaletteToggleButton
+		remainingMandatoryCount={paletteStats.remainingMandatory}
+		onclick={() => (paletteOpen = true)}
+	/>
+
+	<QuestionPaletteModal
+		bind:open={paletteOpen}
+		{questions}
+		selections={selectedQuestions}
+		{currentQuestionIndex}
+		instructions={testDetails?.start_instructions}
+		{perPage}
+		onNavigate={navigateToQuestion}
+	/>
 {/if}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import * as Card from '$lib/components/ui/card/index.js';
+	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
@@ -75,7 +76,9 @@
 				// only update state on success
 				if (answeredQuestion) {
 					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
+						q.question_revision_id === questionId
+							? { ...q, response: newResponse, skipped: false }
+							: q
 					);
 				} else {
 					selectedQuestions = [
@@ -84,7 +87,8 @@
 							question_revision_id: questionId,
 							response: newResponse,
 							visited: true,
-							time_spent: 0
+							time_spent: 0,
+							skipped: false
 						}
 					];
 				}
@@ -118,7 +122,9 @@
 			} else {
 				if (answeredQuestion) {
 					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
+						q.question_revision_id === questionId
+							? { ...q, response: newResponse, skipped: false }
+							: q
 					);
 				} else {
 					selectedQuestions = [
@@ -127,7 +133,8 @@
 							question_revision_id: questionId,
 							response: newResponse,
 							visited: true,
-							time_spent: 0
+							time_spent: 0,
+							skipped: false
 						}
 					];
 				}
@@ -176,6 +183,32 @@
 			throw error;
 		}
 	};
+
+	const handleSkip = () => {
+		const answeredQuestion = selectedQuestion(question.id);
+
+		if (answeredQuestion) {
+			selectedQuestions = selectedQuestions.map((q) =>
+				q.question_revision_id === question.id ? { ...q, skipped: true, visited: true } : q
+			);
+		} else {
+			selectedQuestions = [
+				...selectedQuestions,
+				{
+					question_revision_id: question.id,
+					response: [],
+					visited: true,
+					time_spent: 0,
+					skipped: true
+				}
+			];
+		}
+		updateStore();
+	};
+
+	const isQuestionAnswered = $derived(selectedQuestion(question.id)?.response?.length ?? 0 > 0);
+
+	const isQuestionSkipped = $derived(selectedQuestion(question.id)?.skipped ?? false);
 </script>
 
 <Card.Root
@@ -256,6 +289,12 @@
 					</Label>
 				</div>
 			{/each}
+		{/if}
+
+		{#if !isQuestionAnswered && !isQuestionSkipped}
+			<Button variant="outline" class="mt-4 w-full" onclick={handleSkip}>Skip</Button>
+		{:else if isQuestionSkipped}
+			<p class="text-muted-foreground mt-4 text-center text-sm">Skipped</p>
 		{/if}
 	</Card.Content>
 </Card.Root>

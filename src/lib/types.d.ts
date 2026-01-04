@@ -8,6 +8,7 @@ export type TSelection = {
 	response: number[];
 	visited: boolean;
 	time_spent: number;
+	skipped: boolean;
 };
 
 export type TTestSession = {
