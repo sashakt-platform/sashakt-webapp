@@ -86,8 +86,9 @@ describe('Question', () => {
 		});
 
 		await vi.waitFor(() => {
-			// First question should show "1"
-			expect(screen.getByText('1')).toBeInTheDocument();
+			// first question should show "1" (may have multiple due to question palette)
+			const ones = screen.getAllByText('1');
+			expect(ones.length).toBeGreaterThan(0);
 		});
 	});
 
