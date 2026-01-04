@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import Question from './Question.svelte';
-import { mockCandidate, mockQuestions } from '$lib/test-utils';
+import { mockCandidate, mockQuestions, mockTestData } from '$lib/test-utils';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -23,11 +23,14 @@ describe('Question', () => {
 		question_pagination: 2
 	};
 
+	const testDetails = mockTestData;
+
 	it('should render questions', async () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions
+				testQuestions,
+				testDetails
 			}
 		});
 
@@ -41,7 +44,8 @@ describe('Question', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions
+				testQuestions,
+				testDetails
 			}
 		});
 
@@ -60,7 +64,8 @@ describe('Question', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions: singlePageQuestions
+				testQuestions: singlePageQuestions,
+				testDetails
 			}
 		});
 
@@ -75,7 +80,8 @@ describe('Question', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions
+				testQuestions,
+				testDetails
 			}
 		});
 
@@ -89,7 +95,8 @@ describe('Question', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions
+				testQuestions,
+				testDetails
 			}
 		});
 
@@ -109,7 +116,8 @@ describe('Question', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions: paginatedQuestions
+				testQuestions: paginatedQuestions,
+				testDetails
 			}
 		});
 
@@ -131,7 +139,8 @@ describe('Question', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions: noPaginationQuestions
+				testQuestions: noPaginationQuestions,
+				testDetails
 			}
 		});
 

@@ -74,7 +74,8 @@ export const mockSelection: TSelection = {
 	question_revision_id: 1,
 	response: [102],
 	visited: true,
-	time_spent: 30
+	time_spent: 30,
+	skipped: false
 };
 
 export const mockSelections: TSelection[] = [
@@ -83,7 +84,8 @@ export const mockSelections: TSelection[] = [
 		question_revision_id: 2,
 		response: [201, 202],
 		visited: true,
-		time_spent: 45
+		time_spent: 45,
+		skipped: false
 	}
 ];
 
