@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
+	import InstructionsDialog from '$lib/components/InstructionsDialog.svelte';
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import QuestionPaletteModal from '$lib/components/QuestionPaletteModal.svelte';
+	import QuestionPaletteSidebar from '$lib/components/QuestionPaletteSidebar.svelte';
 	import QuestionPaletteToggleButton from '$lib/components/QuestionPaletteToggleButton.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -115,98 +117,127 @@
 {/snippet}
 
 {#if paginationReady}
-	<Pagination.Root count={totalQuestions} {perPage} bind:page={paginationPage}>
-		{#snippet children({ currentPage, range })}
-			<div class="mb-12">
-				{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
-					<QuestionCard
-						{candidate}
-						serialNumber={(currentPage - 1) * perPage + index + 1}
-						{question}
-						{totalQuestions}
-						bind:selectedQuestions
-					/>
-				{/each}
-			</div>
-			<Pagination.Content
-				class="fixed bottom-0 z-10 flex w-full items-center justify-between bg-white p-2"
-			>
-				<Pagination.PrevButton onclick={scrollToTop} />
-
-				{#if currentPage === Math.ceil(totalQuestions / perPage)}
-					<Dialog.Root bind:open={submitDialogOpen}>
-						<Dialog.Trigger>
-							<Button>Submit</Button>
-						</Dialog.Trigger>
-						{#if answeredAllMandatory(selectedQuestions, questions)}
-							<Dialog.Content class="w-80 rounded-xl">
-								<Dialog.Title>
-									{#if submitError || page.form?.submitTest === false || page.form?.error}
-										Submission Failed
-									{:else}
-										Submit test?
-									{/if}
-								</Dialog.Title>
-								<Dialog.Description>
-									{#if submitError || page.form?.submitTest === false || page.form?.error}
-										<div class="text-destructive">
-											{#if submitError}
-												<p class="mb-2">{submitError}</p>
-											{:else if page.form?.error}
-												<p class="mb-2">{page.form.error}</p>
-											{:else}
-												<p class="mb-2">There was an issue with your previous submission.</p>
-											{/if}
-											<p class="text-muted-foreground">Please click Confirm again to retry.</p>
-										</div>
-									{:else}
-										Are you sure you want to submit for final marking? No changes will be allowed
-										after submission.
-									{/if}
-								</Dialog.Description>
-								<div class="mt-2 inline-flex items-center justify-between">
-									<Dialog.Close
-										><Button variant="outline" class="w-32" disabled={isSubmittingTest}
-											>Cancel</Button
-										></Dialog.Close
-									>
-									<form action="?/submitTest" method="POST" use:enhance={handleSubmitTestEnhance}>
-										<Button type="submit" class="w-32" disabled={isSubmittingTest}>
-											{#if isSubmittingTest}
-												<Spinner />
-											{/if}
-											Confirm
-										</Button>
-									</form>
-								</div>
-							</Dialog.Content>
-						{:else}
-							{@render mandatoryQuestionDialog(true)}
-						{/if}
-					</Dialog.Root>
-				{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
-					<Dialog.Root>
-						<Dialog.Trigger>
-							<Pagination.NextButton
-								onclick={(e) => {
-									e.preventDefault();
-								}}
+	<div class="flex gap-6">
+		<!-- Main question content -->
+		<div class="flex-1 lg:pr-80">
+			<Pagination.Root count={totalQuestions} {perPage} bind:page={paginationPage}>
+				{#snippet children({ currentPage, range })}
+					<div class="mb-16">
+						{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
+							<QuestionCard
+								{candidate}
+								serialNumber={(currentPage - 1) * perPage + index + 1}
+								{question}
+								{totalQuestions}
+								bind:selectedQuestions
 							/>
-						</Dialog.Trigger>
-						{@render mandatoryQuestionDialog(false)}
-					</Dialog.Root>
-				{:else}
-					<Pagination.NextButton onclick={scrollToTop} />
-				{/if}
-			</Pagination.Content>
-		{/snippet}
-	</Pagination.Root>
+						{/each}
+					</div>
+					<Pagination.Content
+						class="fixed bottom-0 left-0 z-10 flex w-full items-center justify-between bg-white p-2 lg:w-[calc(100%-20rem)]"
+					>
+						<Pagination.PrevButton onclick={scrollToTop} />
 
-	<QuestionPaletteToggleButton
-		remainingMandatoryCount={paletteStats.remainingMandatory}
-		onclick={() => (paletteOpen = true)}
-	/>
+						{#if currentPage === Math.ceil(totalQuestions / perPage)}
+							<Dialog.Root bind:open={submitDialogOpen}>
+								<Dialog.Trigger>
+									<Button class="w-24">Submit</Button>
+								</Dialog.Trigger>
+								{#if answeredAllMandatory(selectedQuestions, questions)}
+									<Dialog.Content class="w-80 rounded-xl">
+										<Dialog.Title>
+											{#if submitError || page.form?.submitTest === false || page.form?.error}
+												Submission Failed
+											{:else}
+												Submit test?
+											{/if}
+										</Dialog.Title>
+										<Dialog.Description>
+											{#if submitError || page.form?.submitTest === false || page.form?.error}
+												<div class="text-destructive">
+													{#if submitError}
+														<p class="mb-2">{submitError}</p>
+													{:else if page.form?.error}
+														<p class="mb-2">{page.form.error}</p>
+													{:else}
+														<p class="mb-2">There was an issue with your previous submission.</p>
+													{/if}
+													<p class="text-muted-foreground">Please click Confirm again to retry.</p>
+												</div>
+											{:else}
+												Are you sure you want to submit for final marking? No changes will be
+												allowed after submission.
+											{/if}
+										</Dialog.Description>
+										<div class="mt-2 inline-flex items-center justify-between">
+											<Dialog.Close
+												><Button variant="outline" class="w-32" disabled={isSubmittingTest}
+													>Cancel</Button
+												></Dialog.Close
+											>
+											<form
+												action="?/submitTest"
+												method="POST"
+												use:enhance={handleSubmitTestEnhance}
+											>
+												<Button type="submit" class="w-32" disabled={isSubmittingTest}>
+													{#if isSubmittingTest}
+														<Spinner />
+													{/if}
+													Confirm
+												</Button>
+											</form>
+										</div>
+									</Dialog.Content>
+								{:else}
+									{@render mandatoryQuestionDialog(true)}
+								{/if}
+							</Dialog.Root>
+						{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
+							<Dialog.Root>
+								<Dialog.Trigger>
+									<Pagination.NextButton
+										class="w-24"
+										onclick={(e) => {
+											e.preventDefault();
+										}}
+									/>
+								</Dialog.Trigger>
+								{@render mandatoryQuestionDialog(false)}
+							</Dialog.Root>
+						{:else}
+							<Pagination.NextButton onclick={scrollToTop} class="w-24" />
+						{/if}
+					</Pagination.Content>
+				{/snippet}
+			</Pagination.Root>
+		</div>
 
+		<!-- Desktop sidebar - hidden on mobile -->
+		<div class="fixed top-20 right-4 hidden h-[calc(100vh-6rem)] w-72 lg:block">
+			<QuestionPaletteSidebar
+				{questions}
+				selections={selectedQuestions}
+				{currentQuestionIndex}
+				onNavigate={navigateToQuestion}
+			/>
+		</div>
+	</div>
+
+	<!-- Desktop Instructions button - hidden on mobile -->
+	<div class="fixed top-3.5 right-32 z-50 hidden lg:block">
+		<InstructionsDialog instructions={testDetails?.start_instructions} />
+	</div>
+
+	<!-- Mobile toggle button - hidden on desktop -->
+	<div class="lg:hidden">
+		<QuestionPaletteToggleButton
+			remainingMandatoryCount={paletteStats.remainingMandatory}
+			onclick={() => (paletteOpen = true)}
+		/>
+	</div>
+
+	<!-- Mobile modal -->
 	<QuestionPaletteModal
 		bind:open={paletteOpen}
 		{questions}

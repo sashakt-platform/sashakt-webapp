@@ -206,8 +206,7 @@
 		updateStore();
 	};
 
-	const isQuestionAnswered = $derived(selectedQuestion(question.id)?.response?.length ?? 0 > 0);
-
+	const isQuestionAnswered = $derived((selectedQuestion(question.id)?.response?.length ?? 0) > 0);
 	const isQuestionSkipped = $derived(selectedQuestion(question.id)?.skipped ?? false);
 </script>
 
