@@ -43,13 +43,13 @@
 	}
 </script>
 
-<div class="flex h-full flex-col rounded-xl border bg-white shadow-sm">
-	<div class="flex items-center justify-center gap-2 border-b p-4">
-		<h2 class="text-sm font-semibold tracking-wide text-gray-700">QUESTION PALETTE</h2>
+<div class="flex max-h-full flex-col rounded-xl bg-white shadow-sm">
+	<div class="flex items-center justify-center gap-2 p-4 pb-2">
+		<h2 class="text-sm font-semibold tracking-wide text-gray-700 uppercase">Question Palette</h2>
 		<Info class="h-4 w-4 text-gray-400" />
 	</div>
 
-	<div class="flex-1 overflow-y-auto p-4">
+	<div class="overflow-y-auto p-4 pt-2">
 		<div class="mb-4 grid grid-cols-2 gap-3">
 			<div class="flex items-center gap-2">
 				<span

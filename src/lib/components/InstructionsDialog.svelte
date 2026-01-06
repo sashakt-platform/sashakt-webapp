@@ -15,9 +15,9 @@
 	<Dialog.Trigger>
 		<button
 			type="button"
-			class="flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-200"
+			class="flex items-center gap-2 rounded-full border border-gray-400 bg-slate-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-slate-200"
 		>
-			<CircleHelp class="h-5 w-5" />
+			<CircleHelp class="h-5 w-5 text-teal-600" />
 			Instructions
 		</button>
 	</Dialog.Trigger>

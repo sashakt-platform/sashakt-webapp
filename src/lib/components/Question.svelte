@@ -117,7 +117,7 @@
 {/snippet}
 
 {#if paginationReady}
-	<div class="flex gap-6">
+	<div class="flex min-h-screen gap-6 bg-slate-100 p-4 lg:p-6">
 		<!-- Main question content -->
 		<div class="flex-1 lg:pr-80">
 			<Pagination.Root count={totalQuestions} {perPage} bind:page={paginationPage}>
@@ -214,7 +214,7 @@
 		</div>
 
 		<!-- Desktop sidebar - hidden on mobile -->
-		<div class="fixed top-20 right-4 hidden h-[calc(100vh-6rem)] w-72 lg:block">
+		<div class="fixed top-26 right-6 hidden max-h-[calc(100vh-8rem)] w-72 lg:block">
 			<QuestionPaletteSidebar
 				{questions}
 				selections={selectedQuestions}
@@ -225,7 +225,7 @@
 	</div>
 
 	<!-- Desktop Instructions button - hidden on mobile -->
-	<div class="fixed top-3.5 right-32 z-50 hidden lg:block">
+	<div class="fixed top-4 right-32 z-50 hidden lg:block">
 		<InstructionsDialog instructions={testDetails?.start_instructions} />
 	</div>
 
