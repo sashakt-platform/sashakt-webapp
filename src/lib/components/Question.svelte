@@ -122,7 +122,7 @@
 		<div class="flex-1 lg:pr-80">
 			<Pagination.Root count={totalQuestions} {perPage} bind:page={paginationPage} class="w-full">
 				{#snippet children({ currentPage, range })}
-					<div class="mb-16 w-full">
+					<div class="w-full">
 						{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
 							<QuestionCard
 								{candidate}
@@ -134,7 +134,7 @@
 						{/each}
 					</div>
 					<Pagination.Content
-						class="fixed bottom-0 left-0 z-10 flex w-full items-center justify-between bg-white p-2 lg:w-[calc(100%-20rem)]"
+						class="bottom-0 z-10 flex w-full items-center justify-between rounded-xl bg-white p-2 shadow-md"
 					>
 						<Pagination.PrevButton onclick={scrollToTop} />
 
