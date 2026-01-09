@@ -3,7 +3,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import {
 		countQuestionStatuses,
-		getQuestionStatus,
+		isQuestionAnswered,
 		isQuestionBookmarked
 	} from '$lib/helpers/questionPaletteHelpers';
 	import type { TQuestion, TSelection } from '$lib/types';
@@ -43,15 +43,11 @@
 			return `${baseClasses} border-2 border-blue-500 bg-white text-blue-500`;
 		}
 
-		const status = getQuestionStatus(questionId, selections);
-
-		switch (status) {
-			case 'answered':
-				return `${baseClasses} bg-blue-100 text-blue-700`;
-			case 'not-visited':
-			default:
-				return `${baseClasses} border border-gray-300 bg-white text-gray-500`;
+		if (isQuestionAnswered(questionId, selections)) {
+			return `${baseClasses} bg-blue-100 text-blue-700`;
 		}
+
+		return `${baseClasses} border border-gray-300 bg-white text-gray-500`;
 	}
 </script>
 
@@ -101,15 +97,6 @@
 							{stats.bookmarked}
 						</span>
 						<span class="text-sm text-gray-600">Bookmarked</span>
-					</div>
-
-					<div class="flex items-center gap-2">
-						<span
-							class="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-500"
-						>
-							{stats.notVisited}
-						</span>
-						<span class="text-sm text-gray-600">Not visited</span>
 					</div>
 
 					<div class="flex items-center gap-2">

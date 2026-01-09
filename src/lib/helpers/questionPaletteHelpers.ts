@@ -1,22 +1,11 @@
 import type { TQuestion, TSelection } from '$lib/types';
 
-export type QuestionStatus = 'answered' | 'not-visited';
-
 /**
- * Get the status of a single question based on its selection state
+ * Check if a question is answered (has at least one response)
  */
-export function getQuestionStatus(questionId: number, selections: TSelection[]): QuestionStatus {
+export function isQuestionAnswered(questionId: number, selections: TSelection[]): boolean {
 	const selection = selections.find((s) => s.question_revision_id === questionId);
-
-	if (!selection || !selection.visited) {
-		return 'not-visited';
-	}
-
-	if (selection.response.length > 0) {
-		return 'answered';
-	}
-
-	return 'not-visited';
+	return (selection?.response?.length ?? 0) > 0;
 }
 
 /**
@@ -36,20 +25,15 @@ export function countQuestionStatuses(
 ): {
 	answered: number;
 	bookmarked: number;
-	notVisited: number;
 	mandatory: number;
 	remainingMandatory: number;
 } {
 	let answered = 0;
 	let bookmarked = 0;
-	let notVisited = 0;
 
 	for (const question of questions) {
-		const status = getQuestionStatus(question.id, selections);
-		if (status === 'answered') {
+		if (isQuestionAnswered(question.id, selections)) {
 			answered++;
-		} else {
-			notVisited++;
 		}
 
 		if (isQuestionBookmarked(question.id, selections)) {
@@ -68,7 +52,6 @@ export function countQuestionStatuses(
 	return {
 		answered,
 		bookmarked,
-		notVisited,
 		mandatory,
 		remainingMandatory: mandatory - answeredMandatory
 	};
