@@ -69,7 +69,11 @@
 			</div>
 
 			<div class="flex items-center gap-2">
-				<span class="flex h-8 w-8 items-center justify-center rounded-full bg-red-500"> </span>
+				<span
+					class="flex h-8 w-8 items-center justify-center rounded-full bg-red-500"
+					aria-label="Mandatory question indicator"
+				>
+				</span>
 				<span class="text-sm text-gray-600">Mandatory</span>
 			</div>
 		</div>

@@ -55,13 +55,16 @@
 	<Dialog.Content class="max-h-[80vh] w-[90vw] max-w-md overflow-hidden rounded-xl p-0">
 		<Dialog.Title class="sr-only">Question Palette</Dialog.Title>
 
-		<div class="flex border-b">
+		<div class="flex border-b" role="tablist" aria-label="Question palette tabs">
 			<button
 				type="button"
 				class="flex-1 px-4 py-3 text-center text-sm font-medium transition-colors {activeTab ===
 				'palette'
 					? 'border-b-2 border-blue-500 text-blue-600'
 					: 'text-gray-500 hover:text-gray-700'}"
+				role="tab"
+				aria-selected={activeTab === 'palette'}
+				aria-controls="palette-panel"
 				onclick={() => (activeTab = 'palette')}
 			>
 				Question palette
@@ -72,6 +75,9 @@
 				'instructions'
 					? 'border-b-2 border-blue-500 text-blue-600'
 					: 'text-gray-500 hover:text-gray-700'}"
+				role="tab"
+				aria-selected={activeTab === 'instructions'}
+				aria-controls="instructions-panel"
 				onclick={() => (activeTab = 'instructions')}
 			>
 				Instructions
@@ -80,7 +86,7 @@
 
 		<div class="max-h-[calc(80vh-48px)] overflow-y-auto p-4">
 			{#if activeTab === 'palette'}
-				<div class="mb-4 grid grid-cols-2 gap-3">
+				<div id="palette-panel" class="mb-4 grid grid-cols-2 gap-3">
 					<div class="flex items-center gap-2">
 						<span
 							class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-700"
@@ -132,7 +138,7 @@
 					{/each}
 				</div>
 			{:else}
-				<div class="prose prose-sm max-w-none">
+				<div id="instructions-panel" class="prose prose-sm max-w-none">
 					{#if instructions}
 						{@html instructions}
 					{:else}
