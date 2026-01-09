@@ -1,6 +1,6 @@
 import type { TQuestion, TSelection } from '$lib/types';
 
-export type QuestionStatus = 'answered' | 'skipped' | 'not-visited';
+export type QuestionStatus = 'answered' | 'not-visited';
 
 /**
  * Get the status of a single question based on its selection state
@@ -12,15 +12,19 @@ export function getQuestionStatus(questionId: number, selections: TSelection[]):
 		return 'not-visited';
 	}
 
-	if (selection.skipped) {
-		return 'skipped';
-	}
-
 	if (selection.response.length > 0) {
 		return 'answered';
 	}
 
 	return 'not-visited';
+}
+
+/**
+ * Check if a question is bookmarked
+ */
+export function isQuestionBookmarked(questionId: number, selections: TSelection[]): boolean {
+	const selection = selections.find((s) => s.question_revision_id === questionId);
+	return selection?.bookmarked ?? false;
 }
 
 /**
@@ -31,27 +35,25 @@ export function countQuestionStatuses(
 	selections: TSelection[]
 ): {
 	answered: number;
-	skipped: number;
+	bookmarked: number;
 	notVisited: number;
 	mandatory: number;
 	remainingMandatory: number;
 } {
 	let answered = 0;
-	let skipped = 0;
+	let bookmarked = 0;
 	let notVisited = 0;
 
 	for (const question of questions) {
 		const status = getQuestionStatus(question.id, selections);
-		switch (status) {
-			case 'answered':
-				answered++;
-				break;
-			case 'skipped':
-				skipped++;
-				break;
-			case 'not-visited':
-				notVisited++;
-				break;
+		if (status === 'answered') {
+			answered++;
+		} else {
+			notVisited++;
+		}
+
+		if (isQuestionBookmarked(question.id, selections)) {
+			bookmarked++;
 		}
 	}
 
@@ -65,7 +67,7 @@ export function countQuestionStatuses(
 
 	return {
 		answered,
-		skipped,
+		bookmarked,
 		notVisited,
 		mandatory,
 		remainingMandatory: mandatory - answeredMandatory

@@ -1,6 +1,11 @@
 <script lang="ts">
+	import Bookmark from '@lucide/svelte/icons/bookmark';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { countQuestionStatuses, getQuestionStatus } from '$lib/helpers/questionPaletteHelpers';
+	import {
+		countQuestionStatuses,
+		getQuestionStatus,
+		isQuestionBookmarked
+	} from '$lib/helpers/questionPaletteHelpers';
 	import type { TQuestion, TSelection } from '$lib/types';
 
 	let {
@@ -43,8 +48,6 @@
 		switch (status) {
 			case 'answered':
 				return `${baseClasses} bg-blue-100 text-blue-700`;
-			case 'skipped':
-				return `${baseClasses} bg-gray-200 text-gray-600`;
 			case 'not-visited':
 			default:
 				return `${baseClasses} border border-gray-300 bg-white text-gray-500`;
@@ -93,11 +96,11 @@
 
 					<div class="flex items-center gap-2">
 						<span
-							class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-600"
+							class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-sm font-medium text-amber-700"
 						>
-							{stats.skipped}
+							{stats.bookmarked}
 						</span>
-						<span class="text-sm text-gray-600">Skipped</span>
+						<span class="text-sm text-gray-600">Bookmarked</span>
 					</div>
 
 					<div class="flex items-center gap-2">
@@ -132,6 +135,11 @@
 							{index + 1}
 							{#if question.is_mandatory}
 								<span class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500"></span>
+							{/if}
+							{#if isQuestionBookmarked(question.id, selections)}
+								<Bookmark
+									class="absolute -right-1 -bottom-1 h-3 w-3 fill-amber-500 text-amber-500"
+								/>
 							{/if}
 						</button>
 					{/each}

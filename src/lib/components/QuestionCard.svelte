@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import Bookmark from '@lucide/svelte/icons/bookmark';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -76,9 +77,7 @@
 				// only update state on success
 				if (answeredQuestion) {
 					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId
-							? { ...q, response: newResponse, skipped: false }
-							: q
+						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
 					);
 				} else {
 					selectedQuestions = [
@@ -87,8 +86,7 @@
 							question_revision_id: questionId,
 							response: newResponse,
 							visited: true,
-							time_spent: 0,
-							skipped: false
+							time_spent: 0
 						}
 					];
 				}
@@ -122,9 +120,7 @@
 			} else {
 				if (answeredQuestion) {
 					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId
-							? { ...q, response: newResponse, skipped: false }
-							: q
+						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
 					);
 				} else {
 					selectedQuestions = [
@@ -133,8 +129,7 @@
 							question_revision_id: questionId,
 							response: newResponse,
 							visited: true,
-							time_spent: 0,
-							skipped: false
+							time_spent: 0
 						}
 					];
 				}
@@ -156,11 +151,12 @@
 		}
 	};
 
-	const submitAnswer = async (questionId: number, response: number[]) => {
+	const submitAnswer = async (questionId: number, response: number[], bookmarked?: boolean) => {
 		const data = {
 			question_revision_id: questionId,
 			response,
-			candidate
+			candidate,
+			bookmarked
 		};
 
 		try {
@@ -184,12 +180,22 @@
 		}
 	};
 
-	const handleSkip = () => {
+	const handleBookmark = async () => {
 		const answeredQuestion = selectedQuestion(question.id);
+		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
+		const newBookmarked = !currentBookmarked;
+		const currentResponse = answeredQuestion?.response ?? [];
 
+		if (isSubmitting) return;
+		isSubmitting = true;
+		saveError = null;
+
+		// optimistically update UI
 		if (answeredQuestion) {
 			selectedQuestions = selectedQuestions.map((q) =>
-				q.question_revision_id === question.id ? { ...q, skipped: true, visited: true } : q
+				q.question_revision_id === question.id
+					? { ...q, bookmarked: newBookmarked, visited: true }
+					: q
 			);
 		} else {
 			selectedQuestions = [
@@ -199,15 +205,33 @@
 					response: [],
 					visited: true,
 					time_spent: 0,
-					skipped: true
+					bookmarked: newBookmarked
 				}
 			];
 		}
 		updateStore();
+
+		try {
+			await submitAnswer(question.id, currentResponse, newBookmarked);
+		} catch (error) {
+			// revert on error
+			if (answeredQuestion) {
+				selectedQuestions = selectedQuestions.map((q) =>
+					q.question_revision_id === question.id ? { ...q, bookmarked: currentBookmarked } : q
+				);
+			} else {
+				selectedQuestions = selectedQuestions.filter((q) => q.question_revision_id !== question.id);
+			}
+			updateStore();
+			saveError = 'Failed to save bookmark. Please try again.';
+			setTimeout(() => (saveError = null), 5000);
+		} finally {
+			isSubmitting = false;
+		}
 	};
 
 	const isQuestionAnswered = $derived((selectedQuestion(question.id)?.response?.length ?? 0) > 0);
-	const isQuestionSkipped = $derived(selectedQuestion(question.id)?.skipped ?? false);
+	const isQuestionBookmarked = $derived(selectedQuestion(question.id)?.bookmarked ?? false);
 </script>
 
 <Card.Root
@@ -290,10 +314,15 @@
 			{/each}
 		{/if}
 
-		{#if !isQuestionAnswered && !isQuestionSkipped}
-			<Button variant="outline" class="mt-4 w-full" onclick={handleSkip}>Skip</Button>
-		{:else if isQuestionSkipped}
-			<p class="text-muted-foreground mt-4 text-center text-sm">Skipped</p>
-		{/if}
+		<Button
+			variant="outline"
+			class="mt-4 w-full {isQuestionBookmarked
+				? 'border-amber-500 bg-amber-50 text-amber-700 hover:bg-amber-100'
+				: ''}"
+			onclick={handleBookmark}
+		>
+			<Bookmark class="mr-2 h-4 w-4 {isQuestionBookmarked ? 'fill-amber-500' : ''}" />
+			{isQuestionBookmarked ? 'Bookmarked' : 'Bookmark'}
+		</Button>
 	</Card.Content>
 </Card.Root>
