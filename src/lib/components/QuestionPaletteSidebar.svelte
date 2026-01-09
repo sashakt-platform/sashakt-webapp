@@ -35,7 +35,7 @@
 		}
 
 		if (isQuestionAnswered(questionId, selections)) {
-			return `${baseClasses} bg-blue-100 text-blue-700`;
+			return `${baseClasses} bg-green-100 text-green-700`;
 		}
 
 		return `${baseClasses} border border-gray-300 bg-white text-gray-500`;

@@ -214,7 +214,7 @@
 		</div>
 
 		<!-- Desktop sidebar - hidden on mobile -->
-		<div class="fixed top-26 right-6 hidden max-h-[calc(100vh-8rem)] w-72 lg:block">
+		<div class="fixed top-28 right-6 hidden max-h-[calc(100vh-8rem)] w-72 lg:block">
 			<QuestionPaletteSidebar
 				{questions}
 				selections={selectedQuestions}
