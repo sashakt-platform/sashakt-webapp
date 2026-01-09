@@ -44,7 +44,7 @@
 		}
 
 		if (isQuestionAnswered(questionId, selections)) {
-			return `${baseClasses} bg-green-100 text-green-700`;
+			return `${baseClasses} bg-blue-100 text-blue-700`;
 		}
 
 		return `${baseClasses} border border-gray-300 bg-white text-gray-500`;
@@ -83,7 +83,7 @@
 				<div class="mb-4 grid grid-cols-2 gap-3">
 					<div class="flex items-center gap-2">
 						<span
-							class="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-sm font-medium text-green-700"
+							class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-700"
 						>
 							{stats.answered}
 						</span>
