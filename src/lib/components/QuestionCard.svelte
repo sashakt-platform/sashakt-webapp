@@ -322,7 +322,7 @@
 			onclick={handleBookmark}
 		>
 			<Bookmark class="mr-2 h-4 w-4 {isQuestionBookmarked ? 'fill-amber-500' : ''}" />
-			{isQuestionBookmarked ? 'Bookmarked' : 'Bookmark'}
+			{isQuestionBookmarked ? 'Unmark for review' : 'Mark for review'}
 		</Button>
 	</Card.Content>
 </Card.Root>

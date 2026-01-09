@@ -65,7 +65,7 @@
 				>
 					{stats.bookmarked}
 				</span>
-				<span class="text-sm text-gray-600">Bookmarked</span>
+				<span class="text-sm text-gray-600">Marked for review</span>
 			</div>
 
 			<div class="flex items-center gap-2">
