@@ -120,9 +120,9 @@
 	<div class="flex min-h-screen gap-6 bg-slate-100 p-4 lg:p-6">
 		<!-- Main question content -->
 		<div class="flex-1 lg:pr-80">
-			<Pagination.Root count={totalQuestions} {perPage} bind:page={paginationPage}>
+			<Pagination.Root count={totalQuestions} {perPage} bind:page={paginationPage} class="w-full">
 				{#snippet children({ currentPage, range })}
-					<div class="mb-16">
+					<div class="mb-16 w-full">
 						{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
 							<QuestionCard
 								{candidate}

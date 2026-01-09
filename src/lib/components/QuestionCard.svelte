@@ -211,7 +211,7 @@
 </script>
 
 <Card.Root
-	class="mb-4 w-82 rounded-xl shadow-md {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
+	class="mb-4 w-full rounded-xl shadow-md {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
 >
 	<Card.Header class="p-5">
 		<Card.Title class="mb-5 border-b pb-3 text-sm">
