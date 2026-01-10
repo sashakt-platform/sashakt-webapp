@@ -20,25 +20,6 @@
 	} = $props();
 
 	const stats = $derived(countQuestionStatuses(questions, selections));
-
-	const baseClasses =
-		'relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium cursor-pointer transition-colors';
-
-	function getGridItemClasses(isCurrent: boolean, isAnswered: boolean): string {
-		if (isCurrent && isAnswered) {
-			return `${baseClasses} border-2 border-blue-500 bg-blue-100 text-blue-700`;
-		}
-
-		if (isCurrent) {
-			return `${baseClasses} border-2 border-blue-500 bg-white text-blue-500`;
-		}
-
-		if (isAnswered) {
-			return `${baseClasses} bg-blue-100 text-blue-700`;
-		}
-
-		return `${baseClasses} border border-gray-300 bg-white text-gray-500`;
-	}
 </script>
 
 <!-- Stats Legend -->
@@ -79,7 +60,11 @@
 		{@const isCurrent = index === currentQuestionIndex}
 		<button
 			type="button"
-			class={getGridItemClasses(isCurrent, isAnswered)}
+			class="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-sm font-medium transition-colors
+				{isCurrent ? 'border-2 border-blue-500' : ''}
+				{isAnswered ? 'bg-blue-100 text-blue-700' : ''}
+				{!isCurrent && !isAnswered ? 'border border-gray-300 bg-white text-gray-500' : ''}
+				{isCurrent && !isAnswered ? 'bg-white text-blue-500' : ''}"
 			onclick={() => onNavigate(index)}
 			aria-label="Go to question {index + 1}"
 		>
