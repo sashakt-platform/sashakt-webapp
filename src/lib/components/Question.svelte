@@ -53,15 +53,25 @@
 	let paginationPage = $state(sessionStore.current.currentPage || 1);
 	let paginationReady = $state(false);
 
-	// question palette derived values
-	const currentQuestionIndex = $derived((paginationPage - 1) * perPage);
+	// question palette - track which question is currently selected
+	let currentQuestionIndex = $state((sessionStore.current.currentPage - 1) * perPage || 0);
 	const paletteStats = $derived(countQuestionStatuses(questions, selectedQuestions));
 
 	// navigate to a specific question by index
 	function navigateToQuestion(questionIndex: number) {
 		const targetPage = Math.floor(questionIndex / perPage) + 1;
 		paginationPage = targetPage;
-		scrollToTop();
+		currentQuestionIndex = questionIndex;
+
+		// scroll to the specific question after page renders
+		setTimeout(() => {
+			const element = document.getElementById(`question-${questionIndex}`);
+			if (element) {
+				const offset = 120; // account for top banner and padding
+				const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+				window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+			}
+		}, 50);
 	}
 
 	// sync page number to localStorage when page changes
@@ -88,7 +98,13 @@
 		return () => localStorage.removeItem(`sashakt-session-${candidate.candidate_test_id}`);
 	});
 
-	function scrollToTop() {
+	// scroll to top and update current question index for pagination buttons
+	function handlePageChange(direction: 'prev' | 'next') {
+		if (direction === 'prev' && paginationPage > 1) {
+			currentQuestionIndex = (paginationPage - 2) * perPage;
+		} else if (direction === 'next') {
+			currentQuestionIndex = paginationPage * perPage;
+		}
 		window.scrollTo({ top: 0, behavior: 'instant' });
 	}
 
@@ -124,19 +140,21 @@
 				{#snippet children({ currentPage, range })}
 					<div class="w-full">
 						{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
-							<QuestionCard
-								{candidate}
-								serialNumber={(currentPage - 1) * perPage + index + 1}
-								{question}
-								{totalQuestions}
-								bind:selectedQuestions
-							/>
+							<div id="question-{(currentPage - 1) * perPage + index}">
+								<QuestionCard
+									{candidate}
+									serialNumber={(currentPage - 1) * perPage + index + 1}
+									{question}
+									{totalQuestions}
+									bind:selectedQuestions
+								/>
+							</div>
 						{/each}
 					</div>
 					<Pagination.Content
 						class="bottom-0 z-10 flex w-full items-center justify-between rounded-xl bg-white p-2 shadow-md"
 					>
-						<Pagination.PrevButton onclick={scrollToTop} />
+						<Pagination.PrevButton onclick={() => handlePageChange('prev')} />
 
 						{#if currentPage === Math.ceil(totalQuestions / perPage)}
 							<Dialog.Root bind:open={submitDialogOpen}>
@@ -206,7 +224,7 @@
 								{@render mandatoryQuestionDialog(false)}
 							</Dialog.Root>
 						{:else}
-							<Pagination.NextButton onclick={scrollToTop} class="w-24" />
+							<Pagination.NextButton onclick={() => handlePageChange('next')} class="w-24" />
 						{/if}
 					</Pagination.Content>
 				{/snippet}
