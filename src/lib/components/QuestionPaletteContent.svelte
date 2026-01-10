@@ -21,15 +21,19 @@
 
 	const stats = $derived(countQuestionStatuses(questions, selections));
 
-	function getGridItemClasses(index: number, questionId: number): string {
-		const baseClasses =
-			'relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium cursor-pointer transition-colors';
+	const baseClasses =
+		'relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium cursor-pointer transition-colors';
 
-		if (index === currentQuestionIndex) {
+	function getGridItemClasses(isCurrent: boolean, isAnswered: boolean): string {
+		if (isCurrent && isAnswered) {
+			return `${baseClasses} border-2 border-blue-500 bg-blue-100 text-blue-700`;
+		}
+
+		if (isCurrent) {
 			return `${baseClasses} border-2 border-blue-500 bg-white text-blue-500`;
 		}
 
-		if (isQuestionAnswered(questionId, selections)) {
+		if (isAnswered) {
 			return `${baseClasses} bg-blue-100 text-blue-700`;
 		}
 
@@ -70,9 +74,12 @@
 <!-- Question Grid -->
 <div class="grid grid-cols-5 gap-2">
 	{#each questions as question, index (question.id)}
+		{@const isAnswered = isQuestionAnswered(question.id, selections)}
+		{@const isBookmarked = isQuestionBookmarked(question.id, selections)}
+		{@const isCurrent = index === currentQuestionIndex}
 		<button
 			type="button"
-			class={getGridItemClasses(index, question.id)}
+			class={getGridItemClasses(isCurrent, isAnswered)}
 			onclick={() => onNavigate(index)}
 			aria-label="Go to question {index + 1}"
 		>
@@ -80,7 +87,7 @@
 			{#if question.is_mandatory}
 				<span class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500"></span>
 			{/if}
-			{#if isQuestionBookmarked(question.id, selections)}
+			{#if isBookmarked}
 				<Bookmark class="absolute -right-1 -bottom-1 h-3 w-3 fill-amber-500 text-amber-500" />
 			{/if}
 		</button>
