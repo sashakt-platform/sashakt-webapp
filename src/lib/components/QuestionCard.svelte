@@ -51,6 +51,7 @@
 
 	const handleSelection = async (questionId: number, optionId: number, isRemoving = false) => {
 		const answeredQuestion = selectedQuestion(questionId);
+		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
 
 		// calculate the new response
 		let newResponse: number[];
@@ -72,7 +73,7 @@
 			isSubmitting = true;
 			saveError = null;
 			try {
-				await submitAnswer(questionId, newResponse);
+				await submitAnswer(questionId, newResponse, currentBookmarked);
 
 				// only update state on success
 				if (answeredQuestion) {
