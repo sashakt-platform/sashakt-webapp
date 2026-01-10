@@ -108,7 +108,8 @@ export const mockTestData = {
 	start_instructions: '<p>Read all questions carefully before answering.</p>',
 	completion_message: 'Thank you for completing the test!',
 	candidate_profile: null,
-	profile_list: []
+	profile_list: [],
+	show_question_palette: true
 };
 
 // Mock test questions response (from backend)

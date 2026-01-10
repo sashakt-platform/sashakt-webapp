@@ -119,7 +119,7 @@
 {#if paginationReady}
 	<div class="flex min-h-screen gap-6 bg-slate-100 p-4 lg:p-6">
 		<!-- Main question content -->
-		<div class="flex-1 lg:pr-80">
+		<div class="flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
 			<Pagination.Root count={totalQuestions} {perPage} bind:page={paginationPage} class="w-full">
 				{#snippet children({ currentPage, range })}
 					<div class="w-full">
@@ -214,14 +214,16 @@
 		</div>
 
 		<!-- Desktop sidebar - hidden on mobile -->
-		<div class="fixed top-28 right-6 hidden max-h-[calc(100vh-8rem)] w-72 lg:block">
-			<QuestionPaletteSidebar
-				{questions}
-				selections={selectedQuestions}
-				{currentQuestionIndex}
-				onNavigate={navigateToQuestion}
-			/>
-		</div>
+		{#if testDetails?.show_question_palette}
+			<div class="fixed top-28 right-6 hidden max-h-[calc(100vh-8rem)] w-72 lg:block">
+				<QuestionPaletteSidebar
+					{questions}
+					selections={selectedQuestions}
+					{currentQuestionIndex}
+					onNavigate={navigateToQuestion}
+				/>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Desktop Instructions button - hidden on mobile -->
@@ -230,21 +232,23 @@
 	</div>
 
 	<!-- Mobile toggle button - hidden on desktop -->
-	<div class="lg:hidden">
-		<QuestionPaletteToggleButton
-			remainingMandatoryCount={paletteStats.remainingMandatory}
-			onclick={() => (paletteOpen = true)}
-		/>
-	</div>
+	{#if testDetails?.show_question_palette}
+		<div class="lg:hidden">
+			<QuestionPaletteToggleButton
+				remainingMandatoryCount={paletteStats.remainingMandatory}
+				onclick={() => (paletteOpen = true)}
+			/>
+		</div>
 
-	<!-- Mobile modal -->
-	<QuestionPaletteModal
-		bind:open={paletteOpen}
-		{questions}
-		selections={selectedQuestions}
-		{currentQuestionIndex}
-		instructions={testDetails?.start_instructions}
-		{perPage}
-		onNavigate={navigateToQuestion}
-	/>
+		<!-- Mobile modal -->
+		<QuestionPaletteModal
+			bind:open={paletteOpen}
+			{questions}
+			selections={selectedQuestions}
+			{currentQuestionIndex}
+			instructions={testDetails?.start_instructions}
+			{perPage}
+			onNavigate={navigateToQuestion}
+		/>
+	{/if}
 {/if}
