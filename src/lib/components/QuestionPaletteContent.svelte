@@ -41,7 +41,7 @@
 <div class="mb-4 grid grid-cols-2 gap-3">
 	<div class="flex items-center gap-2">
 		<span
-			class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-700"
+			class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-700"
 		>
 			{stats.answered}
 		</span>
@@ -50,7 +50,7 @@
 
 	<div class="flex items-center gap-2">
 		<span
-			class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-sm font-medium text-amber-700"
+			class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-medium text-amber-700"
 		>
 			{stats.bookmarked}
 		</span>
@@ -59,7 +59,7 @@
 
 	<div class="flex items-center gap-2">
 		<span
-			class="flex h-8 w-8 items-center justify-center rounded-full bg-red-500"
+			class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500"
 			aria-label="Mandatory question indicator"
 		>
 		</span>
