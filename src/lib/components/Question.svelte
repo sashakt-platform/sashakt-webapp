@@ -152,7 +152,7 @@
 						{/each}
 					</div>
 					<Pagination.Content
-						class="bottom-0 z-10 flex w-full items-center justify-between rounded-xl bg-white p-2 shadow-md"
+						class="bottom-0 z-10 flex w-full items-center justify-between bg-white p-2 shadow-md not-lg:fixed lg:rounded-xl"
 					>
 						<Pagination.PrevButton onclick={() => handlePageChange('prev')} />
 
