@@ -20,16 +20,15 @@ vi.mock('$app/state', () => ({
 	}
 }));
 
+const defaultTestDetails = {
+	...mockTestData,
+	total_questions: 20,
+	time_limit: 60,
+	question_pagination: 5,
+	start_instructions: '<p>Please read carefully before starting.</p>',
+	candidate_profile: null
+};
 describe('LandingPage', () => {
-	const defaultTestDetails = {
-		...mockTestData,
-		total_questions: 20,
-		time_limit: 60,
-		question_pagination: 5,
-		start_instructions: '<p>Please read carefully before starting.</p>',
-		candidate_profile: null
-	};
-
 	it('should render test name', () => {
 		render(LandingPage, {
 			props: {
@@ -187,19 +186,9 @@ describe('LandingPage', () => {
 	});
 });
 
-describe('Localization Changes', () => {
-	const defaultTestDetails = {
-		...mockTestData,
-		total_questions: 20,
-		time_limit: 60,
-		question_pagination: 5,
-		start_instructions: '<p>Please read carefully before starting.</p>',
-		candidate_profile: null,
-		locale: 'hi-IN'
-	};
-
+describe('Support for Localization', () => {
 	it('should render localization strings correctly', async () => {
-		await setLocaleForTests(defaultTestDetails.locale);
+		await setLocaleForTests('hi-IN');
 		render(LandingPage, {
 			props: {
 				testDetails: defaultTestDetails
@@ -221,20 +210,11 @@ describe('Localization Changes', () => {
 		});
 	});
 
-	const anotherTestDetails = {
-		...mockTestData,
-		total_questions: 20,
-		time_limit: 60,
-		question_pagination: 5,
-		start_instructions: '<p>Please read carefully before starting.</p>',
-		candidate_profile: null
-	};
-
 	it('should render English localization strings correctly', async () => {
-		await setLocaleForTests(anotherTestDetails.locale);
+		await setLocaleForTests('en-US');
 		render(LandingPage, {
 			props: {
-				testDetails: anotherTestDetails
+				testDetails: defaultTestDetails
 			}
 		});
 		await waitFor(() => {

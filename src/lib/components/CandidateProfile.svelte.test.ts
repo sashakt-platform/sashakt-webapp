@@ -8,17 +8,17 @@ vi.mock('$app/forms', () => ({
 	enhance: () => () => {}
 }));
 
-describe('CandidateProfile', () => {
-	const testDetailsWithProfile = {
-		name: 'Assessment Test',
-		candidate_profile: true,
-		profile_list: [
-			{ id: 1, name: 'CLF Alpha' },
-			{ id: 2, name: 'CLF Beta' },
-			{ id: 3, name: 'CLF Gamma' }
-		]
-	};
+const testDetailsWithProfile = {
+	name: 'Assessment Test',
+	candidate_profile: true,
+	profile_list: [
+		{ id: 1, name: 'CLF Alpha' },
+		{ id: 2, name: 'CLF Beta' },
+		{ id: 3, name: 'CLF Gamma' }
+	]
+};
 
+describe('CandidateProfile', () => {
 	it('should render test name', () => {
 		render(CandidateProfile, {
 			props: {
@@ -82,20 +82,9 @@ describe('CandidateProfile', () => {
 	});
 });
 
-describe('Localization Changes', () => {
-	const testDetailsWithProfile = {
-		name: 'Assessment Test',
-		candidate_profile: true,
-		locale: 'hi-IN',
-		profile_list: [
-			{ id: 1, name: 'CLF Alpha' },
-			{ id: 2, name: 'CLF Beta' },
-			{ id: 3, name: 'CLF Gamma' }
-		]
-	};
-
+describe('Support for Localization', () => {
 	it('should render localization strings correctly', async () => {
-		await setLocaleForTests(testDetailsWithProfile.locale);
+		await setLocaleForTests('hi-IN');
 		render(CandidateProfile, {
 			props: {
 				testDetails: testDetailsWithProfile
@@ -109,19 +98,8 @@ describe('Localization Changes', () => {
 		});
 	});
 
-	const anotherTestDetailsWithProfile = {
-		name: 'Assessment Test',
-		candidate_profile: true,
-		locale: 'en-US',
-		profile_list: [
-			{ id: 1, name: 'CLF Alpha' },
-			{ id: 2, name: 'CLF Beta' },
-			{ id: 3, name: 'CLF Gamma' }
-		]
-	};
-
 	it('should render English localization strings correctly', async () => {
-		await setLocaleForTests(anotherTestDetailsWithProfile.locale);
+		await setLocaleForTests('en-US');
 		render(CandidateProfile, {
 			props: {
 				testDetails: testDetailsWithProfile
