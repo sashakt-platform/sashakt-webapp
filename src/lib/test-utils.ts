@@ -5,7 +5,7 @@
 import { vi } from 'vitest';
 import type { TCandidate, TQuestion, TSelection, TTestSession } from './types';
 import { init, register, waitLocale, locale } from 'svelte-i18n';
-import { localization_enum, DEFAULT_LOCALE } from './utils';
+import { languages, DEFAULT_LANGUAGE } from './utils';
 
 // Mock candidate data
 export const mockCandidate: TCandidate = {
@@ -109,7 +109,7 @@ export const mockTestData = {
 	completion_message: 'Thank you for completing the test!',
 	candidate_profile: null,
 	profile_list: [],
-	locale: 'EN_US'
+	locale: DEFAULT_LANGUAGE
 };
 
 // Mock test questions response (from backend)
@@ -160,18 +160,18 @@ export const createMockFetchError = (message = 'Network error') => {
 
 export function initializeI18nForTests() {
 	// Register locales
-	register(localization_enum.EN_US, () => Promise.resolve({})); // Empty for English (default)
-	register(localization_enum.HI_IN, () => import('$lib/locales/hi-IN.json'));
+	register(languages.English, () => Promise.resolve({})); // Empty for English (default)
+	register(languages.Hindi, () => import('$lib/locales/hi-IN.json'));
 
 	// Initialize
 	init({
-		fallbackLocale: DEFAULT_LOCALE,
-		initialLocale: DEFAULT_LOCALE
+		fallbackLocale: DEFAULT_LANGUAGE,
+		initialLocale: DEFAULT_LANGUAGE
 	});
 }
 
 export async function setLocaleForTests(currentLocale: string) {
-	locale.set(localization_enum[currentLocale as keyof typeof localization_enum] || DEFAULT_LOCALE);
+	locale.set(currentLocale || DEFAULT_LANGUAGE);
 
 	// Wait for locale to load
 	await waitLocale();

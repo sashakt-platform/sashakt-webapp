@@ -195,7 +195,7 @@ describe('Localization Changes', () => {
 		question_pagination: 5,
 		start_instructions: '<p>Please read carefully before starting.</p>',
 		candidate_profile: null,
-		locale: 'HI_IN'
+		locale: 'hi-IN'
 	};
 
 	it('should render localization strings correctly', async () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, waitFor } from '@testing-library/svelte';
 import CandidateProfile from './CandidateProfile.svelte';
+import { setLocaleForTests } from '$lib/test-utils';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -78,5 +79,59 @@ describe('CandidateProfile', () => {
 		});
 
 		expect(screen.getByText('Select your CLF')).toBeInTheDocument();
+	});
+});
+
+describe('Localization Changes', () => {
+	const testDetailsWithProfile = {
+		name: 'Assessment Test',
+		candidate_profile: true,
+		locale: 'hi-IN',
+		profile_list: [
+			{ id: 1, name: 'CLF Alpha' },
+			{ id: 2, name: 'CLF Beta' },
+			{ id: 3, name: 'CLF Gamma' }
+		]
+	};
+
+	it('should render localization strings correctly', async () => {
+		await setLocaleForTests(testDetailsWithProfile.locale);
+		render(CandidateProfile, {
+			props: {
+				testDetails: testDetailsWithProfile
+			}
+		});
+		await waitFor(() => {
+			expect(screen.getByText('उम्मीदवार की जानकारी')).toBeInTheDocument();
+			expect(screen.getByText('कृपया अपने विवरण प्रदान करें')).toBeInTheDocument();
+			expect(screen.getByText('CLF *')).toBeInTheDocument();
+			expect(screen.getByText('परीक्षा जारी रखें')).toBeInTheDocument();
+		});
+	});
+
+	const anotherTestDetailsWithProfile = {
+		name: 'Assessment Test',
+		candidate_profile: true,
+		locale: 'en-US',
+		profile_list: [
+			{ id: 1, name: 'CLF Alpha' },
+			{ id: 2, name: 'CLF Beta' },
+			{ id: 3, name: 'CLF Gamma' }
+		]
+	};
+
+	it('should render English localization strings correctly', async () => {
+		await setLocaleForTests(anotherTestDetailsWithProfile.locale);
+		render(CandidateProfile, {
+			props: {
+				testDetails: testDetailsWithProfile
+			}
+		});
+		await waitFor(() => {
+			expect(screen.getByText('Candidate Information')).toBeInTheDocument();
+			expect(screen.getByText('Please provide your details')).toBeInTheDocument();
+			expect(screen.getByText('CLF *')).toBeInTheDocument();
+			expect(screen.getByText('Continue to Test')).toBeInTheDocument();
+		});
 	});
 });
