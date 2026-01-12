@@ -110,14 +110,11 @@
 			const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 
 			if (isRemoving) {
-				const next = selectedQuestions
-					.map((q) =>
-						q.question_revision_id === questionId
-							? { ...q, response: q.response.filter((id) => id !== optionId) }
-							: q
-					)
-					.filter((q) => q.question_revision_id !== questionId || q.response.length > 0);
-				selectedQuestions = next;
+				selectedQuestions = selectedQuestions.map((q) =>
+					q.question_revision_id === questionId
+						? { ...q, response: q.response.filter((id) => id !== optionId) }
+						: q
+				);
 			} else {
 				if (answeredQuestion) {
 					selectedQuestions = selectedQuestions.map((q) =>
