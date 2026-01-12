@@ -26,7 +26,13 @@ export const answeredCurrentMandatory = (
 	const start = (currentPage - 1) * questionsPerPage;
 	const end = start + questionsPerPage;
 
-	const selectedQuestions = answeredQuestions.slice(start, end);
 	const currentQuestions = allQuestions.slice(start, end);
-	return answeredAllMandatory(selectedQuestions, currentQuestions);
+	const currentQuestionIds = currentQuestions.map((q) => q.id);
+
+	// filter selections that belong to current page questions
+	const currentSelections = answeredQuestions.filter((selection) =>
+		currentQuestionIds.includes(selection.question_revision_id)
+	);
+
+	return answeredAllMandatory(currentSelections, currentQuestions);
 };
