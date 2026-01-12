@@ -152,7 +152,7 @@
 	const submitAnswer = async (questionId: number, response: number[], bookmarked?: boolean) => {
 		const data = {
 			question_revision_id: questionId,
-			response,
+			response: response.length > 0 ? response : null,
 			candidate,
 			bookmarked
 		};

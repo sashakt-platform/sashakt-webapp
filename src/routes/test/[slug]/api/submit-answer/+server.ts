@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		bookmarked
 	}: {
 		question_revision_id: number;
-		response: number[];
+		response: number[] | null;
 		candidate: TCandidate;
 		bookmarked?: boolean;
 	} = await request.json();
@@ -52,7 +52,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					question_revision_id,
-					response: JSON.stringify(response),
+					response: response ? JSON.stringify(response) : null,
 					visited: true,
 					bookmarked: bookmarked ?? false
 				})
