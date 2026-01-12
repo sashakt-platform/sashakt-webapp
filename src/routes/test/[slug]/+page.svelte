@@ -6,14 +6,15 @@
 	import type { PageProps } from './$types';
 	import { locale } from 'svelte-i18n';
 	import { t } from 'svelte-i18n';
-	import { localization_enum, DEFAULT_LOCALE } from '$lib/utils';
+	import { DEFAULT_LANGUAGE } from '$lib/utils';
 
 	let { data, form }: PageProps = $props();
 	let showProfileForm = $state(false);
 
-	locale.set(
-		localization_enum[data.testData.locale as keyof typeof localization_enum] || DEFAULT_LOCALE
-	);
+	$effect(() => {
+		const currentLocale = data?.testData?.locale || DEFAULT_LANGUAGE;
+		locale.set(currentLocale);
+	});
 </script>
 
 <section>

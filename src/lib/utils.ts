@@ -15,9 +15,9 @@ export type WithoutChild<T = object> = Omit<T, 'child'>;
 
 export type WithoutChildrenOrChild<T = object> = Omit<T, 'children' | 'child'>;
 
-export enum localization_enum {
-	EN_US = 'en-US',
-	HI_IN = 'hi-IN'
+export enum languages {
+	English = 'en-US',
+	Hindi = 'hi-IN'
 }
 
-export const DEFAULT_LOCALE = localization_enum.EN_US;
+export const DEFAULT_LANGUAGE = languages.English;

@@ -3,15 +3,15 @@
 	import TestTimer from '$lib/components/TestTimer.svelte';
 	import '../app.css';
 	import { register, init, isLoading } from 'svelte-i18n';
-	import { localization_enum, DEFAULT_LOCALE } from '$lib/utils';
+	import { languages, DEFAULT_LANGUAGE } from '$lib/utils';
 
 	let { children } = $props();
 
-	register(localization_enum.HI_IN, () => import('$lib/locales/hi-IN.json'));
+	register(languages.Hindi, () => import('$lib/locales/hi-IN.json'));
 
 	init({
-		fallbackLocale: DEFAULT_LOCALE,
-		initialLocale: DEFAULT_LOCALE
+		fallbackLocale: DEFAULT_LANGUAGE,
+		initialLocale: DEFAULT_LANGUAGE
 	});
 </script>
 
