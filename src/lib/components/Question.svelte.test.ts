@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import Question from './Question.svelte';
-import { mockCandidate, mockQuestions } from '$lib/test-utils';
+import { mockCandidate, mockQuestions, setLocaleForTests } from '$lib/test-utils';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -17,12 +17,12 @@ vi.mock('$app/state', () => ({
 // Mock fetch for API calls
 vi.stubGlobal('fetch', vi.fn());
 
-describe('Question', () => {
-	const testQuestions = {
-		question_revisions: mockQuestions,
-		question_pagination: 2
-	};
+const testQuestions = {
+	question_revisions: mockQuestions,
+	question_pagination: 2
+};
 
+describe('Question', () => {
 	it('should render questions', async () => {
 		render(Question, {
 			props: {
@@ -140,6 +140,38 @@ describe('Question', () => {
 			mockQuestions.forEach((q) => {
 				expect(screen.getByText(q.question_text)).toBeInTheDocument();
 			});
+		});
+	});
+});
+
+describe('Support for Localization', () => {
+	it('displays text in Hindi Language', async () => {
+		await setLocaleForTests('hi-IN');
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions
+			}
+		});
+
+		await waitFor(async () => {
+			const elements = screen.getAllByText(/अंक/i);
+			expect(elements.length).toBeGreaterThanOrEqual(2);
+
+			const nextElements = screen.getAllByText(/अगला/i);
+			expect(nextElements[0]).toBeInTheDocument();
+			const previousElements = screen.getAllByText(/पिछला/i);
+			expect(previousElements[0]).toBeInTheDocument();
+
+			await fireEvent.click(nextElements[0]);
+
+			expect(screen.getByText(/सभी अनिवार्य प्रश्नों का उत्तर दें!/)).toBeInTheDocument();
+			expect(
+				screen.getByText(
+					/कृपया सुनिश्चित करें कि सभी अनिवार्य प्रश्नों का उत्तर दिया गया है अगले पृष्ठ पर जाने से पहले./
+				)
+			).toBeInTheDocument();
+			expect(screen.getByText(/ठीक है/)).toBeInTheDocument();
 		});
 	});
 });
