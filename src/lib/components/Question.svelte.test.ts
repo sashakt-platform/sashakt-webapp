@@ -205,6 +205,36 @@ describe('Support for Localization', () => {
 		});
 	});
 
+	it('should display text in Hindi Language During Final Submission', async () => {
+		await setLocaleForTests('hi-IN');
+		const singlePageQuestions = {
+			question_revisions: [mockQuestions[2]],
+			question_pagination: 1 // All on one page
+		};
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: singlePageQuestions
+			}
+		});
+
+		await waitFor(async () => {
+			const submitElement = screen.getByText(/जमा करें/i);
+			expect(submitElement).toBeInTheDocument();
+			await fireEvent.click(submitElement);
+			expect(screen.getByText(/परीक्षा जमा करें\?/)).toBeInTheDocument();
+			expect(
+				screen.getByText(
+					/क्या आप निश्चित रूप से अंतिम अंकन के लिए जमा करना चाहते हैं\? जमा करने के बाद कोई बदलाव की अनुमति नहीं होगी।/i
+				)
+			).toBeInTheDocument();
+			expect(screen.getByText(/पुष्टि करें/i)).toBeInTheDocument();
+			expect(screen.getByText(/रद्द करें/i)).toBeInTheDocument();
+			screen.debug();
+		});
+	});
+
 	it('displays text in English Language in question page', async () => {
 		await setLocaleForTests('en-US');
 		render(Question, {
@@ -262,6 +292,35 @@ describe('Support for Localization', () => {
 				)
 			).toBeInTheDocument();
 			expect(screen.getByText(/okay/i)).toBeInTheDocument();
+		});
+	});
+
+	it('should display text in Hindi Language During Final Submission', async () => {
+		await setLocaleForTests('en-US');
+		const singlePageQuestions = {
+			question_revisions: [mockQuestions[2]],
+			question_pagination: 1 // All on one page
+		};
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: singlePageQuestions
+			}
+		});
+
+		await waitFor(async () => {
+			const submitElement = screen.getByText(/Submit/i);
+			expect(submitElement).toBeInTheDocument();
+			await fireEvent.click(submitElement);
+			expect(screen.getByText(/Submit test\?/)).toBeInTheDocument();
+			expect(
+				screen.getByText(
+					/Are you sure you want to submit for final marking\? No changes will be allowed after submission./i
+				)
+			).toBeInTheDocument();
+			expect(screen.getByText(/Confirm/i)).toBeInTheDocument();
+			expect(screen.getByText(/Cancel/i)).toBeInTheDocument();
 		});
 	});
 });
