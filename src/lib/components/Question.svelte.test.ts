@@ -145,7 +145,7 @@ describe('Question', () => {
 });
 
 describe('Support for Localization', () => {
-	it('displays text in Hindi Language', async () => {
+	it('displays text in Hindi Language in question page', async () => {
 		await setLocaleForTests('hi-IN');
 		render(Question, {
 			props: {
@@ -154,16 +154,18 @@ describe('Support for Localization', () => {
 			}
 		});
 
+		console.log('Screen Debug:', screen.debug());
+
 		await waitFor(async () => {
 			const elements = screen.getAllByText(/अंक/i);
 			expect(elements.length).toBeGreaterThanOrEqual(2);
 
-			const nextElements = screen.getAllByText(/अगला/i);
-			expect(nextElements[0]).toBeInTheDocument();
-			const previousElements = screen.getAllByText(/पिछला/i);
-			expect(previousElements[0]).toBeInTheDocument();
+			const nextElements = screen.getByText(/अगला/i);
+			expect(nextElements).toBeInTheDocument();
+			const previousElements = screen.getByText(/पिछला/i);
+			expect(previousElements).toBeInTheDocument();
 
-			await fireEvent.click(nextElements[0]);
+			await fireEvent.click(nextElements);
 
 			expect(screen.getByText(/सभी अनिवार्य प्रश्नों का उत्तर दें!/)).toBeInTheDocument();
 			expect(
@@ -172,6 +174,94 @@ describe('Support for Localization', () => {
 				)
 			).toBeInTheDocument();
 			expect(screen.getByText(/ठीक है/)).toBeInTheDocument();
+		});
+	});
+
+	it('should display text in Hindi Language for submission page', async () => {
+		await setLocaleForTests('hi-IN');
+		const singlePageQuestions = {
+			question_revisions: [mockQuestions[0]],
+			question_pagination: 1 // All on one page
+		};
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: singlePageQuestions
+			}
+		});
+
+		await waitFor(async () => {
+			const submitElement = screen.getByText(/जमा करें/i);
+			expect(submitElement).toBeInTheDocument();
+			await fireEvent.click(submitElement);
+			expect(screen.getByText(/सभी अनिवार्य प्रश्नों का उत्तर दें!/)).toBeInTheDocument();
+			expect(
+				screen.getByText(
+					/कृपया सुनिश्चित करें कि सभी अनिवार्य प्रश्नों का उत्तर दिया गया है परीक्षा जमा करने से पहले./
+				)
+			).toBeInTheDocument();
+			expect(screen.getByText(/ठीक है/)).toBeInTheDocument();
+		});
+	});
+
+	it('displays text in English Language in question page', async () => {
+		await setLocaleForTests('en-US');
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions
+			}
+		});
+
+		console.log('Screen Debug:', screen.debug());
+
+		await waitFor(async () => {
+			const elements = screen.getAllByText(/Mark/i);
+			expect(elements.length).toBeGreaterThanOrEqual(2);
+
+			const nextElements = screen.getByText(/next/i);
+			expect(nextElements).toBeInTheDocument();
+			const previousElements = screen.getByText(/previous/i);
+			expect(previousElements).toBeInTheDocument();
+
+			await fireEvent.click(nextElements);
+
+			expect(screen.getByText(/Answer all mandatory questions!/i)).toBeInTheDocument();
+			expect(
+				screen.getByText(
+					/Please make sure all mandatory questions are answered before proceeding to the next page./
+				)
+			).toBeInTheDocument();
+			expect(screen.getByText(/okay/i)).toBeInTheDocument();
+		});
+	});
+
+	it('should display text in English Language for submission page', async () => {
+		await setLocaleForTests('en-US');
+		const singlePageQuestions = {
+			question_revisions: [mockQuestions[0]],
+			question_pagination: 1 // All on one page
+		};
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: singlePageQuestions
+			}
+		});
+
+		await waitFor(async () => {
+			const submitElement = screen.getByText(/submit/i);
+			expect(submitElement).toBeInTheDocument();
+			await fireEvent.click(submitElement);
+			expect(screen.getByText(/Answer all mandatory questions!/)).toBeInTheDocument();
+			expect(
+				screen.getByText(
+					/Please make sure all mandatory questions are answered before submitting the test./
+				)
+			).toBeInTheDocument();
+			expect(screen.getByText(/okay/i)).toBeInTheDocument();
 		});
 	});
 });
