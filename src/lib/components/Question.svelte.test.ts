@@ -268,7 +268,6 @@ describe('Support for Localization', () => {
 	});
 
 	it('should display text in English Language for submission page', async () => {
-		await setLocaleForTests('en-US');
 		const singlePageQuestions = {
 			question_revisions: [mockQuestions[0]],
 			question_pagination: 1 // All on one page
@@ -295,8 +294,7 @@ describe('Support for Localization', () => {
 		});
 	});
 
-	it('should display text in Hindi Language During Final Submission', async () => {
-		await setLocaleForTests('en-US');
+	it('should display text in English Language During Final Submission', async () => {
 		const singlePageQuestions = {
 			question_revisions: [mockQuestions[2]],
 			question_pagination: 1 // All on one page
