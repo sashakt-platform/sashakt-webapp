@@ -154,8 +154,6 @@ describe('Support for Localization', () => {
 			}
 		});
 
-		console.log('Screen Debug:', screen.debug());
-
 		await waitFor(async () => {
 			const elements = screen.getAllByText(/अंक/i);
 			expect(elements.length).toBeGreaterThanOrEqual(2);
@@ -231,7 +229,6 @@ describe('Support for Localization', () => {
 			).toBeInTheDocument();
 			expect(screen.getByText(/पुष्टि करें/i)).toBeInTheDocument();
 			expect(screen.getByText(/रद्द करें/i)).toBeInTheDocument();
-			screen.debug();
 		});
 	});
 
@@ -243,8 +240,6 @@ describe('Support for Localization', () => {
 				testQuestions
 			}
 		});
-
-		console.log('Screen Debug:', screen.debug());
 
 		await waitFor(async () => {
 			const elements = screen.getAllByText(/Mark/i);
