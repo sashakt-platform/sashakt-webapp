@@ -164,7 +164,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		);
 	});
 
-	it('should handle empty response array', async () => {
+	it('should handle null response when question is unanswered', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 		vi.mocked(fetch).mockResolvedValueOnce(
 			createMockResponse({ success: true }) as unknown as Response
@@ -173,12 +173,65 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		const mockCookies = createMockCookies();
 		const request = createMockRequest({
 			question_revision_id: 1,
-			response: [],
+			response: null,
 			candidate: mockCandidate
 		});
 		const response = await POST({ request, cookies: mockCookies } as any);
 
 		expect(response.status).toBe(200);
+		expect(fetch).toHaveBeenCalledWith(
+			expect.any(String),
+			expect.objectContaining({
+				body: expect.stringContaining('"response":null')
+			})
+		);
+	});
+
+	it('should include bookmarked flag in request', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch).mockResolvedValueOnce(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest({
+			question_revision_id: 1,
+			response: [101],
+			candidate: mockCandidate,
+			bookmarked: true
+		});
+		const response = await POST({ request, cookies: mockCookies } as any);
+
+		expect(response.status).toBe(200);
+		expect(fetch).toHaveBeenCalledWith(
+			expect.any(String),
+			expect.objectContaining({
+				body: expect.stringContaining('"bookmarked":true')
+			})
+		);
+	});
+
+	it('should default bookmarked to false when not provided', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch).mockResolvedValueOnce(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest({
+			question_revision_id: 1,
+			response: [101],
+			candidate: mockCandidate
+		});
+		const response = await POST({ request, cookies: mockCookies } as any);
+
+		expect(response.status).toBe(200);
+		expect(fetch).toHaveBeenCalledWith(
+			expect.any(String),
+			expect.objectContaining({
+				body: expect.stringContaining('"bookmarked":false')
+			})
+		);
 	});
 
 	it('should return 500 when backend API fails', async () => {
