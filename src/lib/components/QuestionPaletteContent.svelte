@@ -11,13 +11,18 @@
 		questions,
 		selections,
 		currentQuestionIndex,
-		onNavigate
+		onNavigate,
+		maxRows
 	}: {
 		questions: TQuestion[];
 		selections: TSelection[];
 		currentQuestionIndex: number;
 		onNavigate: (questionIndex: number) => void;
+		maxRows?: number;
 	} = $props();
+
+	// Calculate max height for grid: rows * 40px (h-10) + (rows-1) * 8px (gap-2)
+	const gridMaxHeight = $derived(maxRows ? `${maxRows * 40 + (maxRows - 1) * 8}px` : undefined);
 
 	const stats = $derived(countQuestionStatuses(questions, selections));
 </script>
@@ -53,7 +58,10 @@
 </div>
 
 <!-- Question Grid -->
-<div class="grid grid-cols-5 gap-2">
+<div
+	class="grid grid-cols-5 gap-2 {maxRows ? 'overflow-y-auto' : ''}"
+	style:max-height={gridMaxHeight}
+>
 	{#each questions as question, index (question.id)}
 		{@const isAnswered = isQuestionAnswered(question.id, selections)}
 		{@const isBookmarked = isQuestionBookmarked(question.id, selections)}

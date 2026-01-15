@@ -68,6 +68,7 @@
 						{selections}
 						{currentQuestionIndex}
 						onNavigate={handleQuestionClick}
+						maxRows={5}
 					/>
 				</div>
 			{:else}
