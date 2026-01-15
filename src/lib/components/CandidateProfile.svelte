@@ -19,8 +19,19 @@
 
 	const entityOptions: EntityOption[] = [];
 
-	testDetails.profile_list.forEach((entity: { id: number; name: string }) => {
-		entityOptions.push({ value: entity.id, label: entity.name });
+	testDetails.profile_list.forEach((entity) => {
+		let label = entity.name;
+
+		if (entity.block?.name) {
+			label = `${entity.name} - ${entity.block.name} Block`;
+		} else if (entity.district?.name) {
+			label = `${entity.name} - ${entity.district.name} District`;
+		}
+
+		entityOptions.push({
+			value: entity.id,
+			label
+		});
 	});
 
 	const triggerContent = $derived(
