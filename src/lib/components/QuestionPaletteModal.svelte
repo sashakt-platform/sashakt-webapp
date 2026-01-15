@@ -9,7 +9,6 @@
 		selections,
 		currentQuestionIndex,
 		instructions,
-		perPage,
 		onNavigate
 	}: {
 		open: boolean;
@@ -17,7 +16,6 @@
 		selections: TSelection[];
 		currentQuestionIndex: number;
 		instructions: string | undefined;
-		perPage: number;
 		onNavigate: (questionIndex: number) => void;
 	} = $props();
 

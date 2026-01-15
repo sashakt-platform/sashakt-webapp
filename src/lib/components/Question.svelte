@@ -265,7 +265,6 @@
 			selections={selectedQuestions}
 			{currentQuestionIndex}
 			instructions={testDetails?.start_instructions}
-			{perPage}
 			onNavigate={navigateToQuestion}
 		/>
 	{/if}
