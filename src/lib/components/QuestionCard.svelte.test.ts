@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, waitFor } from '@testing-library/svelte';
 import QuestionCard from './QuestionCard.svelte';
 import {
 	mockCandidate,
 	mockSingleChoiceQuestion,
-	mockMultipleChoiceQuestion
+	mockMultipleChoiceQuestion,
+	createMockResponse
 } from '$lib/test-utils';
 
 // Mock fetch
@@ -206,5 +207,211 @@ describe('QuestionCard', () => {
 
 		const radioButtons = screen.getAllByRole('radio');
 		expect(radioButtons[1]).toBeChecked();
+	});
+
+	describe('Bookmark functionality', () => {
+		it('should display "Mark for review" button by default', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+		});
+
+		it('should display "Unmark for review" when question is bookmarked', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [],
+					visited: true,
+					time_spent: 0,
+					bookmarked: true
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /unmark for review/i })).toBeInTheDocument();
+		});
+
+		it('should apply bookmark styling when question is bookmarked', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [],
+					visited: true,
+					time_spent: 0,
+					bookmarked: true
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			const bookmarkButton = screen.getByRole('button', { name: /unmark for review/i });
+			expect(bookmarkButton).toHaveClass('border-amber-500');
+			expect(bookmarkButton).toHaveClass('bg-amber-50');
+		});
+
+		it('should not apply bookmark styling when question is not bookmarked', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			expect(bookmarkButton).not.toHaveClass('border-amber-500');
+			expect(bookmarkButton).not.toHaveClass('bg-amber-50');
+		});
+
+		it('should toggle bookmark state when clicked', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			await bookmarkButton.click();
+
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /unmark for review/i })).toBeInTheDocument();
+			});
+		});
+
+		it('should call API when bookmark is toggled', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			await bookmarkButton.click();
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalledWith(
+					expect.stringContaining('/api/submit-answer'),
+					expect.objectContaining({
+						method: 'POST',
+						body: expect.stringContaining('"bookmarked":true')
+					})
+				);
+			});
+		});
+
+		it('should preserve bookmark state with answered question', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [mockSingleChoiceQuestion.options[0].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: true
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			// Should be bookmarked
+			expect(screen.getByRole('button', { name: /unmark for review/i })).toBeInTheDocument();
+
+			// And should have the answer selected
+			const radioButtons = screen.getAllByRole('radio');
+			expect(radioButtons[0]).toBeChecked();
+		});
+
+		it('should show error message when bookmark API fails', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			await bookmarkButton.click();
+
+			await waitFor(() => {
+				expect(screen.getByText(/failed to save bookmark/i)).toBeInTheDocument();
+			});
+		});
+
+		it('should revert bookmark state on API failure', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			await bookmarkButton.click();
+
+			await waitFor(() => {
+				// Should revert to "Mark for review" after failure
+				expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+			});
+		});
 	});
 });
