@@ -33,13 +33,12 @@
 	<Dialog.Content class="max-h-[80vh] w-[90vw] max-w-md overflow-hidden rounded-xl p-0">
 		<Dialog.Title class="sr-only">Question Palette</Dialog.Title>
 
-		<div class="flex border-b" role="tablist" aria-label="Question palette tabs">
+		<div class="flex" role="tablist" aria-label="Question palette tabs">
 			<button
 				type="button"
-				class="flex-1 px-4 py-3 text-center text-sm font-medium transition-colors {activeTab ===
-				'palette'
-					? 'border-b-2 border-blue-500 text-blue-600'
-					: 'text-gray-500 hover:text-gray-700'}"
+				class="flex-1 px-4 py-3 text-center text-sm transition-colors {activeTab === 'palette'
+					? 'text-primary bg-blue-100 font-bold'
+					: 'bg-gray-100 font-medium text-gray-500 hover:text-gray-700'}"
 				role="tab"
 				aria-selected={activeTab === 'palette'}
 				aria-controls="palette-panel"
@@ -49,10 +48,9 @@
 			</button>
 			<button
 				type="button"
-				class="flex-1 px-4 py-3 text-center text-sm font-medium transition-colors {activeTab ===
-				'instructions'
-					? 'border-b-2 border-blue-500 text-blue-600'
-					: 'text-gray-500 hover:text-gray-700'}"
+				class="flex-1 px-4 py-3 text-center text-sm transition-colors {activeTab === 'instructions'
+					? 'text-primary bg-blue-100 font-bold'
+					: 'bg-gray-100 font-medium text-gray-500 hover:text-gray-700'}"
 				role="tab"
 				aria-selected={activeTab === 'instructions'}
 				aria-controls="instructions-panel"
