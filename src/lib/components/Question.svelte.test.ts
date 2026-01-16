@@ -164,17 +164,19 @@ describe('Support for Localization', () => {
 			}
 		});
 
-		await waitFor(async () => {
+		await waitFor(() => {
 			const elements = screen.getAllByText(/अंक/i);
 			expect(elements.length).toBeGreaterThanOrEqual(2);
+		});
 
-			const nextElements = screen.getByText(/अगला/i);
-			expect(nextElements).toBeInTheDocument();
-			const previousElements = screen.getByText(/पिछला/i);
-			expect(previousElements).toBeInTheDocument();
+		const nextElements = screen.getByText(/अगला/i);
+		expect(nextElements).toBeInTheDocument();
+		const previousElements = screen.getByText(/पिछला/i);
+		expect(previousElements).toBeInTheDocument();
 
-			await fireEvent.click(nextElements);
+		await fireEvent.click(nextElements);
 
+		await waitFor(() => {
 			expect(screen.getByText(/सभी अनिवार्य प्रश्नों का उत्तर दें!/)).toBeInTheDocument();
 			expect(
 				screen.getByText(
@@ -199,10 +201,14 @@ describe('Support for Localization', () => {
 			}
 		});
 
-		await waitFor(async () => {
-			const submitElement = screen.getByText(/जमा करें/i);
-			expect(submitElement).toBeInTheDocument();
-			await fireEvent.click(submitElement);
+		await waitFor(() => {
+			expect(screen.getByText(/जमा करें/i)).toBeInTheDocument();
+		});
+
+		const submitElement = screen.getByText(/जमा करें/i);
+		await fireEvent.click(submitElement);
+
+		await waitFor(() => {
 			expect(screen.getByText(/सभी अनिवार्य प्रश्नों का उत्तर दें!/)).toBeInTheDocument();
 			expect(
 				screen.getByText(
@@ -227,10 +233,14 @@ describe('Support for Localization', () => {
 			}
 		});
 
-		await waitFor(async () => {
-			const submitElement = screen.getByText(/जमा करें/i);
-			expect(submitElement).toBeInTheDocument();
-			await fireEvent.click(submitElement);
+		await waitFor(() => {
+			expect(screen.getByText(/जमा करें/i)).toBeInTheDocument();
+		});
+
+		const submitElement = screen.getByText(/जमा करें/i);
+		await fireEvent.click(submitElement);
+
+		await waitFor(() => {
 			expect(screen.getByText(/परीक्षा जमा करें\?/)).toBeInTheDocument();
 			expect(
 				screen.getByText(
@@ -251,17 +261,19 @@ describe('Support for Localization', () => {
 			}
 		});
 
-		await waitFor(async () => {
+		await waitFor(() => {
 			const elements = screen.getAllByText(/Mark/i);
 			expect(elements.length).toBeGreaterThanOrEqual(2);
+		});
 
-			const nextElements = screen.getByText(/next/i);
-			expect(nextElements).toBeInTheDocument();
-			const previousElements = screen.getByText(/previous/i);
-			expect(previousElements).toBeInTheDocument();
+		const nextElements = screen.getByText(/next/i);
+		expect(nextElements).toBeInTheDocument();
+		const previousElements = screen.getByText(/previous/i);
+		expect(previousElements).toBeInTheDocument();
 
-			await fireEvent.click(nextElements);
+		await fireEvent.click(nextElements);
 
+		await waitFor(() => {
 			expect(screen.getByText(/Answer all mandatory questions!/i)).toBeInTheDocument();
 			expect(
 				screen.getByText(
@@ -285,10 +297,14 @@ describe('Support for Localization', () => {
 			}
 		});
 
-		await waitFor(async () => {
-			const submitElement = screen.getByText(/submit/i);
-			expect(submitElement).toBeInTheDocument();
-			await fireEvent.click(submitElement);
+		await waitFor(() => {
+			expect(screen.getByText(/submit/i)).toBeInTheDocument();
+		});
+
+		const submitElement = screen.getByText(/submit/i);
+		await fireEvent.click(submitElement);
+
+		await waitFor(() => {
 			expect(screen.getByText(/Answer all mandatory questions!/)).toBeInTheDocument();
 			expect(
 				screen.getByText(
@@ -312,10 +328,14 @@ describe('Support for Localization', () => {
 			}
 		});
 
-		await waitFor(async () => {
-			const submitElement = screen.getByText(/Submit/i);
-			expect(submitElement).toBeInTheDocument();
-			await fireEvent.click(submitElement);
+		await waitFor(() => {
+			expect(screen.getByText(/Submit/i)).toBeInTheDocument();
+		});
+
+		const submitElement = screen.getByText(/Submit/i);
+		await fireEvent.click(submitElement);
+
+		await waitFor(() => {
 			expect(screen.getByText(/Submit test\?/)).toBeInTheDocument();
 			expect(
 				screen.getByText(
