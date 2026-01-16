@@ -98,13 +98,9 @@
 		return () => localStorage.removeItem(`sashakt-session-${candidate.candidate_test_id}`);
 	});
 
-	// scroll to top and update current question index for pagination buttons
-	function handlePageChange(direction: 'prev' | 'next') {
-		if (direction === 'prev' && paginationPage > 1) {
-			currentQuestionIndex = (paginationPage - 2) * perPage;
-		} else if (direction === 'next') {
-			currentQuestionIndex = paginationPage * perPage;
-		}
+	// scroll to top and update current question index when page changes
+	function handlePageChange(newPage: number) {
+		currentQuestionIndex = (newPage - 1) * perPage;
 		window.scrollTo({ top: 0, behavior: 'instant' });
 	}
 
@@ -136,7 +132,13 @@
 	<div class="flex min-h-screen gap-6 bg-blue-50 p-4 lg:p-6">
 		<!-- Main question content -->
 		<div class="flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
-			<Pagination.Root count={totalQuestions} {perPage} bind:page={paginationPage} class="w-full">
+			<Pagination.Root
+				count={totalQuestions}
+				{perPage}
+				bind:page={paginationPage}
+				onPageChange={handlePageChange}
+				class="w-full"
+			>
 				{#snippet children({ currentPage, range })}
 					<div class="w-full">
 						{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
@@ -154,7 +156,7 @@
 					<Pagination.Content
 						class="bottom-0 z-10 flex w-full items-center justify-between bg-white p-2 shadow-md not-lg:fixed lg:rounded-xl"
 					>
-						<Pagination.PrevButton onclick={() => handlePageChange('prev')} />
+						<Pagination.PrevButton />
 
 						{#if currentPage === Math.ceil(totalQuestions / perPage)}
 							<Dialog.Root bind:open={submitDialogOpen}>
@@ -214,17 +216,12 @@
 						{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
 							<Dialog.Root>
 								<Dialog.Trigger>
-									<Pagination.NextButton
-										class="w-24"
-										onclick={(e) => {
-											e.preventDefault();
-										}}
-									/>
+									<Button class="w-24" variant="outline">Next</Button>
 								</Dialog.Trigger>
 								{@render mandatoryQuestionDialog(false)}
 							</Dialog.Root>
 						{:else}
-							<Pagination.NextButton onclick={() => handlePageChange('next')} class="w-24" />
+							<Pagination.NextButton class="w-24" />
 						{/if}
 					</Pagination.Content>
 				{/snippet}
