@@ -1,5 +1,6 @@
 <script lang="ts">
 	import List from '@lucide/svelte/icons/list';
+	import { t } from 'svelte-i18n';
 
 	let {
 		remainingMandatoryCount,
@@ -14,7 +15,7 @@
 	type="button"
 	class="bg-primary/10 fixed right-4 bottom-16 z-20 flex h-14 w-14 items-center justify-center rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95"
 	{onclick}
-	aria-label="Open question palette"
+	aria-label={$t('Open question palette')}
 >
 	<List class="text-primary h-6 w-6" />
 
