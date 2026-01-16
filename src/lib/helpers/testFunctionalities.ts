@@ -10,8 +10,12 @@ export const answeredAllMandatory = (
 
 	if (mandatoryQuestionIds.length === 0) return true;
 
-	const answeredMandatoryQuestions = answeredQuestions.filter((selection) =>
-		mandatoryQuestionIds.includes(selection.question_revision_id)
+	// only count as answered if response array has at least one answer
+	const answeredMandatoryQuestions = answeredQuestions.filter(
+		(selection) =>
+			mandatoryQuestionIds.includes(selection.question_revision_id) &&
+			selection.response &&
+			selection.response.length > 0
 	);
 
 	return answeredMandatoryQuestions.length === mandatoryQuestionIds.length;
@@ -26,7 +30,13 @@ export const answeredCurrentMandatory = (
 	const start = (currentPage - 1) * questionsPerPage;
 	const end = start + questionsPerPage;
 
-	const selectedQuestions = answeredQuestions.slice(start, end);
 	const currentQuestions = allQuestions.slice(start, end);
-	return answeredAllMandatory(selectedQuestions, currentQuestions);
+	const currentQuestionIds = currentQuestions.map((q) => q.id);
+
+	// filter selections that belong to current page questions
+	const currentSelections = answeredQuestions.filter((selection) =>
+		currentQuestionIds.includes(selection.question_revision_id)
+	);
+
+	return answeredAllMandatory(currentSelections, currentQuestions);
 };

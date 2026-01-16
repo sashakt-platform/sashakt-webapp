@@ -1,21 +1,29 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
+	import InstructionsDialog from '$lib/components/InstructionsDialog.svelte';
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
+	import QuestionPaletteModal from '$lib/components/QuestionPaletteModal.svelte';
+	import QuestionPaletteSidebar from '$lib/components/QuestionPaletteSidebar.svelte';
+	import QuestionPaletteToggleButton from '$lib/components/QuestionPaletteToggleButton.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { countQuestionStatuses } from '$lib/helpers/questionPaletteHelpers';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import type { TQuestion } from '$lib/types';
 
-	let { candidate, testQuestions } = $props();
+	let { candidate, testQuestions, testDetails } = $props();
 	let isSubmittingTest = $state(false);
 
 	// for controlling confirmation dialog display
 	let submitDialogOpen = $state(false);
+
+	// question palette state
+	let paletteOpen = $state(false);
 
 	// track network/submission errors
 	let submitError = $state<string | null>(null);
@@ -45,6 +53,27 @@
 	let paginationPage = $state(sessionStore.current.currentPage || 1);
 	let paginationReady = $state(false);
 
+	// question palette - track which question is currently selected
+	let currentQuestionIndex = $state((sessionStore.current.currentPage - 1) * perPage || 0);
+	const paletteStats = $derived(countQuestionStatuses(questions, selectedQuestions));
+
+	// navigate to a specific question by index
+	function navigateToQuestion(questionIndex: number) {
+		const targetPage = Math.floor(questionIndex / perPage) + 1;
+		paginationPage = targetPage;
+		currentQuestionIndex = questionIndex;
+
+		// scroll to the specific question after page renders
+		setTimeout(() => {
+			const element = document.getElementById(`question-${questionIndex}`);
+			if (element) {
+				const offset = 120; // account for top banner and padding
+				const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+				window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+			}
+		}, 50);
+	}
+
 	// sync page number to localStorage when page changes
 	// using snapshot to avoid unnecessary updates and prevent looping issue
 	$effect(() => {
@@ -69,7 +98,9 @@
 		return () => localStorage.removeItem(`sashakt-session-${candidate.candidate_test_id}`);
 	});
 
-	function scrollToTop() {
+	// scroll to top and update current question index when page changes
+	function handlePageChange(newPage: number) {
+		currentQuestionIndex = (newPage - 1) * perPage;
 		window.scrollTo({ top: 0, behavior: 'instant' });
 	}
 
@@ -98,90 +129,156 @@
 {/snippet}
 
 {#if paginationReady}
-	<Pagination.Root count={totalQuestions} {perPage} bind:page={paginationPage}>
-		{#snippet children({ currentPage, range })}
-			<div class="mb-12">
-				{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
-					<QuestionCard
-						{candidate}
-						serialNumber={(currentPage - 1) * perPage + index + 1}
-						{question}
-						{totalQuestions}
-						bind:selectedQuestions
-					/>
-				{/each}
-			</div>
-			<Pagination.Content
-				class="fixed bottom-0 z-10 flex w-full items-center justify-between bg-white p-2"
+	<div class="flex min-h-screen gap-6 bg-blue-50 p-4 lg:p-6">
+		<!-- Main question content -->
+		<div class="flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
+			<Pagination.Root
+				count={totalQuestions}
+				{perPage}
+				bind:page={paginationPage}
+				onPageChange={handlePageChange}
+				class="w-full"
 			>
-				<Pagination.PrevButton onclick={scrollToTop} />
+				{#snippet children({ currentPage, range })}
+					<div class="w-full">
+						{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
+							<div id="question-{(currentPage - 1) * perPage + index}">
+								<QuestionCard
+									{candidate}
+									serialNumber={(currentPage - 1) * perPage + index + 1}
+									{question}
+									{totalQuestions}
+									bind:selectedQuestions
+								/>
+							</div>
+						{/each}
+					</div>
+					<Pagination.Content
+						class="bottom-0 z-10 flex w-full items-center justify-between bg-white p-2 shadow-md not-lg:fixed lg:rounded-xl"
+					>
+						<Pagination.PrevButton />
 
-				{#if currentPage === Math.ceil(totalQuestions / perPage)}
-					<Dialog.Root bind:open={submitDialogOpen}>
-						<Dialog.Trigger>
-							<Button>Submit</Button>
-						</Dialog.Trigger>
-						{#if answeredAllMandatory(selectedQuestions, questions)}
-							<Dialog.Content class="w-80 rounded-xl">
-								<Dialog.Title>
-									{#if submitError || page.form?.submitTest === false || page.form?.error}
-										Submission Failed
-									{:else}
-										Submit test?
-									{/if}
-								</Dialog.Title>
-								<Dialog.Description>
-									{#if submitError || page.form?.submitTest === false || page.form?.error}
-										<div class="text-destructive">
-											{#if submitError}
-												<p class="mb-2">{submitError}</p>
-											{:else if page.form?.error}
-												<p class="mb-2">{page.form.error}</p>
+						{#if currentPage === Math.ceil(totalQuestions / perPage)}
+							<Dialog.Root bind:open={submitDialogOpen}>
+								<Dialog.Trigger>
+									<Button class="w-24">Submit</Button>
+								</Dialog.Trigger>
+								{#if answeredAllMandatory(selectedQuestions, questions)}
+									<Dialog.Content class="w-80 rounded-xl">
+										<Dialog.Title>
+											{#if submitError || page.form?.submitTest === false || page.form?.error}
+												Submission Failed
 											{:else}
-												<p class="mb-2">There was an issue with your previous submission.</p>
+												Submit test?
 											{/if}
-											<p class="text-muted-foreground">Please click Confirm again to retry.</p>
+										</Dialog.Title>
+										<Dialog.Description>
+											{#if submitError || page.form?.submitTest === false || page.form?.error}
+												<div class="text-destructive">
+													{#if submitError}
+														<p class="mb-2">{submitError}</p>
+													{:else if page.form?.error}
+														<p class="mb-2">{page.form.error}</p>
+													{:else}
+														<p class="mb-2">There was an issue with your previous submission.</p>
+													{/if}
+													<p class="text-muted-foreground">Please click Confirm again to retry.</p>
+												</div>
+											{:else}
+												Are you sure you want to submit for final marking? No changes will be
+												allowed after submission.
+											{/if}
+										</Dialog.Description>
+										<div class="mt-2 inline-flex items-center justify-between">
+											<Dialog.Close
+												><Button variant="outline" class="w-32" disabled={isSubmittingTest}
+													>Cancel</Button
+												></Dialog.Close
+											>
+											<form
+												action="?/submitTest"
+												method="POST"
+												use:enhance={handleSubmitTestEnhance}
+											>
+												<Button type="submit" class="w-32" disabled={isSubmittingTest}>
+													{#if isSubmittingTest}
+														<Spinner />
+													{/if}
+													Confirm
+												</Button>
+											</form>
 										</div>
-									{:else}
-										Are you sure you want to submit for final marking? No changes will be allowed
-										after submission.
-									{/if}
-								</Dialog.Description>
-								<div class="mt-2 inline-flex items-center justify-between">
-									<Dialog.Close
-										><Button variant="outline" class="w-32" disabled={isSubmittingTest}
-											>Cancel</Button
-										></Dialog.Close
-									>
-									<form action="?/submitTest" method="POST" use:enhance={handleSubmitTestEnhance}>
-										<Button type="submit" class="w-32" disabled={isSubmittingTest}>
-											{#if isSubmittingTest}
-												<Spinner />
-											{/if}
-											Confirm
-										</Button>
-									</form>
-								</div>
-							</Dialog.Content>
+									</Dialog.Content>
+								{:else}
+									{@render mandatoryQuestionDialog(true)}
+								{/if}
+							</Dialog.Root>
+						{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
+							<Dialog.Root>
+								<Dialog.Trigger>
+									<Button class="w-24 gap-1 pr-2.5">
+										Next
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="24"
+											height="24"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="size-4"
+										>
+											<path d="m9 18 6-6-6-6" />
+										</svg>
+									</Button>
+								</Dialog.Trigger>
+								{@render mandatoryQuestionDialog(false)}
+							</Dialog.Root>
 						{:else}
-							{@render mandatoryQuestionDialog(true)}
+							<Pagination.NextButton class="w-24" />
 						{/if}
-					</Dialog.Root>
-				{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
-					<Dialog.Root>
-						<Dialog.Trigger>
-							<Pagination.NextButton
-								onclick={(e) => {
-									e.preventDefault();
-								}}
-							/>
-						</Dialog.Trigger>
-						{@render mandatoryQuestionDialog(false)}
-					</Dialog.Root>
-				{:else}
-					<Pagination.NextButton onclick={scrollToTop} />
-				{/if}
-			</Pagination.Content>
-		{/snippet}
-	</Pagination.Root>
+					</Pagination.Content>
+				{/snippet}
+			</Pagination.Root>
+		</div>
+
+		<!-- Desktop sidebar - hidden on mobile -->
+		{#if testDetails?.show_question_palette}
+			<div class="fixed top-28 right-6 hidden max-h-[calc(100vh-8rem)] w-72 lg:block">
+				<QuestionPaletteSidebar
+					{questions}
+					selections={selectedQuestions}
+					{currentQuestionIndex}
+					onNavigate={navigateToQuestion}
+				/>
+			</div>
+		{/if}
+	</div>
+
+	<!-- Desktop Instructions button - hidden on mobile -->
+	<div class="fixed top-4 right-32 z-50 hidden lg:block">
+		<InstructionsDialog instructions={testDetails?.start_instructions} />
+	</div>
+
+	<!-- Mobile toggle button - hidden on desktop -->
+	{#if testDetails?.show_question_palette}
+		<div class="lg:hidden">
+			<QuestionPaletteToggleButton
+				remainingMandatoryCount={paletteStats.remainingMandatory}
+				onclick={() => (paletteOpen = true)}
+			/>
+		</div>
+
+		<!-- Mobile modal -->
+		<QuestionPaletteModal
+			bind:open={paletteOpen}
+			{questions}
+			selections={selectedQuestions}
+			{currentQuestionIndex}
+			instructions={testDetails?.start_instructions}
+			onNavigate={navigateToQuestion}
+		/>
+	{/if}
 {/if}

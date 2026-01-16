@@ -303,14 +303,13 @@ describe('Page Server - submitTest action', () => {
 		expect(mockCookies.delete).toHaveBeenCalledWith('sashakt-candidate', expect.any(Object));
 	});
 
-	it('should handle 400 status and still fetch result', async () => {
+	it('should return error message when backend returns 400', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 
-		const mockResult = { score: 85, passed: true };
+		const errorResponse = { detail: 'Test already submitted' };
 		const mockFetch = vi
 			.fn()
-			.mockResolvedValueOnce(createMockResponse({}, { status: 400, ok: false }))
-			.mockResolvedValueOnce(createMockResponse(mockResult));
+			.mockResolvedValueOnce(createMockResponse(errorResponse, { status: 400, ok: false }));
 
 		const mockCookies = createMockCookies();
 
@@ -320,8 +319,29 @@ describe('Page Server - submitTest action', () => {
 			locals: { testData: mockTestData }
 		} as any);
 
-		expect(result.submitTest).toBe(true);
-		expect(result.result).toEqual(mockResult);
+		expect(result.status).toBe(400);
+		expect((result as any).error).toBe('Test already submitted');
+		expect((result as any).submitTest).toBe(false);
+	});
+
+	it('should return default error message when backend 400 has no detail', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValueOnce(createMockResponse({}, { status: 400, ok: false }));
+
+		const mockCookies = createMockCookies();
+
+		const result = await actions.submitTest({
+			cookies: mockCookies,
+			fetch: mockFetch,
+			locals: { testData: mockTestData }
+		} as any);
+
+		expect(result.status).toBe(400);
+		expect((result as any).error).toBe('Failed to submit test');
+		expect((result as any).submitTest).toBe(false);
 	});
 
 	it('should return fail when candidate is missing', async () => {
