@@ -23,7 +23,6 @@
 	"Time remaining for the test": "परीक्षा के लिए शेष समय",
 	"Start Test": "परीक्षा शुरू करें",
 	"Okay, got it": "ठीक है, समझ गया",
-
 	"Answer all mandatory questions!": "सभी अनिवार्य प्रश्नों का उत्तर दें!",
 	"Please make sure all mandatory questions are answered": "कृपया सुनिश्चित करें कि सभी अनिवार्य प्रश्नों का उत्तर दिया गया है",
 	"before proceeding to the next page": "अगले पृष्ठ पर जाने से पहले",
@@ -87,5 +86,6 @@
 	"Question palette tabs": "प्रश्न पैलेट टैब",
 	"Instructions": "निर्देश",
 	"No instructions available.": "कोई निर्देश उपलब्ध नहीं हैं।",
-	"Open question palette": "प्रश्न पैलेट खोलें"
+	"Open question palette": "प्रश्न पैलेट खोलें",
+	"Please click Confirm again to retry.": ""
 }

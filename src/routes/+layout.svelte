@@ -7,6 +7,7 @@
 
 	let { children } = $props();
 
+	register(languages.English, () => import('$locales/en-US.json'));
 	register(languages.Hindi, () => import('$locales/hi-IN.json'));
 
 	init({
