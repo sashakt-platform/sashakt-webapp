@@ -10,8 +10,12 @@ export const answeredAllMandatory = (
 
 	if (mandatoryQuestionIds.length === 0) return true;
 
-	const answeredMandatoryQuestions = answeredQuestions.filter((selection) =>
-		mandatoryQuestionIds.includes(selection.question_revision_id)
+	// only count as answered if response array has at least one answer
+	const answeredMandatoryQuestions = answeredQuestions.filter(
+		(selection) =>
+			mandatoryQuestionIds.includes(selection.question_revision_id) &&
+			selection.response &&
+			selection.response.length > 0
 	);
 
 	return answeredMandatoryQuestions.length === mandatoryQuestionIds.length;

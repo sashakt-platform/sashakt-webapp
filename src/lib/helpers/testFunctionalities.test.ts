@@ -90,6 +90,41 @@ describe('answeredAllMandatory', () => {
 
 		expect(result).toBe(true);
 	});
+
+	it('should return false when mandatory question is only bookmarked without answer', () => {
+		const questions = [createQuestion(1, true), createQuestion(2, true)];
+		const selections = [
+			{ question_revision_id: 1, response: [1], visited: true, time_spent: 5 },
+			{ question_revision_id: 2, response: [], visited: true, time_spent: 10, bookmarked: true } // Bookmarked but no answer
+		];
+
+		const result = answeredAllMandatory(selections, questions);
+
+		expect(result).toBe(false);
+	});
+
+	it('should return true when mandatory question is both answered and bookmarked', () => {
+		const questions = [createQuestion(1, true), createQuestion(2, true)];
+		const selections = [
+			{ question_revision_id: 1, response: [1], visited: true, time_spent: 5 },
+			{ question_revision_id: 2, response: [2], visited: true, time_spent: 10, bookmarked: true } // Bookmarked with answer
+		];
+
+		const result = answeredAllMandatory(selections, questions);
+
+		expect(result).toBe(true);
+	});
+
+	it('should return false when selection has null response', () => {
+		const questions = [createQuestion(1, true)];
+		const selections = [
+			{ question_revision_id: 1, response: null as any, visited: true, time_spent: 5 }
+		];
+
+		const result = answeredAllMandatory(selections, questions);
+
+		expect(result).toBe(false);
+	});
 });
 
 describe('answeredCurrentMandatory', () => {
