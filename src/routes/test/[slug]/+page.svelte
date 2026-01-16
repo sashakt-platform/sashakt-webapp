@@ -28,7 +28,11 @@
 	{:else if !data.candidate && showProfileForm && data.testData.candidate_profile}
 		<CandidateProfile testDetails={data.testData} />
 	{:else if data.testQuestions?.question_revisions}
-		<Question testQuestions={data.testQuestions} candidate={data.candidate} />
+		<Question
+			testQuestions={data.testQuestions}
+			candidate={data.candidate}
+			testDetails={data.testData}
+		/>
 	{:else if data.testQuestions === null && data.timeLeft == 0}
 		<p>{$t('Sorry, you have exceeded the time limit for this test.')}</p>
 	{:else}

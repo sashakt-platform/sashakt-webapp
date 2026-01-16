@@ -125,7 +125,14 @@ export const actions = {
 				headers: { accept: 'application/json' }
 			});
 
-			if (response.status === 200 || response.status === 400) {
+			// handle 400 errors from backend and display error message
+			if (response.status === 400) {
+				const errorData = await response.json();
+				const errorMessage = errorData?.detail || errorData?.message || 'Failed to submit test';
+				return fail(400, { error: errorMessage, submitTest: false });
+			}
+
+			if (response.status === 200) {
 				const result = await fetch(candidateUrl('result'), {
 					method: 'GET',
 					headers: { accept: 'application/json' }

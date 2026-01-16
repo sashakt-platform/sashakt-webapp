@@ -1,3 +1,4 @@
+import { browser } from '$app/environment';
 import { tick } from 'svelte';
 
 export class LocalStorage<T> {
@@ -17,7 +18,7 @@ export class LocalStorage<T> {
 		this.#key = key;
 		this.#value = initial;
 
-		if (typeof localStorage !== 'undefined') {
+		if (browser) {
 			if (localStorage.getItem(key) === null) {
 				localStorage.setItem(key, JSON.stringify(initial));
 			}
@@ -27,10 +28,7 @@ export class LocalStorage<T> {
 	get current() {
 		this.#version;
 
-		const root =
-			typeof localStorage !== 'undefined'
-				? JSON.parse(localStorage.getItem(this.#key) as any)
-				: this.#value;
+		const root = browser ? JSON.parse(localStorage.getItem(this.#key) as any) : this.#value;
 
 		const proxies = new WeakMap();
 
@@ -51,7 +49,7 @@ export class LocalStorage<T> {
 						this.#version += 1;
 						Reflect.set(target, property, value);
 
-						if (typeof localStorage !== 'undefined') {
+						if (browser) {
 							localStorage.setItem(this.#key, JSON.stringify(root));
 						}
 
@@ -65,7 +63,7 @@ export class LocalStorage<T> {
 			return p;
 		};
 
-		if ($effect.tracking()) {
+		if (browser && $effect.tracking()) {
 			$effect(() => {
 				if (this.#listeners === 0) {
 					window.addEventListener('storage', this.#handler);
@@ -88,7 +86,7 @@ export class LocalStorage<T> {
 	}
 
 	set current(value) {
-		if (typeof localStorage !== 'undefined') {
+		if (browser) {
 			localStorage.setItem(this.#key, JSON.stringify(value));
 		}
 
