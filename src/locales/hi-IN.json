@@ -77,5 +77,15 @@
 	"Please note that there is only 10 mins left for the test to complete, hurry up!": "कृपया ध्यान दें कि परीक्षा पूरी होने के लिए केवल 10 मिनट बचे हैं, जल्दी करें!",
 	"Please click Submit again to retry.": "कृपया पुनः प्रयास करने के लिए फिर से सबमिट पर क्लिक करें।",
 	"The test has ended.": "परीक्षा समाप्त हो गई है।",
-	"Time Up!": "समय समाप्त!"
+	"Time Up!": "समय समाप्त!",
+	"Question Palette": "प्रश्न पैलेट",
+	"Answered": "उत्तर दिया गया",
+	"Marked for review": "समीक्षा के लिए चिह्नित",
+	"Mandatory": "अनिवार्य",
+	"Mandatory question indicator": "अनिवार्य प्रश्न सूचक",
+	"Go to question {number}": "प्रश्न {number} पर जाएं",
+	"Question palette tabs": "प्रश्न पैलेट टैब",
+	"Instructions": "निर्देश",
+	"No instructions available.": "कोई निर्देश उपलब्ध नहीं हैं।",
+	"Open question palette": "प्रश्न पैलेट खोलें"
 }

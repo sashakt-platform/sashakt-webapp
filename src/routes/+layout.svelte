@@ -7,7 +7,7 @@
 
 	let { children } = $props();
 
-	register(languages.Hindi, () => import('$lib/locales/hi-IN.json'));
+	register(languages.Hindi, () => import('$locales/hi-IN.json'));
 
 	init({
 		fallbackLocale: DEFAULT_LANGUAGE,
