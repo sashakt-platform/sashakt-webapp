@@ -33,7 +33,7 @@
 					{@html instructions}
 				</div>
 			{:else}
-				<p class="text-muted-foreground text-center">{`$('No instructions available.')`}</p>
+				<p class="text-muted-foreground text-center">{$t('No instructions available.')}</p>
 			{/if}
 		</div>
 	</Dialog.Content>
