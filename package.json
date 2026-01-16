@@ -15,7 +15,7 @@
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test",
-		"i18n:extract": "svelte-i18n extract --shallow 'src/**/*.svelte' src/locales/en-US.json"
+		"i18n:extract": "svelte-i18n extract --shallow 'src/**/*.svelte' src/locales/en-US.json && svelte-i18n extract --shallow 'src/**/*.svelte' src/locales/hi-IN.json"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.0",
