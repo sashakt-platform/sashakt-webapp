@@ -281,6 +281,13 @@ describe('Page Server - submitTest action', () => {
 		vi.unstubAllGlobals();
 	});
 
+	const createMockRequest = (autoSubmit = false) => ({
+		formData: () =>
+			Promise.resolve({
+				get: (key: string) => (key === 'auto_submit' && autoSubmit ? 'true' : null)
+			})
+	});
+
 	it('should submit test and return result', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 
@@ -293,6 +300,7 @@ describe('Page Server - submitTest action', () => {
 		const mockCookies = createMockCookies();
 
 		const result = await actions.submitTest({
+			request: createMockRequest(),
 			cookies: mockCookies,
 			fetch: mockFetch,
 			locals: { testData: mockTestData }
@@ -314,6 +322,7 @@ describe('Page Server - submitTest action', () => {
 		const mockCookies = createMockCookies();
 
 		const result = await actions.submitTest({
+			request: createMockRequest(),
 			cookies: mockCookies,
 			fetch: mockFetch,
 			locals: { testData: mockTestData }
@@ -334,6 +343,7 @@ describe('Page Server - submitTest action', () => {
 		const mockCookies = createMockCookies();
 
 		const result = await actions.submitTest({
+			request: createMockRequest(),
 			cookies: mockCookies,
 			fetch: mockFetch,
 			locals: { testData: mockTestData }
@@ -350,6 +360,7 @@ describe('Page Server - submitTest action', () => {
 		const mockCookies = createMockCookies();
 
 		const result = await actions.submitTest({
+			request: createMockRequest(),
 			cookies: mockCookies,
 			fetch: vi.fn(),
 			locals: { testData: mockTestData }
@@ -370,6 +381,7 @@ describe('Page Server - submitTest action', () => {
 		const mockCookies = createMockCookies();
 
 		const result = await actions.submitTest({
+			request: createMockRequest(),
 			cookies: mockCookies,
 			fetch: mockFetch,
 			locals: { testData: mockTestData }
@@ -389,6 +401,7 @@ describe('Page Server - submitTest action', () => {
 		const mockCookies = createMockCookies();
 
 		const result = await actions.submitTest({
+			request: createMockRequest(),
 			cookies: mockCookies,
 			fetch: mockFetch,
 			locals: { testData: mockTestData }
@@ -404,6 +417,7 @@ describe('Page Server - submitTest action', () => {
 		const mockCookies = createMockCookies();
 
 		const result = await actions.submitTest({
+			request: createMockRequest(),
 			cookies: mockCookies,
 			fetch: mockFetch,
 			locals: { testData: mockTestData }
@@ -411,6 +425,31 @@ describe('Page Server - submitTest action', () => {
 
 		expect(result.status).toBe(500);
 		expect(result.error).toBe('Failed to submit test');
+	});
+
+	it('should pass auto_submit parameter to backend when set', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+
+		const mockResult = { score: 85, passed: true };
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
+			.mockResolvedValueOnce(createMockResponse(mockResult));
+
+		const mockCookies = createMockCookies();
+
+		await actions.submitTest({
+			request: createMockRequest(true),
+			cookies: mockCookies,
+			fetch: mockFetch,
+			locals: { testData: mockTestData }
+		} as any);
+
+		// Verify the first call includes auto_submit=true
+		expect(mockFetch).toHaveBeenCalledWith(
+			expect.stringContaining('auto_submit=true'),
+			expect.any(Object)
+		);
 	});
 });
 
