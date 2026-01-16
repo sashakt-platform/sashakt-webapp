@@ -23,9 +23,7 @@
 		let label = entity.name;
 
 		if (entity.block?.name) {
-			label = `${entity.name} - ${entity.block.name} Block`;
-		} else if (entity.district?.name) {
-			label = `${entity.name} - ${entity.district.name} District`;
+			label = `${entity.name} - (${entity.block.name})`;
 		}
 
 		entityOptions.push({
