@@ -216,7 +216,23 @@
 						{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
 							<Dialog.Root>
 								<Dialog.Trigger>
-									<Button class="w-24" variant="outline">Next</Button>
+									<Button class="w-24 gap-1 pr-2.5">
+										Next
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="24"
+											height="24"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="size-4"
+										>
+											<path d="m9 18 6-6-6-6" />
+										</svg>
+									</Button>
 								</Dialog.Trigger>
 								{@render mandatoryQuestionDialog(false)}
 							</Dialog.Root>
