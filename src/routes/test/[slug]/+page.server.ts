@@ -109,18 +109,22 @@ export const actions = {
 		}
 	},
 
-	submitTest: async ({ cookies, fetch, locals }) => {
+	submitTest: async ({ request, cookies, fetch, locals }) => {
+		const formData = await request.formData();
+		const autoSubmit = formData.get('auto_submit') === 'true';
+
 		const candidate = getCandidate(cookies);
 		if (!candidate) {
 			return fail(400, { candidate, missing: true });
 		}
 
-		const candidateUrl = (purpose: string) => {
-			return `${BACKEND_URL}/candidate/${purpose}/${candidate.candidate_test_id}/?candidate_uuid=${candidate.candidate_uuid}`;
+		const candidateUrl = (purpose: string, includeAutoSubmit = false) => {
+			const baseUrl = `${BACKEND_URL}/candidate/${purpose}/${candidate.candidate_test_id}/?candidate_uuid=${candidate.candidate_uuid}`;
+			return includeAutoSubmit && autoSubmit ? `${baseUrl}&auto_submit=true` : baseUrl;
 		};
 
 		try {
-			const response = await fetch(candidateUrl('submit_test'), {
+			const response = await fetch(candidateUrl('submit_test', true), {
 				method: 'POST',
 				headers: { accept: 'application/json' }
 			});

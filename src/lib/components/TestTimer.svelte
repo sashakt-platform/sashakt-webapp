@@ -101,6 +101,7 @@
 					use:enhance={handleSubmitTestEnhance}
 					bind:this={formElement}
 				>
+					<input type="hidden" name="auto_submit" value="true" />
 					{#if timeLeft > 0 || submitError}
 						<Button type="submit" class="w-32" disabled={isSubmitting}>
 							{#if isSubmitting}
