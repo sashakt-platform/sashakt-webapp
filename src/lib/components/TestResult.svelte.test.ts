@@ -171,13 +171,15 @@ describe('support for localization', () => {
 			// expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
 			expect(screen.getByText('सफलतापूर्वक जमा किया गया')).toBeInTheDocument();
 			expect(
-				screen.getByText('परीक्षा पूरी करने पर बधाई! आपने 8 प्रश्नों का प्रयास किया है।')
+				screen.getByText(
+					'परीक्षा सफलतापूर्वक पूरी करने पर बधाई! आपने 8 प्रश्नों का प्रयास किया है।'
+				)
 			).toBeInTheDocument();
 			expect(screen.getByText('परिणाम सारांश')).toBeInTheDocument();
 			expect(screen.getByText('सही उत्तर')).toBeInTheDocument();
 			expect(screen.getByText('गलत उत्तर')).toBeInTheDocument();
 			expect(screen.getByText('प्रयास नहीं किया')).toBeInTheDocument();
-			expect(screen.getByText('प्राप्त कुल अंक')).toBeInTheDocument();
+			expect(screen.getByText('कुल प्राप्त अंक')).toBeInTheDocument();
 		});
 	});
 
