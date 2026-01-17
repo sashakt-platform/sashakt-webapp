@@ -92,8 +92,8 @@ describe('Support for Localization', () => {
 		});
 		await waitFor(() => {
 			expect(screen.getByText('उम्मीदवार की जानकारी')).toBeInTheDocument();
-			expect(screen.getByText('कृपया अपने विवरण प्रदान करें')).toBeInTheDocument();
-			expect(screen.getByText('CLF *')).toBeInTheDocument();
+			expect(screen.getByText('कृपया अपना विवरण प्रदान करें')).toBeInTheDocument();
+			expect(screen.getByText('सीएलएफ *')).toBeInTheDocument();
 			expect(screen.getByText('परीक्षा जारी रखें')).toBeInTheDocument();
 		});
 	});

@@ -197,16 +197,14 @@ describe('Support for Localization', () => {
 		await waitFor(() => {
 			expect(screen.getByText('परीक्षा का अवलोकन')).toBeInTheDocument();
 			expect(screen.getByText('शुरू करें')).toBeInTheDocument();
-			expect(screen.getByText('कुल प्रश्न')).toBeInTheDocument();
+			expect(screen.getByText('कुल सवाल')).toBeInTheDocument();
 			expect(screen.getByText('20 प्रश्न')).toBeInTheDocument();
 			expect(screen.getByText('कुल अवधि')).toBeInTheDocument();
 			expect(screen.getByText('60 मिनट')).toBeInTheDocument();
 			expect(screen.getByText('प्रति पृष्ठ प्रश्न')).toBeInTheDocument();
 			expect(screen.getByText('5 प्रश्न')).toBeInTheDocument();
 			expect(screen.getByText('सामान्य निर्देश')).toBeInTheDocument();
-			expect(
-				screen.getByText('मैंने दिए गए निर्देशों को पढ़ लिया है और समझ लिया है।')
-			).toBeInTheDocument();
+			expect(screen.getByText('मैंने दिए गए निर्देशों को पढ़ और समझ लिया है।')).toBeInTheDocument();
 		});
 	});
 
