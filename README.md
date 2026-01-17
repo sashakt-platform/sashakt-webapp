@@ -28,7 +28,7 @@ You can preview the production build with `npm run preview`.
 ## Extract localization strings
 
 ```bash
-pnpm run extract-i18n
+pnpm run i18n:extract
 ```
 
 This will autopopulate the localization files in `src/locales/`.
