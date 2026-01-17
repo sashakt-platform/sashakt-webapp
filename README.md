@@ -25,6 +25,14 @@ pnpm run build
 
 You can preview the production build with `npm run preview`.
 
+## Extract localization strings
+
+```bash
+pnpm run i18n:extract
+```
+
+This will autopopulate the localization files in `src/locales/`.
+
 ## Deployment
 
 This happens via CI/CD

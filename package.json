@@ -14,7 +14,8 @@
 		"lint": "prettier --check . && eslint .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
-		"test:e2e": "playwright test"
+		"test:e2e": "playwright test",
+		"i18n:extract": "svelte-i18n extract --shallow 'src/**/*.svelte' src/locales/en-US.json && svelte-i18n extract --shallow 'src/**/*.svelte' src/locales/hi-IN.json"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.0",
@@ -57,6 +58,7 @@
 		]
 	},
 	"dependencies": {
+		"svelte-i18n": "^4.0.1",
 		"@sentry/sveltekit": "^10.30.0"
 	}
 }

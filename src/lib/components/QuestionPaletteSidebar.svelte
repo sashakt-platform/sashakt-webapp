@@ -2,6 +2,7 @@
 	import Info from '@lucide/svelte/icons/info';
 	import QuestionPaletteContent from './QuestionPaletteContent.svelte';
 	import type { TQuestion, TSelection } from '$lib/types';
+	import { t } from 'svelte-i18n';
 
 	let {
 		questions,
@@ -18,7 +19,9 @@
 
 <div class="flex max-h-full flex-col rounded-xl bg-white shadow-sm">
 	<div class="flex items-center justify-center gap-2 p-4 pb-2">
-		<h2 class="text-sm font-semibold tracking-wide text-gray-700 uppercase">Question Palette</h2>
+		<h2 class="text-sm font-semibold tracking-wide text-gray-700 uppercase">
+			{$t('Question Palette')}
+		</h2>
 		<Info class="h-4 w-4 text-gray-400" />
 	</div>
 

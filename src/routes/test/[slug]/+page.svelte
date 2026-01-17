@@ -4,15 +4,23 @@
 	import Question from '$lib/components/Question.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
 	import type { PageProps } from './$types';
+	import { locale } from 'svelte-i18n';
+	import { t } from 'svelte-i18n';
+	import { DEFAULT_LANGUAGE } from '$lib/utils';
 
 	let { data, form }: PageProps = $props();
 	let showProfileForm = $state(false);
+
+	$effect(() => {
+		const currentLocale = data?.testData?.locale || DEFAULT_LANGUAGE;
+		locale.set(currentLocale);
+	});
 </script>
 
 <section>
 	{#if data.candidate === undefined}
 		<!-- Show nothing or a loading spinner while candidate is loading -->
-		<p>Loading...</p>
+		<p>{$t('Loading...')}</p>
 	{:else if form?.submitTest}
 		<TestResult resultData={form.result} testDetails={data.testData} />
 	{:else if !data.candidate && !showProfileForm}
@@ -26,8 +34,8 @@
 			testDetails={data.testData}
 		/>
 	{:else if data.testQuestions === null && data.timeLeft == 0}
-		<p>Sorry, you have exceeded the time limit for this test.</p>
+		<p>{$t('Sorry, you have exceeded the time limit for this test.')}</p>
 	{:else}
-		<p>Loading test questions...</p>
+		<p>{$t('Loading test questions...')}</p>
 	{/if}
 </section>

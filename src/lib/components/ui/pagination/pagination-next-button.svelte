@@ -3,6 +3,7 @@
 	import { cn } from '$lib/utils.js';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import { Pagination as PaginationPrimitive } from 'bits-ui';
+	import { t } from 'svelte-i18n';
 
 	let {
 		ref = $bindable(null),
@@ -13,7 +14,7 @@
 </script>
 
 {#snippet Fallback()}
-	<span>Next</span>
+	<span>{$t('Next')}</span>
 	<ChevronRight class="size-4" />
 {/snippet}
 

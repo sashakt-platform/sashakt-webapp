@@ -6,6 +6,7 @@
 		isQuestionBookmarked
 	} from '$lib/helpers/questionPaletteHelpers';
 	import type { TQuestion, TSelection } from '$lib/types';
+	import { t } from 'svelte-i18n';
 
 	let {
 		questions,
@@ -35,7 +36,7 @@
 		>
 			{stats.answered}
 		</span>
-		<span class="text-sm text-gray-600">Answered</span>
+		<span class="text-sm text-gray-600">{$t('Answered')}</span>
 	</div>
 
 	<div class="flex items-center gap-2">
@@ -44,16 +45,16 @@
 		>
 			{stats.bookmarked}
 		</span>
-		<span class="text-sm text-gray-600">Marked for review</span>
+		<span class="text-sm text-gray-600">{$t('Marked for review')}</span>
 	</div>
 
 	<div class="flex items-center gap-2">
 		<span
 			class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500"
-			aria-label="Mandatory question indicator"
+			aria-label={$t('Mandatory question indicator')}
 		>
 		</span>
-		<span class="text-sm text-gray-600">Mandatory</span>
+		<span class="text-sm text-gray-600">{$t('Mandatory')}</span>
 	</div>
 </div>
 
@@ -74,7 +75,7 @@
 				{!isCurrent && !isAnswered ? 'border border-gray-300 bg-white text-gray-500' : ''}
 				{isCurrent && !isAnswered ? 'bg-white text-blue-500' : ''}"
 			onclick={() => onNavigate(index)}
-			aria-label="Go to question {index + 1}"
+			aria-label={$t('Go to question {number}', { values: { number: index + 1 } })}
 		>
 			{index + 1}
 			{#if question.is_mandatory}

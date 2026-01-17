@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, waitFor } from '@testing-library/svelte';
 import TestResult from './TestResult.svelte';
-import { mockResultData, mockTestData } from '$lib/test-utils';
+import { mockResultData, mockTestData, setLocaleForTests } from '$lib/test-utils';
 
 describe('TestResult', () => {
 	it('should render success message', () => {
@@ -149,5 +149,62 @@ describe('TestResult', () => {
 		});
 
 		expect(screen.queryByText('Total marks obtained')).not.toBeInTheDocument();
+	});
+});
+
+describe('support for localization', () => {
+	it('should render result in Hindi', async () => {
+		await setLocaleForTests('hi-IN');
+
+		const resultTestData = {
+			...mockTestData,
+			completion_message: null
+		};
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails: resultTestData
+			}
+		});
+
+		await waitFor(() => {
+			// expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
+			expect(screen.getByText('सफलतापूर्वक जमा किया गया')).toBeInTheDocument();
+			expect(
+				screen.getByText('परीक्षा पूरी करने पर बधाई! आपने 8 प्रश्नों का प्रयास किया है।')
+			).toBeInTheDocument();
+			expect(screen.getByText('परिणाम सारांश')).toBeInTheDocument();
+			expect(screen.getByText('सही उत्तर')).toBeInTheDocument();
+			expect(screen.getByText('गलत उत्तर')).toBeInTheDocument();
+			expect(screen.getByText('प्रयास नहीं किया')).toBeInTheDocument();
+			expect(screen.getByText('प्राप्त कुल अंक')).toBeInTheDocument();
+		});
+	});
+
+	it('should render Test in English', async () => {
+		await setLocaleForTests('en-US');
+
+		const resultTestData = {
+			...mockTestData,
+			completion_message: null
+		};
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails: resultTestData
+			}
+		});
+
+		await waitFor(() => {
+			expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
+			expect(screen.getByText(/Congrats on completing the test!/i)).toBeInTheDocument();
+
+			expect(screen.getByText(/You have attempted 8 questions\./i)).toBeInTheDocument();
+			expect(screen.getByText('Result summary')).toBeInTheDocument();
+			expect(screen.getByText('Correct Answers')).toBeInTheDocument();
+			expect(screen.getByText('Incorrect Answers')).toBeInTheDocument();
+			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
+			expect(screen.getByText('Total marks obtained')).toBeInTheDocument();
+		});
 	});
 });

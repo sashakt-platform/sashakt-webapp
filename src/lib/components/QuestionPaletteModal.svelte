@@ -2,6 +2,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import QuestionPaletteContent from './QuestionPaletteContent.svelte';
 	import type { TQuestion, TSelection } from '$lib/types';
+	import { t } from 'svelte-i18n';
 
 	let {
 		open = $bindable(false),
@@ -29,9 +30,9 @@
 
 <Dialog.Root bind:open>
 	<Dialog.Content class="max-h-[80vh] w-[90vw] max-w-md overflow-hidden rounded-xl p-0">
-		<Dialog.Title class="sr-only">Question Palette</Dialog.Title>
+		<Dialog.Title class="sr-only">{$t('Question Palette')}</Dialog.Title>
 
-		<div class="flex" role="tablist" aria-label="Question palette tabs">
+		<div class="flex" role="tablist" aria-label={$t('Question palette tabs')}>
 			<button
 				type="button"
 				class="flex-1 px-4 py-3 text-center text-sm transition-colors {activeTab === 'palette'
@@ -42,7 +43,7 @@
 				aria-controls="palette-panel"
 				onclick={() => (activeTab = 'palette')}
 			>
-				Question palette
+				{$t('Question Palette')}
 			</button>
 			<button
 				type="button"
@@ -54,7 +55,7 @@
 				aria-controls="instructions-panel"
 				onclick={() => (activeTab = 'instructions')}
 			>
-				Instructions
+				{$t('Instructions')}
 			</button>
 		</div>
 
@@ -74,7 +75,7 @@
 					{#if instructions}
 						{@html instructions}
 					{:else}
-						<p class="text-muted-foreground text-center">No instructions available.</p>
+						<p class="text-muted-foreground text-center">{$t('No instructions available.')}</p>
 					{/if}
 				</div>
 			{/if}

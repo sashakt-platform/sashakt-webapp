@@ -9,6 +9,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import type { TCandidate, TQuestion, TSelection } from '$lib/types';
+	import { t } from 'svelte-i18n';
 
 	let {
 		question,
@@ -237,11 +238,11 @@
 >
 	<Card.Header class="p-5">
 		<Card.Title class="mb-5 border-b pb-3 text-sm">
-			{serialNumber} <span>OF {totalQuestions}</span>
+			{serialNumber} <span>{$t('OF')} {totalQuestions}</span>
 			{#if question?.marking_scheme}
 				{@const mark = question.marking_scheme.correct}
 				<span class="text-muted-foreground float-end"
-					>{mark === 1 ? '1 Mark' : `${mark} Marks`}</span
+					>{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}</span
 				>
 			{/if}
 			{#if isSubmitting}
@@ -320,7 +321,7 @@
 			onclick={handleBookmark}
 		>
 			<Bookmark class="mr-2 h-4 w-4 {isQuestionBookmarked ? 'fill-amber-500' : ''}" />
-			{isQuestionBookmarked ? 'Unmark for review' : 'Mark for review'}
+			{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
 		</Button>
 	</Card.Content>
 </Card.Root>
