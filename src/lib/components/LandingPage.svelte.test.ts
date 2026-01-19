@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import LandingPage from './LandingPage.svelte';
-import { mockTestData } from '$lib/test-utils';
+import { mockTestData, setLocaleForTests } from '$lib/test-utils';
 
 // Mock SvelteKit modules
 vi.mock('$app/environment', () => ({
@@ -20,16 +20,15 @@ vi.mock('$app/state', () => ({
 	}
 }));
 
+const defaultTestDetails = {
+	...mockTestData,
+	total_questions: 20,
+	time_limit: 60,
+	question_pagination: 5,
+	start_instructions: '<p>Please read carefully before starting.</p>',
+	candidate_profile: null
+};
 describe('LandingPage', () => {
-	const defaultTestDetails = {
-		...mockTestData,
-		total_questions: 20,
-		time_limit: 60,
-		question_pagination: 5,
-		start_instructions: '<p>Please read carefully before starting.</p>',
-		candidate_profile: null
-	};
-
 	it('should render test name', () => {
 		render(LandingPage, {
 			props: {
@@ -184,5 +183,51 @@ describe('LandingPage', () => {
 
 		const startButton = screen.getByRole('button', { name: /start/i });
 		expect(startButton).not.toBeDisabled();
+	});
+});
+
+describe('Support for Localization', () => {
+	it('should render localization strings correctly', async () => {
+		await setLocaleForTests('hi-IN');
+		render(LandingPage, {
+			props: {
+				testDetails: defaultTestDetails
+			}
+		});
+		await waitFor(() => {
+			expect(screen.getByText('परीक्षा का अवलोकन')).toBeInTheDocument();
+			expect(screen.getByText('शुरू करें')).toBeInTheDocument();
+			expect(screen.getByText('कुल सवाल')).toBeInTheDocument();
+			expect(screen.getByText('20 प्रश्न')).toBeInTheDocument();
+			expect(screen.getByText('कुल अवधि')).toBeInTheDocument();
+			expect(screen.getByText('60 मिनट')).toBeInTheDocument();
+			expect(screen.getByText('प्रति पृष्ठ प्रश्न')).toBeInTheDocument();
+			expect(screen.getByText('5 प्रश्न')).toBeInTheDocument();
+			expect(screen.getByText('सामान्य निर्देश')).toBeInTheDocument();
+			expect(screen.getByText('मैंने दिए गए निर्देशों को पढ़ और समझ लिया है।')).toBeInTheDocument();
+		});
+	});
+
+	it('should render English localization strings correctly', async () => {
+		await setLocaleForTests('en-US');
+		render(LandingPage, {
+			props: {
+				testDetails: defaultTestDetails
+			}
+		});
+		await waitFor(() => {
+			expect(screen.getByText('Test Overview')).toBeInTheDocument();
+			expect(screen.getByText('Start')).toBeInTheDocument();
+			expect(screen.getByText('Total questions')).toBeInTheDocument();
+			expect(screen.getByText('20 questions')).toBeInTheDocument();
+			expect(screen.getByText('Total duration')).toBeInTheDocument();
+			expect(screen.getByText('60 minutes')).toBeInTheDocument();
+			expect(screen.getByText('Questions per page')).toBeInTheDocument();
+			expect(screen.getByText('5 question(s)')).toBeInTheDocument();
+			expect(screen.getByText('General Instructions')).toBeInTheDocument();
+			expect(
+				screen.getByText('I have read and understood the instructions as given')
+			).toBeInTheDocument();
+		});
 	});
 });

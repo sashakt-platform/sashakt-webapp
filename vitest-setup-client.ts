@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest';
-import { vi, beforeEach } from 'vitest';
+import { vi, beforeEach, beforeAll } from 'vitest';
+import { initializeI18nForTests, setLocaleForTests } from './src/lib/test-utils';
 
 // required for svelte5 + jsdom as jsdom does not support matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -73,8 +74,14 @@ Object.defineProperty(window, 'IntersectionObserver', {
 	value: IntersectionObserverMock
 });
 
+// Initialize i18n once
+beforeAll(() => {
+	initializeI18nForTests();
+});
+
 // Reset mocks before each test
-beforeEach(() => {
+beforeEach(async () => {
 	localStorageMock.clear();
 	vi.clearAllMocks();
+	await setLocaleForTests('en-US');
 });

@@ -5,6 +5,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { Clock } from '@lucide/svelte';
+	import { t } from 'svelte-i18n';
 
 	let { timeLeft: initialTime } = $props();
 	let formElement = $state<HTMLFormElement>();
@@ -62,13 +63,13 @@
 	<Dialog.Root bind:open>
 		{#if timeLeft <= 10 * 60 && timeLeft}
 			<Dialog.Content class="w-80 rounded-xl">
-				<Dialog.Title>10 mins left!</Dialog.Title>
+				<Dialog.Title>{$t('10 mins left!')}</Dialog.Title>
 				<Dialog.Description>
-					Please note that there is only 10 mins left for the test to complete, hurry up!
+					{$t('Please note that there is only 10 mins left for the test to complete, hurry up!')}
 				</Dialog.Description>
 
 				<Dialog.Close>
-					<Button class="w-32 place-self-center">Okay</Button>
+					<Button class="w-32 place-self-center">{$t('Okay')}</Button>
 				</Dialog.Close>
 			</Dialog.Content>
 		{:else}
@@ -79,19 +80,19 @@
 			>
 				<Dialog.Title>
 					{#if submitError}
-						Submission Failed
+						{$t('Submission Failed')}
 					{:else}
-						Time Up!
+						{$t('Time Up!')}
 					{/if}
 				</Dialog.Title>
 				<Dialog.Description>
 					{#if submitError}
 						<div class="text-destructive">
 							<p class="mb-2">{submitError}</p>
-							<p class="text-muted-foreground">Please click Submit again to retry.</p>
+							<p class="text-muted-foreground">{$t('Please click Submit again to retry.')}</p>
 						</div>
 					{:else}
-						The test has ended.
+						{$t('The test has ended.')}
 					{/if}
 				</Dialog.Description>
 
@@ -106,7 +107,7 @@
 							{#if isSubmitting}
 								<Spinner />
 							{/if}
-							Submit
+							{$t('Submit')}
 						</Button>
 					{/if}
 				</form>

@@ -20,7 +20,8 @@ const createSelection = (questionId: number): TSelection => ({
 	question_revision_id: questionId,
 	response: [1],
 	visited: true,
-	time_spent: 10
+	time_spent: 10,
+	bookmarked: false
 });
 
 describe('answeredAllMandatory', () => {
@@ -89,6 +90,41 @@ describe('answeredAllMandatory', () => {
 
 		expect(result).toBe(true);
 	});
+
+	it('should return false when mandatory question is only bookmarked without answer', () => {
+		const questions = [createQuestion(1, true), createQuestion(2, true)];
+		const selections = [
+			{ question_revision_id: 1, response: [1], visited: true, time_spent: 5 },
+			{ question_revision_id: 2, response: [], visited: true, time_spent: 10, bookmarked: true } // Bookmarked but no answer
+		];
+
+		const result = answeredAllMandatory(selections, questions);
+
+		expect(result).toBe(false);
+	});
+
+	it('should return true when mandatory question is both answered and bookmarked', () => {
+		const questions = [createQuestion(1, true), createQuestion(2, true)];
+		const selections = [
+			{ question_revision_id: 1, response: [1], visited: true, time_spent: 5 },
+			{ question_revision_id: 2, response: [2], visited: true, time_spent: 10, bookmarked: true } // Bookmarked with answer
+		];
+
+		const result = answeredAllMandatory(selections, questions);
+
+		expect(result).toBe(true);
+	});
+
+	it('should return false when selection has null response', () => {
+		const questions = [createQuestion(1, true)];
+		const selections = [
+			{ question_revision_id: 1, response: null as any, visited: true, time_spent: 5 }
+		];
+
+		const result = answeredAllMandatory(selections, questions);
+
+		expect(result).toBe(false);
+	});
 });
 
 describe('answeredCurrentMandatory', () => {
@@ -123,15 +159,13 @@ describe('answeredCurrentMandatory', () => {
 		expect(result).toBe(false);
 	});
 
-	it('should check page 2 mandatory questions correctly', () => {
+	it('should check page 2 mandatory questions correctly by question ID', () => {
 		const questions = createPaginatedQuestions();
-		// The function slices answeredQuestions by the same indices as questions
-		// So for page 2 (indices 2-3), we need selections at those same indices
+		// Selections are filtered by question ID, not by array index
+		// Page 2 has questions 3 and 4 (both mandatory)
 		const selections = [
-			createSelection(1), // index 0 - page 1
-			createSelection(2), // index 1 - page 1
-			createSelection(3), // index 2 - page 2 (mandatory)
-			createSelection(4) // index 3 - page 2 (mandatory)
+			createSelection(3), // Question 3 (mandatory on page 2)
+			createSelection(4) // Question 4 (mandatory on page 2)
 		];
 		const currentPage = 2;
 		const questionsPerPage = 2;
@@ -143,14 +177,8 @@ describe('answeredCurrentMandatory', () => {
 
 	it('should return false when only some page 2 mandatory questions are answered', () => {
 		const questions = createPaginatedQuestions();
-		// For page 2 (indices 2-3), we need selections at those indices
-		// Only providing one mandatory answer at index 2
-		const selections = [
-			createSelection(1), // index 0 - page 1
-			createSelection(2), // index 1 - page 1
-			createSelection(3) // index 2 - page 2 (only one mandatory)
-			// missing index 3 - question 4 (mandatory) not answered
-		];
+		// Only question 3 answered, but question 4 is also mandatory on page 2
+		const selections = [createSelection(3)];
 		const currentPage = 2;
 		const questionsPerPage = 2;
 
@@ -190,5 +218,37 @@ describe('answeredCurrentMandatory', () => {
 		const result = answeredCurrentMandatory(currentPage, questionsPerPage, selections, questions);
 
 		expect(result).toBe(true);
+	});
+
+	it('should filter selections by question ID regardless of selection order', () => {
+		const questions = createPaginatedQuestions();
+		// Selections in different order than questions, but should still work
+		const selections = [
+			createSelection(4), // Question 4 first
+			createSelection(6), // Question from page 3
+			createSelection(3), // Question 3 second
+			createSelection(1) // Question from page 1
+		];
+		const currentPage = 2;
+		const questionsPerPage = 2;
+
+		const result = answeredCurrentMandatory(currentPage, questionsPerPage, selections, questions);
+
+		expect(result).toBe(true);
+	});
+
+	it('should correctly identify unanswered mandatory when selections are out of order', () => {
+		const questions = createPaginatedQuestions();
+		// Only question 4 answered, question 3 (mandatory) not answered
+		const selections = [
+			createSelection(1),
+			createSelection(4) // Only one mandatory on page 2
+		];
+		const currentPage = 2;
+		const questionsPerPage = 2;
+
+		const result = answeredCurrentMandatory(currentPage, questionsPerPage, selections, questions);
+
+		expect(result).toBe(false);
 	});
 });

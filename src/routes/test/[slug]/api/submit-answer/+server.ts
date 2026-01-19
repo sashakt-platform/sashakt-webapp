@@ -17,9 +17,14 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 	const {
 		question_revision_id,
 		response,
-		candidate
-	}: { question_revision_id: number; response: number[]; candidate: TCandidate } =
-		await request.json();
+		candidate,
+		bookmarked
+	}: {
+		question_revision_id: number;
+		response: number[] | null;
+		candidate: TCandidate;
+		bookmarked?: boolean;
+	} = await request.json();
 
 	// verify candidate matches cookie
 	if (
@@ -47,8 +52,9 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					question_revision_id,
-					response: JSON.stringify(response),
-					visited: true
+					response: response ? JSON.stringify(response) : null,
+					visited: true,
+					bookmarked: bookmarked ?? false
 				})
 			}
 		);

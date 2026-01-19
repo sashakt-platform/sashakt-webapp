@@ -1,23 +1,24 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, waitFor } from '@testing-library/svelte';
 import CandidateProfile from './CandidateProfile.svelte';
+import { setLocaleForTests } from '$lib/test-utils';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
 	enhance: () => () => {}
 }));
 
-describe('CandidateProfile', () => {
-	const testDetailsWithProfile = {
-		name: 'Assessment Test',
-		candidate_profile: true,
-		profile_list: [
-			{ id: 1, name: 'CLF Alpha' },
-			{ id: 2, name: 'CLF Beta' },
-			{ id: 3, name: 'CLF Gamma' }
-		]
-	};
+const testDetailsWithProfile = {
+	name: 'Assessment Test',
+	candidate_profile: true,
+	profile_list: [
+		{ id: 1, name: 'CLF Alpha' },
+		{ id: 2, name: 'CLF Beta' },
+		{ id: 3, name: 'CLF Gamma' }
+	]
+};
 
+describe('CandidateProfile', () => {
 	it('should render test name', () => {
 		render(CandidateProfile, {
 			props: {
@@ -78,5 +79,37 @@ describe('CandidateProfile', () => {
 		});
 
 		expect(screen.getByText('Select your CLF')).toBeInTheDocument();
+	});
+});
+
+describe('Support for Localization', () => {
+	it('should render localization strings correctly', async () => {
+		await setLocaleForTests('hi-IN');
+		render(CandidateProfile, {
+			props: {
+				testDetails: testDetailsWithProfile
+			}
+		});
+		await waitFor(() => {
+			expect(screen.getByText('उम्मीदवार की जानकारी')).toBeInTheDocument();
+			expect(screen.getByText('कृपया अपना विवरण प्रदान करें')).toBeInTheDocument();
+			expect(screen.getByText('सीएलएफ *')).toBeInTheDocument();
+			expect(screen.getByText('परीक्षा जारी रखें')).toBeInTheDocument();
+		});
+	});
+
+	it('should render English localization strings correctly', async () => {
+		await setLocaleForTests('en-US');
+		render(CandidateProfile, {
+			props: {
+				testDetails: testDetailsWithProfile
+			}
+		});
+		await waitFor(() => {
+			expect(screen.getByText('Candidate Information')).toBeInTheDocument();
+			expect(screen.getByText('Please provide your details')).toBeInTheDocument();
+			expect(screen.getByText('CLF *')).toBeInTheDocument();
+			expect(screen.getByText('Continue to Test')).toBeInTheDocument();
+		});
 	});
 });

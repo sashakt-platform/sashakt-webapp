@@ -1,6 +1,6 @@
 # Sashakt web app
 
-[![codecov](https://codecov.io/gh/sashakt-platform/sashakt-webapp/graph/badge.svg?token=VI097YR23K)](https://codecov.io/gh/sashakt-platform/sashakt-webapp)  [![Test status](https://github.com/sashakt-platform/sashakt-webapp/actions/workflows/test-run.yml/badge.svg)](https://github.com/sashakt-platform/sashakt-webapp/actions/workflows/test-run.yml)
+[![codecov](https://codecov.io/gh/sashakt-platform/sashakt-webapp/graph/badge.svg?token=VI097YR23K)](https://codecov.io/gh/sashakt-platform/sashakt-webapp) [![Test status](https://github.com/sashakt-platform/sashakt-webapp/actions/workflows/test-run.yml/badge.svg)](https://github.com/sashakt-platform/sashakt-webapp/actions/workflows/test-run.yml)
 
 This builds the test taker's frontend interface for the Sashakt platform.
 
@@ -24,6 +24,14 @@ pnpm run build
 ```
 
 You can preview the production build with `npm run preview`.
+
+## Extract localization strings
+
+```bash
+pnpm run i18n:extract
+```
+
+This will autopopulate the localization files in `src/locales/`.
 
 ## Deployment
 

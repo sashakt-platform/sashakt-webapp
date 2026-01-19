@@ -14,3 +14,10 @@ export type WithElementRef<T extends HTMLElement = HTMLElement> = HTMLAttributes
 export type WithoutChild<T = object> = Omit<T, 'child'>;
 
 export type WithoutChildrenOrChild<T = object> = Omit<T, 'children' | 'child'>;
+
+export enum languages {
+	English = 'en-US',
+	Hindi = 'hi-IN'
+}
+
+export const DEFAULT_LANGUAGE = languages.English;
