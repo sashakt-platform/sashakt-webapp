@@ -20,8 +20,8 @@
 
 	const entityOptions: EntityOption[] = [];
 
-	testDetails.profile_list.forEach((entity: { id: number; name: string }) => {
-		entityOptions.push({ value: entity.id, label: entity.name });
+	testDetails.profile_list.forEach((entity: { id: number; label: string }) => {
+		entityOptions.push({ value: entity.id, label: entity.label });
 	});
 
 	const triggerContent = $derived(
