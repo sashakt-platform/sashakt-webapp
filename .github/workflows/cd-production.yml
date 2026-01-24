@@ -32,6 +32,7 @@ jobs:
 
             echo "BACKEND_URL=${{ vars.BACKEND_URL }}" > .env
             echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN}}" >> .env
+            echo "PUBLIC_APP_ENV=production" >> .env
 
             corepack enable
             sudo corepack prepare pnpm@latest --activate
