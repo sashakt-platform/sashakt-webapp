@@ -72,16 +72,32 @@ describe('POST /api/download-certificate', () => {
 		);
 	});
 
-	it('should handle full URL in certificate_download_url', async () => {
+	it('should reject URLs with different origin (SSRF protection)', async () => {
+		const request = createMockRequest({
+			certificate_download_url: 'https://malicious-server.com/steal-data'
+		});
+		const response = await POST({ request } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(403);
+		expect(data.success).toBe(false);
+		expect(data.error).toBe('Certificate URL origin not allowed');
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('should allow full URL with same origin as BACKEND_URL', async () => {
 		vi.mocked(fetch).mockResolvedValueOnce(createMockPdfResponse() as unknown as Response);
 
-		const fullUrl = 'https://other-server.com/certificate/download/test-uuid';
 		const request = createMockRequest({
-			certificate_download_url: fullUrl
+			certificate_download_url: 'http://localhost:8000/api/v1/certificate/download/test-uuid'
 		});
-		await POST({ request } as any);
+		const response = await POST({ request } as any);
 
-		expect(fetch).toHaveBeenCalledWith(fullUrl, expect.anything());
+		expect(response.status).toBe(200);
+		expect(fetch).toHaveBeenCalledWith(
+			'http://localhost:8000/api/v1/certificate/download/test-uuid',
+			expect.anything()
+		);
 	});
 
 	it('should return 400 when certificate_download_url is missing', async () => {

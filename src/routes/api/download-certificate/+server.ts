@@ -28,14 +28,33 @@ export const POST: RequestHandler = async ({ request }) => {
 		});
 	}
 
-	// Extract base URL (without path like /api/v1) to avoid duplication
-	const baseUrl = new URL(BACKEND_URL).origin;
-	const backendUrl = certificate_download_url.startsWith('http')
-		? certificate_download_url
-		: `${baseUrl}${certificate_download_url}`;
+	// Validate URL and prevent SSRF by ensuring it resolves to BACKEND_URL origin
+	const trustedOrigin = new URL(BACKEND_URL).origin;
+	let backendUrl: URL;
+	try {
+		backendUrl = new URL(certificate_download_url, trustedOrigin);
+	} catch {
+		return new Response(
+			JSON.stringify({ success: false, error: 'Invalid certificate URL format' }),
+			{
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
+	}
+
+	if (backendUrl.origin !== trustedOrigin) {
+		return new Response(
+			JSON.stringify({ success: false, error: 'Certificate URL origin not allowed' }),
+			{
+				status: 403,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
+	}
 
 	try {
-		const res = await fetch(backendUrl, {
+		const res = await fetch(backendUrl.href, {
 			method: 'GET',
 			headers: { Accept: 'application/pdf' }
 		});
