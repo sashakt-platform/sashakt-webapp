@@ -2,10 +2,27 @@ import { BACKEND_URL } from '$env/static/private';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request }) => {
-	const { certificate_download_url }: { certificate_download_url: string } = await request.json();
+	let body: unknown;
+	try {
+		body = await request.json();
+	} catch {
+		return new Response(JSON.stringify({ success: false, error: 'Invalid or missing JSON body' }), {
+			status: 400,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
 
-	if (!certificate_download_url) {
+	if (typeof body !== 'object' || body === null || !('certificate_download_url' in body)) {
 		return new Response(JSON.stringify({ success: false, error: 'Missing certificate URL' }), {
+			status: 400,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
+
+	const { certificate_download_url } = body as { certificate_download_url: string };
+
+	if (!certificate_download_url || typeof certificate_download_url !== 'string') {
+		return new Response(JSON.stringify({ success: false, error: 'Invalid certificate URL' }), {
 			status: 400,
 			headers: { 'Content-Type': 'application/json' }
 		});

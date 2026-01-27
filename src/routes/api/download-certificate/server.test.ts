@@ -101,7 +101,39 @@ describe('POST /api/download-certificate', () => {
 
 		expect(response.status).toBe(400);
 		expect(data.success).toBe(false);
+		expect(data.error).toBe('Invalid certificate URL');
+	});
+
+	it('should return 400 when JSON body is invalid', async () => {
+		const request = {
+			json: () => Promise.reject(new Error('Invalid JSON'))
+		};
+		const response = await POST({ request } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(400);
+		expect(data.success).toBe(false);
+		expect(data.error).toBe('Invalid or missing JSON body');
+	});
+
+	it('should return 400 when body is not an object', async () => {
+		const request = createMockRequest('not an object');
+		const response = await POST({ request } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(400);
+		expect(data.success).toBe(false);
 		expect(data.error).toBe('Missing certificate URL');
+	});
+
+	it('should return 400 when certificate_download_url is not a string', async () => {
+		const request = createMockRequest({ certificate_download_url: 123 });
+		const response = await POST({ request } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(400);
+		expect(data.success).toBe(false);
+		expect(data.error).toBe('Invalid certificate URL');
 	});
 
 	it('should return backend error status when backend fails', async () => {
