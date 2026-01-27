@@ -1,15 +1,60 @@
 <script lang="ts">
 	import * as Table from '$lib/components/ui/table/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import { t } from 'svelte-i18n';
+	import type { TResultData } from '$lib/types';
 
-	let { resultData, testDetails } = $props();
-
+	let {
+		resultData,
+		testDetails
+	}: {
+		resultData: TResultData;
+		testDetails: { name: string; link: string; completion_message?: string };
+	} = $props();
 	const totalQuestions = resultData?.total_questions || 0;
 
 	const attempted = resultData
 		? (resultData.correct_answer || 0) + (resultData.incorrect_answer || 0)
 		: 0;
 	const notAttempted = totalQuestions - attempted;
+
+	let isDownloading = $state(false);
+	let downloadError = $state<string | null>(null);
+
+	async function handleDownloadCertificate() {
+		if (!resultData?.certificate_download_url) return;
+
+		isDownloading = true;
+		downloadError = null;
+
+		try {
+			const response = await fetch('/api/download-certificate', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					certificate_download_url: resultData.certificate_download_url
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Download failed');
+			}
+
+			const blob = await response.blob();
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `certificate-${testDetails.name.replace(/\s+/g, '-')}.pdf`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			window.URL.revokeObjectURL(url);
+		} catch {
+			downloadError = $t('Failed to download certificate. Please try again.');
+		} finally {
+			isDownloading = false;
+		}
+	}
 </script>
 
 <section class="mx-auto mt-2 w-xs text-center">
@@ -59,5 +104,16 @@
 				{/if}
 			</Table.Body>
 		</Table.Root>
+
+		{#if resultData.certificate_download_url}
+			<div class="mt-6">
+				{#if downloadError}
+					<p class="text-destructive mb-2 text-sm">{downloadError}</p>
+				{/if}
+				<Button onclick={handleDownloadCertificate} disabled={isDownloading} class="w-full">
+					{isDownloading ? $t('Downloading...') : $t('Download Certificate')}
+				</Button>
+			</div>
+		{/if}
 	{/if}
 </section>
