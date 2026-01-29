@@ -133,19 +133,45 @@ export const actions = {
 			}
 
 			if (response.status === 200) {
-				const result = await fetch(candidateUrl('result'), {
+				const submitTestData = await response.json();
+
+				const resultResponse = await fetch(candidateUrl('result'), {
 					method: 'GET',
 					headers: { accept: 'application/json' }
 				});
 
-				if (!result.ok) return fail(400, { result: false, submitTest: true });
+				if (!resultResponse.ok) return fail(400, { result: false, submitTest: true });
+
+				const resultData = await resultResponse.json();
+
+				const testQuestions = await getTestQuestions(
+					candidate.candidate_test_id,
+					candidate.candidate_uuid
+				);
 
 				cookies.delete('sashakt-candidate', {
 					path: '/test/' + locals.testData.link,
 					secure: !dev
 				});
 
-				return { result: await result.json(), submitTest: true };
+				const feedback = (submitTestData.answers ?? []).map(
+					(answer: {
+						question_revision_id: number;
+						response: string;
+						correct_answer: number[];
+					}) => ({
+						question_revision_id: answer.question_revision_id,
+						submitted_answer: answer.response ? JSON.parse(answer.response) : [],
+						correct_answer: answer.correct_answer
+					})
+				);
+
+				return {
+					result: resultData,
+					submitTest: true,
+					feedback,
+					testQuestions
+				};
 			}
 
 			return { submitTest: false };
