@@ -190,12 +190,15 @@ describe('ViewFeedback', () => {
 			expect(screen.getByText('Question not found for feedback #1')).toBeInTheDocument();
 		});
 
-		it('should render nothing when feedback is empty', () => {
+		it('should show empty message when feedback is empty', () => {
 			const { container } = render(ViewFeedback, {
 				props: { feedback: [], testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(container.querySelectorAll('[class*="shadow-md"]')).toHaveLength(0);
+			expect(
+				screen.getByText('No feedback available. You did not attempt any questions.')
+			).toBeInTheDocument();
 		});
 
 		it('should handle empty submitted_answer (unanswered question)', () => {

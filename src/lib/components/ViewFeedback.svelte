@@ -37,6 +37,11 @@
 </script>
 
 <div class="flex flex-col items-center">
+	{#if feedback.length === 0}
+		<p class="text-muted-foreground mt-10 text-center text-sm">
+			No feedback available. You did not attempt any questions.
+		</p>
+	{/if}
 	{#each feedbackWithQuestions as item, idx}
 		{#if item.question}
 			<Card.Root class="mb-6 w-full max-w-sm rounded-xl shadow-md">
