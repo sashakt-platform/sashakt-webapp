@@ -1,8 +1,19 @@
 <script lang="ts">
+	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { t } from 'svelte-i18n';
 
-	let { resultData, testDetails } = $props();
+	let {
+		resultData,
+		testDetails,
+		feedback = null,
+		onViewFeedback = () => {}
+	}: {
+		resultData: any;
+		testDetails: any;
+		feedback?: any;
+		onViewFeedback?: () => void;
+	} = $props();
 
 	const totalQuestions = resultData?.total_questions || 0;
 
@@ -59,5 +70,8 @@
 				{/if}
 			</Table.Body>
 		</Table.Root>
+	{/if}
+	{#if testDetails.show_feedback_on_completion && feedback}
+		<Button class="mt-8" onclick={onViewFeedback}>View Feedback</Button>
 	{/if}
 </section>
