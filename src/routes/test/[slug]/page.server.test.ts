@@ -281,13 +281,31 @@ describe('Page Server - submitTest action', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('should submit test and return result', async () => {
+	it('should submit test and return result with feedback and testQuestions', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 
 		const mockResult = { score: 85, passed: true };
+		const mockAnswers = [
+			{
+				question_revision_id: 1,
+				response: '[102]',
+				correct_answer: [102]
+			},
+			{
+				question_revision_id: 2,
+				response: '[201, 203]',
+				correct_answer: [201, 202]
+			}
+		];
+		const mockQuestionData = { question_revisions: [], question_pagination: 5 };
+
+		vi.mocked(getTestQuestions).mockResolvedValue(mockQuestionData);
+
 		const mockFetch = vi
 			.fn()
-			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
+			.mockResolvedValueOnce(
+				createMockResponse({ success: true, answers: mockAnswers }, { status: 200 })
+			)
 			.mockResolvedValueOnce(createMockResponse(mockResult));
 
 		const mockCookies = createMockCookies();
@@ -300,7 +318,87 @@ describe('Page Server - submitTest action', () => {
 
 		expect(result.submitTest).toBe(true);
 		expect(result.result).toEqual(mockResult);
+		expect(result.feedback).toEqual([
+			{
+				question_revision_id: 1,
+				submitted_answer: [102],
+				correct_answer: [102]
+			},
+			{
+				question_revision_id: 2,
+				submitted_answer: [201, 203],
+				correct_answer: [201, 202]
+			}
+		]);
+		expect(result.testQuestions).toEqual(mockQuestionData);
+		expect(getTestQuestions).toHaveBeenCalledWith(
+			mockCandidate.candidate_test_id,
+			mockCandidate.candidate_uuid
+		);
 		expect(mockCookies.delete).toHaveBeenCalledWith('sashakt-candidate', expect.any(Object));
+	});
+
+	it('should handle empty answers array in submit response', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+
+		const mockResult = { score: 0, passed: false };
+		vi.mocked(getTestQuestions).mockResolvedValue({
+			question_revisions: [],
+			question_pagination: 5
+		});
+
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValueOnce(
+				createMockResponse({ success: true, answers: [] }, { status: 200 })
+			)
+			.mockResolvedValueOnce(createMockResponse(mockResult));
+
+		const mockCookies = createMockCookies();
+
+		const result = await actions.submitTest({
+			cookies: mockCookies,
+			fetch: mockFetch,
+			locals: { testData: mockTestData }
+		} as any);
+
+		expect(result.submitTest).toBe(true);
+		expect(result.feedback).toEqual([]);
+	});
+
+	it('should handle null response field in answers', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+
+		const mockResult = { score: 0, passed: false };
+		const mockAnswers = [
+			{
+				question_revision_id: 1,
+				response: null,
+				correct_answer: [102]
+			}
+		];
+		vi.mocked(getTestQuestions).mockResolvedValue({
+			question_revisions: [],
+			question_pagination: 5
+		});
+
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValueOnce(
+				createMockResponse({ success: true, answers: mockAnswers }, { status: 200 })
+			)
+			.mockResolvedValueOnce(createMockResponse(mockResult));
+
+		const mockCookies = createMockCookies();
+
+		const result = await actions.submitTest({
+			cookies: mockCookies,
+			fetch: mockFetch,
+			locals: { testData: mockTestData }
+		} as any);
+
+		expect(result.feedback[0].submitted_answer).toEqual([]);
+		expect(result.feedback[0].correct_answer).toEqual([102]);
 	});
 
 	it('should return error message when backend returns 400', async () => {
