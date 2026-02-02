@@ -3,10 +3,12 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import Check from '@lucide/svelte/icons/check';
 	import X from '@lucide/svelte/icons/x';
+	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 
-	let { feedback = [], testQuestions } = $props();
+	let { feedback = [], testQuestions, onBack }: { feedback?: any; testQuestions?: any; onBack?: () => void } = $props();
 
 	const isCorrect = (optionId: number, correctAnswer: number[]) => correctAnswer.includes(optionId);
 
@@ -27,7 +29,7 @@
 	};
 
 	const feedbackWithQuestions = $derived(
-		feedback.map((fb: any) => {
+		(feedback ?? []).map((fb: any) => {
 			const question = testQuestions?.question_revisions?.find(
 				(q: any) => q.id === fb.question_revision_id
 			);
@@ -37,6 +39,14 @@
 </script>
 
 <div class="flex flex-col items-center">
+	{#if onBack}
+		<div class="mb-4 w-full max-w-sm">
+			<Button variant="ghost" size="sm" onclick={onBack}>
+				<ArrowLeft size={16} class="mr-1" />
+				Back to Results
+			</Button>
+		</div>
+	{/if}
 	{#if feedback.length === 0}
 		<p class="text-muted-foreground mt-10 text-center text-sm">
 			No feedback available. You did not attempt any questions.

@@ -19,14 +19,27 @@
 		locale.set(currentLocale);
 	});
 
+	$effect(() => {
+		form;
+		showFeedbackView = false;
+	});
+
 	function handleViewFeedback() {
 		showFeedbackView = true;
+	}
+
+	function handleBackToResults() {
+		showFeedbackView = false;
 	}
 </script>
 
 <section>
 	{#if showFeedbackView && form?.feedback}
-		<ViewFeedback feedback={form.feedback} testQuestions={form.testQuestions} />
+		<ViewFeedback
+			feedback={form.feedback}
+			testQuestions={form.testQuestions}
+			onBack={handleBackToResults}
+		/>
 	{:else if data.candidate === undefined}
 		<p>{$t('Loading...')}</p>
 	{:else if form?.submitTest}

@@ -159,11 +159,24 @@ export const actions = {
 						question_revision_id: number;
 						response: string;
 						correct_answer: number[];
-					}) => ({
-						question_revision_id: answer.question_revision_id,
-						submitted_answer: answer.response ? JSON.parse(answer.response) : [],
-						correct_answer: answer.correct_answer
-					})
+					}) => {
+						let submittedAnswer: number[] = [];
+						if (answer.response) {
+							try {
+								submittedAnswer = JSON.parse(answer.response);
+							} catch {
+								console.error(
+									`Failed to parse response for question ${answer.question_revision_id}:`,
+									answer.response
+								);
+							}
+						}
+						return {
+							question_revision_id: answer.question_revision_id,
+							submitted_answer: submittedAnswer,
+							correct_answer: answer.correct_answer
+						};
+					}
 				);
 
 				return {
