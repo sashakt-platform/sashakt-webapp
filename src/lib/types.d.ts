@@ -9,6 +9,7 @@ export type TSelection = {
 	visited: boolean;
 	time_spent: number;
 	bookmarked: boolean;
+	correct_answer?: number[] | null;
 };
 
 export type TTestSession = {

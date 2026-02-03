@@ -63,10 +63,15 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			throw new Error(`Failed to save answer: ${res.status} ${res.statusText}`);
 		}
 
-		return new Response(JSON.stringify({ success: true }), {
-			status: 200,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		const backendData = await res.json();
+
+		return new Response(
+			JSON.stringify({ success: true, correct_answer: backendData.correct_answer ?? null }),
+			{
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
 	} catch (error: any) {
 		return new Response(JSON.stringify({ success: false, error: error.message }), {
 			status: 500,
