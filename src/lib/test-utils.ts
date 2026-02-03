@@ -3,7 +3,7 @@
  */
 
 import { vi } from 'vitest';
-import type { TCandidate, TQuestion, TSelection, TTestSession } from './types';
+import type { TCandidate, TQuestion, TResultData, TSelection, TTestSession } from './types';
 import { init, register, waitLocale, locale } from 'svelte-i18n';
 import { languages, DEFAULT_LANGUAGE } from './utils';
 
@@ -122,13 +122,20 @@ export const mockTestQuestionsResponse = {
 };
 
 // Mock result data
-export const mockResultData = {
+export const mockResultData: TResultData = {
 	correct_answer: 5,
 	incorrect_answer: 3,
 	mandatory_not_attempted: 0,
 	optional_not_attempted: 2,
 	marks_obtained: 8,
-	marks_maximum: 10
+	marks_maximum: 10,
+	total_questions: 10
+};
+
+// Mock result data with certificate
+export const mockResultDataWithCertificate: TResultData = {
+	...mockResultData,
+	certificate_download_url: '/api/v1/certificate/download/31a7d1b0-1549-4b87-978b-f13d7ad3a22c'
 };
 
 // Mock cookies interface for testing
