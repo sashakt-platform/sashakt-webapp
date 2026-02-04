@@ -2,7 +2,7 @@
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { t } from 'svelte-i18n';
-	import type { TResultData } from '$lib/types';
+	import type { TResultData, TFeedback } from '$lib/types';
 
 	let {
 		resultData,
@@ -11,8 +11,8 @@
 		onViewFeedback = () => {}
 	}: {
 		resultData: TResultData;
-		testDetails: { name: string; link: string; completion_message?: string };
-		feedback?: any;
+		testDetails: { name: string; link: string; completion_message?: string; show_feedback_on_completion?: boolean };
+		feedback?: TFeedback[] | null;
 		onViewFeedback?: () => void;
 	} = $props();
 

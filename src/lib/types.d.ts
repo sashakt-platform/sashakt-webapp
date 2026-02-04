@@ -57,3 +57,9 @@ export type TResultData = {
 	total_questions: number;
 	certificate_download_url?: string;
 };
+
+export type TFeedback = {
+	question_revision_id: number;
+	submitted_answer: number[];
+	correct_answer: number[];
+};
