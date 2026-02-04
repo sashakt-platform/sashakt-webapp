@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 import TestResult from './TestResult.svelte';
-import { mockResultData, mockTestData, setLocaleForTests } from '$lib/test-utils';
+import {
+	mockResultData,
+	mockResultDataWithCertificate,
+	mockTestData,
+	setLocaleForTests
+} from '$lib/test-utils';
 
 describe('TestResult', () => {
 	it('should render success message', () => {
@@ -286,5 +291,29 @@ describe('support for localization', () => {
 			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
 			expect(screen.getByText('Total marks obtained')).toBeInTheDocument();
 		});
+	});
+});
+
+describe('Certificate download', () => {
+	it('should show download button when certificate URL is available', () => {
+		render(TestResult, {
+			props: {
+				resultData: mockResultDataWithCertificate,
+				testDetails: mockTestData
+			}
+		});
+
+		expect(screen.getByText('Download Certificate')).toBeInTheDocument();
+	});
+
+	it('should not show download button when certificate URL is not available', () => {
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails: mockTestData
+			}
+		});
+
+		expect(screen.queryByText('Download Certificate')).not.toBeInTheDocument();
 	});
 });
