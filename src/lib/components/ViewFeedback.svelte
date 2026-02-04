@@ -7,6 +7,7 @@
 	import Check from '@lucide/svelte/icons/check';
 	import X from '@lucide/svelte/icons/x';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import { t } from 'svelte-i18n';
 
 	let { feedback = [], testQuestions, onBack }: { feedback?: any; testQuestions?: any; onBack?: () => void } = $props();
 
@@ -43,13 +44,13 @@
 		<div class="mb-4 w-full max-w-sm">
 			<Button variant="ghost" size="sm" onclick={onBack}>
 				<ArrowLeft size={16} class="mr-1" />
-				Back to Results
+				{$t('Back to Results')}
 			</Button>
 		</div>
 	{/if}
 	{#if feedback.length === 0}
 		<p class="text-muted-foreground mt-10 text-center text-sm">
-			No feedback available. You did not attempt any questions.
+			{$t('No feedback available. You did not attempt any questions.')}
 		</p>
 	{/if}
 	{#each feedbackWithQuestions as item, idx}
@@ -57,11 +58,11 @@
 			<Card.Root class="mb-6 w-full max-w-sm rounded-xl shadow-md">
 				<Card.Header class="p-5">
 					<Card.Title class="mb-5 border-b pb-3 text-sm">
-						{idx + 1} <span>OF {feedback.length}</span>
+						{idx + 1} <span>{$t('OF')} {feedback.length}</span>
 
 						{#if item.question?.marking_scheme}
 							<span class="text-muted-foreground float-end">
-								{item.question.marking_scheme.correct} Marks
+								{item.question.marking_scheme.correct} {$t('Marks')}
 							</span>
 						{/if}
 					</Card.Title>
@@ -140,7 +141,7 @@
 			</Card.Root>
 		{:else}
 			<p class="text-center text-sm text-red-500">
-				Question not found for feedback #{idx + 1}
+				{$t('Question not found for feedback #{number}', { values: { number: idx + 1 } })}
 			</p>
 		{/if}
 	{/each}

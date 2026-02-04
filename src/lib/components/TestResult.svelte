@@ -11,7 +11,12 @@
 		onViewFeedback = () => {}
 	}: {
 		resultData: TResultData;
-		testDetails: { name: string; link: string; completion_message?: string; show_feedback_on_completion?: boolean };
+		testDetails: {
+			name: string;
+			link: string;
+			completion_message?: string;
+			show_feedback_on_completion?: boolean;
+		};
 		feedback?: TFeedback[] | null;
 		onViewFeedback?: () => void;
 	} = $props();
@@ -122,6 +127,6 @@
 		{/if}
 	{/if}
 	{#if testDetails.show_feedback_on_completion && feedback}
-		<Button class="mt-8" onclick={onViewFeedback}>View Feedback</Button>
+		<Button class="mt-8" onclick={onViewFeedback}>{$t('View Feedback')}</Button>
 	{/if}
 </section>
