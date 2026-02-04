@@ -9,7 +9,11 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import { t } from 'svelte-i18n';
 
-	let { feedback = [], testQuestions, onBack }: { feedback?: any; testQuestions?: any; onBack?: () => void } = $props();
+	let {
+		feedback = [],
+		testQuestions,
+		onBack
+	}: { feedback?: any; testQuestions?: any; onBack?: () => void } = $props();
 
 	const isCorrect = (optionId: number, correctAnswer: number[]) => correctAnswer.includes(optionId);
 
@@ -53,7 +57,7 @@
 			{$t('No feedback available. You did not attempt any questions.')}
 		</p>
 	{/if}
-	{#each feedbackWithQuestions as item, idx}
+	{#each feedbackWithQuestions as item, idx (item.fb.question_revision_id)}
 		{#if item.question}
 			<Card.Root class="mb-6 w-full max-w-sm rounded-xl shadow-md">
 				<Card.Header class="p-5">
@@ -62,7 +66,8 @@
 
 						{#if item.question?.marking_scheme}
 							<span class="text-muted-foreground float-end">
-								{item.question.marking_scheme.correct} {$t('Marks')}
+								{item.question.marking_scheme.correct}
+								{$t('Marks')}
 							</span>
 						{/if}
 					</Card.Title>
@@ -80,7 +85,7 @@
 				<Card.Content class="p-5 pt-1">
 					{#if item.question.question_type === 'single-choice'}
 						<RadioGroup.Root value={item.fb.submitted_answer[0]?.toString()} disabled>
-							{#each item.question.options as option}
+							{#each item.question.options as option (option.id)}
 								{@const uid = `${item.question.id}-${option.key}`}
 								{@const status = getOptionStatus(
 									option.id,
@@ -116,7 +121,7 @@
 							{/each}
 						</RadioGroup.Root>
 					{:else}
-						{#each item.question.options as option}
+						{#each item.question.options as option (option.id)}
 							{@const uid = `${item.question.id}-${option.key}`}
 
 							<Label
