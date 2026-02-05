@@ -163,7 +163,11 @@
 		}
 	};
 
-	const submitAnswer = async (questionId: number, response: number[] | string, bookmarked?: boolean) => {
+	const submitAnswer = async (
+		questionId: number,
+		response: number[] | string,
+		bookmarked?: boolean
+	) => {
 		const data = {
 			question_revision_id: questionId,
 			response: response.length > 0 ? response : null,
@@ -285,7 +289,6 @@
 			isSubmitting = false;
 		}
 	};
-
 </script>
 
 <Card.Root
@@ -369,7 +372,7 @@
 						variant="default"
 						size="sm"
 						onclick={handleSubjectiveSubmit}
-						disabled={isSubmitting}
+						disabled={isSubmitting || !subjectiveText.trim()}
 					>
 						{$t('Save Answer')}
 					</Button>
