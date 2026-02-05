@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Bookmark from '@lucide/svelte/icons/bookmark';
+	import Check from '@lucide/svelte/icons/check';
+	import X from '@lucide/svelte/icons/x';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -37,20 +39,56 @@
 		return selectedQuestions.find((item) => item.question_revision_id === questionId);
 	};
 
+	const currentSelection = $derived(selectedQuestion(question.id));
+	const hasFeedbackAvailable = $derived(
+		(currentSelection?.response?.length ?? 0) > 0 &&
+			currentSelection?.correct_answer != null &&
+			currentSelection.correct_answer.length > 0
+	);
+	const isFeedbackViewed = $derived(currentSelection?.feedbackViewed === true);
+	const isLocked = $derived(isFeedbackViewed);
+
 	const isSelected = (optionId: number) => {
 		const selected = selectedQuestion(question.id);
 		return selected?.response.includes(optionId);
+	};
+
+	const optionFeedbackClass = (optionId: number) => {
+		if (!isFeedbackViewed || !currentSelection?.correct_answer) return '';
+		if (currentSelection.correct_answer.includes(optionId)) {
+			return 'bg-green-100 border-green-500 text-green-700';
+		}
+		if (currentSelection.response.includes(optionId)) {
+			return 'bg-red-100 border-red-500 text-red-700';
+		}
+		return '';
+	};
+
+	const getOptionFeedbackStatus = (optionId: number): 'correct' | 'wrong' | 'none' => {
+		if (!isFeedbackViewed || !currentSelection?.correct_answer) return 'none';
+		if (currentSelection.correct_answer.includes(optionId)) return 'correct';
+		if (currentSelection.response.includes(optionId)) return 'wrong';
+		return 'none';
 	};
 
 	const updateStore = () => {
 		sessionStore.current = {
 			...sessionStore.current,
 			candidate,
-			selections: [...selectedQuestions]
+			selections: selectedQuestions.map(({ correct_answer, ...rest }) => rest)
 		};
 	};
 
+	const confirmViewFeedback = () => {
+		selectedQuestions = selectedQuestions.map((q) =>
+			q.question_revision_id === question.id ? { ...q, feedbackViewed: true } : q
+		);
+		updateStore();
+	};
+
 	const handleSelection = async (questionId: number, optionId: number, isRemoving = false) => {
+		if (isLocked) return;
+
 		const answeredQuestion = selectedQuestion(questionId);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
 
@@ -74,12 +112,18 @@
 			isSubmitting = true;
 			saveError = null;
 			try {
-				await submitAnswer(questionId, newResponse, currentBookmarked);
+				const result = await submitAnswer(questionId, newResponse, currentBookmarked);
 
 				// only update state on success
 				if (answeredQuestion) {
 					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
+						q.question_revision_id === questionId
+							? {
+									...q,
+									response: newResponse,
+									correct_answer: result?.correct_answer ?? q.correct_answer
+								}
+							: q
 					);
 				} else {
 					selectedQuestions = [
@@ -88,7 +132,9 @@
 							question_revision_id: questionId,
 							response: newResponse,
 							visited: true,
-							time_spent: 0
+							time_spent: 0,
+							bookmarked: currentBookmarked,
+							correct_answer: result?.correct_answer ?? null
 						}
 					];
 				}
@@ -128,7 +174,8 @@
 							question_revision_id: questionId,
 							response: newResponse,
 							visited: true,
-							time_spent: 0
+							time_spent: 0,
+							bookmarked: currentBookmarked
 						}
 					];
 				}
@@ -136,7 +183,16 @@
 			updateStore();
 
 			try {
-				await submitAnswer(questionId, newResponse);
+				const result = await submitAnswer(questionId, newResponse);
+
+				if (result?.correct_answer != null) {
+					selectedQuestions = selectedQuestions.map((q) =>
+						q.question_revision_id === questionId
+							? { ...q, correct_answer: result.correct_answer }
+							: q
+					);
+					updateStore();
+				}
 			} catch (error) {
 				// revert on error
 				selectedQuestions = previousState;
@@ -180,6 +236,8 @@
 	};
 
 	const handleBookmark = async () => {
+		if (isLocked) return;
+
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
 		const newBookmarked = !currentBookmarked;
@@ -277,15 +335,32 @@
 						await handleSelection(question.id, Number(optionId));
 					}}
 					value={selectedQuestion(question.id)?.response[0]?.toString()}
+					disabled={isLocked}
 				>
 					{#each options as option, index (index)}
 						{@const uid = `${question.id}-${option.key}`}
+						{@const feedbackClass = optionFeedbackClass(option.id)}
+						{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
 						<Label
 							for={uid}
-							class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${isSelected(option.id) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
+							class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${
+								isFeedbackViewed
+									? feedbackClass || ''
+									: isSelected(option.id)
+										? 'bg-primary text-muted *:border-muted *:text-muted'
+										: ''
+							} ${isLocked ? 'cursor-not-allowed' : ''}`}
 						>
-							{option.key}. {option.value}
-							<RadioGroup.Item value={option.id.toString()} id={uid} class="float-end" />
+							<span>{option.key}. {option.value}</span>
+							<div class="float-end flex h-6 w-6 items-center justify-center">
+								{#if feedbackStatus === 'correct'}
+									<Check size={18} class="text-green-600" />
+								{:else if feedbackStatus === 'wrong'}
+									<X size={18} class="text-red-600" />
+								{:else}
+									<RadioGroup.Item value={option.id.toString()} id={uid} disabled={isLocked} />
+								{/if}
+							</div>
 						</Label>
 					{/each}
 				</RadioGroup.Root>
@@ -293,24 +368,50 @@
 		{:else}
 			{#each options as option (option.id)}
 				{@const uid = `${question.id}-${option.key}`}
+				{@const feedbackClass = optionFeedbackClass(option.id)}
+				{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
 				<div class="flex flex-row items-start space-x-3">
 					<Label
 						for={uid}
-						class={`mb-2 w-full cursor-pointer rounded-xl border px-4 py-5 ${isSelected(option.id) ? 'bg-primary text-muted *:border-muted *:text-muted' : ''}`}
+						class={`mb-2 w-full cursor-pointer rounded-xl border px-4 py-5 ${
+							isFeedbackViewed
+								? feedbackClass || ''
+								: isSelected(option.id)
+									? 'bg-primary text-muted *:border-muted *:text-muted'
+									: ''
+						} ${isLocked ? 'cursor-not-allowed' : ''}`}
 					>
-						{option.key}. {option.value}
-						<Checkbox
-							id={uid}
-							value={option.id.toString()}
-							class="float-end"
-							checked={isSelected(option.id)}
-							onCheckedChange={async (check) => {
-								await handleSelection(question.id, option.id, check === false);
-							}}
-						/>
+						<span>{option.key}. {option.value}</span>
+						<div class="float-end flex h-6 w-6 items-center justify-center">
+							{#if feedbackStatus === 'correct'}
+								<Check size={18} class="text-green-600" />
+							{:else if feedbackStatus === 'wrong'}
+								<X size={18} class="text-red-600" />
+							{:else}
+								<Checkbox
+									id={uid}
+									value={option.id.toString()}
+									checked={isSelected(option.id)}
+									disabled={isLocked}
+									onCheckedChange={async (check) => {
+										await handleSelection(question.id, option.id, check === false);
+									}}
+								/>
+							{/if}
+						</div>
 					</Label>
 				</div>
 			{/each}
+		{/if}
+
+		{#if hasFeedbackAvailable && !isFeedbackViewed}
+			<Button
+				variant="outline"
+				class="mt-4 w-full border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"
+				onclick={confirmViewFeedback}
+			>
+				{$t('View Feedback')}
+			</Button>
 		{/if}
 
 		<Button
@@ -319,6 +420,7 @@
 				? 'border-amber-500 bg-amber-50 text-amber-700 hover:bg-amber-100'
 				: ''}"
 			onclick={handleBookmark}
+			disabled={isLocked}
 		>
 			<Bookmark class="mr-2 h-4 w-4 {isQuestionBookmarked ? 'fill-amber-500' : ''}" />
 			{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}

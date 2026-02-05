@@ -72,6 +72,10 @@
 	"Mark for review": "Mark for review",
 	"Download Certificate": "Download Certificate",
 	"Downloading...": "Downloading...",
-	"Failed to download certificate. Please try again.": "Failed to download certificate. Please try again."
+	"Failed to download certificate. Please try again.": "Failed to download certificate. Please try again.",
+	"View Feedback": "View Feedback",
+	"Back to Results": "Back to Results",
+	"No feedback available. You did not attempt any questions.": "No feedback available. You did not attempt any questions.",
+	"Question not found for feedback #{number}": "Question not found for feedback #{number}"
 }
 

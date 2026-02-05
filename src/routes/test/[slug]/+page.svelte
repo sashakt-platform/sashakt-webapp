@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ViewFeedback from '$lib/components/ViewFeedback.svelte';
 	import LandingPage from '$lib/components/LandingPage.svelte';
 	import CandidateProfile from '$lib/components/CandidateProfile.svelte';
 	import Question from '$lib/components/Question.svelte';
@@ -9,20 +10,45 @@
 	import { DEFAULT_LANGUAGE } from '$lib/utils';
 
 	let { data, form }: PageProps = $props();
+
+	let showFeedbackView = $state(false);
 	let showProfileForm = $state(false);
 
 	$effect(() => {
 		const currentLocale = data?.testData?.locale || DEFAULT_LANGUAGE;
 		locale.set(currentLocale);
 	});
+
+	$effect(() => {
+		form;
+		showFeedbackView = false;
+	});
+
+	function handleViewFeedback() {
+		showFeedbackView = true;
+	}
+
+	function handleBackToResults() {
+		showFeedbackView = false;
+	}
 </script>
 
 <section>
-	{#if data.candidate === undefined}
-		<!-- Show nothing or a loading spinner while candidate is loading -->
+	{#if showFeedbackView && form?.feedback}
+		<ViewFeedback
+			feedback={form.feedback}
+			testQuestions={form.testQuestions}
+			onBack={handleBackToResults}
+		/>
+	{:else if data.candidate === undefined}
 		<p>{$t('Loading...')}</p>
 	{:else if form?.submitTest}
-		<TestResult resultData={form.result} testDetails={data.testData} />
+		<TestResult
+			resultData={form.result}
+			testDetails={data.testData}
+			feedback={form.feedback}
+			onViewFeedback={handleViewFeedback}
+		/>
 	{:else if !data.candidate && !showProfileForm}
 		<LandingPage testDetails={data.testData} bind:showProfileForm />
 	{:else if !data.candidate && showProfileForm && data.testData.candidate_profile}

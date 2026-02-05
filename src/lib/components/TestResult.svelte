@@ -2,15 +2,25 @@
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { t } from 'svelte-i18n';
-	import type { TResultData } from '$lib/types';
+	import type { TResultData, TFeedback } from '$lib/types';
 
 	let {
 		resultData,
-		testDetails
+		testDetails,
+		feedback = null,
+		onViewFeedback = () => {}
 	}: {
 		resultData: TResultData;
-		testDetails: { name: string; link: string; completion_message?: string };
+		testDetails: {
+			name: string;
+			link: string;
+			completion_message?: string;
+			show_feedback_on_completion?: boolean;
+		};
+		feedback?: TFeedback[] | null;
+		onViewFeedback?: () => void;
 	} = $props();
+
 	const totalQuestions = resultData?.total_questions || 0;
 
 	const attempted = resultData
@@ -115,5 +125,8 @@
 				</Button>
 			</div>
 		{/if}
+	{/if}
+	{#if testDetails.show_feedback_on_completion && feedback}
+		<Button class="mt-8" onclick={onViewFeedback}>{$t('View Feedback')}</Button>
 	{/if}
 </section>
