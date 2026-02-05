@@ -34,11 +34,15 @@
 	};
 
 	const feedbackWithQuestions = $derived(
-		(feedback ?? []).map((fb: any) => {
-			const question = testQuestions?.question_revisions?.find(
-				(q: any) => q.id === fb.question_revision_id
-			);
-			return { fb, question };
+		(testQuestions?.question_revisions ?? []).map((question: any) => {
+			const fb = (feedback ?? []).find((f: any) => f.question_revision_id === question.id);
+
+			const feedbackData = fb ?? {
+				question_revision_id: question.id,
+				submitted_answer: [],
+				correct_answer: fb?.correct_answer ?? []
+			};
+			return { fb: feedbackData, question };
 		})
 	);
 </script>
@@ -52,17 +56,17 @@
 			</Button>
 		</div>
 	{/if}
-	{#if feedback.length === 0}
+	{#if feedbackWithQuestions.length === 0}
 		<p class="text-muted-foreground mt-10 text-center text-sm">
 			{$t('No feedback available. You did not attempt any questions.')}
 		</p>
 	{/if}
-	{#each feedbackWithQuestions as item, idx (item.fb.question_revision_id)}
+	{#each feedbackWithQuestions as item, idx (item.question.id)}
 		{#if item.question}
 			<Card.Root class="mb-6 w-full max-w-sm rounded-xl shadow-md">
 				<Card.Header class="p-5">
 					<Card.Title class="mb-5 border-b pb-3 text-sm">
-						{idx + 1} <span>{$t('OF')} {feedback.length}</span>
+						{idx + 1} <span>{$t('OF')} {feedbackWithQuestions.length}</span>
 
 						{#if item.question?.marking_scheme}
 							<span class="text-muted-foreground float-end">

@@ -39,7 +39,8 @@ describe('ViewFeedback', () => {
 
 			expect(screen.getByText('1')).toBeInTheDocument();
 			expect(screen.getByText('2')).toBeInTheDocument();
-			expect(screen.getAllByText('OF 2')).toHaveLength(2);
+			expect(screen.getByText('3')).toBeInTheDocument();
+			expect(screen.getAllByText('OF 3')).toHaveLength(3);
 		});
 
 		it('should display marks when marking_scheme is present', () => {
@@ -49,7 +50,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			expect(screen.getByText('1 Marks')).toBeInTheDocument();
+			expect(screen.getAllByText(/\d+ Marks/)).toHaveLength(3);
 		});
 
 		it('should display question instructions when present', () => {
@@ -180,25 +181,23 @@ describe('ViewFeedback', () => {
 	});
 
 	describe('edge cases', () => {
-		it('should show error message when question is not found', () => {
+		it('should show all questions even when feedback has extra entries', () => {
 			const feedback = [createFeedback(999, [1], [2])];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			expect(screen.getByText('Question not found for feedback #1')).toBeInTheDocument();
+			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
+			expect(screen.getByText(mockMultipleChoiceQuestion.question_text)).toBeInTheDocument();
 		});
 
-		it('should show empty message when feedback is empty', () => {
+		it('should show all questions with empty feedback (unattempted)', () => {
 			const { container } = render(ViewFeedback, {
 				props: { feedback: [], testQuestions: mockTestQuestionsResponse }
 			});
 
-			expect(container.querySelectorAll('[class*="shadow-md"]')).toHaveLength(0);
-			expect(
-				screen.getByText('No feedback available. You did not attempt any questions.')
-			).toBeInTheDocument();
+			expect(container.querySelectorAll('[class*="shadow-md"]')).toHaveLength(3);
 		});
 
 		it('should handle empty submitted_answer (unanswered question)', () => {
@@ -237,7 +236,9 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: null }
 			});
 
-			expect(screen.getByText('Question not found for feedback #1')).toBeInTheDocument();
+			expect(
+				screen.getByText('No feedback available. You did not attempt any questions.')
+			).toBeInTheDocument();
 		});
 	});
 });
