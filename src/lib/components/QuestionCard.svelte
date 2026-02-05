@@ -37,9 +37,16 @@
 		return selectedQuestions.find((item) => item.question_revision_id === questionId);
 	};
 
+	const getExistingTextResponse = () => {
+		const selected = selectedQuestion(question.id);
+		return typeof selected?.response === 'string' ? selected.response : '';
+	};
+	let subjectiveText = $state(getExistingTextResponse());
+
 	const isSelected = (optionId: number) => {
 		const selected = selectedQuestion(question.id);
-		return selected?.response.includes(optionId);
+		if (!selected || typeof selected.response === 'string') return false;
+		return selected.response.includes(optionId);
 	};
 
 	const updateStore = () => {
@@ -57,13 +64,17 @@
 		// calculate the new response
 		let newResponse: number[];
 		if (isRemoving) {
-			if (!answeredQuestion) return;
+			if (!answeredQuestion || typeof answeredQuestion.response === 'string') return;
 			newResponse = answeredQuestion.response.filter((id) => id !== optionId);
 		} else {
 			if (question.question_type === 'single-choice') {
 				newResponse = [optionId];
 			} else {
-				newResponse = answeredQuestion ? [...answeredQuestion.response, optionId] : [optionId];
+				const existingResponse =
+					answeredQuestion && typeof answeredQuestion.response !== 'string'
+						? answeredQuestion.response
+						: [];
+				newResponse = [...existingResponse, optionId];
 			}
 		}
 
@@ -88,7 +99,8 @@
 							question_revision_id: questionId,
 							response: newResponse,
 							visited: true,
-							time_spent: 0
+							time_spent: 0,
+							bookmarked: false
 						}
 					];
 				}
@@ -112,7 +124,7 @@
 
 			if (isRemoving) {
 				selectedQuestions = selectedQuestions.map((q) =>
-					q.question_revision_id === questionId
+					q.question_revision_id === questionId && typeof q.response !== 'string'
 						? { ...q, response: q.response.filter((id) => id !== optionId) }
 						: q
 				);
@@ -128,7 +140,8 @@
 							question_revision_id: questionId,
 							response: newResponse,
 							visited: true,
-							time_spent: 0
+							time_spent: 0,
+							bookmarked: false
 						}
 					];
 				}
@@ -150,7 +163,7 @@
 		}
 	};
 
-	const submitAnswer = async (questionId: number, response: number[], bookmarked?: boolean) => {
+	const submitAnswer = async (questionId: number, response: number[] | string, bookmarked?: boolean) => {
 		const data = {
 			question_revision_id: questionId,
 			response: response.length > 0 ? response : null,
@@ -183,7 +196,7 @@
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
 		const newBookmarked = !currentBookmarked;
-		const currentResponse = answeredQuestion?.response ?? [];
+		const currentResponse = answeredQuestion?.response;
 
 		if (isSubmitting) return;
 		isSubmitting = true;
@@ -197,11 +210,12 @@
 					: q
 			);
 		} else {
+			const defaultResponse = question.question_type === 'subjective' ? '' : [];
 			selectedQuestions = [
 				...selectedQuestions,
 				{
 					question_revision_id: question.id,
-					response: [],
+					response: defaultResponse,
 					visited: true,
 					time_spent: 0,
 					bookmarked: newBookmarked
@@ -211,7 +225,7 @@
 		updateStore();
 
 		try {
-			await submitAnswer(question.id, currentResponse, newBookmarked);
+			await submitAnswer(question.id, currentResponse ?? [], newBookmarked);
 		} catch (error) {
 			// revert on error
 			if (answeredQuestion) {
@@ -229,8 +243,49 @@
 		}
 	};
 
-	const isQuestionAnswered = $derived((selectedQuestion(question.id)?.response?.length ?? 0) > 0);
 	const isQuestionBookmarked = $derived(selectedQuestion(question.id)?.bookmarked ?? false);
+
+	const handleSubjectiveSubmit = async () => {
+		if (isSubmitting) return;
+
+		const answeredQuestion = selectedQuestion(question.id);
+		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
+
+		isSubmitting = true;
+		saveError = null;
+
+		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+
+		if (answeredQuestion) {
+			selectedQuestions = selectedQuestions.map((q) =>
+				q.question_revision_id === question.id ? { ...q, response: subjectiveText } : q
+			);
+		} else {
+			selectedQuestions = [
+				...selectedQuestions,
+				{
+					question_revision_id: question.id,
+					response: subjectiveText,
+					visited: true,
+					time_spent: 0,
+					bookmarked: false
+				}
+			];
+		}
+		updateStore();
+
+		try {
+			await submitAnswer(question.id, subjectiveText, currentBookmarked);
+		} catch (error) {
+			selectedQuestions = previousState;
+			updateStore();
+			saveError = 'Failed to save your answer. Please try again.';
+			setTimeout(() => (saveError = null), 5000);
+		} finally {
+			isSubmitting = false;
+		}
+	};
+
 </script>
 
 <Card.Root
@@ -276,7 +331,10 @@
 					onValueChange={async (optionId) => {
 						await handleSelection(question.id, Number(optionId));
 					}}
-					value={selectedQuestion(question.id)?.response[0]?.toString()}
+					value={(() => {
+						const resp = selectedQuestion(question.id)?.response;
+						return typeof resp !== 'string' ? resp?.[0]?.toString() : undefined;
+					})()}
 				>
 					{#each options as option, index (index)}
 						{@const uid = `${question.id}-${option.key}`}
@@ -290,6 +348,33 @@
 					{/each}
 				</RadioGroup.Root>
 			{/key}
+		{:else if question.question_type === 'subjective'}
+			<div class="flex flex-col gap-2">
+				<textarea
+					class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full rounded-xl border px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+					placeholder={$t('Type your answer here...')}
+					bind:value={subjectiveText}
+					maxlength={question.subjective_answer_limit || undefined}
+				></textarea>
+				<div class="flex items-center justify-between">
+					{#if question.subjective_answer_limit}
+						<span class="text-muted-foreground text-sm">
+							{subjectiveText.length}/{question.subjective_answer_limit}
+							{$t('characters')}
+						</span>
+					{:else}
+						<span></span>
+					{/if}
+					<Button
+						variant="default"
+						size="sm"
+						onclick={handleSubjectiveSubmit}
+						disabled={isSubmitting}
+					>
+						{$t('Save Answer')}
+					</Button>
+				</div>
+			</div>
 		{:else}
 			{#each options as option (option.id)}
 				{@const uid = `${question.id}-${option.key}`}
