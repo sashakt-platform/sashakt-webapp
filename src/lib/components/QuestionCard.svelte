@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Bookmark from '@lucide/svelte/icons/bookmark';
+	import Check from '@lucide/svelte/icons/check';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -42,6 +43,10 @@
 		return typeof selected?.response === 'string' ? selected.response : '';
 	};
 	let subjectiveText = $state(getExistingTextResponse());
+	let lastSavedText = $state(getExistingTextResponse());
+
+	const hasUnsavedChanges = $derived(subjectiveText.trim() !== lastSavedText.trim());
+	const hasSavedBefore = $derived(lastSavedText.trim().length > 0);
 
 	const isSelected = (optionId: number) => {
 		const selected = selectedQuestion(question.id);
@@ -280,6 +285,7 @@
 
 		try {
 			await submitAnswer(question.id, subjectiveText, currentBookmarked);
+			lastSavedText = subjectiveText;
 		} catch {
 			selectedQuestions = previousState;
 			updateStore();
@@ -368,7 +374,8 @@
 									? 'font-medium text-red-500'
 									: 'text-muted-foreground'}"
 							>
-								{remaining} {$t('characters remaining')}
+								{remaining}
+								{$t('characters remaining')}
 							</span>
 							{#if remaining <= 0}
 								<span class="text-xs text-red-500">
@@ -383,9 +390,16 @@
 						variant="default"
 						size="sm"
 						onclick={handleSubjectiveSubmit}
-						disabled={isSubmitting || !subjectiveText.trim()}
+						disabled={isSubmitting || !subjectiveText.trim() || !hasUnsavedChanges}
 					>
-						{$t('Save Answer')}
+						{#if !hasUnsavedChanges && hasSavedBefore}
+							<Check class="mr-1 h-4 w-4" />
+							{$t('Saved')}
+						{:else if hasSavedBefore}
+							{$t('Update Answer')}
+						{:else}
+							{$t('Save Answer')}
+						{/if}
 					</Button>
 				</div>
 			</div>
