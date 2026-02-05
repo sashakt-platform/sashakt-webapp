@@ -501,7 +501,7 @@ describe('QuestionCard', () => {
 		it('should display character count when limit is set', () => {
 			render(QuestionCard, {
 				props: {
-					question: mockSubjectiveQuestion,
+					question: mockSubjectiveQuestion, // 500 char limit
 					serialNumber: 1,
 					candidate: mockCandidate,
 					totalQuestions: 10,
@@ -509,14 +509,13 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByText(/0\/500/)).toBeInTheDocument();
-			expect(screen.getByText(/characters/i)).toBeInTheDocument();
+			expect(screen.getByText(/500 characters remaining/i)).toBeInTheDocument();
 		});
 
 		it('should update character count as user types', async () => {
 			render(QuestionCard, {
 				props: {
-					question: mockSubjectiveQuestion,
+					question: mockSubjectiveQuestion, // 500 char limit
 					serialNumber: 1,
 					candidate: mockCandidate,
 					totalQuestions: 10,
@@ -525,9 +524,9 @@ describe('QuestionCard', () => {
 			});
 
 			const textarea = screen.getByPlaceholderText(/type your answer here/i);
-			await fireEvent.input(textarea, { target: { value: 'Hello' } });
+			await fireEvent.input(textarea, { target: { value: 'Hello' } }); // 5 chars typed
 
-			expect(screen.getByText(/5\/500/)).toBeInTheDocument();
+			expect(screen.getByText(/495 characters remaining/i)).toBeInTheDocument();
 		});
 
 		it('should not display character count when no limit is set', () => {
@@ -561,16 +560,16 @@ describe('QuestionCard', () => {
 			});
 
 			const textarea = screen.getByPlaceholderText(/type your answer here/i);
-			await fireEvent.input(textarea, { target: { value: '1234567890' } });
+			await fireEvent.input(textarea, { target: { value: '1234567890' } }); // exactly 10 chars
 
-			expect(screen.getByText(/10\/10/)).toBeInTheDocument();
+			expect(screen.getByText(/0 characters remaining/i)).toBeInTheDocument();
 			expect(screen.getByText(/character limit reached/i)).toBeInTheDocument();
 		});
 
 		it('should not show warning message when under character limit', async () => {
 			render(QuestionCard, {
 				props: {
-					question: mockSubjectiveQuestion,
+					question: mockSubjectiveQuestion, // 500 char limit
 					serialNumber: 1,
 					candidate: mockCandidate,
 					totalQuestions: 10,
@@ -579,9 +578,9 @@ describe('QuestionCard', () => {
 			});
 
 			const textarea = screen.getByPlaceholderText(/type your answer here/i);
-			await fireEvent.input(textarea, { target: { value: 'Hello' } });
+			await fireEvent.input(textarea, { target: { value: 'Hello' } }); // 5 chars typed
 
-			expect(screen.getByText(/5\/500/)).toBeInTheDocument();
+			expect(screen.getByText(/495 characters remaining/i)).toBeInTheDocument();
 			expect(screen.queryByText(/character limit reached/i)).not.toBeInTheDocument();
 		});
 

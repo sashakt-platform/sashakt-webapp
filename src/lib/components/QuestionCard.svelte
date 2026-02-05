@@ -361,16 +361,16 @@
 				></textarea>
 				<div class="flex items-center justify-between">
 					{#if question.subjective_answer_limit}
+						{@const remaining = question.subjective_answer_limit - subjectiveText.length}
 						<div class="flex flex-col">
 							<span
-								class="text-sm {subjectiveText.length >= question.subjective_answer_limit
+								class="text-sm {remaining <= 0
 									? 'font-medium text-red-500'
 									: 'text-muted-foreground'}"
 							>
-								{subjectiveText.length}/{question.subjective_answer_limit}
-								{$t('characters')}
+								{remaining} {$t('characters remaining')}
 							</span>
-							{#if subjectiveText.length >= question.subjective_answer_limit}
+							{#if remaining <= 0}
 								<span class="text-xs text-red-500">
 									{$t('Character limit reached')}
 								</span>
