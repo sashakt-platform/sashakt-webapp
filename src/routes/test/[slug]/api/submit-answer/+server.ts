@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		bookmarked
 	}: {
 		question_revision_id: number;
-		response: number[] | null;
+		response: number[] | string | null;
 		candidate: TCandidate;
 		bookmarked?: boolean;
 	} = await request.json();

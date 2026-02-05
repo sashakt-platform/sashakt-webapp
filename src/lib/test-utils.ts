@@ -65,6 +65,30 @@ export const mockOptionalQuestion: TQuestion = {
 	media: null
 };
 
+export const mockSubjectiveQuestion: TQuestion = {
+	id: 4,
+	question_text: 'Explain the process of photosynthesis.',
+	instructions: 'Write your answer in detail',
+	question_type: 'subjective' as any,
+	options: [],
+	subjective_answer_limit: 500,
+	is_mandatory: true,
+	marking_scheme: { correct: 5, wrong: 0, skipped: 0 },
+	media: null
+};
+
+export const mockSubjectiveQuestionNoLimit: TQuestion = {
+	id: 5,
+	question_text: 'Describe your favorite book.',
+	instructions: '',
+	question_type: 'subjective' as any,
+	options: [],
+	subjective_answer_limit: 0,
+	is_mandatory: false,
+	marking_scheme: { correct: 3, wrong: 0, skipped: 0 },
+	media: null
+};
+
 export const mockQuestions: TQuestion[] = [
 	mockSingleChoiceQuestion,
 	mockMultipleChoiceQuestion,
