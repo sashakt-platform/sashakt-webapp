@@ -105,7 +105,7 @@
 					];
 				}
 				updateStore();
-			} catch (error) {
+			} catch {
 				// force complete remount of RadioGroup
 				radioGroupKey++;
 				saveError = 'Failed to save your answer. Please try again.';
@@ -150,7 +150,7 @@
 
 			try {
 				await submitAnswer(questionId, newResponse);
-			} catch (error) {
+			} catch {
 				// revert on error
 				selectedQuestions = previousState;
 				updateStore();
@@ -230,7 +230,7 @@
 
 		try {
 			await submitAnswer(question.id, currentResponse ?? [], newBookmarked);
-		} catch (error) {
+		} catch {
 			// revert on error
 			if (answeredQuestion) {
 				selectedQuestions = selectedQuestions.map((q) =>
@@ -280,7 +280,7 @@
 
 		try {
 			await submitAnswer(question.id, subjectiveText, currentBookmarked);
-		} catch (error) {
+		} catch {
 			selectedQuestions = previousState;
 			updateStore();
 			saveError = 'Failed to save your answer. Please try again.';
@@ -361,10 +361,21 @@
 				></textarea>
 				<div class="flex items-center justify-between">
 					{#if question.subjective_answer_limit}
-						<span class="text-muted-foreground text-sm">
-							{subjectiveText.length}/{question.subjective_answer_limit}
-							{$t('characters')}
-						</span>
+						<div class="flex flex-col">
+							<span
+								class="text-sm {subjectiveText.length >= question.subjective_answer_limit
+									? 'font-medium text-red-500'
+									: 'text-muted-foreground'}"
+							>
+								{subjectiveText.length}/{question.subjective_answer_limit}
+								{$t('characters')}
+							</span>
+							{#if subjectiveText.length >= question.subjective_answer_limit}
+								<span class="text-xs text-red-500">
+									{$t('Character limit reached')}
+								</span>
+							{/if}
+						</div>
 					{:else}
 						<span></span>
 					{/if}

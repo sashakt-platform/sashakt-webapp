@@ -544,6 +544,70 @@ describe('QuestionCard', () => {
 			expect(screen.queryByText(/characters/i)).not.toBeInTheDocument();
 		});
 
+		it('should show warning message when character limit is reached', async () => {
+			const questionWithSmallLimit = {
+				...mockSubjectiveQuestion,
+				subjective_answer_limit: 10
+			};
+
+			render(QuestionCard, {
+				props: {
+					question: questionWithSmallLimit,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: '1234567890' } });
+
+			expect(screen.getByText(/10\/10/)).toBeInTheDocument();
+			expect(screen.getByText(/character limit reached/i)).toBeInTheDocument();
+		});
+
+		it('should not show warning message when under character limit', async () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: 'Hello' } });
+
+			expect(screen.getByText(/5\/500/)).toBeInTheDocument();
+			expect(screen.queryByText(/character limit reached/i)).not.toBeInTheDocument();
+		});
+
+		it('should apply red styling to character count when limit is reached', async () => {
+			const questionWithSmallLimit = {
+				...mockSubjectiveQuestion,
+				subjective_answer_limit: 5
+			};
+
+			const { container } = render(QuestionCard, {
+				props: {
+					question: questionWithSmallLimit,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: '12345' } });
+
+			const charCountSpan = container.querySelector('.text-red-500');
+			expect(charCountSpan).toBeInTheDocument();
+		});
+
 		it('should call API when Save Answer is clicked', async () => {
 			vi.mocked(fetch).mockResolvedValueOnce(
 				createMockResponse({ success: true }) as unknown as Response
