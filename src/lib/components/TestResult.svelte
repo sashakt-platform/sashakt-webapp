@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Spinner } from '$lib/components/ui/spinner/index.js';
 	import { t } from 'svelte-i18n';
 	import type { TResultData } from '$lib/types';
 
@@ -111,7 +112,10 @@
 					<p class="text-destructive mb-2 text-sm">{downloadError}</p>
 				{/if}
 				<Button onclick={handleDownloadCertificate} disabled={isDownloading} class="w-full">
-					{isDownloading ? $t('Downloading...') : $t('Download Certificate')}
+					{#if isDownloading}
+						<Spinner />
+					{/if}
+					{isDownloading ? $t('Preparing...') : $t('Download Certificate')}
 				</Button>
 			</div>
 		{/if}
