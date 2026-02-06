@@ -56,7 +56,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const res = await fetch(backendUrl.href, {
 			method: 'GET',
-			headers: { Accept: 'application/pdf' }
+			headers: { Accept: 'image/png' }
 		});
 
 		if (!res.ok) {
@@ -72,9 +72,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		return new Response(res.body, {
 			status: 200,
 			headers: {
-				'Content-Type': res.headers.get('Content-Type') || 'application/pdf',
+				'Content-Type': res.headers.get('Content-Type') || 'image/png',
 				'Content-Disposition':
-					res.headers.get('Content-Disposition') || 'attachment; filename="certificate.pdf"'
+					res.headers.get('Content-Disposition') || 'attachment; filename="certificate.png"'
 			}
 		});
 	} catch {
