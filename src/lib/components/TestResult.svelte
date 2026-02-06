@@ -44,7 +44,7 @@
 			const url = window.URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.href = url;
-			a.download = `certificate-${testDetails.name.replace(/\s+/g, '-')}.pdf`;
+			a.download = `certificate-${testDetails.name.replace(/\s+/g, '-')}.png`;
 			document.body.appendChild(a);
 			a.click();
 			document.body.removeChild(a);
