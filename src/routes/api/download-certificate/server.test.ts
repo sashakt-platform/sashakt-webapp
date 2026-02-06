@@ -20,7 +20,7 @@ describe('POST /api/download-certificate', () => {
 		json: () => Promise.resolve(body)
 	});
 
-	const createMockPngResponse = () => {
+	const createMockImageResponse = () => {
 		const headers = new Map([
 			['Content-Type', 'image/png'],
 			['Content-Disposition', 'attachment; filename="certificate.png"']
@@ -36,7 +36,7 @@ describe('POST /api/download-certificate', () => {
 	};
 
 	it('should download certificate successfully', async () => {
-		vi.mocked(fetch).mockResolvedValueOnce(createMockPngResponse() as unknown as Response);
+		vi.mocked(fetch).mockResolvedValueOnce(createMockImageResponse() as unknown as Response);
 
 		const request = createMockRequest({
 			certificate_download_url: '/api/v1/certificate/download/test-uuid'
@@ -58,7 +58,7 @@ describe('POST /api/download-certificate', () => {
 	});
 
 	it('should use base URL origin to avoid path duplication', async () => {
-		vi.mocked(fetch).mockResolvedValueOnce(createMockPngResponse() as unknown as Response);
+		vi.mocked(fetch).mockResolvedValueOnce(createMockImageResponse() as unknown as Response);
 
 		const request = createMockRequest({
 			certificate_download_url: '/api/v1/certificate/download/test-uuid'
@@ -86,7 +86,7 @@ describe('POST /api/download-certificate', () => {
 	});
 
 	it('should allow full URL with same origin as BACKEND_URL', async () => {
-		vi.mocked(fetch).mockResolvedValueOnce(createMockPngResponse() as unknown as Response);
+		vi.mocked(fetch).mockResolvedValueOnce(createMockImageResponse() as unknown as Response);
 
 		const request = createMockRequest({
 			certificate_download_url: 'http://localhost:8000/api/v1/certificate/download/test-uuid'
