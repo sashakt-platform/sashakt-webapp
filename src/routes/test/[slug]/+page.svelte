@@ -1,6 +1,7 @@
 <script lang="ts">
 	import LandingPage from '$lib/components/LandingPage.svelte';
 	import CandidateProfile from '$lib/components/CandidateProfile.svelte';
+	import { DynamicForm } from '$lib/components/form';
 	import Question from '$lib/components/Question.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
 	import type { PageProps } from './$types';
@@ -15,6 +16,9 @@
 		const currentLocale = data?.testData?.locale || DEFAULT_LANGUAGE;
 		locale.set(currentLocale);
 	});
+
+	// Check if test has a dynamic form
+	const hasDynamicForm = $derived(data.testData?.candidate_profile && data.testData?.form);
 </script>
 
 <section>
@@ -25,6 +29,13 @@
 		<TestResult resultData={form.result} testDetails={data.testData} />
 	{:else if !data.candidate && !showProfileForm}
 		<LandingPage testDetails={data.testData} bind:showProfileForm />
+	{:else if !data.candidate && showProfileForm && hasDynamicForm}
+		<DynamicForm
+			form={data.testData.form}
+			testDetails={data.testData}
+			entities={data.testData.profile_list || []}
+			locations={data.locations || {}}
+		/>
 	{:else if !data.candidate && showProfileForm && data.testData.candidate_profile}
 		<CandidateProfile testDetails={data.testData} />
 	{:else if data.testQuestions?.question_revisions}
