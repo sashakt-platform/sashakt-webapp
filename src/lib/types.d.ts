@@ -45,3 +45,60 @@ export type TQuestion = {
 	marking_scheme: TMarks;
 	media: Record<string, unknown> | null;
 };
+
+// Form Field Types
+export type TFormFieldType =
+	| 'full_name'
+	| 'email'
+	| 'phone'
+	| 'text'
+	| 'textarea'
+	| 'number'
+	| 'date'
+	| 'select'
+	| 'radio'
+	| 'checkbox'
+	| 'multi_select'
+	| 'entity'
+	| 'state'
+	| 'district'
+	| 'block';
+
+export type TFormFieldOption = {
+	id: number;
+	label: string;
+	value: string;
+};
+
+export type TFormFieldValidation = {
+	min_length?: number | null;
+	max_length?: number | null;
+	min_value?: number | null;
+	max_value?: number | null;
+	pattern?: string | null;
+	custom_error_message?: string | null;
+};
+
+export type TFormField = {
+	id: number;
+	field_type: TFormFieldType;
+	label: string;
+	name: string;
+	placeholder?: string | null;
+	help_text?: string | null;
+	is_required: boolean;
+	order: number;
+	options?: TFormFieldOption[] | null;
+	validation?: TFormFieldValidation | null;
+	default_value?: string | null;
+	entity_type_id?: number | null;
+};
+
+export type TForm = {
+	id: number;
+	name: string;
+	description?: string | null;
+	fields: TFormField[];
+};
+
+export type TFormResponses = Record<string, unknown>;

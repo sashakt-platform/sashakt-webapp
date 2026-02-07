@@ -1,12 +1,33 @@
 import { BACKEND_URL } from '$env/static/private';
 import { dev } from '$app/environment';
 import { getCandidate } from '$lib/helpers/getCandidate';
-import { getTestQuestions, getTimeLeft } from '$lib/server/test';
+import { getTestQuestions, getTimeLeft, getLocations, type TLocations } from '$lib/server/test';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
+/**
+ * Check if the form has any location fields (state, district, block)
+ */
+function hasLocationFields(testData: {
+	form?: { fields?: Array<{ field_type: string }> };
+}): boolean {
+	if (!testData?.form?.fields) return false;
+	const locationFieldTypes = ['state', 'district', 'block'];
+	return testData.form.fields.some((field) => locationFieldTypes.includes(field.field_type));
+}
+
 export const load: PageServerLoad = async ({ locals, cookies }) => {
 	const candidate = getCandidate(cookies);
+
+	// Fetch locations if form has location fields
+	let locations: TLocations | null = null;
+	if (hasLocationFields(locals.testData)) {
+		try {
+			locations = await getLocations();
+		} catch (error) {
+			console.error('Error fetching locations:', error);
+		}
+	}
 
 	if (candidate && candidate.candidate_test_id && candidate.candidate_uuid) {
 		try {
@@ -27,7 +48,8 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 				candidate,
 				testData: locals.testData,
 				timeLeft: timerResponse.time_left,
-				testQuestions: testQuestionsResponse
+				testQuestions: testQuestionsResponse,
+				locations
 			};
 		} catch (error) {
 			console.error('Error fetching candidate data:', error);
@@ -42,7 +64,8 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 		candidate: null,
 		timeToBegin: locals.timeToBegin,
 		testData: locals.testData,
-		testQuestions: null
+		testQuestions: null,
+		locations
 	};
 };
 
@@ -64,6 +87,7 @@ export const actions = {
 		const formData = await request.formData();
 		const deviceInfo = formData.get('deviceInfo') as string;
 		const entity = formData.get('entity') as string;
+		const formResponsesStr = formData.get('formResponses') as string;
 
 		const requestBody: {
 			test_id: number;
@@ -71,11 +95,25 @@ export const actions = {
 			candidate_profile?: {
 				entity_id: string;
 			};
+			form_responses?: Record<string, unknown>;
 		} = {
 			test_id: locals.testData.id,
 			device_info: deviceInfo
 		};
 
+		// Handle form_responses from dynamic form
+		if (formResponsesStr) {
+			try {
+				const formResponses = JSON.parse(formResponsesStr);
+				if (Object.keys(formResponses).length > 0) {
+					requestBody.form_responses = formResponses;
+				}
+			} catch {
+				// Invalid JSON, ignore
+			}
+		}
+
+		// TODO: May be remove this later, legacy entity support
 		if (entity) {
 			requestBody.candidate_profile = {
 				entity_id: entity
