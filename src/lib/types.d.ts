@@ -102,3 +102,14 @@ export type TForm = {
 };
 
 export type TFormResponses = Record<string, unknown>;
+
+export type TResultData = {
+	correct_answer: number;
+	incorrect_answer: number;
+	mandatory_not_attempted: number;
+	optional_not_attempted: number;
+	marks_obtained: number | null;
+	marks_maximum: number | null;
+	total_questions: number;
+	certificate_download_url?: string;
+};
