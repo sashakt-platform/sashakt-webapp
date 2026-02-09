@@ -366,6 +366,21 @@
 					maxlength={question.subjective_answer_limit || undefined}
 				></textarea>
 				<div class="flex items-center justify-between">
+					<Button
+						variant="default"
+						size="sm"
+						onclick={handleSubjectiveSubmit}
+						disabled={isSubmitting || !subjectiveText.trim() || !hasUnsavedChanges}
+					>
+						{#if !hasUnsavedChanges && hasSavedBefore}
+							<Check class="mr-1 h-4 w-4" />
+							{$t('Saved')}
+						{:else if hasSavedBefore}
+							{$t('Update Answer')}
+						{:else}
+							{$t('Save Answer')}
+						{/if}
+					</Button>
 					{#if question.subjective_answer_limit}
 						{@const remaining = question.subjective_answer_limit - subjectiveText.length}
 						<div class="flex flex-col">
@@ -386,21 +401,6 @@
 					{:else}
 						<span></span>
 					{/if}
-					<Button
-						variant="default"
-						size="sm"
-						onclick={handleSubjectiveSubmit}
-						disabled={isSubmitting || !subjectiveText.trim() || !hasUnsavedChanges}
-					>
-						{#if !hasUnsavedChanges && hasSavedBefore}
-							<Check class="mr-1 h-4 w-4" />
-							{$t('Saved')}
-						{:else if hasSavedBefore}
-							{$t('Update Answer')}
-						{:else}
-							{$t('Save Answer')}
-						{/if}
-					</Button>
 				</div>
 			</div>
 		{:else}
