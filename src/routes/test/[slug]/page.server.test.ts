@@ -285,15 +285,15 @@ describe('Page Server - submitTest action', () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 
 		const mockResult = { score: 85, passed: true };
-		const mockAnswers = [
+		const mockFeedbackData = [
 			{
 				question_revision_id: 1,
-				response: '[102]',
+				submitted_answer: '[102]',
 				correct_answer: [102]
 			},
 			{
 				question_revision_id: 2,
-				response: '[201, 203]',
+				submitted_answer: '[201, 203]',
 				correct_answer: [201, 202]
 			}
 		];
@@ -303,10 +303,9 @@ describe('Page Server - submitTest action', () => {
 
 		const mockFetch = vi
 			.fn()
-			.mockResolvedValueOnce(
-				createMockResponse({ success: true, answers: mockAnswers }, { status: 200 })
-			)
-			.mockResolvedValueOnce(createMockResponse(mockResult));
+			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
+			.mockResolvedValueOnce(createMockResponse(mockResult))
+			.mockResolvedValueOnce(createMockResponse(mockFeedbackData));
 
 		const mockCookies = createMockCookies();
 
@@ -338,7 +337,7 @@ describe('Page Server - submitTest action', () => {
 		expect(mockCookies.delete).toHaveBeenCalledWith('sashakt-candidate', expect.any(Object));
 	});
 
-	it('should handle empty answers array in submit response', async () => {
+	it('should handle empty feedback from review-feedback API', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 
 		const mockResult = { score: 0, passed: false };
@@ -349,10 +348,9 @@ describe('Page Server - submitTest action', () => {
 
 		const mockFetch = vi
 			.fn()
-			.mockResolvedValueOnce(
-				createMockResponse({ success: true, answers: [] }, { status: 200 })
-			)
-			.mockResolvedValueOnce(createMockResponse(mockResult));
+			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
+			.mockResolvedValueOnce(createMockResponse(mockResult))
+			.mockResolvedValueOnce(createMockResponse([]));
 
 		const mockCookies = createMockCookies();
 
@@ -366,14 +364,14 @@ describe('Page Server - submitTest action', () => {
 		expect(result.feedback).toEqual([]);
 	});
 
-	it('should handle null response field in answers', async () => {
+	it('should handle null submitted_answer in feedback', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 
 		const mockResult = { score: 0, passed: false };
-		const mockAnswers = [
+		const mockFeedbackData = [
 			{
 				question_revision_id: 1,
-				response: null,
+				submitted_answer: null,
 				correct_answer: [102]
 			}
 		];
@@ -384,10 +382,9 @@ describe('Page Server - submitTest action', () => {
 
 		const mockFetch = vi
 			.fn()
-			.mockResolvedValueOnce(
-				createMockResponse({ success: true, answers: mockAnswers }, { status: 200 })
-			)
-			.mockResolvedValueOnce(createMockResponse(mockResult));
+			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
+			.mockResolvedValueOnce(createMockResponse(mockResult))
+			.mockResolvedValueOnce(createMockResponse(mockFeedbackData));
 
 		const mockCookies = createMockCookies();
 
@@ -399,6 +396,32 @@ describe('Page Server - submitTest action', () => {
 
 		expect(result.feedback[0].submitted_answer).toEqual([]);
 		expect(result.feedback[0].correct_answer).toEqual([102]);
+	});
+
+	it('should not fetch feedback when show_feedback_on_completion is false', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+
+		const mockResult = { score: 85, passed: true };
+
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
+			.mockResolvedValueOnce(createMockResponse(mockResult));
+
+		const mockCookies = createMockCookies();
+
+		const result = await actions.submitTest({
+			cookies: mockCookies,
+			fetch: mockFetch,
+			locals: { testData: { ...mockTestData, show_feedback_on_completion: false } }
+		} as any);
+
+		expect(result.submitTest).toBe(true);
+		expect(result.result).toEqual(mockResult);
+		expect(result.feedback).toBeNull();
+		expect(result.testQuestions).toBeNull();
+		expect(mockFetch).toHaveBeenCalledTimes(2);
+		expect(getTestQuestions).not.toHaveBeenCalled();
 	});
 
 	it('should return error message when backend returns 400', async () => {

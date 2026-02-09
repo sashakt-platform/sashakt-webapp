@@ -417,65 +417,15 @@ describe('QuestionCard', () => {
 	});
 
 	describe('Inline feedback', () => {
-		it('should not show feedback button when correct_answer is null', () => {
+		it('should show feedback button when question is answered even without correct_answer', () => {
 			const selectedQuestions = [
 				{
 					question_revision_id: mockSingleChoiceQuestion.id,
 					response: [mockSingleChoiceQuestion.options[0].id],
 					visited: true,
 					time_spent: 10,
-					correct_answer: null,
-					bookmarked: false
-				}
-			];
-
-			render(QuestionCard, {
-				props: {
-					question: mockSingleChoiceQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions
-				}
-			});
-
-			expect(screen.queryByRole('button', { name: /view feedback/i })).not.toBeInTheDocument();
-		});
-
-		it('should not show feedback button when question is unanswered', () => {
-			const selectedQuestions = [
-				{
-					question_revision_id: mockSingleChoiceQuestion.id,
-					response: [],
-					visited: true,
-					time_spent: 0,
-					correct_answer: [mockSingleChoiceQuestion.options[1].id],
-					bookmarked: false
-				}
-			];
-
-			render(QuestionCard, {
-				props: {
-					question: mockSingleChoiceQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions
-				}
-			});
-
-			expect(screen.queryByRole('button', { name: /view feedback/i })).not.toBeInTheDocument();
-		});
-
-		it('should show feedback button when answer exists and correct_answer is present', () => {
-			const selectedQuestions = [
-				{
-					question_revision_id: mockSingleChoiceQuestion.id,
-					response: [mockSingleChoiceQuestion.options[0].id],
-					visited: true,
-					time_spent: 10,
-					correct_answer: [mockSingleChoiceQuestion.options[1].id],
-					bookmarked: false
+					bookmarked: false,
+					is_reviewed: false
 				}
 			];
 
@@ -492,7 +442,57 @@ describe('QuestionCard', () => {
 			expect(screen.getByRole('button', { name: /view feedback/i })).toBeInTheDocument();
 		});
 
-		it('should render locked state immediately when feedbackViewed is true', () => {
+		it('should not show feedback button when question is unanswered', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [],
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view feedback/i })).not.toBeInTheDocument();
+		});
+
+		it('should show feedback button when question is answered', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [mockSingleChoiceQuestion.options[0].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /view feedback/i })).toBeInTheDocument();
+		});
+
+		it('should render locked state immediately when is_reviewed is true', () => {
 			const selectedQuestions = [
 				{
 					question_revision_id: mockSingleChoiceQuestion.id,
@@ -500,7 +500,7 @@ describe('QuestionCard', () => {
 					visited: true,
 					time_spent: 10,
 					correct_answer: [mockSingleChoiceQuestion.options[1].id],
-					feedbackViewed: true,
+					is_reviewed: true,
 					bookmarked: false
 				}
 			];
@@ -534,7 +534,7 @@ describe('QuestionCard', () => {
 					visited: true,
 					time_spent: 10,
 					correct_answer: [mockSingleChoiceQuestion.options[1].id],
-					feedbackViewed: true,
+					is_reviewed: true,
 					bookmarked: false
 				}
 			];

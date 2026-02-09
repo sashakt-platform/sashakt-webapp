@@ -133,58 +133,53 @@ export const actions = {
 			}
 
 			if (response.status === 200) {
-				const submitTestData = await response.json();
-
-				const resultResponse = await fetch(candidateUrl('result'), {
+				const result = await fetch(candidateUrl('result'), {
 					method: 'GET',
 					headers: { accept: 'application/json' }
 				});
 
-				if (!resultResponse.ok) return fail(400, { result: false, submitTest: true });
+				if (!result.ok) return fail(400, { result: false, submitTest: true });
 
-				const resultData = await resultResponse.json();
+				const resultData = await result.json();
+				let feedback = null;
+				let testQuestions = null;
 
-				const testQuestions = await getTestQuestions(
-					candidate.candidate_test_id,
-					candidate.candidate_uuid
-				);
+				if (locals.testData.show_feedback_on_completion) {
+					try {
+						const [feedbackResponse, testQuestionsData] = await Promise.all([
+							fetch(
+								`${BACKEND_URL}/candidate/${candidate.candidate_test_id}/review-feedback?candidate_uuid=${candidate.candidate_uuid}`,
+								{ method: 'GET', headers: { accept: 'application/json' } }
+							),
+							getTestQuestions(candidate.candidate_test_id, candidate.candidate_uuid)
+						]);
+
+						if (feedbackResponse.ok) {
+							const feedbackData = await feedbackResponse.json();
+							feedback = feedbackData.map(
+								(item: {
+									question_revision_id: number;
+									submitted_answer: string | null;
+									correct_answer: number[];
+								}) => ({
+									question_revision_id: item.question_revision_id,
+									submitted_answer: item.submitted_answer ? JSON.parse(item.submitted_answer) : [],
+									correct_answer: item.correct_answer
+								})
+							);
+							testQuestions = testQuestionsData;
+						}
+					} catch (error) {
+						console.error('Error fetching feedback:', error);
+					}
+				}
 
 				cookies.delete('sashakt-candidate', {
 					path: '/test/' + locals.testData.link,
 					secure: !dev
 				});
 
-				const feedback = (submitTestData.answers ?? []).map(
-					(answer: {
-						question_revision_id: number;
-						response: string;
-						correct_answer: number[];
-					}) => {
-						let submittedAnswer: number[] = [];
-						if (answer.response) {
-							try {
-								submittedAnswer = JSON.parse(answer.response);
-							} catch {
-								console.error(
-									`Failed to parse response for question ${answer.question_revision_id}:`,
-									answer.response
-								);
-							}
-						}
-						return {
-							question_revision_id: answer.question_revision_id,
-							submitted_answer: submittedAnswer,
-							correct_answer: answer.correct_answer
-						};
-					}
-				);
-
-				return {
-					result: resultData,
-					submitTest: true,
-					feedback,
-					testQuestions
-				};
+				return { result: resultData, feedback, testQuestions, submitTest: true };
 			}
 
 			return { submitTest: false };

@@ -40,12 +40,9 @@
 	};
 
 	const currentSelection = $derived(selectedQuestion(question.id));
-	const hasFeedbackAvailable = $derived(
-		(currentSelection?.response?.length ?? 0) > 0 &&
-			currentSelection?.correct_answer != null &&
-			currentSelection.correct_answer.length > 0
-	);
-	const isFeedbackViewed = $derived(currentSelection?.feedbackViewed === true);
+	const correctAnswer = $derived(currentSelection?.correct_answer ?? null);
+	const hasFeedbackAvailable = $derived((currentSelection?.response?.length ?? 0) > 0);
+	const isFeedbackViewed = $derived(currentSelection?.is_reviewed === true);
 	const isLocked = $derived(isFeedbackViewed);
 
 	const isSelected = (optionId: number) => {
@@ -54,20 +51,20 @@
 	};
 
 	const optionFeedbackClass = (optionId: number) => {
-		if (!isFeedbackViewed || !currentSelection?.correct_answer) return '';
-		if (currentSelection.correct_answer.includes(optionId)) {
+		if (!isFeedbackViewed || !correctAnswer) return '';
+		if (correctAnswer.includes(optionId)) {
 			return 'bg-green-100 border-green-500 text-green-700';
 		}
-		if (currentSelection.response.includes(optionId)) {
+		if (currentSelection?.response.includes(optionId)) {
 			return 'bg-red-100 border-red-500 text-red-700';
 		}
 		return '';
 	};
 
 	const getOptionFeedbackStatus = (optionId: number): 'correct' | 'wrong' | 'none' => {
-		if (!isFeedbackViewed || !currentSelection?.correct_answer) return 'none';
-		if (currentSelection.correct_answer.includes(optionId)) return 'correct';
-		if (currentSelection.response.includes(optionId)) return 'wrong';
+		if (!isFeedbackViewed || !correctAnswer) return 'none';
+		if (correctAnswer.includes(optionId)) return 'correct';
+		if (currentSelection?.response.includes(optionId)) return 'wrong';
 		return 'none';
 	};
 
@@ -75,15 +72,33 @@
 		sessionStore.current = {
 			...sessionStore.current,
 			candidate,
-			selections: selectedQuestions.map(({ correct_answer, ...rest }) => rest)
+			selections: selectedQuestions
 		};
 	};
 
-	const confirmViewFeedback = () => {
+	const confirmViewFeedback = async () => {
+		const answeredQuestion = selectedQuestion(question.id);
+		const currentResponse = answeredQuestion?.response ?? [];
+		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
+
 		selectedQuestions = selectedQuestions.map((q) =>
-			q.question_revision_id === question.id ? { ...q, feedbackViewed: true } : q
+			q.question_revision_id === question.id ? { ...q, is_reviewed: true } : q
 		);
 		updateStore();
+
+		try {
+			const result = await submitAnswer(question.id, currentResponse, currentBookmarked, true);
+			if (result?.correct_answer) {
+				selectedQuestions = selectedQuestions.map((q) =>
+					q.question_revision_id === question.id
+						? { ...q, correct_answer: result.correct_answer }
+						: q
+				);
+				updateStore();
+			}
+		} catch {
+			// Question stays locked — user already saw the correct answer
+		}
 	};
 
 	const handleSelection = async (questionId: number, optionId: number, isRemoving = false) => {
@@ -92,7 +107,6 @@
 		const answeredQuestion = selectedQuestion(questionId);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
 
-		// calculate the new response
 		let newResponse: number[];
 		if (isRemoving) {
 			if (!answeredQuestion) return;
@@ -112,18 +126,11 @@
 			isSubmitting = true;
 			saveError = null;
 			try {
-				const result = await submitAnswer(questionId, newResponse, currentBookmarked);
+				await submitAnswer(questionId, newResponse, currentBookmarked);
 
-				// only update state on success
 				if (answeredQuestion) {
 					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId
-							? {
-									...q,
-									response: newResponse,
-									correct_answer: result?.correct_answer ?? q.correct_answer
-								}
-							: q
+						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
 					);
 				} else {
 					selectedQuestions = [
@@ -134,16 +141,14 @@
 							visited: true,
 							time_spent: 0,
 							bookmarked: currentBookmarked,
-							correct_answer: result?.correct_answer ?? null
+							is_reviewed: false
 						}
 					];
 				}
 				updateStore();
 			} catch (error) {
-				// force complete remount of RadioGroup
 				radioGroupKey++;
 				saveError = 'Failed to save your answer. Please try again.';
-				// clear error after 5 seconds
 				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
@@ -175,7 +180,8 @@
 							response: newResponse,
 							visited: true,
 							time_spent: 0,
-							bookmarked: currentBookmarked
+							bookmarked: currentBookmarked,
+							is_reviewed: false
 						}
 					];
 				}
@@ -183,22 +189,11 @@
 			updateStore();
 
 			try {
-				const result = await submitAnswer(questionId, newResponse);
-
-				if (result?.correct_answer != null) {
-					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId
-							? { ...q, correct_answer: result.correct_answer }
-							: q
-					);
-					updateStore();
-				}
+				await submitAnswer(questionId, newResponse);
 			} catch (error) {
-				// revert on error
 				selectedQuestions = previousState;
 				updateStore();
 				saveError = 'Failed to save your answer. Please try again.';
-				// clear error after 5 seconds
 				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
@@ -206,12 +201,18 @@
 		}
 	};
 
-	const submitAnswer = async (questionId: number, response: number[], bookmarked?: boolean) => {
+	const submitAnswer = async (
+		questionId: number,
+		response: number[],
+		bookmarked?: boolean,
+		is_reviewed?: boolean
+	) => {
 		const data = {
 			question_revision_id: questionId,
 			response: response.length > 0 ? response : null,
 			candidate,
-			bookmarked
+			bookmarked,
+			is_reviewed
 		};
 
 		try {
@@ -247,7 +248,6 @@
 		isSubmitting = true;
 		saveError = null;
 
-		// optimistically update UI
 		if (answeredQuestion) {
 			selectedQuestions = selectedQuestions.map((q) =>
 				q.question_revision_id === question.id
@@ -262,7 +262,8 @@
 					response: [],
 					visited: true,
 					time_spent: 0,
-					bookmarked: newBookmarked
+					bookmarked: newBookmarked,
+					is_reviewed: false
 				}
 			];
 		}
@@ -271,7 +272,6 @@
 		try {
 			await submitAnswer(question.id, currentResponse, newBookmarked);
 		} catch (error) {
-			// revert on error
 			if (answeredQuestion) {
 				selectedQuestions = selectedQuestions.map((q) =>
 					q.question_revision_id === question.id ? { ...q, bookmarked: currentBookmarked } : q
@@ -287,7 +287,6 @@
 		}
 	};
 
-	const isQuestionAnswered = $derived((selectedQuestion(question.id)?.response?.length ?? 0) > 0);
 	const isQuestionBookmarked = $derived(selectedQuestion(question.id)?.bookmarked ?? false);
 </script>
 
