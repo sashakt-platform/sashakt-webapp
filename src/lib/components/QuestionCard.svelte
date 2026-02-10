@@ -105,7 +105,7 @@
 							response: newResponse,
 							visited: true,
 							time_spent: 0,
-							bookmarked: false
+							bookmarked: currentBookmarked
 						}
 					];
 				}
@@ -146,7 +146,7 @@
 							response: newResponse,
 							visited: true,
 							time_spent: 0,
-							bookmarked: false
+							bookmarked: currentBookmarked
 						}
 					];
 				}
@@ -277,7 +277,7 @@
 					response: subjectiveText,
 					visited: true,
 					time_spent: 0,
-					bookmarked: false
+					bookmarked: currentBookmarked
 				}
 			];
 		}
