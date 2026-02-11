@@ -5,7 +5,7 @@ export type TCandidate = {
 
 export type TSelection = {
 	question_revision_id: number;
-	response: number[];
+	response: number[] | string;
 	visited: boolean;
 	time_spent: number;
 	bookmarked: boolean;
@@ -25,7 +25,8 @@ export type TOptions = {
 
 enum question_type_enum {
 	SINGLE = 'single-choice',
-	MULTIPLE = 'multiple-select'
+	MULTIPLE = 'multiple-select',
+	SUBJECTIVE = 'subjective'
 }
 
 export type TMarks = {
