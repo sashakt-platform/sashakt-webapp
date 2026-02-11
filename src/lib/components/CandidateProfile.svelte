@@ -14,23 +14,43 @@
 	}
 
 	let { testDetails } = $props();
+
+	const hasProfile = $derived(testDetails.candidate_profile);
+	const hasOmrChoice = $derived(testDetails.omr === 'OPTIONAL');
+
 	let selectedEntity = $state(0);
+
+	let selectedOmr = $state(
+		testDetails.omr === 'OPTIONAL' ? '' : testDetails.omr === 'ALWAYS' ? 'true' : 'false'
+	);
 	let isSubmitting = $state(false);
 	let createError = $state<string | null>(null);
 
-	const entityOptions: EntityOption[] = [];
+	const entityOptions: EntityOption[] = $derived(
+		testDetails.candidate_profile
+			? testDetails.profile_list.map((entity: { id: number; label: string }) => ({
+					value: String(entity.id),
+					label: entity.label
+				}))
+			: []
+	);
 
-	testDetails.profile_list.forEach((entity: { id: number; label: string }) => {
-		entityOptions.push({ value: entity.id, label: entity.label });
-	});
-
-	const triggerContent = $derived(
+	const entityTriggerContent = $derived(
 		entityOptions.find((g) => g.value === selectedEntity)?.label ?? `${$t('Select your CLF')}`
 	);
 
-	let isFormValid = $derived(selectedEntity > 0);
+	const omrTriggerContent = $derived(
+		selectedOmr === 'true'
+			? $t('With OMR Sheet')
+			: selectedOmr === 'false'
+				? $t('Without OMR Sheet')
+				: $t('Select OMR mode')
+	);
 
-	// enhance handler for createCandidate form action
+	let isFormValid = $derived(
+		(!hasProfile || selectedEntity > 0) && (!hasOmrChoice || selectedOmr !== '')
+	);
+
 	const handleCreateCandidateEnhance = createFormEnhanceHandler({
 		setLoading: (loading) => (isSubmitting = loading),
 		setError: (error) => (createError = error)
@@ -40,12 +60,14 @@
 <section class="mx-auto max-w-xl p-6">
 	<h1 class="mb-4 text-xl font-semibold">{testDetails.name}</h1>
 	<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">
-		{$t('Candidate Information')}
+		{hasProfile ? $t('Candidate Information') : $t('OMR Sheet Preference')}
 	</h2>
 
 	<Card.Root class="mb-8">
 		<Card.Header>
-			<Card.Title class="text-lg">{$t('Please provide your details')}</Card.Title>
+			<Card.Title class="text-lg">
+				{hasProfile ? $t('Please provide your details') : $t('Please select your preference')}
+			</Card.Title>
 			<Card.Description></Card.Description>
 		</Card.Header>
 		<Card.Content>
@@ -55,28 +77,58 @@
 				use:enhance={handleCreateCandidateEnhance}
 				class="space-y-4"
 			>
-				<div class="space-y-2">
-					<Label for="entity">{$t('CLF')} *</Label>
-					<Select.Root
-						type="single"
-						name="entity"
-						bind:value={selectedEntity}
-						disabled={isSubmitting}
-					>
-						<Select.Trigger class="w-full">
-							{triggerContent}
-						</Select.Trigger>
-						<Select.Content>
-							<Select.Group>
-								{#each entityOptions as option (option.value)}
-									<Select.Item value={option.value} label={option.label}>
-										{option.label}
+				{#if hasProfile}
+					<div class="space-y-2">
+						<Label for="entity">{$t('CLF')} *</Label>
+						<Select.Root
+							type="single"
+							name="entity"
+							bind:value={selectedEntity}
+							disabled={isSubmitting}
+						>
+							<Select.Trigger class="w-full">
+								{entityTriggerContent}
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Group>
+									{#each entityOptions as option (option.value)}
+										<Select.Item value={option.value} label={option.label}>
+											{option.label}
+										</Select.Item>
+									{/each}
+								</Select.Group>
+							</Select.Content>
+						</Select.Root>
+					</div>
+				{/if}
+
+				{#if hasOmrChoice}
+					<div class="space-y-2">
+						<Label for="omrMode">{$t('OMR Mode')} *</Label>
+						<Select.Root
+							type="single"
+							name="omrMode"
+							bind:value={selectedOmr}
+							disabled={isSubmitting}
+						>
+							<Select.Trigger class="w-full">
+								{omrTriggerContent}
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Group>
+									<Select.Item value="true" label={$t('With OMR Sheet')}>
+										{$t('With OMR Sheet')}
 									</Select.Item>
-								{/each}
-							</Select.Group>
-						</Select.Content>
-					</Select.Root>
-				</div>
+									<Select.Item value="false" label={$t('Without OMR Sheet')}>
+										{$t('Without OMR Sheet')}
+									</Select.Item>
+								</Select.Group>
+							</Select.Content>
+						</Select.Root>
+					</div>
+				{:else}
+					<input name="omrMode" value={testDetails.omr === 'ALWAYS' ? 'true' : 'false'} hidden />
+				{/if}
 
 				{#if createError}
 					<p class="text-destructive text-sm">{createError}</p>

@@ -72,6 +72,12 @@
 	"Mark for review": "समीक्षा के लिए चिह्नित करें",
 	"Download Certificate": "प्रमाणपत्र डाउनलोड करें",
 	"Preparing...": "तैयार हो रहा है...",
-	"Failed to download certificate. Please try again.": "प्रमाणपत्र डाउनलोड करने में विफल। कृपया पुनः प्रयास करें।"
+	"Failed to download certificate. Please try again.": "प्रमाणपत्र डाउनलोड करने में विफल। कृपया पुनः प्रयास करें।",
+	"OMR Mode": "OMR मोड",
+	"Select OMR mode": "OMR मोड चुनें",
+	"With OMR Sheet": "OMR शीट के साथ",
+	"Without OMR Sheet": "OMR शीट के बिना",
+	"OMR Sheet Preference": "OMR शीट वरीयता",
+	"Please select your preference": "कृपया अपनी वरीयता चुनें"
 }
 

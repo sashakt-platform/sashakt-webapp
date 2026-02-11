@@ -112,7 +112,8 @@ export const mockTestData = {
 	candidate_profile: null,
 	profile_list: [],
 	locale: DEFAULT_LANGUAGE,
-	show_question_palette: true
+	show_question_palette: true,
+	omr: 'NEVER'
 };
 
 // Mock test questions response (from backend)

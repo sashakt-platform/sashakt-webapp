@@ -72,6 +72,12 @@
 	"Mark for review": "Mark for review",
 	"Download Certificate": "Download Certificate",
 	"Preparing...": "Preparing...",
-	"Failed to download certificate. Please try again.": "Failed to download certificate. Please try again."
+	"Failed to download certificate. Please try again.": "Failed to download certificate. Please try again.",
+	"OMR Mode": "OMR Mode",
+	"Select OMR mode": "Select OMR mode",
+	"With OMR Sheet": "With OMR Sheet",
+	"Without OMR Sheet": "Without OMR Sheet",
+	"OMR Sheet Preference": "OMR Sheet Preference",
+	"Please select your preference": "Please select your preference"
 }
 

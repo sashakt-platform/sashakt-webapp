@@ -18,7 +18,7 @@
 	let createError = $state<string | null>(null);
 
 	function handleStart() {
-		if (testDetails.candidate_profile && page.data?.timeToBegin === 0) {
+		if (page.data?.timeToBegin === 0) {
 			showProfileForm = true;
 		}
 	}
@@ -94,7 +94,7 @@
 			</label>
 		</div>
 		{#if page.data?.timeToBegin === 0}
-			{#if testDetails.candidate_profile}
+			{#if testDetails.candidate_profile || testDetails.omr === 'OPTIONAL'}
 				<Button onclick={handleStart} class="w-32" disabled={!isChecked}>{$t('Start')}</Button>
 			{:else}
 				<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
@@ -105,6 +105,7 @@
 						}}
 						hidden
 					/>
+					<input name="omrMode" value={testDetails.omr === 'ALWAYS' ? 'true' : 'false'} hidden />
 					<Button type="submit" class="w-32" disabled={!isChecked || isStarting}>
 						{#if isStarting}
 							<Spinner />
@@ -121,7 +122,7 @@
 				>
 					{$t('Start')}
 				</Dialog.Trigger>
-				{#if testDetails.candidate_profile}
+				{#if testDetails.candidate_profile || testDetails.omr === 'OPTIONAL'}
 					<PreTestTimer timeLeft={page.data?.timeToBegin} bind:showProfileForm />
 				{:else}
 					<PreTestTimer timeLeft={page.data?.timeToBegin} />
