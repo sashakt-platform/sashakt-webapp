@@ -75,8 +75,8 @@
 	"Failed to download certificate. Please try again.": "प्रमाणपत्र डाउनलोड करने में विफल। कृपया पुनः प्रयास करें।",
 	"OMR Mode": "OMR मोड",
 	"Select OMR mode": "OMR मोड चुनें",
-	"With OMR Sheet": "OMR शीट के साथ",
-	"Without OMR Sheet": "OMR शीट के बिना",
+	"Yes": "हाँ",
+	"No": "नहीं",
 	"OMR Sheet Preference": "OMR शीट वरीयता",
 	"Please select your preference": "कृपया अपनी वरीयता चुनें"
 }

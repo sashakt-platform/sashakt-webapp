@@ -41,9 +41,9 @@
 
 	const omrTriggerContent = $derived(
 		selectedOmr === 'true'
-			? $t('With OMR Sheet')
+			? $t('Yes')
 			: selectedOmr === 'false'
-				? $t('Without OMR Sheet')
+				? $t('No')
 				: $t('Select OMR mode')
 	);
 
@@ -116,11 +116,11 @@
 							</Select.Trigger>
 							<Select.Content>
 								<Select.Group>
-									<Select.Item value="true" label={$t('With OMR Sheet')}>
-										{$t('With OMR Sheet')}
+									<Select.Item value="true" label={$t('Yes')}>
+										{$t('Yes')}
 									</Select.Item>
-									<Select.Item value="false" label={$t('Without OMR Sheet')}>
-										{$t('Without OMR Sheet')}
+									<Select.Item value="false" label={$t('No')}>
+										{$t('No')}
 									</Select.Item>
 								</Select.Group>
 							</Select.Content>
