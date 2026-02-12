@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import QuestionCard from './QuestionCard.svelte';
+import { fireEvent } from '@testing-library/svelte';
 import {
 	mockCandidate,
 	mockSingleChoiceQuestion,
 	mockMultipleChoiceQuestion,
+	mockSubjectiveQuestion,
+	mockSubjectiveQuestionNoLimit,
 	createMockResponse
 } from '$lib/test-utils';
 
@@ -413,6 +416,306 @@ describe('QuestionCard', () => {
 				// Should revert to "Mark for review" after failure
 				expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
 			});
+		});
+	});
+
+	describe('Subjective question functionality', () => {
+		it('should render textarea for subjective questions', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.getByPlaceholderText(/type your answer here/i)).toBeInTheDocument();
+		});
+
+		it('should render Save Answer button for subjective questions', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
+		});
+
+		it('should disable Save Answer button when textarea is empty', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const saveButton = screen.getByRole('button', { name: /save answer/i });
+			expect(saveButton).toBeDisabled();
+		});
+
+		it('should enable Save Answer button when text is entered', async () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: 'My answer' } });
+
+			const saveButton = screen.getByRole('button', { name: /save answer/i });
+			expect(saveButton).not.toBeDisabled();
+		});
+
+		it('should disable Save Answer button when only whitespace is entered', async () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: '   ' } });
+
+			const saveButton = screen.getByRole('button', { name: /save answer/i });
+			expect(saveButton).toBeDisabled();
+		});
+
+		it('should display character count when limit is set', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion, // 500 char limit
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.getByText(/500 characters remaining/i)).toBeInTheDocument();
+		});
+
+		it('should update character count as user types', async () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion, // 500 char limit
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: 'Hello' } }); // 5 chars typed
+
+			expect(screen.getByText(/495 characters remaining/i)).toBeInTheDocument();
+		});
+
+		it('should not display character count when no limit is set', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestionNoLimit,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.queryByText(/characters/i)).not.toBeInTheDocument();
+		});
+
+		it('should show warning message when character limit is reached', async () => {
+			const questionWithSmallLimit = {
+				...mockSubjectiveQuestion,
+				subjective_answer_limit: 10
+			};
+
+			render(QuestionCard, {
+				props: {
+					question: questionWithSmallLimit,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: '1234567890' } }); // exactly 10 chars
+
+			expect(screen.getByText(/0 characters remaining/i)).toBeInTheDocument();
+			expect(screen.getByText(/character limit reached/i)).toBeInTheDocument();
+		});
+
+		it('should not show warning message when under character limit', async () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion, // 500 char limit
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: 'Hello' } }); // 5 chars typed
+
+			expect(screen.getByText(/495 characters remaining/i)).toBeInTheDocument();
+			expect(screen.queryByText(/character limit reached/i)).not.toBeInTheDocument();
+		});
+
+		it('should apply red styling to character count when limit is reached', async () => {
+			const questionWithSmallLimit = {
+				...mockSubjectiveQuestion,
+				subjective_answer_limit: 5
+			};
+
+			const { container } = render(QuestionCard, {
+				props: {
+					question: questionWithSmallLimit,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: '12345' } });
+
+			const charCountSpan = container.querySelector('.text-red-500');
+			expect(charCountSpan).toBeInTheDocument();
+		});
+
+		it('should call API when Save Answer is clicked', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: 'My detailed answer' } });
+
+			const saveButton = screen.getByRole('button', { name: /save answer/i });
+			await saveButton.click();
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalledWith(
+					expect.stringContaining('/api/submit-answer'),
+					expect.objectContaining({
+						method: 'POST',
+						body: expect.stringContaining('My detailed answer')
+					})
+				);
+			});
+		});
+
+		it('should show error message when save fails', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: 'My answer' } });
+
+			const saveButton = screen.getByRole('button', { name: /save answer/i });
+			await saveButton.click();
+
+			await waitFor(() => {
+				expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
+			});
+		});
+
+		it('should display existing answer when question was previously answered', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSubjectiveQuestion.id,
+					response: 'My previous answer',
+					visited: true,
+					time_spent: 60,
+					bookmarked: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			expect(textarea).toHaveValue('My previous answer');
+		});
+
+		it('should not render radio buttons or checkboxes for subjective questions', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+		});
+
+		it('should display marks for subjective question', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.getByText('5 Marks')).toBeInTheDocument();
 		});
 	});
 
