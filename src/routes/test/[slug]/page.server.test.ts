@@ -398,6 +398,48 @@ describe('Page Server - submitTest action', () => {
 		expect(result.feedback[0].correct_answer).toEqual([102]);
 	});
 
+	it('should handle subjective answer string in feedback without crashing', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+
+		const mockResult = { score: 85, passed: true };
+		const mockFeedbackData = [
+			{
+				question_revision_id: 1,
+				submitted_answer: '[102]',
+				correct_answer: [102]
+			},
+			{
+				question_revision_id: 4,
+				submitted_answer: 'This is a subjective text answer',
+				correct_answer: []
+			}
+		];
+		vi.mocked(getTestQuestions).mockResolvedValue({
+			question_revisions: [],
+			question_pagination: 5
+		});
+
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
+			.mockResolvedValueOnce(createMockResponse(mockResult))
+			.mockResolvedValueOnce(createMockResponse(mockFeedbackData));
+
+		const mockCookies = createMockCookies();
+
+		const result = await actions.submitTest({
+			cookies: mockCookies,
+			fetch: mockFetch,
+			locals: { testData: mockTestData }
+		} as any);
+
+		expect(result.submitTest).toBe(true);
+		expect(result.feedback).toHaveLength(2);
+		expect(result.feedback[0].submitted_answer).toEqual([102]);
+		expect(result.feedback[1].submitted_answer).toEqual([]);
+		expect(result.feedback[1].correct_answer).toEqual([]);
+	});
+
 	it('should not fetch feedback when show_feedback_on_completion is false', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 

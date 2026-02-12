@@ -857,5 +857,30 @@ describe('QuestionCard', () => {
 
 			expect(fetch).not.toHaveBeenCalled();
 		});
+
+		it('should not show feedback button for answered subjective question', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSubjectiveQuestion.id,
+					response: 'This is my subjective answer',
+					visited: true,
+					time_spent: 30,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view Result/i })).not.toBeInTheDocument();
+		});
 	});
 });

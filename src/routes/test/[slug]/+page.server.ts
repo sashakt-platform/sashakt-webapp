@@ -153,7 +153,6 @@ export const actions = {
 							),
 							getTestQuestions(candidate.candidate_test_id, candidate.candidate_uuid)
 						]);
-
 						if (feedbackResponse.ok) {
 							const feedbackData = await feedbackResponse.json();
 							feedback = feedbackData.map(
@@ -161,11 +160,22 @@ export const actions = {
 									question_revision_id: number;
 									submitted_answer: string | null;
 									correct_answer: number[];
-								}) => ({
-									question_revision_id: item.question_revision_id,
-									submitted_answer: item.submitted_answer ? JSON.parse(item.submitted_answer) : [],
-									correct_answer: item.correct_answer
-								})
+								}) => {
+									let submitted: number[] = [];
+									if (item.submitted_answer) {
+										try {
+											const parsed = JSON.parse(item.submitted_answer);
+											submitted = Array.isArray(parsed) ? parsed : [];
+										} catch {
+											submitted = [];
+										}
+									}
+									return {
+										question_revision_id: item.question_revision_id,
+										submitted_answer: submitted,
+										correct_answer: item.correct_answer
+									};
+								}
 							);
 							testQuestions = testQuestionsData;
 						}

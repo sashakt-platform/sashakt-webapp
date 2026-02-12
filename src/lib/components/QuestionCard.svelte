@@ -513,7 +513,7 @@
 			{/each}
 		{/if}
 
-		{#if hasFeedbackAvailable && !isFeedbackViewed}
+		{#if hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective'}
 			<Button
 				variant="outline"
 				class="mt-4 w-full border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"

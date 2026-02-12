@@ -34,7 +34,9 @@
 	};
 
 	const feedbackWithQuestions = $derived(
-		(testQuestions?.question_revisions ?? []).map((question: any) => {
+		(testQuestions?.question_revisions ?? [])
+			.filter((question: any) => question.question_type !== 'subjective')
+			.map((question: any) => {
 			const fb = (feedback ?? []).find((f: any) => f.question_revision_id === question.id);
 
 			const feedbackData = fb ?? {

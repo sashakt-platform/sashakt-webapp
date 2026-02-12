@@ -4,6 +4,7 @@ import ViewFeedback from './ViewFeedback.svelte';
 import {
 	mockSingleChoiceQuestion,
 	mockMultipleChoiceQuestion,
+	mockSubjectiveQuestion,
 	mockTestQuestionsResponse
 } from '$lib/test-utils';
 
@@ -234,6 +235,48 @@ describe('ViewFeedback', () => {
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: null }
+			});
+
+			expect(
+				screen.getByText('No feedback available. You did not attempt any questions.')
+			).toBeInTheDocument();
+		});
+	});
+
+	describe('subjective question filtering', () => {
+		it('should exclude subjective questions from feedback list', () => {
+			const testQuestionsWithSubjective = {
+				question_revisions: [
+					mockSingleChoiceQuestion,
+					mockMultipleChoiceQuestion,
+					mockSubjectiveQuestion
+				],
+				question_pagination: 5
+			};
+			const feedback = [
+				createFeedback(1, [102], [102]),
+				createFeedback(2, [201], [201, 202]),
+				createFeedback(4, [], [])
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithSubjective }
+			});
+
+			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
+			expect(screen.getByText(mockMultipleChoiceQuestion.question_text)).toBeInTheDocument();
+			expect(screen.queryByText(mockSubjectiveQuestion.question_text)).not.toBeInTheDocument();
+		});
+
+		it('should show no feedback message when all questions are subjective', () => {
+			const subjectiveOnlyQuestions = {
+				question_revisions: [mockSubjectiveQuestion],
+				question_pagination: 5
+			};
+			const feedback = [createFeedback(4, [], [])];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: subjectiveOnlyQuestions }
 			});
 
 			expect(
