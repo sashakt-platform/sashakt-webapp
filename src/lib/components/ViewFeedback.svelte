@@ -107,18 +107,11 @@
 								>
 									<span>{option.key}. {option.value}</span>
 
-									<div class="relative h-6 w-6">
-										<RadioGroup.Item
-											id={uid}
-											value={option.id.toString()}
-											disabled
-											class="h-6 w-6"
-										/>
-
+									<div class="flex h-6 w-6 items-center justify-center">
 										{#if status === 'correct'}
-											<Check size={14} class="absolute inset-0 m-auto text-green-600" />
+											<Check size={18} class="text-green-600" />
 										{:else if status === 'wrong'}
-											<X size={14} class="absolute inset-0 m-auto text-red-600" />
+											<X size={18} class="text-red-600" />
 										{/if}
 									</div>
 								</Label>
@@ -127,6 +120,11 @@
 					{:else}
 						{#each item.question.options as option (option.id)}
 							{@const uid = `${item.question.id}-${option.key}`}
+							{@const status = getOptionStatus(
+								option.id,
+								item.fb.submitted_answer,
+								item.fb.correct_answer
+							)}
 
 							<Label
 								for={uid}
@@ -138,11 +136,13 @@
 							>
 								<span>{option.key}. {option.value}</span>
 
-								<Checkbox
-									id={uid}
-									checked={isSubmitted(option.id, item.fb.submitted_answer)}
-									disabled
-								/>
+								<div class="flex h-6 w-6 items-center justify-center">
+									{#if status === 'correct'}
+										<Check size={18} class="text-green-600" />
+									{:else if status === 'wrong'}
+										<X size={18} class="text-red-600" />
+									{/if}
+								</div>
 							</Label>
 						{/each}
 					{/if}

@@ -439,7 +439,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByRole('button', { name: /view feedback/i })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: /view Result/i })).toBeInTheDocument();
 		});
 
 		it('should not show feedback button when question is unanswered', () => {
@@ -464,7 +464,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.queryByRole('button', { name: /view feedback/i })).not.toBeInTheDocument();
+			expect(screen.queryByRole('button', { name: /view Result/i })).not.toBeInTheDocument();
 		});
 
 		it('should show feedback button when question is answered', () => {
@@ -489,7 +489,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByRole('button', { name: /view feedback/i })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: /view Result/i })).toBeInTheDocument();
 		});
 
 		it('should render locked state immediately when is_reviewed is true', () => {
@@ -515,7 +515,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.queryByRole('button', { name: /view feedback/i })).not.toBeInTheDocument();
+			expect(screen.queryByRole('button', { name: /view Result/i })).not.toBeInTheDocument();
 
 			const radioButtons = screen.getAllByRole('radio');
 			radioButtons.forEach((radio) => {

@@ -173,7 +173,7 @@ describe('TestResult - View Feedback button', () => {
 			}
 		});
 
-		expect(screen.getByText('View Feedback')).toBeInTheDocument();
+		expect(screen.getByText('View Result')).toBeInTheDocument();
 	});
 
 	it('should NOT show View Feedback button when show_feedback_on_completion is false', () => {
@@ -187,7 +187,7 @@ describe('TestResult - View Feedback button', () => {
 			}
 		});
 
-		expect(screen.queryByText('View Feedback')).not.toBeInTheDocument();
+		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
 	});
 
 	it('should NOT show View Feedback button when feedback is null', () => {
@@ -201,7 +201,7 @@ describe('TestResult - View Feedback button', () => {
 			}
 		});
 
-		expect(screen.queryByText('View Feedback')).not.toBeInTheDocument();
+		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
 	});
 
 	it('should NOT show View Feedback button when neither prop is provided', () => {
@@ -212,7 +212,7 @@ describe('TestResult - View Feedback button', () => {
 			}
 		});
 
-		expect(screen.queryByText('View Feedback')).not.toBeInTheDocument();
+		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
 	});
 
 	it('should call onViewFeedback when button is clicked', async () => {
@@ -228,7 +228,7 @@ describe('TestResult - View Feedback button', () => {
 			}
 		});
 
-		const button = screen.getByText('View Feedback');
+		const button = screen.getByText('View Result');
 		await fireEvent.click(button);
 
 		expect(onViewFeedback).toHaveBeenCalledOnce();

@@ -180,7 +180,7 @@ describe('Test Page - Feedback flow', () => {
 		});
 
 		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
-		expect(screen.getByText('View Feedback')).toBeInTheDocument();
+		expect(screen.getByText('View Result')).toBeInTheDocument();
 	});
 
 	it('should NOT show View Feedback button when show_feedback_on_completion is false', () => {
@@ -204,7 +204,7 @@ describe('Test Page - Feedback flow', () => {
 		});
 
 		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
-		expect(screen.queryByText('View Feedback')).not.toBeInTheDocument();
+		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
 	});
 
 	it('should NOT show View Feedback button when feedback is null', () => {
@@ -225,7 +225,7 @@ describe('Test Page - Feedback flow', () => {
 		});
 
 		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
-		expect(screen.queryByText('View Feedback')).not.toBeInTheDocument();
+		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
 	});
 
 	it('should switch to ViewFeedback when View Feedback button is clicked', async () => {
@@ -247,7 +247,7 @@ describe('Test Page - Feedback flow', () => {
 
 		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
 
-		const button = screen.getByText('View Feedback');
+		const button = screen.getByText('View Result');
 		await fireEvent.click(button);
 
 		await vi.waitFor(() => {

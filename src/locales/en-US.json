@@ -73,7 +73,7 @@
 	"Download Certificate": "Download Certificate",
 	"Preparing...": "Preparing...",
 	"Failed to download certificate. Please try again.": "Failed to download certificate. Please try again.",
-	"View Feedback": "View Feedback",
+	"View Feedback": "View Result",
 	"Back to Results": "Back to Results",
 	"No feedback available. You did not attempt any questions.": "No feedback available. You did not attempt any questions.",
 	"Question not found for feedback #{number}": "Question not found for feedback #{number}"
