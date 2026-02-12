@@ -20,9 +20,7 @@
 
 	let selectedEntity = $state(0);
 
-	let selectedOmr = $state(
-		testDetails.omr === 'OPTIONAL' ? '' : testDetails.omr === 'ALWAYS' ? 'true' : 'false'
-	);
+	let selectedOmr = $state('');
 	let isSubmitting = $state(false);
 	let createError = $state<string | null>(null);
 
@@ -126,8 +124,6 @@
 							</Select.Content>
 						</Select.Root>
 					</div>
-				{:else}
-					<input name="omrMode" value={testDetails.omr === 'ALWAYS' ? 'true' : 'false'} hidden />
 				{/if}
 
 				{#if createError}

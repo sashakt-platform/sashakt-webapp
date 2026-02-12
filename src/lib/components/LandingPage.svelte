@@ -105,7 +105,6 @@
 						}}
 						hidden
 					/>
-					<input name="omrMode" value={testDetails.omr === 'ALWAYS' ? 'true' : 'false'} hidden />
 					<Button type="submit" class="w-32" disabled={!isChecked || isStarting}>
 						{#if isStarting}
 							<Spinner />

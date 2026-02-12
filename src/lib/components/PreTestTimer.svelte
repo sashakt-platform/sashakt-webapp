@@ -100,9 +100,6 @@
 	<Dialog.Close>
 		<form method="POST" action="?/createCandidate" use:enhance bind:this={formElement}>
 			<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
-			{#if page.data.testData.omr && page.data.testData.omr !== 'OPTIONAL'}
-				<input name="omrMode" value={page.data.testData.omr === 'ALWAYS' ? 'true' : 'false'} hidden />
-			{/if}
 			{#if timeLeft <= 10}
 				<!-- prompt candidate to start the test when last 10 secs left before test starts -->
 				{#if showProfileForm !== undefined && (page.data.testData.candidate_profile || page.data.testData.omr === 'OPTIONAL')}
