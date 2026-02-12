@@ -38,11 +38,19 @@ export const getPreTestTimer = async (testUuid: string) => {
  * @param candidate_uuid - The candidate's UUID
  * @returns Promise containing the test questions data
  */
-export const getTestQuestions = async (candidate_test_id: number, candidate_uuid: string) => {
+export const getTestQuestions = async (
+	candidate_test_id: number,
+	candidate_uuid: string,
+	useOmr?: string
+) => {
 	if (!candidate_test_id || !candidate_uuid) {
 		throw new Error('candidate_test_id and candidate_uuid are required');
 	}
-	const apiEndpoint = `${BACKEND_URL}/candidate/test_questions/${candidate_test_id}/?candidate_uuid=${candidate_uuid}`;
+	let apiEndpoint = `${BACKEND_URL}/candidate/test_questions/${candidate_test_id}/?candidate_uuid=${candidate_uuid}`;
+
+	if (useOmr) {
+		apiEndpoint += `&use_omr=${useOmr}`;
+	}
 
 	const response = await fetch(apiEndpoint, {
 		method: 'GET',

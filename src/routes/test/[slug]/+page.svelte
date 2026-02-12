@@ -25,7 +25,7 @@
 		<TestResult resultData={form.result} testDetails={data.testData} />
 	{:else if !data.candidate && !showProfileForm}
 		<LandingPage testDetails={data.testData} bind:showProfileForm />
-	{:else if !data.candidate && showProfileForm && data.testData.candidate_profile}
+	{:else if !data.candidate && showProfileForm}
 		<CandidateProfile testDetails={data.testData} />
 	{:else if data.testQuestions?.question_revisions}
 		<Question

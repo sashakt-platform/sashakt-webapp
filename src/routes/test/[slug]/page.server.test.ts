@@ -118,6 +118,29 @@ describe('Page Server - load function', () => {
 		expect(result.testQuestions).not.toBeNull();
 	});
 
+	it('should pass candidate use_omr when omr is OPTIONAL', async () => {
+		const candidateWithOmr = { ...mockCandidate, use_omr: 'false' };
+		vi.mocked(getCandidate).mockReturnValue(candidateWithOmr);
+		vi.mocked(getTimeLeft).mockResolvedValue({ time_left: 1800 });
+		vi.mocked(getTestQuestions).mockResolvedValue({
+			question_revisions: [],
+			question_pagination: 5
+		});
+
+		const mockCookies = createMockCookies();
+		const testDataOptional = { ...mockTestData, omr: 'OPTIONAL' };
+		await load({
+			locals: { testData: testDataOptional, timeToBegin: 300 },
+			cookies: mockCookies
+		} as any);
+
+		expect(getTestQuestions).toHaveBeenCalledWith(
+			candidateWithOmr.candidate_test_id,
+			candidateWithOmr.candidate_uuid,
+			'false'
+		);
+	});
+
 	it('should delete cookie and redirect on error', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 		vi.mocked(getTimeLeft).mockRejectedValue(new Error('API Error'));
@@ -268,6 +291,88 @@ describe('Page Server - createCandidate action', () => {
 
 		expect(result.status).toBe(500);
 		expect(result.error).toBe('Cannot start test. Please check your internet connection.');
+	});
+
+	it('should store use_omr in candidate cookie when omrMode is provided', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+
+		const mockResponse = createMockResponse({ ...mockCandidate });
+		const mockFetch = vi.fn().mockResolvedValue(mockResponse);
+		const mockCookies = createMockCookies();
+
+		const result = await actions.createCandidate({
+			request: {
+				formData: () =>
+					Promise.resolve(
+						createMockFormData({
+							deviceInfo: JSON.stringify({ browser: 'Chrome' }),
+							entity: '',
+							omrMode: 'true'
+						})
+					)
+			},
+			locals: { testData: mockTestData },
+			fetch: mockFetch,
+			cookies: mockCookies
+		} as any);
+
+		expect(result.success).toBe(true);
+		const savedCookie = JSON.parse(mockCookies.set.mock.calls[0][1]);
+		expect(savedCookie.use_omr).toBe('true');
+	});
+
+	it('should store use_omr=false in candidate cookie when omrMode is false', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+
+		const mockResponse = createMockResponse({ ...mockCandidate });
+		const mockFetch = vi.fn().mockResolvedValue(mockResponse);
+		const mockCookies = createMockCookies();
+
+		const result = await actions.createCandidate({
+			request: {
+				formData: () =>
+					Promise.resolve(
+						createMockFormData({
+							deviceInfo: JSON.stringify({ browser: 'Chrome' }),
+							entity: '',
+							omrMode: 'false'
+						})
+					)
+			},
+			locals: { testData: mockTestData },
+			fetch: mockFetch,
+			cookies: mockCookies
+		} as any);
+
+		expect(result.success).toBe(true);
+		const savedCookie = JSON.parse(mockCookies.set.mock.calls[0][1]);
+		expect(savedCookie.use_omr).toBe('false');
+	});
+
+	it('should not set use_omr when omrMode is not provided', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+
+		const mockResponse = createMockResponse({ ...mockCandidate });
+		const mockFetch = vi.fn().mockResolvedValue(mockResponse);
+		const mockCookies = createMockCookies();
+
+		await actions.createCandidate({
+			request: {
+				formData: () =>
+					Promise.resolve(
+						createMockFormData({
+							deviceInfo: JSON.stringify({ browser: 'Chrome' }),
+							entity: ''
+						})
+					)
+			},
+			locals: { testData: mockTestData },
+			fetch: mockFetch,
+			cookies: mockCookies
+		} as any);
+
+		const savedCookie = JSON.parse(mockCookies.set.mock.calls[0][1]);
+		expect(savedCookie.use_omr).toBeUndefined();
 	});
 });
 
