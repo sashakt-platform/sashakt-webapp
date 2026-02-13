@@ -58,7 +58,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 						: null,
 					visited: true,
 					bookmarked: bookmarked ?? false,
-					is_reviwed: is_reviewed ?? false
+					is_reviewed: is_reviewed ?? false
 				})
 			}
 		);
