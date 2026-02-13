@@ -738,7 +738,8 @@ describe('QuestionCard', () => {
 					serialNumber: 1,
 					candidate: mockCandidate,
 					totalQuestions: 10,
-					selectedQuestions
+					selectedQuestions,
+					showFeedback: true
 				}
 			});
 
@@ -788,7 +789,8 @@ describe('QuestionCard', () => {
 					serialNumber: 1,
 					candidate: mockCandidate,
 					totalQuestions: 10,
-					selectedQuestions
+					selectedQuestions,
+					showFeedback: true
 				}
 			});
 
@@ -856,6 +858,32 @@ describe('QuestionCard', () => {
 			await labels[2].click();
 
 			expect(fetch).not.toHaveBeenCalled();
+		});
+
+		it('should not show feedback button when showFeedback is false', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [mockSingleChoiceQuestion.options[0].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions,
+					showFeedback: false
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view Result/i })).not.toBeInTheDocument();
 		});
 
 		it('should not show feedback button for answered subjective question', () => {

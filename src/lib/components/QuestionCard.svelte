@@ -18,13 +18,15 @@
 		serialNumber,
 		candidate,
 		totalQuestions,
-		selectedQuestions = $bindable()
+		selectedQuestions = $bindable(),
+		showFeedback = false
 	}: {
 		question: TQuestion;
 		candidate: TCandidate;
 		serialNumber: number;
 		totalQuestions: number;
 		selectedQuestions: TSelection[];
+		showFeedback?: boolean;
 	} = $props();
 
 	const options = question.options;
@@ -513,7 +515,7 @@
 			{/each}
 		{/if}
 
-		{#if hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective'}
+		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective'}
 			<Button
 				variant="outline"
 				class="mt-4 w-full border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"
