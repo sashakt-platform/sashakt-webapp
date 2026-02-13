@@ -27,7 +27,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		json: () => Promise.resolve(body)
 	});
 
-	it('should submit answer successfully', async () => {
+	it('should submit answer successfully without fetching feedback', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 		vi.mocked(fetch).mockResolvedValueOnce(
 			createMockResponse({ success: true }) as unknown as Response
@@ -44,6 +44,8 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
+		expect(data.correct_answer).toBeNull();
+		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(fetch).toHaveBeenCalledWith(
 			`http://test-backend.com/candidate/submit_answer/${mockCandidate.candidate_test_id}/?candidate_uuid=${mockCandidate.candidate_uuid}`,
 			expect.objectContaining({
@@ -52,6 +54,32 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 				body: expect.stringContaining('"question_revision_id":1')
 			})
 		);
+	});
+
+	it('should fetch feedback and return correct_answer when is_reviewed is true', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch)
+			.mockResolvedValueOnce(createMockResponse({ success: true }) as unknown as Response)
+			.mockResolvedValueOnce(
+				createMockResponse([
+					{ question_revision_id: 1, submitted_answer: '[101]', correct_answer: [101] }
+				]) as unknown as Response
+			);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest({
+			question_revision_id: 1,
+			response: [101],
+			candidate: mockCandidate,
+			is_reviewed: true
+		});
+		const response = await POST({ request, cookies: mockCookies } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(data.success).toBe(true);
+		expect(data.correct_answer).toEqual([101]);
+		expect(fetch).toHaveBeenCalledTimes(2);
 	});
 
 	it('should return 401 when cookie candidate is missing', async () => {
@@ -156,6 +184,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		const response = await POST({ request, cookies: mockCookies } as any);
 
 		expect(response.status).toBe(200);
+		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(fetch).toHaveBeenCalledWith(
 			expect.any(String),
 			expect.objectContaining({
@@ -164,7 +193,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		);
 	});
 
-	it('should handle null response when question is unanswered', async () => {
+	it('should handle null response when question is unanswered and skip feedback', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 		vi.mocked(fetch).mockResolvedValueOnce(
 			createMockResponse({ success: true }) as unknown as Response
@@ -177,8 +206,11 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			candidate: mockCandidate
 		});
 		const response = await POST({ request, cookies: mockCookies } as any);
+		const data = await response.json();
 
 		expect(response.status).toBe(200);
+		expect(data.correct_answer).toBeNull();
+		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(fetch).toHaveBeenCalledWith(
 			expect.any(String),
 			expect.objectContaining({
@@ -203,6 +235,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		const response = await POST({ request, cookies: mockCookies } as any);
 
 		expect(response.status).toBe(200);
+		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(fetch).toHaveBeenCalledWith(
 			expect.any(String),
 			expect.objectContaining({
@@ -226,6 +259,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		const response = await POST({ request, cookies: mockCookies } as any);
 
 		expect(response.status).toBe(200);
+		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(fetch).toHaveBeenCalledWith(
 			expect.any(String),
 			expect.objectContaining({

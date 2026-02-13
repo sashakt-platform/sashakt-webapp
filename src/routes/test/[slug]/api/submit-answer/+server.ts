@@ -4,8 +4,6 @@ import type { TCandidate } from '$lib/types';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
-	// check if the session cookie exists
-	// this is to prevent submission if the test is already submitted
 	const cookieCandidate = getCandidate(cookies);
 	if (!cookieCandidate) {
 		return new Response(
@@ -18,15 +16,16 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		question_revision_id,
 		response,
 		candidate,
-		bookmarked
+		bookmarked,
+		is_reviewed
 	}: {
 		question_revision_id: number;
 		response: number[] | string | null;
 		candidate: TCandidate;
 		bookmarked?: boolean;
+		is_reviewed?: boolean;
 	} = await request.json();
 
-	// verify candidate matches cookie
 	if (
 		cookieCandidate.candidate_test_id !== candidate?.candidate_test_id ||
 		cookieCandidate.candidate_uuid !== candidate?.candidate_uuid
@@ -58,7 +57,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 							: JSON.stringify(response)
 						: null,
 					visited: true,
-					bookmarked: bookmarked ?? false
+					bookmarked: bookmarked ?? false,
+					is_reviewed: is_reviewed ?? false
 				})
 			}
 		);
@@ -67,7 +67,24 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			throw new Error(`Failed to save answer: ${res.status} ${res.statusText}`);
 		}
 
-		return new Response(JSON.stringify({ success: true }), {
+		let correct_answer = null;
+
+		if (is_reviewed && response && response.length > 0) {
+			try {
+				const feedbackRes = await fetch(
+					`${BACKEND_URL}/candidate/${candidate.candidate_test_id}/review-feedback?candidate_uuid=${candidate.candidate_uuid}&question_revision_ids=${question_revision_id}`,
+					{ method: 'GET', headers: { accept: 'application/json' } }
+				);
+				if (feedbackRes.ok) {
+					const feedbackData = await feedbackRes.json();
+					if (feedbackData.length > 0) {
+						correct_answer = feedbackData[0].correct_answer;
+					}
+				}
+			} catch {}
+		}
+
+		return new Response(JSON.stringify({ success: true, correct_answer }), {
 			status: 200,
 			headers: { 'Content-Type': 'application/json' }
 		});
