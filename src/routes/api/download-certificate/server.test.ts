@@ -20,10 +20,10 @@ describe('POST /api/download-certificate', () => {
 		json: () => Promise.resolve(body)
 	});
 
-	const createMockPdfResponse = () => {
+	const createMockImageResponse = () => {
 		const headers = new Map([
-			['Content-Type', 'application/pdf'],
-			['Content-Disposition', 'attachment; filename="certificate.pdf"']
+			['Content-Type', 'image/png'],
+			['Content-Disposition', 'attachment; filename="certificate.png"']
 		]);
 		return {
 			ok: true,
@@ -36,7 +36,7 @@ describe('POST /api/download-certificate', () => {
 	};
 
 	it('should download certificate successfully', async () => {
-		vi.mocked(fetch).mockResolvedValueOnce(createMockPdfResponse() as unknown as Response);
+		vi.mocked(fetch).mockResolvedValueOnce(createMockImageResponse() as unknown as Response);
 
 		const request = createMockRequest({
 			certificate_download_url: '/api/v1/certificate/download/test-uuid'
@@ -44,21 +44,21 @@ describe('POST /api/download-certificate', () => {
 		const response = await POST({ request } as any);
 
 		expect(response.status).toBe(200);
-		expect(response.headers.get('Content-Type')).toBe('application/pdf');
+		expect(response.headers.get('Content-Type')).toBe('image/png');
 		expect(response.headers.get('Content-Disposition')).toBe(
-			'attachment; filename="certificate.pdf"'
+			'attachment; filename="certificate.png"'
 		);
 		expect(fetch).toHaveBeenCalledWith(
 			'http://localhost:8000/api/v1/certificate/download/test-uuid',
 			expect.objectContaining({
 				method: 'GET',
-				headers: { Accept: 'application/pdf' }
+				headers: { Accept: 'image/png' }
 			})
 		);
 	});
 
 	it('should use base URL origin to avoid path duplication', async () => {
-		vi.mocked(fetch).mockResolvedValueOnce(createMockPdfResponse() as unknown as Response);
+		vi.mocked(fetch).mockResolvedValueOnce(createMockImageResponse() as unknown as Response);
 
 		const request = createMockRequest({
 			certificate_download_url: '/api/v1/certificate/download/test-uuid'
@@ -86,7 +86,7 @@ describe('POST /api/download-certificate', () => {
 	});
 
 	it('should allow full URL with same origin as BACKEND_URL', async () => {
-		vi.mocked(fetch).mockResolvedValueOnce(createMockPdfResponse() as unknown as Response);
+		vi.mocked(fetch).mockResolvedValueOnce(createMockImageResponse() as unknown as Response);
 
 		const request = createMockRequest({
 			certificate_download_url: 'http://localhost:8000/api/v1/certificate/download/test-uuid'
@@ -199,9 +199,9 @@ describe('POST /api/download-certificate', () => {
 		});
 		const response = await POST({ request } as any);
 
-		expect(response.headers.get('Content-Type')).toBe('application/pdf');
+		expect(response.headers.get('Content-Type')).toBe('image/png');
 		expect(response.headers.get('Content-Disposition')).toBe(
-			'attachment; filename="certificate.pdf"'
+			'attachment; filename="certificate.png"'
 		);
 	});
 });
