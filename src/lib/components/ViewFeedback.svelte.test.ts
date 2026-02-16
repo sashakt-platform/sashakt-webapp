@@ -243,8 +243,8 @@ describe('ViewFeedback', () => {
 		});
 	});
 
-	describe('subjective question filtering', () => {
-		it('should exclude subjective questions from feedback list', () => {
+	describe('subjective question display', () => {
+		it('should include subjective questions in feedback list', () => {
 			const testQuestionsWithSubjective = {
 				question_revisions: [
 					mockSingleChoiceQuestion,
@@ -256,7 +256,7 @@ describe('ViewFeedback', () => {
 			const feedback = [
 				createFeedback(1, [102], [102]),
 				createFeedback(2, [201], [201, 202]),
-				createFeedback(4, [], [])
+				{ question_revision_id: 4, submitted_answer: 'My subjective answer', correct_answer: [] }
 			];
 
 			render(ViewFeedback, {
@@ -265,23 +265,23 @@ describe('ViewFeedback', () => {
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
 			expect(screen.getByText(mockMultipleChoiceQuestion.question_text)).toBeInTheDocument();
-			expect(screen.queryByText(mockSubjectiveQuestion.question_text)).not.toBeInTheDocument();
+			expect(screen.getByText(mockSubjectiveQuestion.question_text)).toBeInTheDocument();
+			expect(screen.getByText('My subjective answer')).toBeInTheDocument();
 		});
 
-		it('should show no feedback message when all questions are subjective', () => {
+		it('should show not attempted for subjective question with no answer', () => {
 			const subjectiveOnlyQuestions = {
 				question_revisions: [mockSubjectiveQuestion],
 				question_pagination: 5
 			};
-			const feedback = [createFeedback(4, [], [])];
+			const feedback = [{ question_revision_id: 4, submitted_answer: '', correct_answer: [] }];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: subjectiveOnlyQuestions }
 			});
 
-			expect(
-				screen.getByText('No feedback available. You did not attempt any questions.')
-			).toBeInTheDocument();
+			expect(screen.getByText(mockSubjectiveQuestion.question_text)).toBeInTheDocument();
+			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
 		});
 	});
 });

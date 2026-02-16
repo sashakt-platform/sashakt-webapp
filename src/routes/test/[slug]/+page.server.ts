@@ -161,13 +161,13 @@ export const actions = {
 									submitted_answer: string | null;
 									correct_answer: number[];
 								}) => {
-									let submitted: number[] = [];
+									let submitted: number[] | string = [];
 									if (item.submitted_answer) {
 										try {
 											const parsed = JSON.parse(item.submitted_answer);
-											submitted = Array.isArray(parsed) ? parsed : [];
+											submitted = Array.isArray(parsed) ? parsed : item.submitted_answer;
 										} catch {
-											submitted = [];
+											submitted = item.submitted_answer;
 										}
 									}
 									return {

@@ -436,7 +436,7 @@ describe('Page Server - submitTest action', () => {
 		expect(result.submitTest).toBe(true);
 		expect(result.feedback).toHaveLength(2);
 		expect(result.feedback[0].submitted_answer).toEqual([102]);
-		expect(result.feedback[1].submitted_answer).toEqual([]);
+		expect(result.feedback[1].submitted_answer).toEqual('This is a subjective text answer');
 		expect(result.feedback[1].correct_answer).toEqual([]);
 	});
 

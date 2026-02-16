@@ -34,14 +34,12 @@
 	};
 
 	const feedbackWithQuestions = $derived(
-		(testQuestions?.question_revisions ?? [])
-			.filter((question: any) => question.question_type !== 'subjective')
-			.map((question: any) => {
+		(testQuestions?.question_revisions ?? []).map((question: any) => {
 			const fb = (feedback ?? []).find((f: any) => f.question_revision_id === question.id);
 
 			const feedbackData = fb ?? {
 				question_revision_id: question.id,
-				submitted_answer: [],
+				submitted_answer: question.question_type === 'subjective' ? '' : [],
 				correct_answer: fb?.correct_answer ?? []
 			};
 			return { fb: feedbackData, question };
@@ -89,7 +87,16 @@
 				</Card.Header>
 
 				<Card.Content class="p-5 pt-1">
-					{#if item.question.question_type === 'single-choice'}
+					{#if item.question.question_type === 'subjective'}
+						<div class="rounded-xl border px-4 py-4">
+							<p class="text-muted-foreground mb-1 text-xs font-medium">{$t('Your Answer')}</p>
+							{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
+								<p class="whitespace-pre-wrap text-sm">{item.fb.submitted_answer}</p>
+							{:else}
+								<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
+							{/if}
+						</div>
+					{:else if item.question.question_type === 'single-choice'}
 						<RadioGroup.Root value={item.fb.submitted_answer[0]?.toString()} disabled>
 							{#each item.question.options as option (option.id)}
 								{@const uid = `${item.question.id}-${option.key}`}
