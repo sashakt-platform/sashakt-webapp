@@ -417,10 +417,12 @@
 							} ${isLocked ? 'cursor-not-allowed' : ''}`}
 						>
 							<span>{option.key}. {option.value}</span>
-							<div class="float-end flex h-6 w-6 items-center justify-center">
+							<div class="float-end flex items-center gap-1">
 								{#if feedbackStatus === 'correct'}
+									<span class="text-xs font-medium text-green-600">{$t('Correct')}</span>
 									<Check size={18} class="text-green-600" />
 								{:else if feedbackStatus === 'wrong'}
+									<span class="text-xs font-medium text-red-600">{$t('Wrong')}</span>
 									<X size={18} class="text-red-600" />
 								{:else}
 									<RadioGroup.Item value={option.id.toString()} id={uid} disabled={isLocked} />
@@ -493,10 +495,12 @@
 						} ${isLocked ? 'cursor-not-allowed' : ''}`}
 					>
 						<span>{option.key}. {option.value}</span>
-						<div class="float-end flex h-6 w-6 items-center justify-center">
+						<div class="float-end flex items-center gap-1">
 							{#if feedbackStatus === 'correct'}
+								<span class="text-xs font-medium text-green-600">{$t('Correct')}</span>
 								<Check size={18} class="text-green-600" />
 							{:else if feedbackStatus === 'wrong'}
+								<span class="text-xs font-medium text-red-600">{$t('Wrong')}</span>
 								<X size={18} class="text-red-600" />
 							{:else}
 								<Checkbox

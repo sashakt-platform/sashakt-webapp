@@ -54,6 +54,8 @@
 	"You have attempted {count} questions.": "You have attempted {count} questions.",
 	"Your test has been submitted successfully.": "Your test has been submitted successfully.",
 	"Result summary": "Result summary",
+	"Correct": "Correct",
+	"Wrong": "Wrong",
 	"Correct Answers": "Correct Answers",
 	"Incorrect Answers": "Incorrect Answers",
 	"Not Attempted": "Not Attempted",

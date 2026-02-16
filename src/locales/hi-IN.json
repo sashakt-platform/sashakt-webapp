@@ -54,6 +54,8 @@
 	"You have attempted {count} questions.": "आपने {count} प्रश्नों का प्रयास किया है।",
 	"Your test has been submitted successfully.": "आपकी परीक्षा सफलतापूर्वक जमा की गई है।",
 	"Result summary": "परिणाम सारांश",
+	"Correct": "सही",
+	"Wrong": "गलत",
 	"Correct Answers": "सही उत्तर",
 	"Incorrect Answers": "गलत उत्तर",
 	"Not Attempted": "प्रयास नहीं किया",

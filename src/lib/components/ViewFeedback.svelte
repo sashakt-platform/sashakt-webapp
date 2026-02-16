@@ -109,10 +109,12 @@
 								>
 									<span>{option.key}. {option.value}</span>
 
-									<div class="flex h-6 w-6 items-center justify-center">
+									<div class="flex items-center gap-1">
 										{#if status === 'correct'}
+											<span class="text-xs font-medium text-green-600">{$t('Correct')}</span>
 											<Check size={18} class="text-green-600" />
 										{:else if status === 'wrong'}
+											<span class="text-xs font-medium text-red-600">{$t('Wrong')}</span>
 											<X size={18} class="text-red-600" />
 										{/if}
 									</div>
@@ -138,10 +140,12 @@
 							>
 								<span>{option.key}. {option.value}</span>
 
-								<div class="flex h-6 w-6 items-center justify-center">
+								<div class="flex items-center gap-1">
 									{#if status === 'correct'}
+										<span class="text-xs font-medium text-green-600">{$t('Correct')}</span>
 										<Check size={18} class="text-green-600" />
 									{:else if status === 'wrong'}
+										<span class="text-xs font-medium text-red-600">{$t('Wrong')}</span>
 										<X size={18} class="text-red-600" />
 									{/if}
 								</div>
