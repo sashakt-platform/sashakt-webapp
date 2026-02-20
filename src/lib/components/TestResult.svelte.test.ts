@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/svelte';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 import TestResult from './TestResult.svelte';
 import {
 	mockResultData,
@@ -154,6 +154,84 @@ describe('TestResult', () => {
 		});
 
 		expect(screen.queryByText('Total marks obtained')).not.toBeInTheDocument();
+	});
+});
+
+describe('TestResult - View Feedback button', () => {
+	const mockFeedback = [
+		{ question_revision_id: 1, submitted_answer: [101], correct_answer: [102] }
+	];
+
+	it('should show View Feedback button when show_feedback_on_completion is true and feedback exists', () => {
+		const testDetails = { ...mockTestData, show_feedback_on_completion: true };
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails,
+				feedback: mockFeedback
+			}
+		});
+
+		expect(screen.getByText('View Result')).toBeInTheDocument();
+	});
+
+	it('should NOT show View Feedback button when show_feedback_on_completion is false', () => {
+		const testDetails = { ...mockTestData, show_feedback_on_completion: false };
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails,
+				feedback: mockFeedback
+			}
+		});
+
+		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
+	});
+
+	it('should NOT show View Feedback button when feedback is null', () => {
+		const testDetails = { ...mockTestData, show_feedback_on_completion: true };
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails,
+				feedback: null
+			}
+		});
+
+		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
+	});
+
+	it('should NOT show View Feedback button when neither prop is provided', () => {
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails: mockTestData
+			}
+		});
+
+		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
+	});
+
+	it('should call onViewFeedback when button is clicked', async () => {
+		const testDetails = { ...mockTestData, show_feedback_on_completion: true };
+		const onViewFeedback = vi.fn();
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails,
+				feedback: mockFeedback,
+				onViewFeedback
+			}
+		});
+
+		const button = screen.getByText('View Result');
+		await fireEvent.click(button);
+
+		expect(onViewFeedback).toHaveBeenCalledOnce();
 	});
 });
 

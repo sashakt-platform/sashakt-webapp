@@ -194,7 +194,8 @@ describe('QuestionCard', () => {
 				question_revision_id: mockSingleChoiceQuestion.id,
 				response: [mockSingleChoiceQuestion.options[1].id], // Selected option B
 				visited: true,
-				time_spent: 10
+				time_spent: 10,
+				bookmarked: false
 			}
 		];
 
@@ -715,6 +716,199 @@ describe('QuestionCard', () => {
 			});
 
 			expect(screen.getByText('5 Marks')).toBeInTheDocument();
+		});
+	});
+
+	describe('Inline feedback', () => {
+		it('should show feedback button when question is answered even without correct_answer', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [mockSingleChoiceQuestion.options[0].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /view Result/i })).toBeInTheDocument();
+		});
+
+		it('should not show feedback button when question is unanswered', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [],
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view Result/i })).not.toBeInTheDocument();
+		});
+
+		it('should show feedback button when question is answered', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [mockSingleChoiceQuestion.options[0].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /view Result/i })).toBeInTheDocument();
+		});
+
+		it('should render locked state immediately when is_reviewed is true', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [mockSingleChoiceQuestion.options[0].id],
+					visited: true,
+					time_spent: 10,
+					correct_answer: [mockSingleChoiceQuestion.options[1].id],
+					is_reviewed: true,
+					bookmarked: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view Result/i })).not.toBeInTheDocument();
+
+			const radioButtons = screen.getAllByRole('radio');
+			radioButtons.forEach((radio) => {
+				expect(radio).toBeDisabled();
+			});
+
+			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			expect(bookmarkButton).toBeDisabled();
+		});
+
+		it('should not allow answer changes when question is locked', async () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [mockSingleChoiceQuestion.options[0].id],
+					visited: true,
+					time_spent: 10,
+					correct_answer: [mockSingleChoiceQuestion.options[1].id],
+					is_reviewed: true,
+					bookmarked: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			const labels = screen.getAllByText(/[A-D]\./);
+			await labels[2].click();
+
+			expect(fetch).not.toHaveBeenCalled();
+		});
+
+		it('should not show feedback button when showFeedback is false', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [mockSingleChoiceQuestion.options[0].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions,
+					showFeedback: false
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view Result/i })).not.toBeInTheDocument();
+		});
+
+		it('should not show feedback button for answered subjective question', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockSubjectiveQuestion.id,
+					response: 'This is my subjective answer',
+					visited: true,
+					time_spent: 30,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view Result/i })).not.toBeInTheDocument();
 		});
 	});
 });

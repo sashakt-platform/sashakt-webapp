@@ -140,12 +140,56 @@ export const actions = {
 
 				if (!result.ok) return fail(400, { result: false, submitTest: true });
 
+				const resultData = await result.json();
+				let feedback = null;
+				let testQuestions = null;
+
+				if (locals.testData.show_feedback_on_completion) {
+					try {
+						const [feedbackResponse, testQuestionsData] = await Promise.all([
+							fetch(
+								`${BACKEND_URL}/candidate/${candidate.candidate_test_id}/review-feedback?candidate_uuid=${candidate.candidate_uuid}`,
+								{ method: 'GET', headers: { accept: 'application/json' } }
+							),
+							getTestQuestions(candidate.candidate_test_id, candidate.candidate_uuid)
+						]);
+						if (feedbackResponse.ok) {
+							const feedbackData = await feedbackResponse.json();
+							feedback = feedbackData.map(
+								(item: {
+									question_revision_id: number;
+									submitted_answer: string | null;
+									correct_answer: number[];
+								}) => {
+									let submitted: number[] | string = [];
+									if (item.submitted_answer) {
+										try {
+											const parsed = JSON.parse(item.submitted_answer);
+											submitted = Array.isArray(parsed) ? parsed : item.submitted_answer;
+										} catch {
+											submitted = item.submitted_answer;
+										}
+									}
+									return {
+										question_revision_id: item.question_revision_id,
+										submitted_answer: submitted,
+										correct_answer: item.correct_answer
+									};
+								}
+							);
+							testQuestions = testQuestionsData;
+						}
+					} catch (error) {
+						console.error('Error fetching feedback:', error);
+					}
+				}
+
 				cookies.delete('sashakt-candidate', {
 					path: '/test/' + locals.testData.link,
 					secure: !dev
 				});
 
-				return { result: await result.json(), submitTest: true };
+				return { result: resultData, feedback, testQuestions, submitTest: true };
 			}
 
 			return { submitTest: false };

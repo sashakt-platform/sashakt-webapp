@@ -101,7 +101,8 @@ export const mockSelection: TSelection = {
 	response: [102],
 	visited: true,
 	time_spent: 30,
-	bookmarked: false
+	bookmarked: false,
+	is_reviewed: false
 };
 
 export const mockSelections: TSelection[] = [
@@ -111,7 +112,8 @@ export const mockSelections: TSelection[] = [
 		response: [201, 202],
 		visited: true,
 		time_spent: 45,
-		bookmarked: false
+		bookmarked: false,
+		is_reviewed: false
 	}
 ];
 
@@ -136,7 +138,8 @@ export const mockTestData = {
 	candidate_profile: null,
 	profile_list: [],
 	locale: DEFAULT_LANGUAGE,
-	show_question_palette: true
+	show_question_palette: true,
+	show_feedback_on_completion: true
 };
 
 // Mock test questions response (from backend)
