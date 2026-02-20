@@ -89,9 +89,8 @@
 				<Card.Content class="p-5 pt-1">
 					{#if item.question.question_type === 'subjective'}
 						<div class="rounded-xl border px-4 py-4">
-							<p class="text-muted-foreground mb-1 text-xs font-medium">{$t('Your Answer')}</p>
 							{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
-								<p class="whitespace-pre-wrap text-sm">{item.fb.submitted_answer}</p>
+								<p class="text-sm whitespace-pre-wrap">{item.fb.submitted_answer}</p>
 							{:else}
 								<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
 							{/if}
