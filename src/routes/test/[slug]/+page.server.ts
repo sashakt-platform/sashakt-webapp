@@ -125,7 +125,9 @@ export const actions = {
 					requestBody.form_responses = formResponses;
 				}
 			} catch {
-				// Invalid JSON, ignore
+				if (locals.testData.form?.fields?.length) {
+					return fail(400, { error: 'Invalid form_responses JSON' });
+				}
 			}
 		}
 

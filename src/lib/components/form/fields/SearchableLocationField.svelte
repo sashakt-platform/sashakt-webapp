@@ -179,7 +179,7 @@
 			<Command.List>
 				{#if requiresParent && !parentId}
 					<div class="text-muted-foreground p-2 text-sm">
-						{$t('Please select a {parent} first', { parent: $t(parentFieldName) })}
+						{$t('Please select a {parent} first', { values: { parent: $t(parentFieldName) } })}
 					</div>
 				{:else if isLoading && searchResults.length === 0}
 					<div class="flex items-center justify-center p-4">

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockResponse } from '$lib/test-utils';
+import { createMockResponse, createRequestEvent } from '$lib/test-utils';
 import { GET } from './+server';
 
 vi.mock('$env/static/private', () => ({
@@ -31,9 +31,9 @@ describe('GET /api/location/district', () => {
 			createMockResponse({ items: mockItems }) as unknown as Response
 		);
 
-		const response = await GET({
-			url: createMockUrl({ name: 'dist', state_ids: '5', test_id: '42' })
-		} as any);
+		const response = await GET(
+			createRequestEvent(createMockUrl({ name: 'dist', state_ids: '5', test_id: '42' }))
+		);
 		const data = await response.json();
 
 		expect(data.items).toEqual(mockItems);
@@ -55,7 +55,7 @@ describe('GET /api/location/district', () => {
 			createMockResponse({ items: [] }) as unknown as Response
 		);
 
-		await GET({ url: createMockUrl({ name: 'test' }) } as any);
+		await GET(createRequestEvent(createMockUrl({ name: 'test' })));
 
 		const fetchUrl = vi.mocked(fetch).mock.calls[0][0] as string;
 		expect(fetchUrl).toContain('name=test');
@@ -68,7 +68,7 @@ describe('GET /api/location/district', () => {
 			createMockResponse({ items: [] }) as unknown as Response
 		);
 
-		await GET({ url: createMockUrl() } as any);
+		await GET(createRequestEvent(createMockUrl()));
 
 		const fetchUrl = vi.mocked(fetch).mock.calls[0][0] as string;
 		expect(fetchUrl).toContain('page=1');
@@ -78,7 +78,7 @@ describe('GET /api/location/district', () => {
 	it('should handle backend response with missing items key', async () => {
 		vi.mocked(fetch).mockResolvedValueOnce(createMockResponse({}) as unknown as Response);
 
-		const response = await GET({ url: createMockUrl() } as any);
+		const response = await GET(createRequestEvent(createMockUrl()));
 		const data = await response.json();
 
 		expect(data.items).toEqual([]);
@@ -89,7 +89,7 @@ describe('GET /api/location/district', () => {
 			createMockResponse({}, { ok: false, status: 404 }) as unknown as Response
 		);
 
-		const response = await GET({ url: createMockUrl({ name: 'test' }) } as any);
+		const response = await GET(createRequestEvent(createMockUrl({ name: 'test' })));
 		const data = await response.json();
 
 		expect(response.status).toBe(404);
@@ -99,7 +99,7 @@ describe('GET /api/location/district', () => {
 	it('should return 500 on fetch exception', async () => {
 		vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 
-		const response = await GET({ url: createMockUrl({ name: 'test' }) } as any);
+		const response = await GET(createRequestEvent(createMockUrl({ name: 'test' })));
 		const data = await response.json();
 
 		expect(response.status).toBe(500);
@@ -111,7 +111,7 @@ describe('GET /api/location/district', () => {
 			createMockResponse({ items: [] }) as unknown as Response
 		);
 
-		await GET({ url: createMockUrl() } as any);
+		await GET(createRequestEvent(createMockUrl()));
 
 		expect(fetch).toHaveBeenCalledWith(
 			expect.any(String),
