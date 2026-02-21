@@ -1,7 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, fireEvent } from '@testing-library/svelte';
 import Page from './+page.svelte';
-import { mockCandidate, mockTestData, mockQuestions, mockResultData } from '$lib/test-utils';
+import {
+	mockCandidate,
+	mockTestData,
+	mockQuestions,
+	mockResultData,
+	mockTestQuestionsResponse
+} from '$lib/test-utils';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -134,5 +140,121 @@ describe('Test Page', () => {
 		});
 
 		expect(screen.getByText('Loading test questions...')).toBeInTheDocument();
+	});
+});
+
+describe('Test Page - Feedback flow', () => {
+	const mockFeedback = [
+		{
+			question_revision_id: 1,
+			submitted_answer: [101],
+			correct_answer: [102]
+		}
+	];
+
+	const testDataWithFeedback = {
+		...mockTestData,
+		completion_message: null,
+		show_feedback_on_completion: true
+	};
+
+	const baseData = {
+		testData: testDataWithFeedback,
+		timeToBegin: 300
+	};
+
+	it('should show View Feedback button when feedback is available and setting is on', () => {
+		render(Page, {
+			props: {
+				data: {
+					...baseData,
+					candidate: mockCandidate,
+					testQuestions: null
+				},
+				form: {
+					submitTest: true,
+					result: mockResultData,
+					feedback: mockFeedback,
+					testQuestions: mockTestQuestionsResponse
+				}
+			}
+		});
+
+		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
+		expect(screen.getByText('View Result')).toBeInTheDocument();
+	});
+
+	it('should NOT show View Feedback button when show_feedback_on_completion is false', () => {
+		const testDataNoFeedback = { ...testDataWithFeedback, show_feedback_on_completion: false };
+
+		render(Page, {
+			props: {
+				data: {
+					testData: testDataNoFeedback,
+					timeToBegin: 300,
+					candidate: mockCandidate,
+					testQuestions: null
+				},
+				form: {
+					submitTest: true,
+					result: mockResultData,
+					feedback: mockFeedback,
+					testQuestions: mockTestQuestionsResponse
+				}
+			}
+		});
+
+		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
+		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
+	});
+
+	it('should NOT show View Feedback button when feedback is null', () => {
+		render(Page, {
+			props: {
+				data: {
+					...baseData,
+					candidate: mockCandidate,
+					testQuestions: null
+				},
+				form: {
+					submitTest: true,
+					result: mockResultData,
+					feedback: null,
+					testQuestions: null
+				}
+			}
+		});
+
+		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
+		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
+	});
+
+	it('should switch to ViewFeedback when View Feedback button is clicked', async () => {
+		render(Page, {
+			props: {
+				data: {
+					...baseData,
+					candidate: mockCandidate,
+					testQuestions: null
+				},
+				form: {
+					submitTest: true,
+					result: mockResultData,
+					feedback: mockFeedback,
+					testQuestions: mockTestQuestionsResponse
+				}
+			}
+		});
+
+		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
+
+		const button = screen.getByText('View Result');
+		await fireEvent.click(button);
+
+		await vi.waitFor(() => {
+			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+		});
+
+		expect(screen.queryByText('Submitted Successfully')).not.toBeInTheDocument();
 	});
 });

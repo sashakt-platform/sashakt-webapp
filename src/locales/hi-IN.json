@@ -54,6 +54,8 @@
 	"You have attempted {count} questions.": "आपने {count} प्रश्नों का प्रयास किया है।",
 	"Your test has been submitted successfully.": "आपकी परीक्षा सफलतापूर्वक जमा की गई है।",
 	"Result summary": "परिणाम सारांश",
+	"Correct": "सही",
+	"Wrong": "गलत",
 	"Correct Answers": "सही उत्तर",
 	"Incorrect Answers": "गलत उत्तर",
 	"Not Attempted": "प्रयास नहीं किया",
@@ -72,6 +74,10 @@
 	"Mark for review": "समीक्षा के लिए चिह्नित करें",
 	"Download Certificate": "प्रमाणपत्र डाउनलोड करें",
 	"Preparing...": "तैयार हो रहा है...",
-	"Failed to download certificate. Please try again.": "प्रमाणपत्र डाउनलोड करने में विफल। कृपया पुनः प्रयास करें।"
+	"Failed to download certificate. Please try again.": "प्रमाणपत्र डाउनलोड करने में विफल। कृपया पुनः प्रयास करें।",
+	"View Feedback": "परिणाम देखें",
+	"Back to Results": "परिणामों पर वापस जाएं",
+	"No feedback available. You did not attempt any questions.": "कोई प्रतिक्रिया उपलब्ध नहीं है। आपने किसी भी प्रश्न का प्रयास नहीं किया।",
+	"Question not found for feedback #{number}": "प्रतिक्रिया #{number} के लिए प्रश्न नहीं मिला"
 }
 
