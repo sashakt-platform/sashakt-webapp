@@ -27,9 +27,11 @@
 	// Sort fields by order
 	const sortedFields = $derived([...form.fields].sort((a, b) => a.order - b.order));
 
-	// Check if form has parent location fields (for cascading dependency)
-	const hasStateField = $derived(form.fields.some((f) => f.field_type === 'state'));
-	const hasDistrictField = $derived(form.fields.some((f) => f.field_type === 'district'));
+	// Locate location fields by field_type to get their actual name properties
+	const stateField = $derived(form.fields.find((f) => f.field_type === 'state'));
+	const districtField = $derived(form.fields.find((f) => f.field_type === 'district'));
+	const hasStateField = $derived(!!stateField);
+	const hasDistrictField = $derived(!!districtField);
 
 	function handleFieldChange(fieldName: string, value: unknown) {
 		formResponses[fieldName] = value;
@@ -97,11 +99,11 @@
 						value={formResponses[field.name]}
 						error={validationErrors[field.name]}
 						{locations}
-						selectedState={hasStateField
-							? (formResponses['state'] as number | undefined)
+						selectedState={stateField
+							? (formResponses[stateField.name] as number | undefined)
 							: undefined}
-						selectedDistrict={hasDistrictField
-							? (formResponses['district'] as number | undefined)
+						selectedDistrict={districtField
+							? (formResponses[districtField.name] as number | undefined)
 							: undefined}
 						{hasStateField}
 						{hasDistrictField}
