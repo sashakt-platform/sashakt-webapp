@@ -23,6 +23,7 @@
 	let abortController: AbortController | null = null;
 	let selectedValue = $state<string>(value !== undefined && value !== null ? String(value) : '');
 	let inputValue = $state('');
+	let needsNameResolution = $state(value !== undefined && value !== null);
 
 	async function search(query: string) {
 		if (abortController) abortController.abort();
@@ -56,9 +57,9 @@
 		debounceTimer = setTimeout(() => search(query), 300);
 	}
 
-	// Load initial results when dropdown opens
+	// Load initial results when dropdown opens or when a pre-populated value needs name resolution
 	$effect(() => {
-		if (open && !hasLoaded) {
+		if ((open || needsNameResolution) && !hasLoaded) {
 			hasLoaded = true;
 			search('');
 		}
@@ -68,6 +69,20 @@
 	$effect(() => {
 		if (value !== undefined && value !== null) {
 			selectedValue = String(value);
+		} else {
+			selectedValue = '';
+			inputValue = '';
+		}
+	});
+
+	// Resolve display name when results become available for a pre-populated value
+	$effect(() => {
+		if (needsNameResolution && searchResults.length > 0 && selectedValue) {
+			const match = searchResults.find((r) => String(r.id) === selectedValue);
+			if (match) {
+				inputValue = match.name;
+			}
+			needsNameResolution = false;
 		}
 	});
 
