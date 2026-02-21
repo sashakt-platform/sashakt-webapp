@@ -9,21 +9,22 @@
 	import RadioField from './fields/RadioField.svelte';
 	import CheckboxField from './fields/CheckboxField.svelte';
 	import MultiSelectField from './fields/MultiSelectField.svelte';
-	import EntityField from './fields/EntityField.svelte';
+	import SearchableEntityField from './fields/SearchableEntityField.svelte';
 	import LocationField from './fields/LocationField.svelte';
+	import SearchableLocationField from './fields/SearchableLocationField.svelte';
 
 	interface Props {
 		field: TFormField;
 		value: unknown;
 		error?: string;
-		entities?: Array<{ id: number; label: string }>;
 		locations?: {
 			states?: Array<{ id: number; name: string }>;
-			districts?: Array<{ id: number; name: string; state_id: number }>;
-			blocks?: Array<{ id: number; name: string; district_id: number }>;
 		};
 		selectedState?: number;
 		selectedDistrict?: number;
+		hasStateField?: boolean;
+		hasDistrictField?: boolean;
+		testId: number;
 		onchange: (value: unknown) => void;
 	}
 
@@ -31,10 +32,12 @@
 		field,
 		value,
 		error,
-		entities = [],
 		locations = {},
 		selectedState,
 		selectedDistrict,
+		hasStateField = false,
+		hasDistrictField = false,
+		testId,
 		onchange
 	}: Props = $props();
 </script>
@@ -68,9 +71,27 @@
 	{:else if field.field_type === 'multi_select'}
 		<MultiSelectField {field} {value} {onchange} />
 	{:else if field.field_type === 'entity'}
-		<EntityField {field} {value} {onchange} {entities} />
-	{:else if field.field_type === 'state' || field.field_type === 'district' || field.field_type === 'block'}
-		<LocationField {field} {value} {onchange} {locations} {selectedState} {selectedDistrict} />
+		<SearchableEntityField {field} {value} {onchange} {testId} />
+	{:else if field.field_type === 'state'}
+		<LocationField {field} {value} {onchange} {locations} />
+	{:else if field.field_type === 'district'}
+		<SearchableLocationField
+			{field}
+			{value}
+			{onchange}
+			parentId={hasStateField ? selectedState : undefined}
+			parentFieldName={hasStateField ? 'state' : ''}
+			{testId}
+		/>
+	{:else if field.field_type === 'block'}
+		<SearchableLocationField
+			{field}
+			{value}
+			{onchange}
+			parentId={hasDistrictField ? selectedDistrict : undefined}
+			parentFieldName={hasDistrictField ? 'district' : ''}
+			{testId}
+		/>
 	{/if}
 
 	{#if field.help_text}

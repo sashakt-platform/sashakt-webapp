@@ -27,7 +27,8 @@ describe('Test Page', () => {
 
 	const baseData = {
 		testData: testDataWithNoCompletion,
-		timeToBegin: 300
+		timeToBegin: 300,
+		locations: null
 	};
 
 	it('should show loading when candidate is undefined', () => {

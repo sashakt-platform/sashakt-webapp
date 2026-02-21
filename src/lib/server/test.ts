@@ -5,33 +5,18 @@ export type TState = {
 	name: string;
 };
 
-export type TDistrict = {
-	id: number;
-	name: string;
-	state_id: number;
-};
-
-export type TBlock = {
-	id: number;
-	name: string;
-	district_id: number;
-};
-
-export type TLocations = {
-	states: TState[];
-	districts: TDistrict[];
-	blocks: TBlock[];
-};
-
 /**
  * Fetches all states from the backend
  */
-export const getStates = async (): Promise<TState[]> => {
+export const getStates = async (testId: number): Promise<TState[]> => {
 	try {
-		const response = await fetch(`${BACKEND_URL}/location/state/?page=1&size=100`, {
-			method: 'GET',
-			headers: { accept: 'application/json' }
-		});
+		const response = await fetch(
+			`${BACKEND_URL}/location/state/?test_id=${testId}&page=1&size=100`,
+			{
+				method: 'GET',
+				headers: { accept: 'application/json' }
+			}
+		);
 
 		if (!response.ok) {
 			console.error('Failed to fetch states:', response.status, response.statusText);
@@ -44,61 +29,6 @@ export const getStates = async (): Promise<TState[]> => {
 		console.error('Error fetching states:', error);
 		return [];
 	}
-};
-
-/**
- * Fetches all districts from the backend
- */
-export const getDistricts = async (): Promise<TDistrict[]> => {
-	try {
-		const response = await fetch(`${BACKEND_URL}/location/district/?page=1&size=100`, {
-			method: 'GET',
-			headers: { accept: 'application/json' }
-		});
-
-		if (!response.ok) {
-			console.error('Failed to fetch districts:', response.status, response.statusText);
-			return [];
-		}
-
-		const data = await response.json();
-		return data.items || [];
-	} catch (error) {
-		console.error('Error fetching districts:', error);
-		return [];
-	}
-};
-
-/**
- * Fetches all blocks from the backend
- */
-export const getBlocks = async (): Promise<TBlock[]> => {
-	try {
-		const response = await fetch(`${BACKEND_URL}/location/block/?page=1&size=100`, {
-			method: 'GET',
-			headers: { accept: 'application/json' }
-		});
-
-		if (!response.ok) {
-			console.error('Failed to fetch blocks:', response.status, response.statusText);
-			return [];
-		}
-
-		const data = await response.json();
-		return data.items || [];
-	} catch (error) {
-		console.error('Error fetching blocks:', error);
-		return [];
-	}
-};
-
-/**
- * Fetches all locations (states, districts, blocks) in parallel
- */
-export const getLocations = async (): Promise<TLocations> => {
-	const [states, districts, blocks] = await Promise.all([getStates(), getDistricts(), getBlocks()]);
-
-	return { states, districts, blocks };
 };
 
 export const getTestDetailsBySlug = async (slug: string) => {

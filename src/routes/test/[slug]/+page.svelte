@@ -33,7 +33,6 @@
 		<DynamicForm
 			form={data.testData.form}
 			testDetails={data.testData}
-			entities={data.testData.profile_list || []}
 			locations={data.locations || {}}
 		/>
 	{:else if !data.candidate && showProfileForm && data.testData.candidate_profile}

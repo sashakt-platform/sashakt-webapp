@@ -11,16 +11,13 @@
 
 	interface Props {
 		form: TForm;
-		testDetails: { name: string };
-		entities?: Array<{ id: number; label: string }>;
+		testDetails: { id: number; name: string };
 		locations?: {
 			states?: Array<{ id: number; name: string }>;
-			districts?: Array<{ id: number; name: string; state_id: number }>;
-			blocks?: Array<{ id: number; name: string; district_id: number }>;
 		};
 	}
 
-	let { form, testDetails, entities = [], locations = {} }: Props = $props();
+	let { form, testDetails, locations = {} }: Props = $props();
 
 	let formResponses = $state<TFormResponses>({});
 	let isSubmitting = $state(false);
@@ -29,6 +26,10 @@
 
 	// Sort fields by order
 	const sortedFields = $derived([...form.fields].sort((a, b) => a.order - b.order));
+
+	// Check if form has parent location fields (for cascading dependency)
+	const hasStateField = $derived(form.fields.some((f) => f.field_type === 'state'));
+	const hasDistrictField = $derived(form.fields.some((f) => f.field_type === 'district'));
 
 	function handleFieldChange(fieldName: string, value: unknown) {
 		formResponses[fieldName] = value;
@@ -94,10 +95,16 @@
 						{field}
 						value={formResponses[field.name]}
 						error={validationErrors[field.name]}
-						{entities}
 						{locations}
-						selectedState={formResponses['state'] as number | undefined}
-						selectedDistrict={formResponses['district'] as number | undefined}
+						selectedState={hasStateField
+							? (formResponses['state'] as number | undefined)
+							: undefined}
+						selectedDistrict={hasDistrictField
+							? (formResponses['district'] as number | undefined)
+							: undefined}
+						{hasStateField}
+						{hasDistrictField}
+						testId={testDetails.id}
 						onchange={(value) => handleFieldChange(field.name, value)}
 					/>
 				{/each}

@@ -1,7 +1,7 @@
 import { BACKEND_URL } from '$env/static/private';
 import { dev } from '$app/environment';
 import { getCandidate } from '$lib/helpers/getCandidate';
-import { getTestQuestions, getTimeLeft, getLocations, type TLocations } from '$lib/server/test';
+import { getTestQuestions, getTimeLeft, getStates, type TState } from '$lib/server/test';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -19,13 +19,14 @@ function hasLocationFields(testData: {
 export const load: PageServerLoad = async ({ locals, cookies }) => {
 	const candidate = getCandidate(cookies);
 
-	// Fetch locations if form has location fields
-	let locations: TLocations | null = null;
+	// Fetch states if form has location fields (districts/blocks are fetched on-demand via search)
+	let locations: { states: TState[] } | null = null;
 	if (hasLocationFields(locals.testData)) {
 		try {
-			locations = await getLocations();
+			const states = await getStates(locals.testData.id);
+			locations = { states };
 		} catch (error) {
-			console.error('Error fetching locations:', error);
+			console.error('Error fetching states:', error);
 		}
 	}
 
