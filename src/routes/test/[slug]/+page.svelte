@@ -1,7 +1,6 @@
 <script lang="ts">
 	import ViewFeedback from '$lib/components/ViewFeedback.svelte';
 	import LandingPage from '$lib/components/LandingPage.svelte';
-	import CandidateProfile from '$lib/components/CandidateProfile.svelte';
 	import { DynamicForm } from '$lib/components/form';
 	import Question from '$lib/components/Question.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
@@ -21,7 +20,7 @@
 	});
 
 	// Check if test has a dynamic form
-	const hasDynamicForm = $derived(data.testData?.candidate_profile && data.testData?.form);
+	const hasDynamicForm = $derived(!!data.testData?.form);
 
 	$effect(() => {
 		form;
@@ -61,8 +60,6 @@
 			testDetails={data.testData}
 			locations={data.locations || {}}
 		/>
-	{:else if !data.candidate && showProfileForm && data.testData.candidate_profile}
-		<CandidateProfile testDetails={data.testData} />
 	{:else if data.testQuestions?.question_revisions}
 		<Question
 			testQuestions={data.testQuestions}

@@ -88,15 +88,11 @@ export const actions = {
 
 		const formData = await request.formData();
 		const deviceInfo = formData.get('deviceInfo') as string;
-		const entity = formData.get('entity') as string;
 		const formResponsesStr = formData.get('formResponses') as string;
 
 		const requestBody: {
 			test_id: number;
 			device_info: unknown;
-			candidate_profile?: {
-				entity_id: string;
-			};
 			form_responses?: Record<string, unknown>;
 		} = {
 			test_id: locals.testData.id,
@@ -129,13 +125,6 @@ export const actions = {
 					return fail(400, { error: 'Invalid form_responses JSON' });
 				}
 			}
-		}
-
-		// TODO: May be remove this later, legacy entity support
-		if (entity) {
-			requestBody.candidate_profile = {
-				entity_id: entity
-			};
 		}
 
 		try {

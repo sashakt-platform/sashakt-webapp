@@ -136,8 +136,7 @@ export const mockTestData = {
 	start_time: new Date().toISOString(),
 	start_instructions: '<p>Read all questions carefully before answering.</p>',
 	completion_message: 'Thank you for completing the test!',
-	candidate_profile: null,
-	profile_list: [],
+	form: null,
 	locale: DEFAULT_LANGUAGE,
 	show_question_palette: true,
 	show_feedback_on_completion: true
