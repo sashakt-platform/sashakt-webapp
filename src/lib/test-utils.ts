@@ -3,6 +3,7 @@
  */
 
 import { vi } from 'vitest';
+import type { RequestEvent } from '@sveltejs/kit';
 import type { TCandidate, TQuestion, TResultData, TSelection, TTestSession } from './types';
 import { init, register, waitLocale, locale } from 'svelte-i18n';
 import { languages, DEFAULT_LANGUAGE } from './utils';
@@ -135,8 +136,7 @@ export const mockTestData = {
 	start_time: new Date().toISOString(),
 	start_instructions: '<p>Read all questions carefully before answering.</p>',
 	completion_message: 'Thank you for completing the test!',
-	candidate_profile: null,
-	profile_list: [],
+	form: null,
 	locale: DEFAULT_LANGUAGE,
 	show_question_palette: true,
 	show_feedback_on_completion: true
@@ -194,6 +194,9 @@ export const createMockResponse = (data: any, options: { ok?: boolean; status?: 
 export const createMockFetchError = (message = 'Network error') => {
 	return () => Promise.reject(new Error(message));
 };
+
+// Helper to create a typed mock RequestEvent with just a URL (for API route handler tests)
+export const createRequestEvent = (url: URL) => ({ url }) as Partial<RequestEvent> as RequestEvent;
 
 export function initializeI18nForTests() {
 	// Register locales

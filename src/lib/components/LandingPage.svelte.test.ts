@@ -26,7 +26,7 @@ const defaultTestDetails = {
 	time_limit: 60,
 	question_pagination: 5,
 	start_instructions: '<p>Please read carefully before starting.</p>',
-	candidate_profile: null
+	form: null
 };
 describe('LandingPage', () => {
 	it('should render test name', () => {
