@@ -19,10 +19,25 @@ export function validateField(field: TFormField, value: unknown): string | null 
 		return null;
 	}
 
+	const stringValue = String(value);
+
+	// Email/phone format checks run based on field_type, independent of the validation object
+	if (field.field_type === 'email') {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(stringValue)) {
+			return field.validation?.custom_error_message || 'Please enter a valid email address';
+		}
+	}
+
+	if (field.field_type === 'phone') {
+		const phoneRegex = /^[0-9+\-\s()]{7,20}$/;
+		if (!phoneRegex.test(stringValue)) {
+			return field.validation?.custom_error_message || 'Please enter a valid phone number';
+		}
+	}
+
 	const validation = field.validation;
 	if (!validation) return null;
-
-	const stringValue = String(value);
 
 	// String length validation
 	if (validation.min_length !== null && validation.min_length !== undefined) {
@@ -76,22 +91,6 @@ export function validateField(field: TFormField, value: unknown): string | null 
 			}
 		} catch {
 			// Invalid regex pattern, skip validation
-		}
-	}
-
-	// Email validation for email field type
-	if (field.field_type === 'email') {
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!emailRegex.test(stringValue)) {
-			return validation.custom_error_message || 'Please enter a valid email address';
-		}
-	}
-
-	// Phone validation for phone field type
-	if (field.field_type === 'phone') {
-		const phoneRegex = /^[0-9+\-\s()]{7,20}$/;
-		if (!phoneRegex.test(stringValue)) {
-			return validation.custom_error_message || 'Please enter a valid phone number';
 		}
 	}
 

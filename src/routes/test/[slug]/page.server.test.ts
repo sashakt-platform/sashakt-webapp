@@ -6,7 +6,7 @@ import {
 	mockTestData
 } from '$lib/test-utils';
 import { getCandidate } from '$lib/helpers/getCandidate';
-import { getTestQuestions, getTimeLeft, getStates } from '$lib/server/test';
+import { getTestQuestions, getTimeLeft } from '$lib/server/test';
 import { load, actions } from './+page.server';
 
 // Mock environment variables
