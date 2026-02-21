@@ -1,10 +1,13 @@
 <script lang="ts">
-	import { Combobox } from 'bits-ui';
+	import * as Popover from '$lib/components/ui/popover/index.js';
+	import * as Command from '$lib/components/ui/command/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import type { TFormField } from '$lib/types';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { t } from 'svelte-i18n';
 	import CheckIcon from '@lucide/svelte/icons/check';
-	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
+	import { cn } from '$lib/utils.js';
 
 	interface Props {
 		field: TFormField;
@@ -24,6 +27,12 @@
 	let selectedValue = $state<string>(value !== undefined && value !== null ? String(value) : '');
 	let inputValue = $state('');
 	let needsNameResolution = $state(value !== undefined && value !== null);
+
+	const selectedLabel = $derived.by(() => {
+		if (!selectedValue) return '';
+		const match = searchResults.find((r) => String(r.id) === selectedValue);
+		return match?.name ?? '';
+	});
 
 	async function search(query: string) {
 		if (abortController) abortController.abort();
@@ -65,13 +74,19 @@
 		}
 	});
 
+	// Reset search input when popover opens
+	$effect(() => {
+		if (open) {
+			inputValue = '';
+		}
+	});
+
 	// Sync external value changes
 	$effect(() => {
 		if (value !== undefined && value !== null) {
 			selectedValue = String(value);
 		} else {
 			selectedValue = '';
-			inputValue = '';
 		}
 	});
 
@@ -80,7 +95,7 @@
 		if (needsNameResolution && searchResults.length > 0 && selectedValue) {
 			const match = searchResults.find((r) => String(r.id) === selectedValue);
 			if (match) {
-				inputValue = match.name;
+				// name will be shown via selectedLabel derived
 			}
 			needsNameResolution = false;
 		}
@@ -91,69 +106,65 @@
 		inputValue = target.value;
 		debouncedSearch(target.value);
 	}
+
+	function handleSelect(resultId: number) {
+		selectedValue = String(resultId);
+		onchange(resultId);
+		open = false;
+	}
 </script>
 
-<Combobox.Root
-	type="single"
-	bind:value={selectedValue}
-	bind:open
-	{inputValue}
-	onValueChange={(v) => {
-		if (v !== undefined && v !== '') {
-			onchange(Number(v));
-			const match = searchResults.find((r) => String(r.id) === v);
-			if (match) {
-				inputValue = match.name;
-			}
-		}
-	}}
->
-	<div class="relative">
-		<Combobox.Input
-			placeholder={field.placeholder ?? $t('Type to search...')}
-			class="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border bg-transparent px-3 py-2 pr-8 text-sm shadow-xs outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
-			oninput={handleInput}
-		/>
-		<div class="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2">
-			{#if isLoading}
-				<Spinner class="size-4" />
-			{:else}
-				<ChevronDownIcon class="size-4 opacity-50" />
-			{/if}
-		</div>
-	</div>
-
-	<Combobox.Portal>
-		<Combobox.Content
-			class="bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 relative z-50 max-h-60 min-w-[8rem] overflow-y-auto rounded-md border p-1 shadow-md"
-			sideOffset={4}
-		>
-			{#if isLoading && searchResults.length === 0}
-				<div class="flex items-center justify-center p-4">
-					<Spinner class="size-4" />
-				</div>
-			{:else if searchResults.length === 0}
-				<div class="text-muted-foreground p-2 text-sm">
-					{$t('No results found')}
-				</div>
-			{:else}
-				{#each searchResults as result (result.id)}
-					<Combobox.Item
-						value={String(result.id)}
-						label={result.name}
-						class="data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-					>
-						{#snippet children({ selected })}
-							<span class="absolute right-2 flex size-3.5 items-center justify-center">
-								{#if selected}
-									<CheckIcon class="size-4" />
-								{/if}
-							</span>
-							{result.name}
-						{/snippet}
-					</Combobox.Item>
-				{/each}
-			{/if}
-		</Combobox.Content>
-	</Combobox.Portal>
-</Combobox.Root>
+<Popover.Root bind:open>
+	<Popover.Trigger>
+		{#snippet child({ props })}
+			<Button
+				{...props}
+				variant="outline"
+				class="w-full justify-between font-normal"
+				role="combobox"
+				aria-expanded={open}
+			>
+				<span class="truncate">
+					{selectedLabel || field.placeholder || $t('Type to search...')}
+				</span>
+				{#if isLoading}
+					<Spinner class="ml-2 size-4 shrink-0" />
+				{:else}
+					<ChevronsUpDownIcon class="ml-2 size-4 shrink-0 opacity-50" />
+				{/if}
+			</Button>
+		{/snippet}
+	</Popover.Trigger>
+	<Popover.Content class="w-[--bits-popover-anchor-width] p-0" align="start">
+		<Command.Root shouldFilter={false}>
+			<Command.Input
+				placeholder={field.placeholder ?? $t('Type to search...')}
+				bind:value={inputValue}
+				oninput={handleInput}
+			/>
+			<Command.List>
+				{#if isLoading && searchResults.length === 0}
+					<div class="flex items-center justify-center p-4">
+						<Spinner class="size-4" />
+					</div>
+				{:else if searchResults.length === 0}
+					<Command.Empty>{$t('No results found')}</Command.Empty>
+				{:else}
+					<Command.Group>
+						{#each searchResults as result (result.id)}
+							<Command.Item value={String(result.id)} onSelect={() => handleSelect(result.id)}>
+								<CheckIcon
+									class={cn(
+										'mr-2 size-4',
+										selectedValue !== String(result.id) && 'text-transparent'
+									)}
+								/>
+								{result.name}
+							</Command.Item>
+						{/each}
+					</Command.Group>
+				{/if}
+			</Command.List>
+		</Command.Root>
+	</Popover.Content>
+</Popover.Root>
