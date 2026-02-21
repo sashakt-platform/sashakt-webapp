@@ -8,7 +8,7 @@
 	"questions": "questions",
 	"Total duration": "Total duration",
 	"minutes": "minutes",
-	"N\/A": "N\/A",
+	"N/A": "N/A",
 	"Questions per page": "Questions per page",
 	"question(s)": "question(s)",
 	"All questions": "All questions",
@@ -78,6 +78,16 @@
 	"View Feedback": "View Result",
 	"Back to Results": "Back to Results",
 	"No feedback available. You did not attempt any questions.": "No feedback available. You did not attempt any questions.",
-	"Question not found for feedback #{number}": "Question not found for feedback #{number}"
+	"Question not found for feedback #{number}": "Question not found for feedback #{number}",
+	"Type your answer here...": "Type your answer here...",
+	"Saved": "Saved",
+	"Update Answer": "Update Answer",
+	"Save Answer": "Save Answer",
+	"characters remaining": "characters remaining",
+	"Character limit reached": "Character limit reached",
+	"Select an option": "Select an option",
+	"Type to search...": "Type to search...",
+	"No results found": "No results found",
+	"Please select a {parent} first": "Please select a {parent} first"
 }
 
