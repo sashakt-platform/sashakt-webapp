@@ -2,6 +2,7 @@ import { BACKEND_URL } from '$env/static/private';
 import { dev } from '$app/environment';
 import { getCandidate } from '$lib/helpers/getCandidate';
 import { getTestQuestions, getTimeLeft, getStates, type TState } from '$lib/server/test';
+import { validateForm } from '$lib/components/form/validation';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -106,7 +107,21 @@ export const actions = {
 		if (formResponsesStr) {
 			try {
 				const formResponses = JSON.parse(formResponsesStr);
-				if (Object.keys(formResponses).length > 0) {
+				// Ensure parsed value is a plain object
+				if (
+					typeof formResponses === 'object' &&
+					formResponses !== null &&
+					!Array.isArray(formResponses) &&
+					Object.keys(formResponses).length > 0
+				) {
+					// Run server-side validation if form fields are available
+					const formFields = locals.testData.form?.fields;
+					if (formFields && formFields.length > 0) {
+						const errors = validateForm(formFields, formResponses);
+						if (Object.keys(errors).length > 0) {
+							return fail(400, { error: 'Please fix the form errors and try again.' });
+						}
+					}
 					requestBody.form_responses = formResponses;
 				}
 			} catch {
