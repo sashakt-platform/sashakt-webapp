@@ -40,7 +40,9 @@
 				<Checkbox
 					id={`${field.name}-${option.id}`}
 					checked={isSelected(option.value)}
-					onCheckedChange={(checked) => handleToggle(option.value, checked)}
+					onCheckedChange={(checked) => {
+						if (typeof checked === 'boolean') handleToggle(option.value, checked);
+					}}
 				/>
 				<Label for={`${field.name}-${option.id}`} class="cursor-pointer font-normal">
 					{option.label}

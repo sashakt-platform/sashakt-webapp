@@ -48,9 +48,10 @@
 	}
 
 	// Custom enhance handler with validation
-	function formEnhance() {
+	function formEnhance({ cancel }: { cancel: () => void }) {
 		// Validate before submitting
 		if (!validateBeforeSubmit()) {
+			cancel();
 			return;
 		}
 
