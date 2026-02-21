@@ -18,7 +18,21 @@
 
 	let { field, value, onchange, testId }: Props = $props();
 
-	let searchResults = $state<Array<{ id: number; name: string }>>([]);
+	type EntityResult = {
+		id: number;
+		name: string;
+		state?: { name: string } | null;
+		district?: { name: string } | null;
+		block?: { name: string } | null;
+	};
+
+	let searchResults = $state<Array<EntityResult>>([]);
+
+	function displayLabel(result: EntityResult): string {
+		const location = result.block?.name ?? result.district?.name ?? result.state?.name;
+		return location ? `${result.name} (${location})` : result.name;
+	}
+
 	let isLoading = $state(false);
 	let open = $state(false);
 	let hasLoaded = $state(false);
@@ -31,7 +45,7 @@
 	const selectedLabel = $derived.by(() => {
 		if (!selectedValue) return '';
 		const match = searchResults.find((r) => String(r.id) === selectedValue);
-		return match?.name ?? '';
+		return match ? displayLabel(match) : '';
 	});
 
 	async function search(query: string) {
@@ -159,7 +173,7 @@
 										selectedValue !== String(result.id) && 'text-transparent'
 									)}
 								/>
-								{result.name}
+								{displayLabel(result)}
 							</Command.Item>
 						{/each}
 					</Command.Group>
