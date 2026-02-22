@@ -2,6 +2,7 @@
 	import LandingPage from '$lib/components/LandingPage.svelte';
 	import CandidateProfile from '$lib/components/CandidateProfile.svelte';
 	import Question from '$lib/components/Question.svelte';
+	import OmrSheet from '$lib/components/OmrSheet.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
 	import type { PageProps } from './$types';
 	import { locale } from 'svelte-i18n';
@@ -28,11 +29,19 @@
 	{:else if !data.candidate && showProfileForm}
 		<CandidateProfile testDetails={data.testData} />
 	{:else if data.testQuestions?.question_revisions}
-		<Question
-			testQuestions={data.testQuestions}
-			candidate={data.candidate}
-			testDetails={data.testData}
-		/>
+		{#if data.candidate.use_omr === 'true'}
+			<OmrSheet
+				candidate={data.candidate}
+				testDetails={data.testData}
+				testQuestions={data.testQuestions}
+			/>
+		{:else}
+			<Question
+				testQuestions={data.testQuestions}
+				candidate={data.candidate}
+				testDetails={data.testData}
+			/>
+		{/if}
 	{:else if data.testQuestions === null && data.timeLeft == 0}
 		<p>{$t('Sorry, you have exceeded the time limit for this test.')}</p>
 	{:else}
