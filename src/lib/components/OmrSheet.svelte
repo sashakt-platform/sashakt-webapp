@@ -138,7 +138,7 @@
 <div class="min-h-screen bg-blue-50 p-4 pb-20 lg:p-6 lg:pb-20">
 	<h1 class="mb-6 text-center text-xl font-semibold text-slate-800">{$t('OMR Sheet')}</h1>
 
-	<div class="mx-auto flex max-w-4xl flex-col gap-5">
+	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
 		{#each questions as question, i}
 			{@const isMultiple = question.question_type === 'multiple-select'}
 			<div
