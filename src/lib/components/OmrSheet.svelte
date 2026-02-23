@@ -196,8 +196,8 @@
 
 	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
 		{#each questions as question, i}
-			{@const isMultiple = question.question_type === 'multiple-select'}
 			{@const isSubjective = question.question_type === 'subjective'}
+			{@const isMultiple = !isSubjective && question.question_type !== 'single-choice'}
 			<div
 				class="flex items-center gap-6 sm:gap-10 {submittingQuestion === question.id
 					? 'pointer-events-none opacity-60'
@@ -268,7 +268,7 @@
 								<Checkbox
 									id={uid}
 									value={option.id.toString()}
-									class="ml-2 sm:ml-3"
+									class="ml-2 data-[state=checked]:bg-transparent data-[state=checked]:text-current sm:ml-3"
 									checked={isSelected(question.id, option.id)}
 									onCheckedChange={async (check) => {
 										await handleSelect(question, option.id, check === false);
