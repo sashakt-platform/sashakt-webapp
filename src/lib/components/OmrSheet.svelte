@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
+	import Check from '@lucide/svelte/icons/check';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -15,7 +16,7 @@
 
 	let {
 		candidate,
-		testDetails,
+		testDetails: _testDetails,
 		testQuestions
 	}: { candidate: TCandidate; testDetails: any; testQuestions: any } = $props();
 
@@ -50,21 +51,36 @@
 		setDialogOpen: (open) => (submitDialogOpen = open)
 	});
 
+	const getExistingText = (questionId: number): string => {
+		const sel = selections.find((s) => s.question_revision_id === questionId);
+		return typeof sel?.response === 'string' ? sel.response : '';
+	};
+
+	let subjectiveTexts = $state<Record<number, string>>(
+		Object.fromEntries(
+			questions
+				.filter((q) => q.question_type === 'subjective')
+				.map((q) => [q.id, getExistingText(q.id)])
+		)
+	);
+	let lastSavedTexts = $state<Record<number, string>>({ ...subjectiveTexts });
+
 	const getSelectedOptionIds = (questionId: number): number[] => {
 		const sel = selections.find((s) => s.question_revision_id === questionId);
-		return sel?.response ?? [];
+		const resp = sel?.response;
+		return Array.isArray(resp) ? resp : [];
 	};
 
 	const isSelected = (questionId: number, optionId: number) => {
 		return getSelectedOptionIds(questionId).includes(optionId);
 	};
 
-	const submitAnswer = async (questionId: number, response: number[], bookmarked?: boolean) => {
+	const submitAnswer = async (questionId: number, response: number[] | string) => {
+		const hasResponse = Array.isArray(response) ? response.length > 0 : response.trim().length > 0;
 		const data = {
 			question_revision_id: questionId,
-			response: response.length > 0 ? response : null,
-			candidate,
-			bookmarked: bookmarked ?? false
+			response: hasResponse ? response : null,
+			candidate
 		};
 
 		const res = await fetch(`/test/${page.params.slug}/api/submit-answer`, {
@@ -95,7 +111,8 @@
 					response: newResponse,
 					visited: true,
 					time_spent: 0,
-					bookmarked: false
+					bookmarked: false,
+					is_reviewed: false
 				}
 			];
 		}
@@ -133,6 +150,45 @@
 			submittingQuestion = null;
 		}
 	};
+
+	const handleSubjectiveSubmit = async (question: TQuestion) => {
+		if (submittingQuestion === question.id) return;
+
+		const text = subjectiveTexts[question.id] ?? '';
+		const existing = selections.find((s) => s.question_revision_id === question.id);
+
+		const previousSelections = JSON.parse(JSON.stringify(selections));
+		submittingQuestion = question.id;
+
+		if (existing) {
+			selections = selections.map((s) =>
+				s.question_revision_id === question.id ? { ...s, response: text } : s
+			);
+		} else {
+			selections = [
+				...selections,
+				{
+					question_revision_id: question.id,
+					response: text,
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+		}
+		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
+
+		try {
+			await submitAnswer(question.id, text);
+			lastSavedTexts[question.id] = text;
+		} catch {
+			selections = previousSelections;
+			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
+		} finally {
+			submittingQuestion = null;
+		}
+	};
 </script>
 
 <div class="min-h-screen bg-blue-50 p-4 pb-20 lg:p-6 lg:pb-20">
@@ -141,6 +197,7 @@
 	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
 		{#each questions as question, i}
 			{@const isMultiple = question.question_type === 'multiple-select'}
+			{@const isSubjective = question.question_type === 'subjective'}
 			<div
 				class="flex items-center gap-6 sm:gap-10 {submittingQuestion === question.id
 					? 'pointer-events-none opacity-60'
@@ -153,7 +210,48 @@
 					{/if}
 				</div>
 
-				{#if isMultiple}
+				{#if isSubjective}
+					{@const currentText = subjectiveTexts[question.id] ?? ''}
+					{@const savedText = lastSavedTexts[question.id] ?? ''}
+					{@const hasUnsavedChanges = currentText.trim() !== savedText.trim()}
+					{@const hasSavedBefore = savedText.trim().length > 0}
+					<div class="flex w-full flex-col gap-2">
+						<textarea
+							class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+							placeholder={$t('Type your answer here...')}
+							bind:value={subjectiveTexts[question.id]}
+							maxlength={question.subjective_answer_limit || undefined}
+						></textarea>
+						<div class="flex items-center justify-between">
+							<Button
+								size="sm"
+								onclick={() => handleSubjectiveSubmit(question)}
+								disabled={submittingQuestion === question.id ||
+									!currentText.trim() ||
+									!hasUnsavedChanges}
+							>
+								{#if !hasUnsavedChanges && hasSavedBefore}
+									<Check class="mr-1 h-4 w-4" />{$t('Saved')}
+								{:else if hasSavedBefore}
+									{$t('Update Answer')}
+								{:else}
+									{$t('Save Answer')}
+								{/if}
+							</Button>
+							{#if question.subjective_answer_limit}
+								{@const remaining = question.subjective_answer_limit - currentText.length}
+								<span
+									class="text-sm {remaining <= 0
+										? 'font-medium text-red-500'
+										: 'text-muted-foreground'}"
+								>
+									{remaining}
+									{$t('characters remaining')}
+								</span>
+							{/if}
+						</div>
+					</div>
+				{:else if isMultiple}
 					<div class="grid grid-cols-4 gap-2 sm:gap-3">
 						{#each question.options as option (option.id)}
 							{@const uid = `omr-${question.id}-${option.key}`}
@@ -206,7 +304,7 @@
 					</RadioGroup.Root>
 				{/if}
 
-				{#if submittingQuestion === question.id}
+				{#if submittingQuestion === question.id && !isSubjective}
 					<Spinner />
 				{/if}
 			</div>
