@@ -5,10 +5,12 @@ export type TCandidate = {
 
 export type TSelection = {
 	question_revision_id: number;
-	response: number[];
+	response: number[] | string;
 	visited: boolean;
 	time_spent: number;
 	bookmarked: boolean;
+	is_reviewed: boolean;
+	correct_answer?: number[];
 };
 
 export type TTestSession = {
@@ -25,7 +27,8 @@ export type TOptions = {
 
 enum question_type_enum {
 	SINGLE = 'single-choice',
-	MULTIPLE = 'multiple-select'
+	MULTIPLE = 'multiple-select',
+	SUBJECTIVE = 'subjective'
 }
 
 export type TMarks = {
@@ -55,4 +58,10 @@ export type TResultData = {
 	marks_maximum: number | null;
 	total_questions: number;
 	certificate_download_url?: string;
+};
+
+export type TFeedback = {
+	question_revision_id: number;
+	submitted_answer: number[];
+	correct_answer: number[];
 };
