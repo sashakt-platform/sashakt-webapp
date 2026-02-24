@@ -8,7 +8,7 @@
 	"questions": "प्रश्न",
 	"Total duration": "कुल अवधि",
 	"minutes": "मिनट",
-	"N\/A": "लागू नहीं",
+	"N/A": "लागू नहीं",
 	"Questions per page": "प्रति पृष्ठ प्रश्न",
 	"question(s)": "प्रश्न",
 	"All questions": "सभी प्रश्न",
@@ -78,6 +78,15 @@
 	"View Feedback": "परिणाम देखें",
 	"Back to Results": "परिणामों पर वापस जाएं",
 	"No feedback available. You did not attempt any questions.": "कोई प्रतिक्रिया उपलब्ध नहीं है। आपने किसी भी प्रश्न का प्रयास नहीं किया।",
-	"Question not found for feedback #{number}": "प्रतिक्रिया #{number} के लिए प्रश्न नहीं मिला"
+	"Question not found for feedback #{number}": "प्रतिक्रिया #{number} के लिए प्रश्न नहीं मिला",
+	"Type your answer here...": "",
+	"Saved": "",
+	"Update Answer": "",
+	"Save Answer": "",
+	"characters remaining": "",
+	"Character limit reached": "",
+	"Select an option": "",
+	"Type to search...": "",
+	"No results found": "",
+	"Please select a {parent} first": ""
 }
-

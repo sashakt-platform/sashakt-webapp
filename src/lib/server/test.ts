@@ -1,5 +1,36 @@
 import { BACKEND_URL } from '$env/static/private';
 
+export type TState = {
+	id: number;
+	name: string;
+};
+
+/**
+ * Fetches all states from the backend
+ */
+export const getStates = async (testId: number): Promise<TState[]> => {
+	try {
+		const response = await fetch(
+			`${BACKEND_URL}/location/state/?test_id=${testId}&page=1&size=100`,
+			{
+				method: 'GET',
+				headers: { accept: 'application/json' }
+			}
+		);
+
+		if (!response.ok) {
+			console.error('Failed to fetch states:', response.status, response.statusText);
+			return [];
+		}
+
+		const data = await response.json();
+		return data.items || [];
+	} catch (error) {
+		console.error('Error fetching states:', error);
+		return [];
+	}
+};
+
 export const getTestDetailsBySlug = async (slug: string) => {
 	const apiEndpoint = `${BACKEND_URL}/test/public/${slug}`;
 

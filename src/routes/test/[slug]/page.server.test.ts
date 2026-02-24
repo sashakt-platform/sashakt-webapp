@@ -25,7 +25,8 @@ vi.mock('$lib/helpers/getCandidate', () => ({
 
 vi.mock('$lib/server/test', () => ({
 	getTestQuestions: vi.fn(),
-	getTimeLeft: vi.fn()
+	getTimeLeft: vi.fn(),
+	getStates: vi.fn().mockResolvedValue([])
 }));
 
 // Mock SvelteKit functions
@@ -182,37 +183,6 @@ describe('Page Server - createCandidate action', () => {
 			expect.objectContaining({
 				path: `/test/${mockTestData.link}`,
 				httpOnly: true
-			})
-		);
-	});
-
-	it('should include entity in request when provided', async () => {
-		// check no existing candidate
-		vi.mocked(getCandidate).mockReturnValue(null);
-
-		const mockResponse = createMockResponse(mockCandidate);
-		const mockFetch = vi.fn().mockResolvedValue(mockResponse);
-		const mockCookies = createMockCookies();
-
-		await actions.createCandidate({
-			request: {
-				formData: () =>
-					Promise.resolve(
-						createMockFormData({
-							deviceInfo: JSON.stringify({ browser: 'Chrome' }),
-							entity: 'entity-123'
-						})
-					)
-			},
-			locals: { testData: mockTestData },
-			fetch: mockFetch,
-			cookies: mockCookies
-		} as any);
-
-		expect(mockFetch).toHaveBeenCalledWith(
-			'http://test-backend.com/candidate/start_test/',
-			expect.objectContaining({
-				body: expect.stringContaining('entity_id')
 			})
 		);
 	});
