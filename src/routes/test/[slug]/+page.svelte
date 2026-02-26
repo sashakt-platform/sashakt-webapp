@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ViewFeedback from '$lib/components/ViewFeedback.svelte';
 	import LandingPage from '$lib/components/LandingPage.svelte';
-	import CandidateProfile from '$lib/components/CandidateProfile.svelte';
+	import { DynamicForm } from '$lib/components/form';
 	import Question from '$lib/components/Question.svelte';
 	import OmrSheet from '$lib/components/OmrSheet.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
@@ -9,6 +9,7 @@
 	import { locale } from 'svelte-i18n';
 	import { t } from 'svelte-i18n';
 	import { DEFAULT_LANGUAGE } from '$lib/utils';
+	import CandidateProfile from '$lib/components/CandidateProfile.svelte';
 
 	let { data, form }: PageProps = $props();
 
@@ -19,6 +20,9 @@
 		const currentLocale = data?.testData?.locale || DEFAULT_LANGUAGE;
 		locale.set(currentLocale);
 	});
+
+	// Check if test has a dynamic form
+	const hasDynamicForm = $derived(!!data.testData?.form);
 
 	$effect(() => {
 		form;
@@ -54,6 +58,12 @@
 		<LandingPage testDetails={data.testData} bind:showProfileForm />
 	{:else if !data.candidate && showProfileForm}
 		<CandidateProfile testDetails={data.testData} />
+	{:else if !data.candidate && showProfileForm && hasDynamicForm}
+		<DynamicForm
+			form={data.testData.form}
+			testDetails={data.testData}
+			locations={data.locations || {}}
+		/>
 	{:else if data.testQuestions?.question_revisions}
 		{#if data.candidate.use_omr === 'true'}
 			<OmrSheet

@@ -38,11 +38,7 @@
 	);
 
 	const omrTriggerContent = $derived(
-		selectedOmr === 'true'
-			? $t('Yes')
-			: selectedOmr === 'false'
-				? $t('No')
-				: $t('Select OMR mode')
+		selectedOmr === 'true' ? $t('Yes') : selectedOmr === 'false' ? $t('No') : $t('Select OMR mode')
 	);
 
 	let isFormValid = $derived(

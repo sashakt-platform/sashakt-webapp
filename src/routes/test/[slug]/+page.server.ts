@@ -1,12 +1,35 @@
 import { BACKEND_URL } from '$env/static/private';
 import { dev } from '$app/environment';
 import { getCandidate } from '$lib/helpers/getCandidate';
-import { getTestQuestions, getTimeLeft } from '$lib/server/test';
+import { getTestQuestions, getTimeLeft, getStates, type TState } from '$lib/server/test';
+import { validateForm } from '$lib/components/form/validation';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
+/**
+ * Check if the form has any location fields (state, district, block)
+ */
+function hasLocationFields(testData: {
+	form?: { fields?: Array<{ field_type: string }> };
+}): boolean {
+	if (!testData?.form?.fields) return false;
+	const locationFieldTypes = ['state', 'district', 'block'];
+	return testData.form.fields.some((field) => locationFieldTypes.includes(field.field_type));
+}
+
 export const load: PageServerLoad = async ({ locals, cookies }) => {
 	const candidate = getCandidate(cookies);
+
+	// Fetch states if form has location fields (districts/blocks are fetched on-demand via search)
+	let locations: { states: TState[] } | null = null;
+	if (hasLocationFields(locals.testData)) {
+		try {
+			const states = await getStates(locals.testData.id);
+			locations = { states };
+		} catch (error) {
+			console.error('Error fetching states:', error);
+		}
+	}
 
 	if (candidate && candidate.candidate_test_id && candidate.candidate_uuid) {
 		try {
@@ -17,8 +40,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			let testQuestionsResponse = null;
 
 			if (timerResponse.time_left == null || timerResponse.time_left > 0) {
-				const useOmr =
-					locals.testData.omr === 'OPTIONAL' ? candidate.use_omr : undefined;
+				const useOmr = locals.testData.omr === 'OPTIONAL' ? candidate.use_omr : undefined;
 				testQuestionsResponse = await getTestQuestions(
 					candidate.candidate_test_id,
 					candidate.candidate_uuid,
@@ -30,7 +52,8 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 				candidate,
 				testData: locals.testData,
 				timeLeft: timerResponse.time_left,
-				testQuestions: testQuestionsResponse
+				testQuestions: testQuestionsResponse,
+				locations
 			};
 		} catch (error) {
 			console.error('Error fetching candidate data:', error);
@@ -45,7 +68,8 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 		candidate: null,
 		timeToBegin: locals.timeToBegin,
 		testData: locals.testData,
-		testQuestions: null
+		testQuestions: null,
+		locations
 	};
 };
 
@@ -66,24 +90,44 @@ export const actions = {
 
 		const formData = await request.formData();
 		const deviceInfo = formData.get('deviceInfo') as string;
-		const entity = formData.get('entity') as string;
+		const formResponsesStr = formData.get('formResponses') as string;
 		const omrMode = formData.get('omrMode') as string;
 
 		const requestBody: {
 			test_id: number;
 			device_info: unknown;
-			candidate_profile?: {
-				entity_id: string;
-			};
+			form_responses?: Record<string, unknown>;
 		} = {
 			test_id: locals.testData.id,
 			device_info: deviceInfo
 		};
 
-		if (entity) {
-			requestBody.candidate_profile = {
-				entity_id: entity
-			};
+		// Handle form_responses from dynamic form
+		if (formResponsesStr) {
+			try {
+				const formResponses = JSON.parse(formResponsesStr);
+				// Ensure parsed value is a plain object
+				if (
+					typeof formResponses === 'object' &&
+					formResponses !== null &&
+					!Array.isArray(formResponses) &&
+					Object.keys(formResponses).length > 0
+				) {
+					// Run server-side validation if form fields are available
+					const formFields = locals.testData.form?.fields;
+					if (formFields && formFields.length > 0) {
+						const errors = validateForm(formFields, formResponses);
+						if (Object.keys(errors).length > 0) {
+							return fail(400, { error: 'Please fix the form errors and try again.' });
+						}
+					}
+					requestBody.form_responses = formResponses;
+				}
+			} catch {
+				if (locals.testData.form?.fields?.length) {
+					return fail(400, { error: 'Invalid form_responses JSON' });
+				}
+			}
 		}
 
 		try {

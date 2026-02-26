@@ -8,7 +8,7 @@
 	"questions": "प्रश्न",
 	"Total duration": "कुल अवधि",
 	"minutes": "मिनट",
-	"N\/A": "लागू नहीं",
+	"N/A": "लागू नहीं",
 	"Questions per page": "प्रति पृष्ठ प्रश्न",
 	"question(s)": "प्रश्न",
 	"All questions": "सभी प्रश्न",
@@ -79,6 +79,16 @@
 	"Back to Results": "परिणामों पर वापस जाएं",
 	"No feedback available. You did not attempt any questions.": "कोई प्रतिक्रिया उपलब्ध नहीं है। आपने किसी भी प्रश्न का प्रयास नहीं किया।",
 	"Question not found for feedback #{number}": "प्रतिक्रिया #{number} के लिए प्रश्न नहीं मिला",
+	"Type your answer here...": "",
+	"Saved": "",
+	"Update Answer": "",
+	"Save Answer": "",
+	"characters remaining": "",
+	"Character limit reached": "",
+	"Select an option": "",
+	"Type to search...": "",
+	"No results found": "",
+	"Please select a {parent} first": "",
 	"OMR Mode": "OMR मोड",
 	"Select OMR mode": "OMR मोड चुनें",
 	"Yes": "हाँ",
@@ -86,4 +96,3 @@
 	"OMR Sheet Preference": "OMR शीट वरीयता",
 	"Please select your preference": "कृपया अपनी वरीयता चुनें"
 }
-
