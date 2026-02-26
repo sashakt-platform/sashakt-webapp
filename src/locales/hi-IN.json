@@ -88,5 +88,10 @@
 	"Select an option": "",
 	"Type to search...": "",
 	"No results found": "",
-	"Please select a {parent} first": ""
+	"Please select a {parent} first": "",
+	"Marking Scheme": "अंक योजना",
+	"Skipped": "छोड़ा गया",
+	"Partial Marks": "आंशिक अंक",
+	"correct selected": "सही चुना",
+	"correct selected_plural": "सही चुने"
 }

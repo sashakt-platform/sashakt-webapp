@@ -361,9 +361,51 @@
 			{serialNumber} <span>{$t('OF')} {totalQuestions}</span>
 			{#if question?.marking_scheme}
 				{@const mark = question.marking_scheme.correct}
-				<span class="text-muted-foreground float-end"
-					>{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}</span
-				>
+				{@const scheme = question.marking_scheme}
+				<span class="group relative float-end cursor-help select-none">
+					<span class="text-muted-foreground">
+						{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}
+					</span>
+					<div
+						class="absolute top-full right-0 z-20 mt-1 hidden min-w-48 rounded-lg border bg-white p-3 text-xs shadow-lg group-hover:block"
+					>
+						<p class="text-foreground mb-2 font-semibold">{$t('Marking Scheme')}</p>
+						<div class="space-y-1.5">
+							<div class="flex justify-between gap-4">
+								<span class="text-muted-foreground">{$t('Correct')}</span>
+								<span class="font-medium text-green-600">+{scheme.correct}</span>
+							</div>
+							<div class="flex justify-between gap-4">
+								<span class="text-muted-foreground">{$t('Wrong')}</span>
+								<span class="font-medium {scheme.wrong < 0 ? 'text-red-600' : 'text-foreground'}"
+									>{scheme.wrong > 0 ? `+${scheme.wrong}` : scheme.wrong}</span
+								>
+							</div>
+							<div class="flex justify-between gap-4">
+								<span class="text-muted-foreground">{$t('Skipped')}</span>
+								<span class="text-foreground font-medium">{scheme.skipped}</span>
+							</div>
+						</div>
+						{#if scheme.partial?.correct_answers?.length && question.question_type === 'multi-choice'}
+							<div class="border-muted-foreground/20 mt-2.5 border-t pt-2.5">
+								<p class="text-foreground mb-1.5 font-semibold">{$t('Partial Marks')}</p>
+								<div class="space-y-1.5">
+									{#each scheme.partial.correct_answers as rule}
+										<div class="flex justify-between gap-4">
+											<span class="text-muted-foreground"
+												>{rule.num_correct_selected}
+												{rule.num_correct_selected === 1
+													? $t('correct selected')
+													: $t('correct selected_plural')}</span
+											>
+											<span class="font-medium text-green-600">+{rule.marks}</span>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+					</div>
+				</span>
 			{/if}
 			{#if isSubmitting}
 				<span class="float-end mr-2"><Spinner /></span>
