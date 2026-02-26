@@ -107,11 +107,7 @@
 			<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
 			{#if timeLeft <= 10}
 				<!-- prompt candidate to start the test when last 10 secs left before test starts -->
-				 if (showProfileForm !== undefined && (
-     page.data.testData.candidate_profile ||
-     page.data.testData.omr === 'OPTIONAL' ||
-     page.data.testData.form
- ))
+				{#if showProfileForm !== undefined && (page.data.testData.candidate_profile || page.data.testData.omr === 'OPTIONAL' || page.data.testData.form)}
 					<Button type="button" class="mt-4 w-full" onclick={() => (showProfileForm = true)}>
 						{$t('Start Test')}
 					</Button>
