@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import Bookmark from '@lucide/svelte/icons/bookmark';
 	import Check from '@lucide/svelte/icons/check';
+	import Info from '@lucide/svelte/icons/info';
 	import X from '@lucide/svelte/icons/x';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button';
@@ -363,8 +364,9 @@
 				{@const mark = question.marking_scheme.correct}
 				{@const scheme = question.marking_scheme}
 				<span class="group relative float-end cursor-help select-none">
-					<span class="text-muted-foreground">
+					<span class="text-muted-foreground inline-flex items-center gap-1">
 						{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}
+						<Info size={13} class="text-muted-foreground/60" />
 					</span>
 					<div
 						class="absolute top-full right-0 z-20 mt-1 hidden min-w-48 rounded-lg border bg-white p-3 text-xs shadow-lg group-hover:block"
@@ -402,6 +404,13 @@
 										</div>
 									{/each}
 								</div>
+								{#if scheme.wrong < 0}
+									<p class="text-muted-foreground mt-2 text-[11px] leading-snug">
+										{$t('Selecting any incorrect option accrues')}
+										<span class="font-medium text-red-600">{scheme.wrong}</span>
+										{Math.abs(scheme.wrong) === 1 ? $t('mark') : $t('marks')}
+									</p>
+								{/if}
 							</div>
 						{/if}
 					</div>
