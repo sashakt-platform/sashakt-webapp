@@ -15,9 +15,10 @@
 		locations?: {
 			states?: Array<{ id: number; name: string }>;
 		};
+		omrMode?: string;
 	}
 
-	let { form, testDetails, locations = {} }: Props = $props();
+	let { form, testDetails, locations = {}, omrMode = '' }: Props = $props();
 
 	let formResponses = $state<TFormResponses>({});
 	let isSubmitting = $state(false);
@@ -118,6 +119,9 @@
 
 				<input name="deviceInfo" value={JSON.stringify(navigator?.userAgent || '')} hidden />
 				<input name="formResponses" value={JSON.stringify(formResponses)} hidden />
+				{#if omrMode}
+					<input name="omrMode" value={omrMode} hidden />
+				{/if}
 
 				<div class="pt-4">
 					<Button type="submit" class="w-full" disabled={isSubmitting}>

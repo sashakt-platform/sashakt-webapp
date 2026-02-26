@@ -15,14 +15,16 @@
 
 	let showFeedbackView = $state(false);
 	let showProfileForm = $state(false);
+	let showDynamicForm = $state(false);
+	let candidateOmrMode = $state('');
 
 	$effect(() => {
 		const currentLocale = data?.testData?.locale || DEFAULT_LANGUAGE;
 		locale.set(currentLocale);
 	});
 
-	// Check if test has a dynamic form
 	const hasDynamicForm = $derived(!!data.testData?.form);
+	const hasOmrChoice = $derived(data.testData?.omr === 'OPTIONAL');
 
 	$effect(() => {
 		form;
@@ -35,6 +37,11 @@
 
 	function handleBackToResults() {
 		showFeedbackView = false;
+	}
+
+	function handleProfileContinue(omrMode: string) {
+		candidateOmrMode = omrMode;
+		showDynamicForm = true;
 	}
 </script>
 
@@ -56,13 +63,17 @@
 		/>
 	{:else if !data.candidate && !showProfileForm}
 		<LandingPage testDetails={data.testData} bind:showProfileForm />
-	{:else if !data.candidate && showProfileForm}
-		<CandidateProfile testDetails={data.testData} />
-	{:else if !data.candidate && showProfileForm && hasDynamicForm}
+	{:else if !data.candidate && hasOmrChoice && !showDynamicForm}
+		<CandidateProfile
+			testDetails={data.testData}
+			onContinue={hasDynamicForm ? handleProfileContinue : undefined}
+		/>
+	{:else if !data.candidate && hasDynamicForm}
 		<DynamicForm
 			form={data.testData.form}
 			testDetails={data.testData}
 			locations={data.locations || {}}
+			omrMode={candidateOmrMode}
 		/>
 	{:else if data.testQuestions?.question_revisions}
 		{#if data.candidate.use_omr === 'true'}
