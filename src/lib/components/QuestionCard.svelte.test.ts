@@ -6,6 +6,7 @@ import {
 	mockCandidate,
 	mockSingleChoiceQuestion,
 	mockMultipleChoiceQuestion,
+	mockMultiChoiceWithPartialMarks,
 	mockSubjectiveQuestion,
 	mockSubjectiveQuestionNoLimit,
 	createMockResponse
@@ -909,6 +910,183 @@ describe('QuestionCard', () => {
 			});
 
 			expect(screen.queryByRole('button', { name: /view Result/i })).not.toBeInTheDocument();
+		});
+	});
+
+	describe('Marking scheme tooltip', () => {
+		const defaultProps = {
+			serialNumber: 1,
+			candidate: mockCandidate,
+			totalQuestions: 10,
+			selectedQuestions: []
+		};
+
+		it('should render an info icon next to the marks text', () => {
+			const { container } = render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			});
+
+			const marksTrigger = container.querySelector('.cursor-help');
+			expect(marksTrigger).toBeInTheDocument();
+			expect(marksTrigger?.querySelector('svg')).toBeInTheDocument();
+		});
+
+		it('should render the tooltip with marking scheme heading', () => {
+			render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			});
+
+			expect(screen.getByText('Marking Scheme')).toBeInTheDocument();
+		});
+
+		it('should display correct marks value with + prefix', () => {
+			render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			});
+
+			expect(screen.getByText('+1')).toBeInTheDocument();
+		});
+
+		it('should display wrong marks value in red when negative', () => {
+			const { container } = render(QuestionCard, {
+				props: {
+					question: {
+						...mockSingleChoiceQuestion,
+						marking_scheme: { correct: 1, wrong: -1, skipped: 0 }
+					},
+					...defaultProps
+				}
+			});
+
+			const wrongValueSpan = container.querySelector('.text-red-600');
+			expect(wrongValueSpan).toBeInTheDocument();
+			expect(wrongValueSpan?.textContent).toBe('-1');
+		});
+
+		it('should not apply red styling to wrong marks when zero', () => {
+			render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			});
+
+			const wrongRow = screen.getByText('Wrong').closest('div');
+			expect(wrongRow?.querySelector('.text-red-600')).not.toBeInTheDocument();
+		});
+
+		it('should display skipped marks value', () => {
+			render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			});
+
+			expect(screen.getByText('Skipped')).toBeInTheDocument();
+		});
+
+		it('should show partial marks section for multi-choice question with partial scheme', () => {
+			render(QuestionCard, {
+				props: { question: mockMultiChoiceWithPartialMarks, ...defaultProps }
+			});
+
+			expect(screen.getByText('Partial Marks')).toBeInTheDocument();
+		});
+
+		it('should not show partial marks section for single-choice question', () => {
+			render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			});
+
+			expect(screen.queryByText('Partial Marks')).not.toBeInTheDocument();
+		});
+
+		it('should not show partial marks section for multi-choice question without partial scheme', () => {
+			const questionNoPartial = {
+				...mockMultiChoiceWithPartialMarks,
+				marking_scheme: { correct: 4, wrong: -1, skipped: 0 }
+			};
+
+			render(QuestionCard, {
+				props: { question: questionNoPartial, ...defaultProps }
+			});
+
+			expect(screen.queryByText('Partial Marks')).not.toBeInTheDocument();
+		});
+
+		it('should display each partial mark rule with correct selected count and marks', () => {
+			render(QuestionCard, {
+				props: { question: mockMultiChoiceWithPartialMarks, ...defaultProps }
+			});
+
+			expect(screen.getByText(/1 correct selected/i)).toBeInTheDocument();
+			expect(screen.getByText(/2 correct selected/i)).toBeInTheDocument();
+			expect(screen.getByText('+1')).toBeInTheDocument();
+			expect(screen.getByText('+2')).toBeInTheDocument();
+		});
+
+		it('should use plural "correct selected" label for counts greater than 1', () => {
+			render(QuestionCard, {
+				props: { question: mockMultiChoiceWithPartialMarks, ...defaultProps }
+			});
+
+			const pluralRule = screen.getByText(/2 correct selected/i);
+			expect(pluralRule).toBeInTheDocument();
+		});
+
+		it('should show negative marks warning when wrong < 0 in partial marks section', () => {
+			render(QuestionCard, {
+				props: { question: mockMultiChoiceWithPartialMarks, ...defaultProps }
+			});
+
+			expect(screen.getByText(/Selecting any incorrect option accrues/i)).toBeInTheDocument();
+		});
+
+		it('should not show negative marks warning when wrong is 0', () => {
+			const questionNoNegative = {
+				...mockMultiChoiceWithPartialMarks,
+				marking_scheme: {
+					...mockMultiChoiceWithPartialMarks.marking_scheme,
+					wrong: 0
+				}
+			};
+
+			render(QuestionCard, {
+				props: { question: questionNoNegative, ...defaultProps }
+			});
+
+			expect(screen.queryByText(/Selecting any incorrect option accrues/i)).not.toBeInTheDocument();
+		});
+
+		it('should show singular "mark" when wrong is -1', () => {
+			render(QuestionCard, {
+				props: { question: mockMultiChoiceWithPartialMarks, ...defaultProps }
+			});
+
+			const note = screen.getByText(/Selecting any incorrect option accrues/i);
+			expect(note.textContent).toMatch(/\bmark\b/);
+			expect(note.textContent).not.toMatch(/\bmarks\b/);
+		});
+
+		it('should show plural "marks" when wrong is -2', () => {
+			const questionHighPenalty = {
+				...mockMultiChoiceWithPartialMarks,
+				marking_scheme: {
+					...mockMultiChoiceWithPartialMarks.marking_scheme,
+					wrong: -2
+				}
+			};
+
+			render(QuestionCard, {
+				props: { question: questionHighPenalty, ...defaultProps }
+			});
+
+			const note = screen.getByText(/Selecting any incorrect option accrues/i);
+			expect(note.textContent).toMatch(/\bmarks\b/);
+		});
+
+		it('should display the exact wrong mark value in the negative marks warning', () => {
+			render(QuestionCard, {
+				props: { question: mockMultiChoiceWithPartialMarks, ...defaultProps }
+			});
+
+			const note = screen.getByText(/Selecting any incorrect option accrues/i);
+			expect(note.textContent).toContain('-1');
 		});
 	});
 });
