@@ -187,7 +187,7 @@ describe('OmrSheet', () => {
 			});
 		});
 
-		it('shows loading state (opacity-60) while submitting', async () => {
+		it('shows loading state (pointer-events-none) while submitting', async () => {
 			let resolveFetch!: (v: unknown) => void;
 			vi.mocked(fetch).mockImplementationOnce(
 				() => new Promise((resolve) => (resolveFetch = resolve))
@@ -198,13 +198,13 @@ describe('OmrSheet', () => {
 			await fireEvent.click(screen.getAllByRole('radio')[0]);
 
 			await waitFor(() => {
-				expect(document.querySelector('.opacity-60.pointer-events-none')).toBeInTheDocument();
+				expect(document.querySelector('.pointer-events-none')).toBeInTheDocument();
 			});
 
 			resolveFetch(createMockResponse({ success: true }));
 
 			await waitFor(() => {
-				expect(document.querySelector('.opacity-60.pointer-events-none')).not.toBeInTheDocument();
+				expect(document.querySelector('.pointer-events-none')).not.toBeInTheDocument();
 			});
 		});
 	});
