@@ -51,7 +51,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			expect(screen.getAllByText(/\d+ Marks/)).toHaveLength(3);
+			expect(screen.getAllByText(/\d+ Marks?/)).toHaveLength(3);
 		});
 
 		it('should display question instructions when present', () => {
