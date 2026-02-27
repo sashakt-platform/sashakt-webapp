@@ -195,7 +195,7 @@
 	<h1 class="mb-6 text-center text-xl font-semibold text-slate-800">{$t('OMR Sheet')}</h1>
 
 	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
-		{#each questions as question, i}
+		{#each questions as question, i (question.id)}
 			{@const isSubjective = question.question_type === 'subjective'}
 			{@const isMultiple = !isSubjective && question.question_type !== 'single-choice'}
 			<div
@@ -207,7 +207,11 @@
 					<Spinner class={submittingQuestion === question.id && !isSubjective ? '' : 'invisible'} />
 					<div class="flex min-w-12 items-center justify-end gap-0.5 sm:min-w-16">
 						<span class="text-sm font-medium text-slate-700 sm:text-lg">Q.{i + 1}:</span>
-						<span class="text-sm leading-none font-bold text-red-500 sm:text-lg {question.is_mandatory ? '' : 'invisible'}">*</span>
+						<span
+							class="text-sm leading-none font-bold text-red-500 sm:text-lg {question.is_mandatory
+								? ''
+								: 'invisible'}">*</span
+						>
 					</div>
 				</div>
 
@@ -304,7 +308,6 @@
 						{/each}
 					</RadioGroup.Root>
 				{/if}
-
 			</div>
 		{/each}
 	</div>
