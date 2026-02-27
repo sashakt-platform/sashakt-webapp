@@ -25,10 +25,12 @@ export type TOptions = {
 	value: string;
 };
 
-enum question_type_enum {
+export enum question_type_enum {
 	SINGLE = 'single-choice',
 	MULTIPLE = 'multiple-select',
-	SUBJECTIVE = 'subjective'
+	SUBJECTIVE = 'subjective',
+	NUMERICALINTEGER = 'numerical-integer',
+	NUMERICALDECIMAL = 'numerical-decimal'
 }
 
 export type TMarks = {
