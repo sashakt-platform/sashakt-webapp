@@ -76,7 +76,7 @@
 			omrMode={candidateOmrMode}
 		/>
 	{:else if data.testQuestions?.question_revisions}
-		{#if data.candidate.use_omr === 'true'}
+		{#if data.candidate.use_omr === 'true' || data.testData?.omr === 'ALWAYS'}
 			<OmrSheet
 				candidate={data.candidate}
 				testDetails={data.testData}

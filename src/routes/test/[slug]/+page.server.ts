@@ -40,7 +40,12 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			let testQuestionsResponse = null;
 
 			if (timerResponse.time_left == null || timerResponse.time_left > 0) {
-				const useOmr = locals.testData.omr === 'OPTIONAL' ? candidate.use_omr : undefined;
+				const useOmr =
+				locals.testData.omr === 'ALWAYS'
+					? 'true'
+					: locals.testData.omr === 'OPTIONAL'
+						? candidate.use_omr
+						: undefined;
 				testQuestionsResponse = await getTestQuestions(
 					candidate.candidate_test_id,
 					candidate.candidate_uuid,
