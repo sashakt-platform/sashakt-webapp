@@ -142,6 +142,73 @@ describe('Page Server - load function', () => {
 		);
 	});
 
+	it('should pass use_omr=true when omr mode is ALWAYS', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(getTimeLeft).mockResolvedValue({ time_left: 1800 });
+		vi.mocked(getTestQuestions).mockResolvedValue({
+			question_revisions: [],
+			question_pagination: 5
+		});
+
+		const mockCookies = createMockCookies();
+		const testDataAlways = { ...mockTestData, omr: 'ALWAYS' };
+		await load({
+			locals: { testData: testDataAlways, timeToBegin: 300 },
+			cookies: mockCookies
+		} as any);
+
+		expect(getTestQuestions).toHaveBeenCalledWith(
+			mockCandidate.candidate_test_id,
+			mockCandidate.candidate_uuid,
+			'true'
+		);
+	});
+
+	it('should pass use_omr=undefined when omr mode is NEVER', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(getTimeLeft).mockResolvedValue({ time_left: 1800 });
+		vi.mocked(getTestQuestions).mockResolvedValue({
+			question_revisions: [],
+			question_pagination: 5
+		});
+
+		const mockCookies = createMockCookies();
+		const testDataNever = { ...mockTestData, omr: 'NEVER' };
+		await load({
+			locals: { testData: testDataNever, timeToBegin: 300 },
+			cookies: mockCookies
+		} as any);
+
+		expect(getTestQuestions).toHaveBeenCalledWith(
+			mockCandidate.candidate_test_id,
+			mockCandidate.candidate_uuid,
+			undefined
+		);
+	});
+
+	it('should pass candidate use_omr=true when omr is OPTIONAL and candidate opted in', async () => {
+		const candidateWithOmr = { ...mockCandidate, use_omr: 'true' };
+		vi.mocked(getCandidate).mockReturnValue(candidateWithOmr);
+		vi.mocked(getTimeLeft).mockResolvedValue({ time_left: 1800 });
+		vi.mocked(getTestQuestions).mockResolvedValue({
+			question_revisions: [],
+			question_pagination: 5
+		});
+
+		const mockCookies = createMockCookies();
+		const testDataOptional = { ...mockTestData, omr: 'OPTIONAL' };
+		await load({
+			locals: { testData: testDataOptional, timeToBegin: 300 },
+			cookies: mockCookies
+		} as any);
+
+		expect(getTestQuestions).toHaveBeenCalledWith(
+			candidateWithOmr.candidate_test_id,
+			candidateWithOmr.candidate_uuid,
+			'true'
+		);
+	});
+
 	it('should delete cookie and redirect on error', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 		vi.mocked(getTimeLeft).mockRejectedValue(new Error('API Error'));
