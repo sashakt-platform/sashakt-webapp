@@ -88,5 +88,13 @@
 	"Select an option": "Select an option",
 	"Type to search...": "Type to search...",
 	"No results found": "No results found",
-	"Please select a {parent} first": "Please select a {parent} first"
+	"Please select a {parent} first": "Please select a {parent} first",
+	"OMR Mode": "OMR Mode",
+	"Select OMR mode": "Select OMR mode",
+	"Yes": "Yes",
+	"No": "No",
+	"OMR Sheet Preference": "OMR Sheet Preference",
+	"Please select your preference": "Please select your preference",
+	"OMR Sheet": ""
 }
+

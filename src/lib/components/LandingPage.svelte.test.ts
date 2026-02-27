@@ -186,6 +186,58 @@ describe('LandingPage', () => {
 	});
 });
 
+describe('LandingPage - OMR Mode', () => {
+	it('should render Start button  when OMR is OPTIONAL', () => {
+		const testDetailsOmrOptional = {
+			...defaultTestDetails,
+			omr: 'OPTIONAL'
+		};
+
+		render(LandingPage, {
+			props: {
+				testDetails: testDetailsOmrOptional
+			}
+		});
+
+		expect(screen.getByRole('button', { name: /start/i })).toBeInTheDocument();
+	});
+
+	it('should render Start button  when candidate_profile is set', () => {
+		const testDetailsWithProfile = {
+			...defaultTestDetails,
+			candidate_profile: true,
+			profile_list: [{ id: 1, name: 'CLF Alpha' }]
+		};
+
+		render(LandingPage, {
+			props: {
+				testDetails: testDetailsWithProfile
+			}
+		});
+
+		expect(screen.getByRole('button', { name: /start/i })).toBeInTheDocument();
+	});
+
+	it('should render form with submit when OMR is NEVER and no profile', () => {
+		const testDetailsNoOmr = {
+			...defaultTestDetails,
+			candidate_profile: null,
+			omr: 'NEVER'
+		};
+
+		render(LandingPage, {
+			props: {
+				testDetails: testDetailsNoOmr
+			}
+		});
+
+		const button = screen.getByRole('button', { name: /start/i });
+		expect(button).toBeInTheDocument();
+		expect(button.getAttribute('type')).toBe('submit');
+	});
+
+});
+
 describe('Support for Localization', () => {
 	it('should render localization strings correctly', async () => {
 		await setLocaleForTests('hi-IN');

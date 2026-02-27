@@ -139,6 +139,7 @@ export const mockTestData = {
 	form: null,
 	locale: DEFAULT_LANGUAGE,
 	show_question_palette: true,
+	omr: 'NEVER',
 	show_feedback_on_completion: true
 };
 
