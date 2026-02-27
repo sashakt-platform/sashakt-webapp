@@ -93,7 +93,7 @@
 	"Skipped": "छोड़ा गया",
 	"Partial Marks": "आंशिक अंक",
 	"correct selected": "सही चुना",
-	"Selecting any incorrect option accrues": "कोई भी गलत विकल्प चुनने पर",
+	"Partial marks awarded if no wrong option is selected": "यदि कोई गलत विकल्प नहीं चुना गया तो आंशिक अंक दिए जाएंगे",
 	"mark": "अंक",
 	"marks": "अंक"
 }

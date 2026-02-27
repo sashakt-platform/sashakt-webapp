@@ -392,7 +392,7 @@
 							<div class="border-muted-foreground/20 mt-2.5 border-t pt-2.5">
 								<p class="text-foreground mb-1.5 font-semibold">{$t('Partial Marks')}</p>
 								<div class="space-y-1.5">
-									{#each scheme.partial.correct_answers as rule (rule.num_correct_selected)}
+									{#each scheme.partial.correct_answers as rule, i (i)}
 										<div class="flex justify-between gap-4">
 											<span class="text-muted-foreground"
 												>{rule.num_correct_selected}
@@ -404,9 +404,7 @@
 								</div>
 								{#if scheme.wrong < 0}
 									<p class="text-muted-foreground mt-2 text-[11px] leading-snug">
-										{$t('Selecting any incorrect option accrues')}
-										<span class="font-medium text-red-600">{scheme.wrong}</span>
-										{Math.abs(scheme.wrong) === 1 ? $t('mark') : $t('marks')}
+										{$t('Partial marks awarded if no wrong option is selected')}
 									</p>
 								{/if}
 							</div>

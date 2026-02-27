@@ -1034,7 +1034,9 @@ describe('QuestionCard', () => {
 				props: { question: mockMultiChoiceWithPartialMarks, ...defaultProps }
 			});
 
-			expect(screen.getByText(/Selecting any incorrect option accrues/i)).toBeInTheDocument();
+			expect(
+				screen.getByText(/Partial marks awarded if no wrong option is selected/i)
+			).toBeInTheDocument();
 		});
 
 		it('should not show negative marks warning when wrong is 0', () => {
@@ -1050,43 +1052,9 @@ describe('QuestionCard', () => {
 				props: { question: questionNoNegative, ...defaultProps }
 			});
 
-			expect(screen.queryByText(/Selecting any incorrect option accrues/i)).not.toBeInTheDocument();
-		});
-
-		it('should show singular "mark" when wrong is -1', () => {
-			render(QuestionCard, {
-				props: { question: mockMultiChoiceWithPartialMarks, ...defaultProps }
-			});
-
-			const note = screen.getByText(/Selecting any incorrect option accrues/i);
-			expect(note.textContent).toMatch(/\bmark\b/);
-			expect(note.textContent).not.toMatch(/\bmarks\b/);
-		});
-
-		it('should show plural "marks" when wrong is -2', () => {
-			const questionHighPenalty = {
-				...mockMultiChoiceWithPartialMarks,
-				marking_scheme: {
-					...mockMultiChoiceWithPartialMarks.marking_scheme,
-					wrong: -2
-				}
-			};
-
-			render(QuestionCard, {
-				props: { question: questionHighPenalty, ...defaultProps }
-			});
-
-			const note = screen.getByText(/Selecting any incorrect option accrues/i);
-			expect(note.textContent).toMatch(/\bmarks\b/);
-		});
-
-		it('should display the exact wrong mark value in the negative marks warning', () => {
-			render(QuestionCard, {
-				props: { question: mockMultiChoiceWithPartialMarks, ...defaultProps }
-			});
-
-			const note = screen.getByText(/Selecting any incorrect option accrues/i);
-			expect(note.textContent).toContain('-1');
+			expect(
+				screen.queryByText(/Partial marks awarded if no wrong option is selected/i)
+			).not.toBeInTheDocument();
 		});
 	});
 });
