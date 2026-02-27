@@ -205,9 +205,7 @@
 			>
 				<div class="flex min-w-12 items-center justify-end gap-0.5 sm:min-w-16">
 					<span class="text-sm font-medium text-slate-700 sm:text-lg">Q.{i + 1}:</span>
-					{#if question.is_mandatory}
-						<span class="text-sm leading-none font-bold text-red-500 sm:text-lg">*</span>
-					{/if}
+					<span class="text-sm leading-none font-bold text-red-500 sm:text-lg {question.is_mandatory ? '' : 'invisible'}">*</span>
 				</div>
 
 				{#if isSubjective}

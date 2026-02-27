@@ -72,10 +72,12 @@ describe('OmrSheet', () => {
 			expect(screen.getByText('*')).toBeInTheDocument();
 		});
 
-		it('does not show asterisk for optional questions', () => {
+		it('renders asterisk as invisible for optional questions to preserve alignment', () => {
 			const optional = { ...mockMultipleChoiceQuestion, is_mandatory: false };
 			render(OmrSheet, { props: makeProps([optional]) });
-			expect(screen.queryByText('*')).not.toBeInTheDocument();
+			const asterisk = screen.getByText('*');
+			expect(asterisk).toBeInTheDocument();
+			expect(asterisk).toHaveClass('invisible');
 		});
 
 		it('renders option keys A B C D for single-choice', () => {
