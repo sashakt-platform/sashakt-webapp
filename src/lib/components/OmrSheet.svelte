@@ -200,12 +200,15 @@
 			{@const isMultiple = !isSubjective && question.question_type !== 'single-choice'}
 			<div
 				class="flex items-center gap-6 sm:gap-10 {submittingQuestion === question.id
-					? 'pointer-events-none opacity-60'
+					? 'pointer-events-none'
 					: ''}"
 			>
-				<div class="flex min-w-12 items-center justify-end gap-0.5 sm:min-w-16">
-					<span class="text-sm font-medium text-slate-700 sm:text-lg">Q.{i + 1}:</span>
-					<span class="text-sm leading-none font-bold text-red-500 sm:text-lg {question.is_mandatory ? '' : 'invisible'}">*</span>
+				<div class="flex items-center gap-1.5">
+					<Spinner class={submittingQuestion === question.id && !isSubjective ? '' : 'invisible'} />
+					<div class="flex min-w-12 items-center justify-end gap-0.5 sm:min-w-16">
+						<span class="text-sm font-medium text-slate-700 sm:text-lg">Q.{i + 1}:</span>
+						<span class="text-sm leading-none font-bold text-red-500 sm:text-lg {question.is_mandatory ? '' : 'invisible'}">*</span>
+					</div>
 				</div>
 
 				{#if isSubjective}
@@ -302,9 +305,6 @@
 					</RadioGroup.Root>
 				{/if}
 
-				{#if submittingQuestion === question.id && !isSubjective}
-					<Spinner />
-				{/if}
 			</div>
 		{/each}
 	</div>
