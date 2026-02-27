@@ -10,8 +10,8 @@
 
 	let {
 		testDetails,
-		onContinue = undefined
-	}: { testDetails: any; onContinue?: (omrMode: string) => void } = $props();
+		formResponses = {}
+	}: { testDetails: any; formResponses?: Record<string, unknown> } = $props();
 
 	const hasOmrChoice = $derived(testDetails.omr === 'OPTIONAL');
 
@@ -51,12 +51,7 @@
 				{#if hasOmrChoice}
 					<div class="space-y-2">
 						<Label for="omrMode">{$t('OMR Mode')} *</Label>
-						<Select.Root
-							type="single"
-							name="omrMode"
-							bind:value={selectedOmr}
-							disabled={!onContinue && isSubmitting}
-						>
+						<Select.Root type="single" name="omrMode" bind:value={selectedOmr} disabled={isSubmitting}>
 							<Select.Trigger class="w-full">{omrTriggerContent}</Select.Trigger>
 							<Select.Content>
 								<Select.Group>
@@ -68,30 +63,20 @@
 					</div>
 				{/if}
 
-				{#if createError && !onContinue}
+				{#if createError}
 					<p class="text-destructive text-sm">{createError}</p>
 				{/if}
 
-				{#if !onContinue}
-					<input name="deviceInfo" value={JSON.stringify(navigator?.userAgent || '')} hidden />
+				<input name="deviceInfo" value={JSON.stringify(navigator?.userAgent || '')} hidden />
+				{#if Object.keys(formResponses).length > 0}
+					<input name="formResponses" value={JSON.stringify(formResponses)} hidden />
 				{/if}
 
 				<div class="pt-4">
-					{#if onContinue}
-						<Button
-							type="button"
-							class="w-full"
-							disabled={!isFormValid}
-							onclick={() => onContinue!(selectedOmr)}
-						>
-							{$t('Continue to Test')}
-						</Button>
-					{:else}
-						<Button type="submit" class="w-full" disabled={!isFormValid || isSubmitting}>
-							{#if isSubmitting}<Spinner />{/if}
-							{$t('Continue to Test')}
-						</Button>
-					{/if}
+					<Button type="submit" class="w-full" disabled={!isFormValid || isSubmitting}>
+						{#if isSubmitting}<Spinner />{/if}
+						{$t('Continue to Test')}
+					</Button>
 				</div>
 			</form>
 		</Card.Content>

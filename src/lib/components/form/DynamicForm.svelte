@@ -15,10 +15,10 @@
 		locations?: {
 			states?: Array<{ id: number; name: string }>;
 		};
-		omrMode?: string;
+		onContinue?: (formResponses: TFormResponses) => void;
 	}
 
-	let { form, testDetails, locations = {}, omrMode = '' }: Props = $props();
+	let { form, testDetails, locations = {}, onContinue = undefined }: Props = $props();
 
 	let formResponses = $state<TFormResponses>({});
 	let isSubmitting = $state(false);
@@ -48,6 +48,11 @@
 		const errors = validateForm(sortedFields, formResponses);
 		validationErrors = errors;
 		return Object.keys(errors).length === 0;
+	}
+
+	function handleContinue() {
+		if (!validateBeforeSubmit()) return;
+		onContinue!(formResponses);
 	}
 
 	// Custom enhance handler with validation
@@ -117,19 +122,24 @@
 					<p class="text-destructive text-sm">{submitError}</p>
 				{/if}
 
-				<input name="deviceInfo" value={JSON.stringify(navigator?.userAgent || '')} hidden />
-				<input name="formResponses" value={JSON.stringify(formResponses)} hidden />
-				{#if omrMode}
-					<input name="omrMode" value={omrMode} hidden />
+				{#if !onContinue}
+					<input name="deviceInfo" value={JSON.stringify(navigator?.userAgent || '')} hidden />
+					<input name="formResponses" value={JSON.stringify(formResponses)} hidden />
 				{/if}
 
 				<div class="pt-4">
-					<Button type="submit" class="w-full" disabled={isSubmitting}>
-						{#if isSubmitting}
-							<Spinner />
-						{/if}
-						{$t('Continue to Test')}
-					</Button>
+					{#if onContinue}
+						<Button type="button" class="w-full" onclick={handleContinue}>
+							{$t('Continue to Test')}
+						</Button>
+					{:else}
+						<Button type="submit" class="w-full" disabled={isSubmitting}>
+							{#if isSubmitting}
+								<Spinner />
+							{/if}
+							{$t('Continue to Test')}
+						</Button>
+					{/if}
 				</div>
 			</form>
 		</Card.Content>

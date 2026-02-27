@@ -125,36 +125,8 @@ describe('CandidateProfile - OMR Mode', () => {
 	});
 });
 
-describe('CandidateProfile - onContinue callback', () => {
-	it('should call onContinue with omrMode when provided and button is clicked', async () => {
-		const onContinue = vi.fn();
-
-		render(CandidateProfile, {
-			props: {
-				testDetails: testDetailsOmrNever,
-				onContinue
-			}
-		});
-
-		const button = screen.getByRole('button', { name: /continue to test/i });
-		await fireEvent.click(button);
-
-		expect(onContinue).toHaveBeenCalledWith('');
-	});
-
-	it('should render a button (not form submit) when onContinue is provided', () => {
-		render(CandidateProfile, {
-			props: {
-				testDetails: testDetailsOmrOptional,
-				onContinue: vi.fn()
-			}
-		});
-
-		const button = screen.getByRole('button', { name: /continue to test/i });
-		expect(button).toHaveAttribute('type', 'button');
-	});
-
-	it('should render a submit button when onContinue is not provided', () => {
+describe('CandidateProfile - form submission', () => {
+	it('should always render a submit button', () => {
 		render(CandidateProfile, {
 			props: {
 				testDetails: testDetailsOmrOptional
@@ -163,6 +135,29 @@ describe('CandidateProfile - onContinue callback', () => {
 
 		const button = screen.getByRole('button', { name: /continue to test/i });
 		expect(button).toHaveAttribute('type', 'submit');
+	});
+
+	it('should include a hidden formResponses input when formResponses are provided', () => {
+		render(CandidateProfile, {
+			props: {
+				testDetails: testDetailsOmrOptional,
+				formResponses: { name: 'Alice', age: 25 }
+			}
+		});
+
+		const input = document.querySelector('input[name="formResponses"]') as HTMLInputElement;
+		expect(input).toBeInTheDocument();
+		expect(JSON.parse(input.value)).toEqual({ name: 'Alice', age: 25 });
+	});
+
+	it('should not include a hidden formResponses input when formResponses is empty', () => {
+		render(CandidateProfile, {
+			props: {
+				testDetails: testDetailsOmrOptional
+			}
+		});
+
+		expect(document.querySelector('input[name="formResponses"]')).not.toBeInTheDocument();
 	});
 });
 
