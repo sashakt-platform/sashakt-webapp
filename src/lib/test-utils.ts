@@ -78,6 +78,33 @@ export const mockSubjectiveQuestion: TQuestion = {
 	media: null
 };
 
+export const mockMultiChoiceWithPartialMarks: TQuestion = {
+	id: 6,
+	question_text: 'Which of the following are programming languages?',
+	instructions: 'Select all that apply',
+	question_type: 'multi-choice' as any,
+	options: [
+		{ id: 601, key: 'A', value: 'Python' },
+		{ id: 602, key: 'B', value: 'HTML' },
+		{ id: 603, key: 'C', value: 'Java' },
+		{ id: 604, key: 'D', value: 'CSS' }
+	],
+	subjective_answer_limit: 0,
+	is_mandatory: false,
+	marking_scheme: {
+		correct: 4,
+		wrong: -1,
+		skipped: 0,
+		partial: {
+			correct_answers: [
+				{ num_correct_selected: 1, marks: 1 },
+				{ num_correct_selected: 2, marks: 2 }
+			]
+		}
+	},
+	media: null
+};
+
 export const mockSubjectiveQuestionNoLimit: TQuestion = {
 	id: 5,
 	question_text: 'Describe your favorite book.',

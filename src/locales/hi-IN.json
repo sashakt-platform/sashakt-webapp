@@ -88,5 +88,12 @@
 	"Select an option": "",
 	"Type to search...": "",
 	"No results found": "",
-	"Please select a {parent} first": ""
+	"Please select a {parent} first": "",
+	"Marking Scheme": "अंक योजना",
+	"Skipped": "छोड़ा गया",
+	"Partial Marks": "आंशिक अंक",
+	"correct selected": "सही चुना",
+	"Partial marks awarded if no wrong option is selected": "यदि कोई गलत विकल्प नहीं चुना गया तो आंशिक अंक दिए जाएंगे",
+	"mark": "अंक",
+	"marks": "अंक"
 }
