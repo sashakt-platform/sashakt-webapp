@@ -392,13 +392,11 @@
 							<div class="border-muted-foreground/20 mt-2.5 border-t pt-2.5">
 								<p class="text-foreground mb-1.5 font-semibold">{$t('Partial Marks')}</p>
 								<div class="space-y-1.5">
-									{#each scheme.partial.correct_answers as rule}
+									{#each scheme.partial.correct_answers as rule (rule.num_correct_selected)}
 										<div class="flex justify-between gap-4">
 											<span class="text-muted-foreground"
 												>{rule.num_correct_selected}
-												{rule.num_correct_selected === 1
-													? $t('correct selected')
-													: $t('correct selected_plural')}</span
+												{$t('correct selected')}</span
 											>
 											<span class="font-medium text-green-600">+{rule.marks}</span>
 										</div>
