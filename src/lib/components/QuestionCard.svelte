@@ -10,7 +10,7 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
-	import type { TCandidate, TQuestion, TSelection } from '$lib/types';
+	import { question_type_enum, type TCandidate, type TQuestion, type TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
 	let {
@@ -432,7 +432,7 @@
 					{/each}
 				</RadioGroup.Root>
 			{/key}
-		{:else if question.question_type === 'subjective'}
+		{:else if question.question_type === question_type_enum.SUBJECTIVE}
 			<div class="flex flex-col gap-2">
 				<textarea
 					class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full rounded-xl border px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
@@ -476,6 +476,31 @@
 					{:else}
 						<span></span>
 					{/if}
+				</div>
+			</div>
+		{:else if question.question_type === question_type_enum.NUMERICALINTEGER || question.question_type === question_type_enum.NUMERICALDECIMAL}
+			<div class="flex flex-col gap-2">
+				<input
+					class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+					placeholder={$t('Type your answer here...')}
+					bind:value={subjectiveText}
+				/>
+				<div class="flex items-center justify-between">
+					<Button
+						variant="default"
+						size="sm"
+						onclick={handleSubjectiveSubmit}
+						disabled={isSubmitting || !subjectiveText.trim() || !hasUnsavedChanges}
+					>
+						{#if !hasUnsavedChanges && hasSavedBefore}
+							<Check class="mr-1 h-4 w-4" />
+							{$t('Saved')}
+						{:else if hasSavedBefore}
+							{$t('Update Answer')}
+						{:else}
+							{$t('Save Answer')}
+						{/if}
+					</Button>
 				</div>
 			</div>
 		{:else}
