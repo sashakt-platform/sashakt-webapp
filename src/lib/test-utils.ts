@@ -90,6 +90,30 @@ export const mockSubjectiveQuestionNoLimit: TQuestion = {
 	media: null
 };
 
+export const mockNumericalIntegerQuestion: TQuestion = {
+	id: 6,
+	question_text: 'What is 5 + 3?',
+	instructions: 'Enter the numerical answer',
+	question_type: 'numerical-integer' as any,
+	options: [],
+	subjective_answer_limit: 0,
+	is_mandatory: true,
+	marking_scheme: { correct: 3, wrong: -1, skipped: 0 },
+	media: null
+};
+
+export const mockNumericalDecimalQuestion: TQuestion = {
+	id: 7,
+	question_text: 'What is the value of π (pi)?',
+	instructions: 'Enter up to 2 decimal places',
+	question_type: 'numerical-decimal' as any,
+	options: [],
+	subjective_answer_limit: 0,
+	is_mandatory: false,
+	marking_scheme: { correct: 2, wrong: 0, skipped: 0 },
+	media: null
+};
+
 export const mockQuestions: TQuestion[] = [
 	mockSingleChoiceQuestion,
 	mockMultipleChoiceQuestion,
