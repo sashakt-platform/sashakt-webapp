@@ -8,6 +8,7 @@
 	import X from '@lucide/svelte/icons/x';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import { t } from 'svelte-i18n';
+	import { question_type_enum } from '$lib/types';
 
 	let {
 		feedback = [],
@@ -31,6 +32,24 @@
 		if (isCorrect(optionId, correct)) return 'correct';
 		if (isSubmitted(optionId, submitted)) return 'wrong';
 		return 'none';
+	};
+
+	const isNumericalAnswerCorrect = (
+		questionType: question_type_enum,
+		submittedAnswer: string,
+		correctAnswer: number
+	): boolean | null => {
+		if (submittedAnswer == null) return null;
+		if (correctAnswer == null) return null;
+		if (questionType === question_type_enum.NUMERICALINTEGER) {
+			const submittedNum = parseInt(submittedAnswer);
+			return submittedNum === correctAnswer;
+		} else if (questionType === question_type_enum.NUMERICALDECIMAL) {
+			const submittedNum = parseFloat(submittedAnswer);
+			if (!Number.isFinite(submittedNum) || !Number.isFinite(correctAnswer)) return null;
+			return Math.abs(submittedNum - correctAnswer) <= 0.5;
+		}
+		return null;
 	};
 
 	const feedbackWithQuestions = $derived(
@@ -95,6 +114,48 @@
 								<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
 							{/if}
 						</div>
+					{:else if item.question.question_type === question_type_enum.NUMERICALINTEGER || item.question.question_type === question_type_enum.NUMERICALDECIMAL}
+						{@const isCorrect = isNumericalAnswerCorrect(
+							item.question.question_type,
+							item.fb.submitted_answer,
+							item.fb.correct_answer
+						)}
+						{@const feedbackClass =
+							isCorrect === null
+								? 'border-gray-300 bg-white text-gray-700'
+								: isCorrect
+									? 'border-green-400 bg-green-100 text-green-700'
+									: 'border-red-400 bg-red-100 text-red-700'}
+
+						<div class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}>
+							{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
+								<p class="w-full text-sm whitespace-pre-wrap">{item.fb.submitted_answer}</p>
+								{#if isCorrect === true}
+									<span class="flex-end flex gap-1 text-xs font-medium text-green-600"
+										>{$t('Correct')}
+										<Check size={18} class="text-green-600" />
+									</span>
+								{:else if isCorrect === false}
+									<span class="flex-end flex gap-1 text-xs font-medium text-red-600"
+										>{$t('Wrong')}
+										<X size={18} class="text-red-600" />
+									</span>
+								{/if}
+							{:else}
+								<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
+							{/if}
+						</div>
+						{#if !isCorrect}
+							<div
+								class="mt-4 flex flex-row rounded-xl border border-green-400 bg-green-100 px-4 py-4 text-green-700"
+							>
+								<p class="w-full text-sm whitespace-pre-wrap">{item.fb.correct_answer}</p>
+								<span class="flex-end flex gap-1 text-xs font-medium text-green-600"
+									>{$t('Correct')}
+									<Check size={18} class="text-green-600" />
+								</span>
+							</div>
+						{/if}
 					{:else if item.question.question_type === 'single-choice'}
 						<RadioGroup.Root value={item.fb.submitted_answer[0]?.toString()} disabled>
 							{#each item.question.options as option (option.id)}
