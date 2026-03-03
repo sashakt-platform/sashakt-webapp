@@ -5,6 +5,8 @@ import {
 	mockSingleChoiceQuestion,
 	mockMultipleChoiceQuestion,
 	mockSubjectiveQuestion,
+	mockNumericalIntegerQuestion,
+	mockNumericalDecimalQuestion,
 	mockTestQuestionsResponse
 } from '$lib/test-utils';
 
@@ -240,6 +242,282 @@ describe('ViewFeedback', () => {
 			expect(
 				screen.getByText('No feedback available. You did not attempt any questions.')
 			).toBeInTheDocument();
+		});
+	});
+
+	describe('numerical integer question feedback', () => {
+		const testQuestionsWithNumericalInteger = {
+			question_revisions: [mockNumericalIntegerQuestion],
+			question_pagination: 5
+		};
+
+		it('should render numerical-integer question text', () => {
+			const feedback = [
+				{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+			});
+
+			expect(screen.getByText(mockNumericalIntegerQuestion.question_text)).toBeInTheDocument();
+		});
+
+		it('should display the submitted integer answer', () => {
+			const feedback = [
+				{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+			});
+
+			expect(screen.getByText('8')).toBeInTheDocument();
+		});
+
+		it('should show Correct and apply green styling when integer answer exactly matches', () => {
+			const feedback = [
+				{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }
+			];
+
+			const { container } = render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+			});
+
+			expect(screen.getByText('Correct')).toBeInTheDocument();
+			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+			expect(container.querySelector('.bg-green-100.border-green-400')).toBeInTheDocument();
+		});
+
+		it('should show Wrong and apply red styling when integer answer does not match', () => {
+			const feedback = [
+				{ question_revision_id: 6, submitted_answer: '5', correct_answer: 8 }
+			];
+
+			const { container } = render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+			});
+
+			expect(screen.getByText('Wrong')).toBeInTheDocument();
+			expect(container.querySelector('.bg-red-100.border-red-400')).toBeInTheDocument();
+		});
+
+		it('should display the correct answer panel when integer answer is wrong', () => {
+			const feedback = [
+				{ question_revision_id: 6, submitted_answer: '5', correct_answer: 8 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+			});
+
+			// '5' (submitted) and '8' (correct answer in the panel) should both appear
+			expect(screen.getByText('5')).toBeInTheDocument();
+			expect(screen.getByText('8')).toBeInTheDocument();
+		});
+
+		it('should show Not Attempted when submitted_answer is empty', () => {
+			const feedback = [
+				{ question_revision_id: 6, submitted_answer: '', correct_answer: 8 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+			});
+
+			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
+		});
+
+		it('should show Not Attempted when numerical-integer question has no feedback entry', () => {
+			render(ViewFeedback, {
+				props: { feedback: [], testQuestions: testQuestionsWithNumericalInteger }
+			});
+
+			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
+		});
+
+		it('should apply gray styling when no correct_answer is provided', () => {
+			const feedback = [
+				{ question_revision_id: 6, submitted_answer: '8', correct_answer: null }
+			];
+
+			const { container } = render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+			});
+
+			expect(container.querySelector('.border-gray-300.bg-white')).toBeInTheDocument();
+		});
+
+		it('should not show Wrong mark in the response area when correct_answer is not provided', () => {
+			const feedback = [
+				{ question_revision_id: 6, submitted_answer: '8', correct_answer: null }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+			});
+
+			// isNumericalAnswerCorrect returns null → no Wrong indicator on the response.
+			// The correct-answer panel below still shows its own "Correct" label, so we
+			// only assert that Wrong is absent.
+			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('numerical decimal question feedback', () => {
+		const testQuestionsWithNumericalDecimal = {
+			question_revisions: [mockNumericalDecimalQuestion],
+			question_pagination: 5
+		};
+
+		it('should render numerical-decimal question text', () => {
+			const feedback = [
+				{ question_revision_id: 7, submitted_answer: '3.14', correct_answer: 3.14 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+			});
+
+			expect(screen.getByText(mockNumericalDecimalQuestion.question_text)).toBeInTheDocument();
+		});
+
+		it('should show Correct when decimal answer exactly matches', () => {
+			const feedback = [
+				{ question_revision_id: 7, submitted_answer: '3.14', correct_answer: 3.14 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+			});
+
+			expect(screen.getByText('Correct')).toBeInTheDocument();
+			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+		});
+
+		it('should show Correct when decimal answer is within 0.5 tolerance', () => {
+			// |3.4 - 3.14| = 0.26 <= 0.5
+			const feedback = [
+				{ question_revision_id: 7, submitted_answer: '3.4', correct_answer: 3.14 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+			});
+
+			expect(screen.getByText('Correct')).toBeInTheDocument();
+		});
+
+		it('should show Wrong when decimal answer is outside 0.5 tolerance', () => {
+			// |2.5 - 3.14| = 0.64 > 0.5
+			const feedback = [
+				{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+			});
+
+			expect(screen.getByText('Wrong')).toBeInTheDocument();
+		});
+
+		it('should apply green styling when decimal answer is correct', () => {
+			const feedback = [
+				{ question_revision_id: 7, submitted_answer: '3.14', correct_answer: 3.14 }
+			];
+
+			const { container } = render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+			});
+
+			expect(container.querySelector('.bg-green-100.border-green-400')).toBeInTheDocument();
+		});
+
+		it('should apply red styling when decimal answer is wrong', () => {
+			const feedback = [
+				{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }
+			];
+
+			const { container } = render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+			});
+
+			expect(container.querySelector('.bg-red-100.border-red-400')).toBeInTheDocument();
+		});
+
+		it('should display the correct answer panel when decimal answer is wrong', () => {
+			const feedback = [
+				{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+			});
+
+			expect(screen.getByText('2.5')).toBeInTheDocument();
+			expect(screen.getByText('3.14')).toBeInTheDocument();
+		});
+
+		it('should show Not Attempted when submitted_answer is empty', () => {
+			const feedback = [
+				{ question_revision_id: 7, submitted_answer: '', correct_answer: 3.14 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+			});
+
+			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
+		});
+
+		it('should show Not Attempted when numerical-decimal question has no feedback entry', () => {
+			render(ViewFeedback, {
+				props: { feedback: [], testQuestions: testQuestionsWithNumericalDecimal }
+			});
+
+			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
+		});
+	});
+
+	describe('mixed numerical question types in feedback', () => {
+		it('should render both integer and decimal numerical questions together', () => {
+			const testQuestionsWithBoth = {
+				question_revisions: [mockNumericalIntegerQuestion, mockNumericalDecimalQuestion],
+				question_pagination: 5
+			};
+			const feedback = [
+				{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 },
+				{ question_revision_id: 7, submitted_answer: '3.14', correct_answer: 3.14 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithBoth }
+			});
+
+			expect(screen.getByText(mockNumericalIntegerQuestion.question_text)).toBeInTheDocument();
+			expect(screen.getByText(mockNumericalDecimalQuestion.question_text)).toBeInTheDocument();
+		});
+
+		it('should independently show Correct for integer and Wrong for decimal', () => {
+			const testQuestionsWithBoth = {
+				question_revisions: [mockNumericalIntegerQuestion, mockNumericalDecimalQuestion],
+				question_pagination: 5
+			};
+			const feedback = [
+				{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 },
+				// |2.5 - 3.14| = 0.64 > 0.5 → wrong
+				{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithBoth }
+			});
+
+			// Integer correct: one "Correct" in its response area.
+			// Decimal wrong: "Wrong" in its response area + the correct-answer panel
+			// renders its own "Correct" label → two "Correct" elements total.
+			expect(screen.getAllByText('Correct')).toHaveLength(2);
+			expect(screen.getByText('Wrong')).toBeInTheDocument();
 		});
 	});
 
