@@ -12,6 +12,7 @@
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { question_type_enum, type TCandidate, type TQuestion, type TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
+	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
 
 	let {
 		question,
@@ -46,6 +47,21 @@
 	const hasFeedbackAvailable = $derived((currentSelection?.response?.length ?? 0) > 0);
 	const isFeedbackViewed = $derived(currentSelection?.is_reviewed === true);
 	const isLocked = $derived(isFeedbackViewed);
+
+	const checkNumberAnswerCorrect = $derived(() => {
+		if (!currentSelection) return null;
+		if (currentSelection.response && typeof currentSelection.response !== 'string') return null;
+		if (
+			(currentSelection.correct_answer && typeof currentSelection.correct_answer !== 'number') ||
+			currentSelection.correct_answer == undefined
+		)
+			return null;
+		return isNumericalAnswerCorrect(
+			question.question_type,
+			currentSelection.response,
+			currentSelection.correct_answer
+		);
+	});
 
 	const getExistingTextResponse = () => {
 		const selected = selectedQuestion(question.id);
@@ -353,6 +369,20 @@
 	};
 </script>
 
+{#snippet showCorrectWrongMark(answerStatus: string)}
+	{#if answerStatus === 'correct'}
+		<span class="flex-end flex gap-1 text-xs font-medium text-green-600"
+			>{$t('Correct')}
+			<Check size={18} class="text-green-600" />
+		</span>
+	{:else if answerStatus === 'wrong'}
+		<span class="flex-end flex gap-1 text-xs font-medium text-red-600"
+			>{$t('Wrong')}
+			<X size={18} class="text-red-600" />
+		</span>
+	{/if}
+{/snippet}
+
 <Card.Root
 	class="mb-4 w-full rounded-xl shadow-md {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
 >
@@ -390,7 +420,7 @@
 				{saveError}
 			</div>
 		{/if}
-		{#if question.question_type === 'single-choice'}
+		{#if question.question_type === question_type_enum.SINGLE}
 			{#key radioGroupKey}
 				<RadioGroup.Root
 					onValueChange={async (optionId) => {
@@ -419,11 +449,9 @@
 							<span>{option.key}. {option.value}</span>
 							<div class="float-end flex items-center gap-1">
 								{#if feedbackStatus === 'correct'}
-									<span class="text-xs font-medium text-green-600">{$t('Correct')}</span>
-									<Check size={18} class="text-green-600" />
+									{@render showCorrectWrongMark('correct')}
 								{:else if feedbackStatus === 'wrong'}
-									<span class="text-xs font-medium text-red-600">{$t('Wrong')}</span>
-									<X size={18} class="text-red-600" />
+									{@render showCorrectWrongMark('wrong')}
 								{:else}
 									<RadioGroup.Item value={option.id.toString()} id={uid} disabled={isLocked} />
 								{/if}
@@ -479,30 +507,62 @@
 				</div>
 			</div>
 		{:else if question.question_type === question_type_enum.NUMERICALINTEGER || question.question_type === question_type_enum.NUMERICALDECIMAL}
-			<div class="flex flex-col gap-2">
-				<input
-					class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-					placeholder={$t('Type your answer here...')}
-					bind:value={subjectiveText}
-				/>
-				<div class="flex items-center justify-between">
-					<Button
-						variant="default"
-						size="sm"
-						onclick={handleSubjectiveSubmit}
-						disabled={isSubmitting || !subjectiveText.trim() || !hasUnsavedChanges}
-					>
-						{#if !hasUnsavedChanges && hasSavedBefore}
-							<Check class="mr-1 h-4 w-4" />
-							{$t('Saved')}
-						{:else if hasSavedBefore}
-							{$t('Update Answer')}
-						{:else}
-							{$t('Save Answer')}
+			{#if isLocked}
+				{@const isCorrect = checkNumberAnswerCorrect()}
+				{@const feedbackClass =
+					isCorrect === null
+						? 'border-gray-300 bg-white text-gray-700'
+						: isCorrect
+							? 'border-green-400 bg-green-100 text-green-700'
+							: 'border-red-400 bg-red-100 text-red-700'}
+				{@const candidateResponse = currentSelection?.response}
+				{@const correctAnswer = currentSelection?.correct_answer}
+				<div class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}>
+					{#if typeof candidateResponse === 'string' && candidateResponse.trim()}
+						<p class="w-full text-sm whitespace-pre-wrap">{candidateResponse}</p>
+						{#if isCorrect === true}
+							{@render showCorrectWrongMark('correct')}
+						{:else if isCorrect === false}
+							{@render showCorrectWrongMark('wrong')}
 						{/if}
-					</Button>
+					{:else}
+						<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
+					{/if}
 				</div>
-			</div>
+				{#if !isCorrect}
+					<div
+						class="mt-4 flex flex-row rounded-xl border border-green-400 bg-green-100 px-4 py-4 text-green-700"
+					>
+						<p class="w-full text-sm whitespace-pre-wrap">{correctAnswer}</p>
+						{@render showCorrectWrongMark('correct')}
+					</div>
+				{/if}
+			{:else}
+				<div class="flex flex-col gap-2">
+					<input
+						class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+						placeholder={$t('Type your answer here...')}
+						bind:value={subjectiveText}
+					/>
+					<div class="flex items-center justify-between">
+						<Button
+							variant="default"
+							size="sm"
+							onclick={handleSubjectiveSubmit}
+							disabled={isSubmitting || !subjectiveText.trim() || !hasUnsavedChanges}
+						>
+							{#if !hasUnsavedChanges && hasSavedBefore}
+								<Check class="mr-1 h-4 w-4" />
+								{$t('Saved')}
+							{:else if hasSavedBefore}
+								{$t('Update Answer')}
+							{:else}
+								{$t('Save Answer')}
+							{/if}
+						</Button>
+					</div>
+				</div>
+			{/if}
 		{:else}
 			{#each options as option (option.id)}
 				{@const uid = `${question.id}-${option.key}`}
@@ -522,11 +582,9 @@
 						<span>{option.key}. {option.value}</span>
 						<div class="float-end flex items-center gap-1">
 							{#if feedbackStatus === 'correct'}
-								<span class="text-xs font-medium text-green-600">{$t('Correct')}</span>
-								<Check size={18} class="text-green-600" />
+								{@render showCorrectWrongMark('correct')}
 							{:else if feedbackStatus === 'wrong'}
-								<span class="text-xs font-medium text-red-600">{$t('Wrong')}</span>
-								<X size={18} class="text-red-600" />
+								{@render showCorrectWrongMark('wrong')}
 							{:else}
 								<Checkbox
 									id={uid}

@@ -9,6 +9,7 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import { t } from 'svelte-i18n';
 	import { question_type_enum } from '$lib/types';
+	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
 
 	let {
 		feedback = [],
@@ -32,24 +33,6 @@
 		if (isCorrect(optionId, correct)) return 'correct';
 		if (isSubmitted(optionId, submitted)) return 'wrong';
 		return 'none';
-	};
-
-	const isNumericalAnswerCorrect = (
-		questionType: question_type_enum,
-		submittedAnswer: string,
-		correctAnswer: number
-	): boolean | null => {
-		if (submittedAnswer == null) return null;
-		if (correctAnswer == null) return null;
-		if (questionType === question_type_enum.NUMERICALINTEGER) {
-			const submittedNum = parseInt(submittedAnswer);
-			return submittedNum === correctAnswer;
-		} else if (questionType === question_type_enum.NUMERICALDECIMAL) {
-			const submittedNum = parseFloat(submittedAnswer);
-			if (!Number.isFinite(submittedNum) || !Number.isFinite(correctAnswer)) return null;
-			return Math.abs(submittedNum - correctAnswer) <= 0.5;
-		}
-		return null;
 	};
 
 	const feedbackWithQuestions = $derived(
