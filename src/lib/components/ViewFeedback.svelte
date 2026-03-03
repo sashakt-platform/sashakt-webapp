@@ -66,6 +66,20 @@
 	);
 </script>
 
+{#snippet showCorrectWrongMark(answerStatus: string)}
+	{#if answerStatus === 'correct'}
+		<span class="flex-end flex gap-1 text-xs font-medium text-green-600"
+			>{$t('Correct')}
+			<Check size={18} class="text-green-600" />
+		</span>
+	{:else if answerStatus === 'wrong'}
+		<span class="flex-end flex gap-1 text-xs font-medium text-red-600"
+			>{$t('Wrong')}
+			<X size={18} class="text-red-600" />
+		</span>
+	{/if}
+{/snippet}
+
 <div class="flex flex-col items-center">
 	{#if onBack}
 		<div class="mb-4 w-full max-w-sm">
@@ -131,15 +145,9 @@
 							{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
 								<p class="w-full text-sm whitespace-pre-wrap">{item.fb.submitted_answer}</p>
 								{#if isCorrect === true}
-									<span class="flex-end flex gap-1 text-xs font-medium text-green-600"
-										>{$t('Correct')}
-										<Check size={18} class="text-green-600" />
-									</span>
+									{@render showCorrectWrongMark('correct')}
 								{:else if isCorrect === false}
-									<span class="flex-end flex gap-1 text-xs font-medium text-red-600"
-										>{$t('Wrong')}
-										<X size={18} class="text-red-600" />
-									</span>
+									{@render showCorrectWrongMark('wrong')}
 								{/if}
 							{:else}
 								<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
@@ -150,10 +158,7 @@
 								class="mt-4 flex flex-row rounded-xl border border-green-400 bg-green-100 px-4 py-4 text-green-700"
 							>
 								<p class="w-full text-sm whitespace-pre-wrap">{item.fb.correct_answer}</p>
-								<span class="flex-end flex gap-1 text-xs font-medium text-green-600"
-									>{$t('Correct')}
-									<Check size={18} class="text-green-600" />
-								</span>
+								{@render showCorrectWrongMark('correct')}
 							</div>
 						{/if}
 					{:else if item.question.question_type === 'single-choice'}
@@ -178,11 +183,9 @@
 
 									<div class="flex items-center gap-1">
 										{#if status === 'correct'}
-											<span class="text-xs font-medium text-green-600">{$t('Correct')}</span>
-											<Check size={18} class="text-green-600" />
+											{@render showCorrectWrongMark('correct')}
 										{:else if status === 'wrong'}
-											<span class="text-xs font-medium text-red-600">{$t('Wrong')}</span>
-											<X size={18} class="text-red-600" />
+											{@render showCorrectWrongMark('wrong')}
 										{/if}
 									</div>
 								</Label>
@@ -209,11 +212,9 @@
 
 								<div class="flex items-center gap-1">
 									{#if status === 'correct'}
-										<span class="text-xs font-medium text-green-600">{$t('Correct')}</span>
-										<Check size={18} class="text-green-600" />
+										{@render showCorrectWrongMark('correct')}
 									{:else if status === 'wrong'}
-										<span class="text-xs font-medium text-red-600">{$t('Wrong')}</span>
-										<X size={18} class="text-red-600" />
+										{@render showCorrectWrongMark('wrong')}
 									{/if}
 								</div>
 							</Label>
