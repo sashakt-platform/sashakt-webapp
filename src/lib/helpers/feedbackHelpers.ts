@@ -8,7 +8,7 @@ export const isNumericalAnswerCorrect = (
 	if (submittedAnswer == null) return null;
 	if (correctAnswer == null) return null;
 	if (questionType === question_type_enum.NUMERICALINTEGER) {
-		const submittedNum = parseInt(submittedAnswer);
+		const submittedNum = parseFloat(submittedAnswer);
 		return submittedNum === correctAnswer;
 	} else if (questionType === question_type_enum.NUMERICALDECIMAL) {
 		const submittedNum = parseFloat(submittedAnswer);
