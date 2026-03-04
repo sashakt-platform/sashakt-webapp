@@ -1316,6 +1316,88 @@ describe('QuestionCard', () => {
 			expect(screen.queryByPlaceholderText(/type your answer here/i)).not.toBeInTheDocument();
 			expect(screen.queryByRole('button', { name: /save answer/i })).not.toBeInTheDocument();
 		});
+
+		describe('correct answer is zero (integer)', () => {
+			it('should show Correct when submitted answer is 0 and correct answer is 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalIntegerQuestion.id,
+						response: '0',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalIntegerQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				expect(screen.getByText('Correct')).toBeInTheDocument();
+				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+			});
+
+			it('should show Wrong when submitted answer is non-zero and correct answer is 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalIntegerQuestion.id,
+						response: '5',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalIntegerQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				expect(screen.getByText('Wrong')).toBeInTheDocument();
+			});
+
+			it('should display "0" as the correct answer when response is wrong and correct answer is 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalIntegerQuestion.id,
+						response: '5',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalIntegerQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				// '0' should appear as the correct answer in the feedback panel
+				expect(screen.getByText('0')).toBeInTheDocument();
+			});
+		});
 	});
 
 	describe('Numerical decimal question functionality', () => {
@@ -1490,6 +1572,116 @@ describe('QuestionCard', () => {
 			});
 
 			expect(screen.getByRole('button', { name: /view result/i })).toBeInTheDocument();
+		});
+
+		describe('correct answer is zero (decimal)', () => {
+			it('should show Correct when submitted answer is 0 and correct answer is 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalDecimalQuestion.id,
+						response: '0',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalDecimalQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				// |0 - 0| = 0 <= 0.5
+				expect(screen.getByText('Correct')).toBeInTheDocument();
+				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+			});
+
+			it('should show Correct when decimal answer is within 0.5 tolerance of 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalDecimalQuestion.id,
+						response: '0.3',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalDecimalQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				// |0.3 - 0| = 0.3 <= 0.5
+				expect(screen.getByText('Correct')).toBeInTheDocument();
+			});
+
+			it('should show Wrong when decimal answer is outside 0.5 tolerance of 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalDecimalQuestion.id,
+						response: '0.6',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalDecimalQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				// |0.6 - 0| = 0.6 > 0.5
+				expect(screen.getByText('Wrong')).toBeInTheDocument();
+			});
+
+			it('should display "0" as the correct answer when decimal response is wrong and correct answer is 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalDecimalQuestion.id,
+						response: '0.6',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalDecimalQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				expect(screen.getByText('0')).toBeInTheDocument();
+			});
 		});
 	});
 });

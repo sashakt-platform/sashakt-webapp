@@ -116,7 +116,7 @@
 
 		try {
 			const result = await submitAnswer(question.id, currentResponse, currentBookmarked, true);
-			if (result?.correct_answer) {
+			if (result?.correct_answer != null) {
 				selectedQuestions = selectedQuestions.map((q) =>
 					q.question_revision_id === question.id
 						? { ...q, correct_answer: result.correct_answer }

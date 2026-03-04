@@ -362,6 +362,59 @@ describe('ViewFeedback', () => {
 			// only assert that Wrong is absent.
 			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
 		});
+
+		describe('correct answer is zero (integer)', () => {
+			it('should show Correct when submitted answer is "0" and correct_answer is 0', () => {
+				const feedback = [
+					{ question_revision_id: 6, submitted_answer: '0', correct_answer: 0 }
+				];
+
+				render(ViewFeedback, {
+					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				});
+
+				expect(screen.getByText('Correct')).toBeInTheDocument();
+				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+			});
+
+			it('should show green styling when integer answer is 0 and correct answer is 0', () => {
+				const feedback = [
+					{ question_revision_id: 6, submitted_answer: '0', correct_answer: 0 }
+				];
+
+				const { container } = render(ViewFeedback, {
+					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				});
+
+				expect(container.querySelector('.bg-green-100.border-green-400')).toBeInTheDocument();
+			});
+
+			it('should show Wrong when submitted answer is non-zero and correct_answer is 0', () => {
+				const feedback = [
+					{ question_revision_id: 6, submitted_answer: '5', correct_answer: 0 }
+				];
+
+				render(ViewFeedback, {
+					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				});
+
+				expect(screen.getByText('Wrong')).toBeInTheDocument();
+			});
+
+			it('should display "0" as the correct answer when integer response is wrong and correct_answer is 0', () => {
+				const feedback = [
+					{ question_revision_id: 6, submitted_answer: '5', correct_answer: 0 }
+				];
+
+				render(ViewFeedback, {
+					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				});
+
+				// '5' is the submitted wrong answer, '0' is the correct answer in the panel
+				expect(screen.getByText('5')).toBeInTheDocument();
+				expect(screen.getByText('0')).toBeInTheDocument();
+			});
+		});
 	});
 
 	describe('numerical decimal question feedback', () => {
@@ -476,6 +529,73 @@ describe('ViewFeedback', () => {
 			});
 
 			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
+		});
+
+		describe('correct answer is zero (decimal)', () => {
+			it('should show Correct when submitted answer is "0" and correct_answer is 0', () => {
+				const feedback = [
+					{ question_revision_id: 7, submitted_answer: '0', correct_answer: 0 }
+				];
+
+				render(ViewFeedback, {
+					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				});
+
+				// |0 - 0| = 0 <= 0.5
+				expect(screen.getByText('Correct')).toBeInTheDocument();
+				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+			});
+
+			it('should show Correct when decimal answer is within 0.5 tolerance of 0', () => {
+				const feedback = [
+					{ question_revision_id: 7, submitted_answer: '0.3', correct_answer: 0 }
+				];
+
+				render(ViewFeedback, {
+					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				});
+
+				// |0.3 - 0| = 0.3 <= 0.5
+				expect(screen.getByText('Correct')).toBeInTheDocument();
+			});
+
+			it('should show Wrong when decimal answer is outside 0.5 tolerance of 0', () => {
+				const feedback = [
+					{ question_revision_id: 7, submitted_answer: '0.6', correct_answer: 0 }
+				];
+
+				render(ViewFeedback, {
+					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				});
+
+				// |0.6 - 0| = 0.6 > 0.5
+				expect(screen.getByText('Wrong')).toBeInTheDocument();
+			});
+
+			it('should apply green styling when decimal answer is 0 and correct answer is 0', () => {
+				const feedback = [
+					{ question_revision_id: 7, submitted_answer: '0', correct_answer: 0 }
+				];
+
+				const { container } = render(ViewFeedback, {
+					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				});
+
+				expect(container.querySelector('.bg-green-100.border-green-400')).toBeInTheDocument();
+			});
+
+			it('should display "0" as the correct answer when decimal response is wrong and correct_answer is 0', () => {
+				const feedback = [
+					{ question_revision_id: 7, submitted_answer: '0.6', correct_answer: 0 }
+				];
+
+				render(ViewFeedback, {
+					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				});
+
+				expect(screen.getByText('0.6')).toBeInTheDocument();
+				expect(screen.getByText('0')).toBeInTheDocument();
+			});
 		});
 	});
 
