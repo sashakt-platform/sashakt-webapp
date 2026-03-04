@@ -36,7 +36,7 @@ export const mockMultipleChoiceQuestion: TQuestion = {
 	id: 2,
 	question_text: 'Which are prime numbers?',
 	instructions: 'Select all that apply',
-	question_type: 'multiple-select' as any,
+	question_type: 'multi-choice' as any,
 	options: [
 		{ id: 201, key: 'A', value: '2' },
 		{ id: 202, key: 'B', value: '3' },
