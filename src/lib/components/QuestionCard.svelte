@@ -543,6 +543,7 @@
 						class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 						placeholder={$t('Type your answer here...')}
 						bind:value={candidateInput}
+						inputmode="numeric"
 					/>
 					<div class="flex items-center justify-between">
 						<Button
