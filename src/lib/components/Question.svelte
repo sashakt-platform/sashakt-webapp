@@ -150,7 +150,7 @@
 									{question}
 									{totalQuestions}
 									bind:selectedQuestions
-									showFeedback={testDetails?.show_feedback_on_completion ?? false}
+									showFeedback={testDetails?.show_feedback_immediately ?? false}
 								/>
 							</div>
 						{/each}
