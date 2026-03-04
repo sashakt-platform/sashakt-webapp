@@ -63,15 +63,15 @@
 		);
 	});
 
-	const getExistingTextResponse = () => {
+	const getExistingInputResponse = () => {
 		const selected = selectedQuestion(question.id);
 		return typeof selected?.response === 'string' ? selected.response : '';
 	};
-	let subjectiveText = $state(getExistingTextResponse());
-	let lastSavedText = $state(getExistingTextResponse());
+	let candidateInput = $state(getExistingInputResponse());
+	let lastSavedInput = $state(getExistingInputResponse());
 
-	const hasUnsavedChanges = $derived(subjectiveText.trim() !== lastSavedText.trim());
-	const hasSavedBefore = $derived(lastSavedText.trim().length > 0);
+	const hasUnsavedChanges = $derived(candidateInput.trim() !== lastSavedInput.trim());
+	const hasSavedBefore = $derived(lastSavedInput.trim().length > 0);
 
 	const isSelected = (optionId: number) => {
 		const selected = selectedQuestion(question.id);
@@ -339,14 +339,14 @@
 
 		if (answeredQuestion) {
 			selectedQuestions = selectedQuestions.map((q) =>
-				q.question_revision_id === question.id ? { ...q, response: subjectiveText } : q
+				q.question_revision_id === question.id ? { ...q, response: candidateInput } : q
 			);
 		} else {
 			selectedQuestions = [
 				...selectedQuestions,
 				{
 					question_revision_id: question.id,
-					response: subjectiveText,
+					response: candidateInput,
 					visited: true,
 					time_spent: 0,
 					bookmarked: currentBookmarked
@@ -356,8 +356,8 @@
 		updateStore();
 
 		try {
-			await submitAnswer(question.id, subjectiveText, currentBookmarked);
-			lastSavedText = subjectiveText;
+			await submitAnswer(question.id, candidateInput, currentBookmarked);
+			lastSavedInput = candidateInput;
 		} catch {
 			selectedQuestions = previousState;
 			updateStore();
@@ -465,7 +465,7 @@
 				<textarea
 					class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full rounded-xl border px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 					placeholder={$t('Type your answer here...')}
-					bind:value={subjectiveText}
+					bind:value={candidateInput}
 					maxlength={question.subjective_answer_limit || undefined}
 				></textarea>
 				<div class="flex items-center justify-between">
@@ -473,7 +473,7 @@
 						variant="default"
 						size="sm"
 						onclick={handleSubjectiveSubmit}
-						disabled={isSubmitting || !subjectiveText.trim() || !hasUnsavedChanges}
+						disabled={isSubmitting || !candidateInput.trim() || !hasUnsavedChanges}
 					>
 						{#if !hasUnsavedChanges && hasSavedBefore}
 							<Check class="mr-1 h-4 w-4" />
@@ -485,7 +485,7 @@
 						{/if}
 					</Button>
 					{#if question.subjective_answer_limit}
-						{@const remaining = question.subjective_answer_limit - subjectiveText.length}
+						{@const remaining = question.subjective_answer_limit - candidateInput.length}
 						<div class="flex flex-col">
 							<span
 								class="text-sm {remaining <= 0
@@ -542,14 +542,14 @@
 					<input
 						class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 						placeholder={$t('Type your answer here...')}
-						bind:value={subjectiveText}
+						bind:value={candidateInput}
 					/>
 					<div class="flex items-center justify-between">
 						<Button
 							variant="default"
 							size="sm"
 							onclick={handleSubjectiveSubmit}
-							disabled={isSubmitting || !subjectiveText.trim() || !hasUnsavedChanges}
+							disabled={isSubmitting || !candidateInput.trim() || !hasUnsavedChanges}
 						>
 							{#if !hasUnsavedChanges && hasSavedBefore}
 								<Check class="mr-1 h-4 w-4" />
