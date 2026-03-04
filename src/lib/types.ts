@@ -27,7 +27,7 @@ export type TOptions = {
 
 export enum question_type_enum {
 	SINGLE = 'single-choice',
-	MULTIPLE = 'multiple-select',
+	MULTIPLE = 'multi-choice',
 	SUBJECTIVE = 'subjective',
 	NUMERICALINTEGER = 'numerical-integer',
 	NUMERICALDECIMAL = 'numerical-decimal'
