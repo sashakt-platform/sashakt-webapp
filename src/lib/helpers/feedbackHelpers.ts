@@ -1,4 +1,5 @@
 import { question_type_enum } from '$lib/types';
+import { TOLERANCE } from '$lib/utils';
 
 export const isNumericalAnswerCorrect = (
 	questionType: question_type_enum,
@@ -13,7 +14,7 @@ export const isNumericalAnswerCorrect = (
 	} else if (questionType === question_type_enum.NUMERICALDECIMAL) {
 		const submittedNum = parseFloat(submittedAnswer);
 		if (!Number.isFinite(submittedNum) || !Number.isFinite(correctAnswer)) return null;
-		return Math.abs(submittedNum - correctAnswer) <= 0.5;
+		return Math.abs(submittedNum - correctAnswer) <= TOLERANCE;
 	}
 	return null;
 };

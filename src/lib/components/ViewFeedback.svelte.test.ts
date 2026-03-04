@@ -448,10 +448,10 @@ describe('ViewFeedback', () => {
 			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
 		});
 
-		it('should show Correct when decimal answer is within 0.5 tolerance', () => {
-			// |3.4 - 3.14| = 0.26 <= 0.5
+		it('should show Correct when decimal answer is within 0.05 tolerance', () => {
+			// |3.16 - 3.14| = 0.02 <= 0.05
 			const feedback = [
-				{ question_revision_id: 7, submitted_answer: '3.4', correct_answer: 3.14 }
+				{ question_revision_id: 7, submitted_answer: '3.16', correct_answer: 3.14 }
 			];
 
 			render(ViewFeedback, {
@@ -461,8 +461,8 @@ describe('ViewFeedback', () => {
 			expect(screen.getByText('Correct')).toBeInTheDocument();
 		});
 
-		it('should show Wrong when decimal answer is outside 0.5 tolerance', () => {
-			// |2.5 - 3.14| = 0.64 > 0.5
+		it('should show Wrong when decimal answer is outside 0.05 tolerance', () => {
+			// |2.5 - 3.14| = 0.64 > 0.05
 			const feedback = [
 				{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }
 			];
@@ -546,20 +546,20 @@ describe('ViewFeedback', () => {
 				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
 			});
 
-			it('should show Correct when decimal answer is within 0.5 tolerance of 0', () => {
+			it('should show Correct when decimal answer is within 0.05 tolerance of 0', () => {
 				const feedback = [
-					{ question_revision_id: 7, submitted_answer: '0.3', correct_answer: 0 }
+					{ question_revision_id: 7, submitted_answer: '0.03', correct_answer: 0 }
 				];
 
 				render(ViewFeedback, {
 					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
 				});
 
-				// |0.3 - 0| = 0.3 <= 0.5
+				// |0.03 - 0| = 0.03 <= 0.05
 				expect(screen.getByText('Correct')).toBeInTheDocument();
 			});
 
-			it('should show Wrong when decimal answer is outside 0.5 tolerance of 0', () => {
+			it('should show Wrong when decimal answer is outside 0.05 tolerance of 0', () => {
 				const feedback = [
 					{ question_revision_id: 7, submitted_answer: '0.6', correct_answer: 0 }
 				];
@@ -568,7 +568,7 @@ describe('ViewFeedback', () => {
 					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
 				});
 
-				// |0.6 - 0| = 0.6 > 0.5
+				// |0.6 - 0| = 0.6 > 0.05
 				expect(screen.getByText('Wrong')).toBeInTheDocument();
 			});
 

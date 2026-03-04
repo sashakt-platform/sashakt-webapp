@@ -1416,11 +1416,11 @@ describe('QuestionCard', () => {
 			expect(screen.getByPlaceholderText(/type your answer here/i).tagName).toBe('INPUT');
 		});
 
-		it('should show Correct feedback when decimal answer is within 0.5 tolerance', () => {
+		it('should show Correct feedback when decimal answer is within 0.05 tolerance', () => {
 			const selectedQuestions = [
 				{
 					question_revision_id: mockNumericalDecimalQuestion.id,
-					response: '3.4',
+					response: '3.16',
 					visited: true,
 					time_spent: 15,
 					bookmarked: false,
@@ -1439,12 +1439,12 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			// |3.4 - 3.14| = 0.26 <= 0.5, so correct
+			// |3.16 - 3.14| = 0.02 <= 0.05, so correct
 			expect(screen.getByText('Correct')).toBeInTheDocument();
 			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
 		});
 
-		it('should show Wrong feedback when decimal answer is outside 0.5 tolerance', () => {
+		it('should show Wrong feedback when decimal answer is outside 0.05 tolerance', () => {
 			const selectedQuestions = [
 				{
 					question_revision_id: mockNumericalDecimalQuestion.id,
@@ -1467,7 +1467,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			// |2.5 - 3.14| = 0.64 > 0.5, so wrong
+			// |2.5 - 3.14| = 0.64 > 0.05, so wrong
 			expect(screen.getByText('Wrong')).toBeInTheDocument();
 		});
 
@@ -1603,11 +1603,11 @@ describe('QuestionCard', () => {
 				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
 			});
 
-			it('should show Correct when decimal answer is within 0.5 tolerance of 0', () => {
+			it('should show Correct when decimal answer is within 0.05 tolerance of 0', () => {
 				const selectedQuestions = [
 					{
 						question_revision_id: mockNumericalDecimalQuestion.id,
-						response: '0.3',
+						response: '0.03',
 						visited: true,
 						time_spent: 10,
 						bookmarked: false,
@@ -1626,11 +1626,11 @@ describe('QuestionCard', () => {
 					}
 				});
 
-				// |0.3 - 0| = 0.3 <= 0.5
+				// |0.03 - 0| = 0.03 <= 0.05
 				expect(screen.getByText('Correct')).toBeInTheDocument();
 			});
 
-			it('should show Wrong when decimal answer is outside 0.5 tolerance of 0', () => {
+			it('should show Wrong when decimal answer is outside 0.05 tolerance of 0', () => {
 				const selectedQuestions = [
 					{
 						question_revision_id: mockNumericalDecimalQuestion.id,
@@ -1653,7 +1653,7 @@ describe('QuestionCard', () => {
 					}
 				});
 
-				// |0.6 - 0| = 0.6 > 0.5
+				// |0.6 - 0| = 0.6 > 0.05
 				expect(screen.getByText('Wrong')).toBeInTheDocument();
 			});
 
