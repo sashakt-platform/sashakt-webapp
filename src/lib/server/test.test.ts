@@ -117,6 +117,66 @@ describe('Server API Functions', () => {
 				'Failed to fetch test questions: 404 Error'
 			);
 		});
+
+		it('should append use_omr parameter when useOmr is provided', async () => {
+			const mockQuestions = {
+				question_revisions: [{ id: 1, question_text: 'Q1' }],
+				question_pagination: 5
+			};
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse(mockQuestions) as unknown as Response
+			);
+
+			await getTestQuestions(1, 'candidate-uuid', 'true');
+
+			expect(fetch).toHaveBeenCalledWith(
+				'http://test-backend.com/candidate/test_questions/1/?candidate_uuid=candidate-uuid&use_omr=true',
+				{
+					method: 'GET',
+					headers: { accept: 'application/json' }
+				}
+			);
+		});
+
+		it('should append use_omr=false when useOmr is "false"', async () => {
+			const mockQuestions = {
+				question_revisions: [],
+				question_pagination: 5
+			};
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse(mockQuestions) as unknown as Response
+			);
+
+			await getTestQuestions(1, 'candidate-uuid', 'false');
+
+			expect(fetch).toHaveBeenCalledWith(
+				'http://test-backend.com/candidate/test_questions/1/?candidate_uuid=candidate-uuid&use_omr=false',
+				{
+					method: 'GET',
+					headers: { accept: 'application/json' }
+				}
+			);
+		});
+
+		it('should not append use_omr parameter when useOmr is undefined', async () => {
+			const mockQuestions = {
+				question_revisions: [],
+				question_pagination: 5
+			};
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse(mockQuestions) as unknown as Response
+			);
+
+			await getTestQuestions(1, 'candidate-uuid', undefined);
+
+			expect(fetch).toHaveBeenCalledWith(
+				'http://test-backend.com/candidate/test_questions/1/?candidate_uuid=candidate-uuid',
+				{
+					method: 'GET',
+					headers: { accept: 'application/json' }
+				}
+			);
+		});
 	});
 
 	describe('getTimeLeft', () => {

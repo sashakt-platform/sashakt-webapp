@@ -40,9 +40,16 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			let testQuestionsResponse = null;
 
 			if (timerResponse.time_left == null || timerResponse.time_left > 0) {
+				const useOmr =
+				locals.testData.omr === 'ALWAYS'
+					? 'true'
+					: locals.testData.omr === 'OPTIONAL'
+						? candidate.use_omr
+						: undefined;
 				testQuestionsResponse = await getTestQuestions(
 					candidate.candidate_test_id,
-					candidate.candidate_uuid
+					candidate.candidate_uuid,
+					useOmr
 				);
 			}
 
@@ -89,6 +96,7 @@ export const actions = {
 		const formData = await request.formData();
 		const deviceInfo = formData.get('deviceInfo') as string;
 		const formResponsesStr = formData.get('formResponses') as string;
+		const omrMode = formData.get('omrMode') as string;
 
 		const requestBody: {
 			test_id: number;
@@ -137,6 +145,11 @@ export const actions = {
 				return fail(response.status, { error: 'Failed to start test' });
 			}
 			const candidateData = await response.json();
+
+			if (omrMode) {
+				candidateData.use_omr = omrMode;
+			}
+
 			cookies.set('sashakt-candidate', JSON.stringify(candidateData), {
 				expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
 				path: '/test/' + locals.testData.link,

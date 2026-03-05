@@ -69,9 +69,9 @@
 						{idx + 1} <span>{$t('OF')} {feedbackWithQuestions.length}</span>
 
 						{#if item.question?.marking_scheme}
+							{@const mark = item.question.marking_scheme.correct}
 							<span class="text-muted-foreground float-end">
-								{item.question.marking_scheme.correct}
-								{$t('Marks')}
+								{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}
 							</span>
 						{/if}
 					</Card.Title>

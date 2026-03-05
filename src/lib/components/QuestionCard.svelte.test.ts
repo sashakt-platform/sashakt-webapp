@@ -913,6 +913,167 @@ describe('QuestionCard', () => {
 		});
 	});
 
+	describe('View Feedback button controlled by showFeedback prop', () => {
+		const answeredSingleChoice = [
+			{
+				question_revision_id: mockSingleChoiceQuestion.id,
+				response: [mockSingleChoiceQuestion.options[0].id],
+				visited: true,
+				time_spent: 10,
+				bookmarked: false,
+				is_reviewed: false
+			}
+		];
+
+		const answeredMultipleChoice = [
+			{
+				question_revision_id: mockMultipleChoiceQuestion.id,
+				response: [mockMultipleChoiceQuestion.options[0].id],
+				visited: true,
+				time_spent: 10,
+				bookmarked: false,
+				is_reviewed: false
+			}
+		];
+
+		it('shows the button for single-choice when showFeedback is true and question is answered', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredSingleChoice,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /view result/i })).toBeInTheDocument();
+		});
+
+		it('hides the button for single-choice when showFeedback is false', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredSingleChoice,
+					showFeedback: false
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view result/i })).not.toBeInTheDocument();
+		});
+
+		it('hides the button when showFeedback is not passed (defaults to false)', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredSingleChoice
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view result/i })).not.toBeInTheDocument();
+		});
+
+		it('shows the button for multiple-choice when showFeedback is true and question is answered', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockMultipleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredMultipleChoice,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /view result/i })).toBeInTheDocument();
+		});
+
+		it('hides the button for multiple-choice when showFeedback is false', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockMultipleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredMultipleChoice,
+					showFeedback: false
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view result/i })).not.toBeInTheDocument();
+		});
+
+		it('hides the button for subjective regardless of showFeedback', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [
+						{
+							question_revision_id: mockSubjectiveQuestion.id,
+							response: 'My answer',
+							visited: true,
+							time_spent: 10,
+							bookmarked: false,
+							is_reviewed: false
+						}
+					],
+					showFeedback: true
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view result/i })).not.toBeInTheDocument();
+		});
+
+		it('hides the button when question is unanswered even if showFeedback is true', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [],
+					showFeedback: true
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view result/i })).not.toBeInTheDocument();
+		});
+
+		it('hides the button after feedback is viewed (is_reviewed=true) even if showFeedback is true', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [
+						{
+							question_revision_id: mockSingleChoiceQuestion.id,
+							response: [mockSingleChoiceQuestion.options[0].id],
+							visited: true,
+							time_spent: 10,
+							bookmarked: false,
+							is_reviewed: true
+						}
+					],
+					showFeedback: true
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view result/i })).not.toBeInTheDocument();
+		});
+	});
+
 	describe('Marking scheme tooltip', () => {
 		const defaultProps = {
 			serialNumber: 1,

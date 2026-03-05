@@ -143,6 +143,103 @@ describe('Test Page', () => {
 	});
 });
 
+describe('Test Page - OMR Mode display', () => {
+	const testQuestions = {
+		question_revisions: mockQuestions,
+		question_pagination: 5
+	};
+
+	it('should render OmrSheet when omr mode is ALWAYS', async () => {
+		const testDataAlways = { ...mockTestData, completion_message: null, omr: 'ALWAYS' };
+
+		render(Page, {
+			props: {
+				data: {
+					testData: testDataAlways,
+					candidate: mockCandidate,
+					testQuestions,
+					timeToBegin: 300,
+					locations: null
+				},
+				form: null
+			}
+		});
+
+		await vi.waitFor(() => {
+			expect(screen.getByText('OMR Sheet')).toBeInTheDocument();
+		});
+		expect(screen.queryByText(mockQuestions[0].question_text)).not.toBeInTheDocument();
+	});
+
+	it('should render OmrSheet when omr is OPTIONAL and candidate chose use_omr=true', async () => {
+		const testDataOptional = { ...mockTestData, completion_message: null, omr: 'OPTIONAL' };
+		const candidateWithOmr = { ...mockCandidate, use_omr: 'true' };
+
+		render(Page, {
+			props: {
+				data: {
+					testData: testDataOptional,
+					candidate: candidateWithOmr,
+					testQuestions,
+					timeToBegin: 300,
+					locations: null
+				},
+				form: null
+			}
+		});
+
+		await vi.waitFor(() => {
+			expect(screen.getByText('OMR Sheet')).toBeInTheDocument();
+		});
+		expect(screen.queryByText(mockQuestions[0].question_text)).not.toBeInTheDocument();
+	});
+
+	it('should render Question when omr is OPTIONAL and candidate chose use_omr=false', async () => {
+		const testDataOptional = { ...mockTestData, completion_message: null, omr: 'OPTIONAL' };
+		const candidateNoOmr = { ...mockCandidate, use_omr: 'false' };
+
+		render(Page, {
+			props: {
+				data: {
+					testData: testDataOptional,
+					candidate: candidateNoOmr,
+					testQuestions,
+					timeToBegin: 300,
+					locations: null
+				},
+				form: null
+			}
+		});
+
+		await vi.waitFor(() => {
+			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+		});
+		expect(screen.queryByText('OMR Sheet')).not.toBeInTheDocument();
+	});
+
+	it('should render Question when omr mode is NEVER', async () => {
+		const testDataNever = { ...mockTestData, completion_message: null, omr: 'NEVER' };
+
+		render(Page, {
+			props: {
+				data: {
+					testData: testDataNever,
+					candidate: mockCandidate,
+					testQuestions,
+					timeToBegin: 300,
+					locations: null
+				},
+				form: null
+			}
+		});
+
+		await vi.waitFor(() => {
+			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+		});
+		expect(screen.queryByText('OMR Sheet')).not.toBeInTheDocument();
+	});
+});
+
 describe('Test Page - Feedback flow', () => {
 	const mockFeedback = [
 		{

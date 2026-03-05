@@ -18,7 +18,7 @@
 	let createError = $state<string | null>(null);
 
 	function handleStart() {
-		if (testDetails.form && page.data?.timeToBegin === 0) {
+		if (page.data?.timeToBegin === 0) {
 			showProfileForm = true;
 		}
 	}
@@ -94,7 +94,7 @@
 			</label>
 		</div>
 		{#if page.data?.timeToBegin === 0}
-			{#if testDetails.form}
+			{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
 				<Button onclick={handleStart} class="w-32" disabled={!isChecked}>{$t('Start')}</Button>
 			{:else}
 				<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
@@ -121,7 +121,7 @@
 				>
 					{$t('Start')}
 				</Dialog.Trigger>
-				{#if testDetails.form}
+				{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
 					<PreTestTimer timeLeft={page.data?.timeToBegin} bind:showProfileForm />
 				{:else}
 					<PreTestTimer timeLeft={page.data?.timeToBegin} />

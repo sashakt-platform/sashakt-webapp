@@ -89,6 +89,13 @@
 	"Type to search...": "",
 	"No results found": "",
 	"Please select a {parent} first": "",
+	"OMR Mode": "OMR मोड",
+	"Select OMR mode": "OMR मोड चुनें",
+	"Yes": "हाँ",
+	"No": "नहीं",
+	"OMR Sheet Preference": "OMR शीट वरीयता",
+	"Please select your preference": "कृपया अपनी वरीयता चुनें",
+	"OMR Sheet": "",
 	"Marking Scheme": "अंक योजना",
 	"Skipped": "छोड़ा गया",
 	"Partial Marks": "आंशिक अंक",
@@ -97,3 +104,4 @@
 	"mark": "अंक",
 	"marks": "अंक"
 }
+
