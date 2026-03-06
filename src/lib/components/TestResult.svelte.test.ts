@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 import TestResult from './TestResult.svelte';
 import {
@@ -315,5 +315,264 @@ describe('Certificate download', () => {
 		});
 
 		expect(screen.queryByText('Download Certificate')).not.toBeInTheDocument();
+	});
+});
+
+describe('handleDownloadCertificate', () => {
+	beforeEach(() => {
+		vi.stubGlobal('fetch', vi.fn());
+		vi.stubGlobal('URL', {
+			createObjectURL: vi.fn(() => 'blob:mock-url'),
+			revokeObjectURL: vi.fn()
+		});
+	});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
+	});
+
+	it('should not call fetch when certificate_download_url is missing', async () => {
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails: mockTestData
+			}
+		});
+
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('should call fetch with correct URL, method, and body on click', async () => {
+		const mockBlob = new Blob(['pdf-content'], { type: 'application/pdf' });
+		vi.mocked(fetch).mockResolvedValue({
+			ok: true,
+			blob: () => Promise.resolve(mockBlob)
+		} as Response);
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultDataWithCertificate,
+				testDetails: mockTestData
+			}
+		});
+
+		await fireEvent.click(screen.getByText('Download Certificate'));
+
+		expect(fetch).toHaveBeenCalledWith('/api/download-certificate', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				certificate_download_url: mockResultDataWithCertificate.certificate_download_url
+			})
+		});
+	});
+
+	it('should show spinner and "Preparing..." text while downloading', async () => {
+		let resolveBlob: (blob: Blob) => void;
+		const blobPromise = new Promise<Blob>((resolve) => {
+			resolveBlob = resolve;
+		});
+
+		vi.mocked(fetch).mockResolvedValue({
+			ok: true,
+			blob: () => blobPromise
+		} as Response);
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultDataWithCertificate,
+				testDetails: mockTestData
+			}
+		});
+
+		fireEvent.click(screen.getByText('Download Certificate'));
+
+		await waitFor(() => {
+			expect(screen.getByText('Preparing...')).toBeInTheDocument();
+		});
+
+		resolveBlob!(new Blob());
+	});
+
+	it('should disable the button while downloading', async () => {
+		let resolveBlob: (blob: Blob) => void;
+		const blobPromise = new Promise<Blob>((resolve) => {
+			resolveBlob = resolve;
+		});
+
+		vi.mocked(fetch).mockResolvedValue({
+			ok: true,
+			blob: () => blobPromise
+		} as Response);
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultDataWithCertificate,
+				testDetails: mockTestData
+			}
+		});
+
+		fireEvent.click(screen.getByText('Download Certificate'));
+
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: /Preparing/i })).toBeDisabled();
+		});
+
+		resolveBlob!(new Blob());
+	});
+
+	it('should create and click an anchor element with the correct filename', async () => {
+		const mockBlob = new Blob(['content']);
+		vi.mocked(fetch).mockResolvedValue({
+			ok: true,
+			blob: () => Promise.resolve(mockBlob)
+		} as Response);
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultDataWithCertificate,
+				testDetails: mockTestData
+			}
+		});
+
+		const mockAnchor = { href: '', download: '', click: vi.fn() };
+		const origCreateElement = document.createElement.bind(document);
+		vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+			if (tag === 'a') return mockAnchor as unknown as HTMLElement;
+			return origCreateElement(tag);
+		});
+		vi.spyOn(document.body, 'appendChild').mockReturnValue(mockAnchor as unknown as Node);
+		vi.spyOn(document.body, 'removeChild').mockReturnValue(mockAnchor as unknown as Node);
+
+		await fireEvent.click(screen.getByText('Download Certificate'));
+
+		await waitFor(() => {
+			expect(mockAnchor.click).toHaveBeenCalled();
+			expect(mockAnchor.href).toBe('blob:mock-url');
+			expect(mockAnchor.download).toBe(`certificate-${mockTestData.name.replace(/\s+/g, '-')}.png`);
+		});
+	});
+
+	it('should revoke the object URL after download completes', async () => {
+		const mockBlob = new Blob(['content']);
+		vi.mocked(fetch).mockResolvedValue({
+			ok: true,
+			blob: () => Promise.resolve(mockBlob)
+		} as Response);
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultDataWithCertificate,
+				testDetails: mockTestData
+			}
+		});
+
+		const mockAnchorRevoke = { href: '', download: '', click: vi.fn() };
+		const origCreateElement2 = document.createElement.bind(document);
+		vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+			if (tag === 'a') return mockAnchorRevoke as unknown as HTMLElement;
+			return origCreateElement2(tag);
+		});
+		vi.spyOn(document.body, 'appendChild').mockReturnValue(mockAnchorRevoke as unknown as Node);
+		vi.spyOn(document.body, 'removeChild').mockReturnValue(mockAnchorRevoke as unknown as Node);
+
+		await fireEvent.click(screen.getByText('Download Certificate'));
+
+		await waitFor(() => {
+			expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+		});
+	});
+
+	it('should show error message when response is not ok', async () => {
+		vi.mocked(fetch).mockResolvedValue({
+			ok: false,
+			blob: vi.fn()
+		} as unknown as Response);
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultDataWithCertificate,
+				testDetails: mockTestData
+			}
+		});
+
+		await fireEvent.click(screen.getByText('Download Certificate'));
+
+		await waitFor(() => {
+			expect(
+				screen.getByText('Failed to download certificate. Please try again.')
+			).toBeInTheDocument();
+		});
+	});
+
+	it('should show error message when fetch throws a network error', async () => {
+		vi.mocked(fetch).mockRejectedValue(new Error('Network error'));
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultDataWithCertificate,
+				testDetails: mockTestData
+			}
+		});
+
+		await fireEvent.click(screen.getByText('Download Certificate'));
+
+		await waitFor(() => {
+			expect(
+				screen.getByText('Failed to download certificate. Please try again.')
+			).toBeInTheDocument();
+		});
+	});
+
+	it('should re-enable the button and restore label after a successful download', async () => {
+		const mockBlob = new Blob(['content']);
+		vi.mocked(fetch).mockResolvedValue({
+			ok: true,
+			blob: () => Promise.resolve(mockBlob)
+		} as Response);
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultDataWithCertificate,
+				testDetails: mockTestData
+			}
+		});
+
+		const mockAnchorRestore = { href: '', download: '', click: vi.fn() };
+		const origCreateElement3 = document.createElement.bind(document);
+		vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+			if (tag === 'a') return mockAnchorRestore as unknown as HTMLElement;
+			return origCreateElement3(tag);
+		});
+		vi.spyOn(document.body, 'appendChild').mockReturnValue(mockAnchorRestore as unknown as Node);
+		vi.spyOn(document.body, 'removeChild').mockReturnValue(mockAnchorRestore as unknown as Node);
+
+		await fireEvent.click(screen.getByText('Download Certificate'));
+
+		await waitFor(() => {
+			expect(screen.getByText('Download Certificate')).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: 'Download Certificate' })).not.toBeDisabled();
+		});
+	});
+
+	it('should re-enable the button and show error after a failed download', async () => {
+		vi.mocked(fetch).mockRejectedValue(new Error('Network error'));
+
+		render(TestResult, {
+			props: {
+				resultData: mockResultDataWithCertificate,
+				testDetails: mockTestData
+			}
+		});
+
+		await fireEvent.click(screen.getByText('Download Certificate'));
+
+		await waitFor(() => {
+			expect(
+				screen.getByText('Failed to download certificate. Please try again.')
+			).toBeInTheDocument();
+			expect(screen.getByRole('button')).not.toBeDisabled();
+		});
 	});
 });
