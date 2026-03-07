@@ -95,6 +95,13 @@
 	"No": "नहीं",
 	"OMR Sheet Preference": "OMR शीट वरीयता",
 	"Please select your preference": "कृपया अपनी वरीयता चुनें",
-	"OMR Sheet": ""
+	"OMR Sheet": "",
+	"Marking Scheme": "अंक योजना",
+	"Skipped": "छोड़ा गया",
+	"Partial Marks": "आंशिक अंक",
+	"correct selected": "सही चुना",
+	"Partial marks awarded if no wrong option is selected": "यदि कोई गलत विकल्प नहीं चुना गया तो आंशिक अंक दिए जाएंगे",
+	"mark": "अंक",
+	"marks": "अंक"
 }
 

@@ -27,14 +27,22 @@ export type TOptions = {
 
 enum question_type_enum {
 	SINGLE = 'single-choice',
-	MULTIPLE = 'multiple-select',
+	MULTIPLE = 'multi-choice',
 	SUBJECTIVE = 'subjective'
 }
+
+export type TPartialMark = {
+	num_correct_selected: number;
+	marks: number;
+};
 
 export type TMarks = {
 	correct: number;
 	wrong: number;
 	skipped: number;
+	partial?: {
+		correct_answers: TPartialMark[];
+	};
 };
 
 export type TQuestion = {
