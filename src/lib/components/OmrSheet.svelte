@@ -11,7 +11,7 @@
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
-	import type { TCandidate, TQuestion, TSelection } from '$lib/types';
+	import { question_type_enum, type TCandidate, type TQuestion, type TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
 	let {
@@ -56,14 +56,19 @@
 		return typeof sel?.response === 'string' ? sel.response : '';
 	};
 
-	let subjectiveTexts = $state<Record<number, string>>(
+	let candidateInput = $state<Record<number, string>>(
 		Object.fromEntries(
 			questions
-				.filter((q) => q.question_type === 'subjective')
+				.filter(
+					(q) =>
+						q.question_type === question_type_enum.SUBJECTIVE ||
+						q.question_type === question_type_enum.NUMERICALINTEGER ||
+						q.question_type === question_type_enum.NUMERICALDECIMAL
+				)
 				.map((q) => [q.id, getExistingText(q.id)])
 		)
 	);
-	let lastSavedTexts = $state<Record<number, string>>({ ...subjectiveTexts });
+	let lastSavedInput = $state<Record<number, string>>({ ...candidateInput });
 
 	const getSelectedOptionIds = (questionId: number): number[] => {
 		const sel = selections.find((s) => s.question_revision_id === questionId);
@@ -154,7 +159,7 @@
 	const handleSubjectiveSubmit = async (question: TQuestion) => {
 		if (submittingQuestion === question.id) return;
 
-		const text = subjectiveTexts[question.id] ?? '';
+		const text = candidateInput[question.id] ?? '';
 		const existing = selections.find((s) => s.question_revision_id === question.id);
 
 		const previousSelections = JSON.parse(JSON.stringify(selections));
@@ -181,7 +186,7 @@
 
 		try {
 			await submitAnswer(question.id, text);
-			lastSavedTexts[question.id] = text;
+			lastSavedInput[question.id] = text;
 		} catch {
 			selections = previousSelections;
 			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
@@ -196,15 +201,14 @@
 
 	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
 		{#each questions as question, i (question.id)}
-			{@const isSubjective = question.question_type === 'subjective'}
-			{@const isMultiple = !isSubjective && question.question_type !== 'single-choice'}
+			{@const question_type = question.question_type}
 			<div
 				class="flex items-center gap-6 sm:gap-10 {submittingQuestion === question.id
 					? 'pointer-events-none'
 					: ''}"
 			>
 				<div class="flex items-center gap-1.5">
-					<Spinner class={submittingQuestion === question.id && !isSubjective ? '' : 'invisible'} />
+					<Spinner class={submittingQuestion === question.id ? '' : 'invisible'} />
 					<div class="flex min-w-12 items-center justify-end gap-0.5 sm:min-w-16">
 						<span class="text-sm font-medium text-slate-700 sm:text-lg">Q.{i + 1}:</span>
 						<span
@@ -215,24 +219,33 @@
 					</div>
 				</div>
 
-				{#if isSubjective}
-					{@const currentText = subjectiveTexts[question.id] ?? ''}
-					{@const savedText = lastSavedTexts[question.id] ?? ''}
-					{@const hasUnsavedChanges = currentText.trim() !== savedText.trim()}
-					{@const hasSavedBefore = savedText.trim().length > 0}
+				{#if question_type === question_type_enum.SUBJECTIVE || question_type === question_type_enum.NUMERICALINTEGER || question_type === question_type_enum.NUMERICALDECIMAL}
+					{@const currentInput = candidateInput[question.id] ?? ''}
+					{@const savedInput = lastSavedInput[question.id] ?? ''}
+					{@const hasUnsavedChanges = currentInput.trim() !== savedInput.trim()}
+					{@const hasSavedBefore = savedInput.trim().length > 0}
 					<div class="flex w-full flex-col gap-2">
-						<textarea
-							class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-							placeholder={$t('Type your answer here...')}
-							bind:value={subjectiveTexts[question.id]}
-							maxlength={question.subjective_answer_limit || undefined}
-						></textarea>
+						{#if question_type == question_type_enum.SUBJECTIVE}
+							<textarea
+								class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+								placeholder={$t('Type your answer here...')}
+								bind:value={candidateInput[question.id]}
+								maxlength={question.subjective_answer_limit || undefined}
+							></textarea>
+						{:else}
+							<input
+								class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+								placeholder={$t('Type your answer here...')}
+								bind:value={candidateInput[question.id]}
+								inputmode="numeric"
+							/>
+						{/if}
 						<div class="flex items-center justify-between">
 							<Button
 								size="sm"
 								onclick={() => handleSubjectiveSubmit(question)}
 								disabled={submittingQuestion === question.id ||
-									!currentText.trim() ||
+									!currentInput.trim() ||
 									!hasUnsavedChanges}
 							>
 								{#if !hasUnsavedChanges && hasSavedBefore}
@@ -244,7 +257,7 @@
 								{/if}
 							</Button>
 							{#if question.subjective_answer_limit}
-								{@const remaining = question.subjective_answer_limit - currentText.length}
+								{@const remaining = question.subjective_answer_limit - currentInput.length}
 								<span
 									class="text-sm {remaining <= 0
 										? 'font-medium text-red-500'
@@ -256,7 +269,7 @@
 							{/if}
 						</div>
 					</div>
-				{:else if isMultiple}
+				{:else if question_type === question_type_enum.MULTIPLE}
 					<div class="grid grid-cols-4 gap-2 sm:gap-3">
 						{#each question.options as option (option.id)}
 							{@const uid = `omr-${question.id}-${option.key}`}
@@ -282,7 +295,7 @@
 							</Label>
 						{/each}
 					</div>
-				{:else}
+				{:else if question_type === question_type_enum.SINGLE}
 					<RadioGroup.Root
 						class="grid grid-cols-4 gap-2 sm:gap-3"
 						orientation="horizontal"

@@ -8,6 +8,8 @@ import {
 	mockMultipleChoiceQuestion,
 	mockSubjectiveQuestion,
 	mockSubjectiveQuestionNoLimit,
+	mockNumericalIntegerQuestion,
+	mockNumericalDecimalQuestion,
 	createMockResponse
 } from '$lib/test-utils';
 
@@ -912,6 +914,776 @@ describe('QuestionCard', () => {
 		});
 	});
 
+	describe('Numerical integer question functionality', () => {
+		it('should render input field for numerical-integer questions', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.getByPlaceholderText(/type your answer here/i)).toBeInTheDocument();
+			// input, not textarea
+			expect(screen.getByPlaceholderText(/type your answer here/i).tagName).toBe('INPUT');
+		});
+
+		it('should not render radio buttons or checkboxes for numerical-integer questions', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+		});
+
+		it('should render Save Answer button for numerical-integer questions', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
+		});
+
+		it('should disable Save Answer button when input is empty', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
+		});
+
+		it('should disable Save Answer button when only whitespace is entered', async () => {
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const input = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(input, { target: { value: '   ' } });
+
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
+		});
+
+		it('should enable Save Answer button when a value is entered', async () => {
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const input = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(input, { target: { value: '8' } });
+
+			expect(screen.getByRole('button', { name: /save answer/i })).not.toBeDisabled();
+		});
+
+		it('should display existing answer when previously answered', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalIntegerQuestion.id,
+					response: '8',
+					visited: true,
+					time_spent: 20,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			const input = screen.getByPlaceholderText(/type your answer here/i);
+			expect(input).toHaveValue('8');
+		});
+
+		it('should show Saved state when question was previously answered without changes', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalIntegerQuestion.id,
+					response: '8',
+					visited: true,
+					time_spent: 20,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: /saved/i })).toBeDisabled();
+		});
+
+		it('should show Update Answer button when modifying a previously saved answer', async () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalIntegerQuestion.id,
+					response: '8',
+					visited: true,
+					time_spent: 20,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			const input = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(input, { target: { value: '42' } });
+
+			expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
+		});
+
+		it('should call API when Save Answer is clicked with entered value', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const input = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(input, { target: { value: '8' } });
+
+			const saveButton = screen.getByRole('button', { name: /save answer/i });
+			await saveButton.click();
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalledWith(
+					expect.stringContaining('/api/submit-answer'),
+					expect.objectContaining({
+						method: 'POST',
+						body: expect.stringContaining('"8"')
+					})
+				);
+			});
+		});
+
+		it('should show error message when save fails', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const input = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(input, { target: { value: '8' } });
+
+			const saveButton = screen.getByRole('button', { name: /save answer/i });
+			await saveButton.click();
+
+			await waitFor(() => {
+				expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
+			});
+		});
+
+		it('should show View Result button for answered numerical-integer question when showFeedback is true', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalIntegerQuestion.id,
+					response: '8',
+					visited: true,
+					time_spent: 20,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /view result/i })).toBeInTheDocument();
+		});
+
+		it('should not show View Result button for unanswered numerical-integer question', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [],
+					showFeedback: true
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view result/i })).not.toBeInTheDocument();
+		});
+
+		it('should show Not Attempted when locked with no response', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalIntegerQuestion.id,
+					response: '',
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: true
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.getByText(/not attempted/i)).toBeInTheDocument();
+		});
+
+		it('should show Correct feedback when integer answer exactly matches correct answer', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalIntegerQuestion.id,
+					response: '8',
+					visited: true,
+					time_spent: 15,
+					bookmarked: false,
+					is_reviewed: true,
+					correct_answer: 8 as any
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.getByText('Correct')).toBeInTheDocument();
+			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+		});
+
+		it('should show Wrong feedback when integer answer does not match correct answer', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalIntegerQuestion.id,
+					response: '5',
+					visited: true,
+					time_spent: 15,
+					bookmarked: false,
+					is_reviewed: true,
+					correct_answer: 8 as any
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.getByText('Wrong')).toBeInTheDocument();
+		});
+
+		it('should display the correct answer when integer answer is wrong', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalIntegerQuestion.id,
+					response: '5',
+					visited: true,
+					time_spent: 15,
+					bookmarked: false,
+					is_reviewed: true,
+					correct_answer: 8 as any
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			// The correct answer value should be displayed in the feedback panel
+			expect(screen.getByText('8')).toBeInTheDocument();
+		});
+
+		it('should lock the input and hide Save button when is_reviewed is true', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalIntegerQuestion.id,
+					response: '8',
+					visited: true,
+					time_spent: 15,
+					bookmarked: false,
+					is_reviewed: true,
+					correct_answer: 8 as any
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalIntegerQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.queryByPlaceholderText(/type your answer here/i)).not.toBeInTheDocument();
+			expect(screen.queryByRole('button', { name: /save answer/i })).not.toBeInTheDocument();
+		});
+
+		describe('correct answer is zero (integer)', () => {
+			it('should show Correct when submitted answer is 0 and correct answer is 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalIntegerQuestion.id,
+						response: '0',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalIntegerQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				expect(screen.getByText('Correct')).toBeInTheDocument();
+				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+			});
+
+			it('should show Wrong when submitted answer is non-zero and correct answer is 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalIntegerQuestion.id,
+						response: '5',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalIntegerQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				expect(screen.getByText('Wrong')).toBeInTheDocument();
+			});
+
+			it('should display "0" as the correct answer when response is wrong and correct answer is 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalIntegerQuestion.id,
+						response: '5',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalIntegerQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				// '0' should appear as the correct answer in the feedback panel
+				expect(screen.getByText('0')).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('Numerical decimal question functionality', () => {
+		it('should render input field for numerical-decimal questions', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalDecimalQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.getByPlaceholderText(/type your answer here/i)).toBeInTheDocument();
+			expect(screen.getByPlaceholderText(/type your answer here/i).tagName).toBe('INPUT');
+		});
+
+		it('should show Correct feedback when decimal answer is within 0.05 tolerance', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalDecimalQuestion.id,
+					response: '3.16',
+					visited: true,
+					time_spent: 15,
+					bookmarked: false,
+					is_reviewed: true,
+					correct_answer: 3.14 as any
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalDecimalQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			// |3.16 - 3.14| = 0.02 <= 0.05, so correct
+			expect(screen.getByText('Correct')).toBeInTheDocument();
+			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+		});
+
+		it('should show Wrong feedback when decimal answer is outside 0.05 tolerance', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalDecimalQuestion.id,
+					response: '2.5',
+					visited: true,
+					time_spent: 15,
+					bookmarked: false,
+					is_reviewed: true,
+					correct_answer: 3.14 as any
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalDecimalQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			// |2.5 - 3.14| = 0.64 > 0.05, so wrong
+			expect(screen.getByText('Wrong')).toBeInTheDocument();
+		});
+
+		it('should show Correct feedback when decimal answer exactly matches correct answer', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalDecimalQuestion.id,
+					response: '3.14',
+					visited: true,
+					time_spent: 15,
+					bookmarked: false,
+					is_reviewed: true,
+					correct_answer: 3.14 as any
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalDecimalQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.getByText('Correct')).toBeInTheDocument();
+		});
+
+		it('should show Not Attempted when locked with no decimal response', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalDecimalQuestion.id,
+					response: '',
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: true
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalDecimalQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.getByText(/not attempted/i)).toBeInTheDocument();
+		});
+
+		it('should display the correct answer when decimal response is wrong', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalDecimalQuestion.id,
+					response: '2.5',
+					visited: true,
+					time_spent: 15,
+					bookmarked: false,
+					is_reviewed: true,
+					correct_answer: 3.14 as any
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalDecimalQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			expect(screen.getByText('3.14')).toBeInTheDocument();
+		});
+
+		it('should show View Result button for answered numerical-decimal question when showFeedback is true', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockNumericalDecimalQuestion.id,
+					response: '3.14',
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockNumericalDecimalQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /view result/i })).toBeInTheDocument();
+		});
+
+		describe('correct answer is zero (decimal)', () => {
+			it('should show Correct when submitted answer is 0 and correct answer is 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalDecimalQuestion.id,
+						response: '0',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalDecimalQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				// |0 - 0| = 0 <= 0.5
+				expect(screen.getByText('Correct')).toBeInTheDocument();
+				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+			});
+
+			it('should show Correct when decimal answer is within 0.05 tolerance of 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalDecimalQuestion.id,
+						response: '0.03',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalDecimalQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				// |0.03 - 0| = 0.03 <= 0.05
+				expect(screen.getByText('Correct')).toBeInTheDocument();
+			});
+
+			it('should show Wrong when decimal answer is outside 0.05 tolerance of 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalDecimalQuestion.id,
+						response: '0.6',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalDecimalQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				// |0.6 - 0| = 0.6 > 0.05
+				expect(screen.getByText('Wrong')).toBeInTheDocument();
+			});
+
+			it('should display "0" as the correct answer when decimal response is wrong and correct answer is 0', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockNumericalDecimalQuestion.id,
+						response: '0.6',
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: true,
+						correct_answer: 0 as any
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockNumericalDecimalQuestion,
+						serialNumber: 1,
+						candidate: mockCandidate,
+						totalQuestions: 10,
+						selectedQuestions
+					}
+				});
+
+				expect(screen.getByText('0')).toBeInTheDocument();
+			});
+		});
+	});
 	describe('View Feedback button controlled by showFeedback prop', () => {
 		const answeredSingleChoice = [
 			{

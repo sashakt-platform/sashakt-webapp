@@ -7,6 +7,8 @@ import {
 	mockSingleChoiceQuestion,
 	mockMultipleChoiceQuestion,
 	mockSubjectiveQuestion,
+	mockNumericalIntegerQuestion,
+	mockNumericalDecimalQuestion,
 	createMockResponse
 } from '$lib/test-utils';
 import type { TQuestion, TSelection } from '$lib/types';
@@ -386,6 +388,112 @@ describe('OmrSheet', () => {
 
 			await waitFor(() => {
 				expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('Numerical integer questions', () => {
+		it('renders an input field (not radio or checkbox)', () => {
+			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
+			expect(screen.getByRole('textbox')).toBeInTheDocument();
+			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+		});
+
+		it('Save Answer button is disabled when input is empty', () => {
+			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
+		});
+
+		it('Save Answer button is enabled after typing a value', async () => {
+			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
+			await fireEvent.input(screen.getByRole('textbox'), { target: { value: '8' } });
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeEnabled();
+		});
+
+		it('calls fetch with the entered value when Save Answer is clicked', async () => {
+			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
+			await fireEvent.input(screen.getByRole('textbox'), { target: { value: '8' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				const body = JSON.parse(
+					(vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
+				);
+				expect(body.response).toBe('8');
+			});
+		});
+
+		it('shows Saved state after a successful save', async () => {
+			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
+			await fireEvent.input(screen.getByRole('textbox'), { target: { value: '8' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+			});
+		});
+
+		it('shows Update Answer after modifying a saved answer', async () => {
+			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
+			const input = screen.getByRole('textbox');
+
+			await fireEvent.input(input, { target: { value: '8' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await waitFor(() => screen.getByRole('button', { name: /saved/i }));
+
+			await fireEvent.input(input, { target: { value: '5' } });
+
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
+			});
+		});
+
+		it('pre-populates an existing integer answer from selections', () => {
+			withSelections([
+				{
+					question_revision_id: mockNumericalIntegerQuestion.id,
+					response: '8',
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			]);
+
+			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
+			expect(screen.getByRole('textbox')).toHaveValue('8');
+		});
+	});
+
+	describe('Numerical decimal questions', () => {
+		it('renders an input field (not radio or checkbox)', () => {
+			render(OmrSheet, { props: makeProps([mockNumericalDecimalQuestion]) });
+			expect(screen.getByRole('textbox')).toBeInTheDocument();
+			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+		});
+
+		it('calls fetch with the decimal value when Save Answer is clicked', async () => {
+			render(OmrSheet, { props: makeProps([mockNumericalDecimalQuestion]) });
+			await fireEvent.input(screen.getByRole('textbox'), { target: { value: '3.14' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				const body = JSON.parse(
+					(vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
+				);
+				expect(body.response).toBe('3.14');
+			});
+		});
+
+		it('shows Saved state after saving a decimal answer', async () => {
+			render(OmrSheet, { props: makeProps([mockNumericalDecimalQuestion]) });
+			await fireEvent.input(screen.getByRole('textbox'), { target: { value: '3.14' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
 			});
 		});
 	});

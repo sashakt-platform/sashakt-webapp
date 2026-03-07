@@ -21,3 +21,5 @@ export enum languages {
 }
 
 export const DEFAULT_LANGUAGE = languages.English;
+
+export const TOLERANCE: number = 0.05;
