@@ -1199,23 +1199,5 @@ describe('QuestionCard', () => {
 				screen.getByText(/Partial marks awarded if no wrong option is selected/i)
 			).toBeInTheDocument();
 		});
-
-		it('should not show negative marks warning when wrong is 0', () => {
-			const questionNoNegative = {
-				...mockMultiChoiceWithPartialMarks,
-				marking_scheme: {
-					...mockMultiChoiceWithPartialMarks.marking_scheme,
-					wrong: 0
-				}
-			};
-
-			render(QuestionCard, {
-				props: { question: questionNoNegative, ...defaultProps }
-			});
-
-			expect(
-				screen.queryByText(/Partial marks awarded if no wrong option is selected/i)
-			).not.toBeInTheDocument();
-		});
 	});
 });

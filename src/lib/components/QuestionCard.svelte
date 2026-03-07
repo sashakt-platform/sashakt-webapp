@@ -402,11 +402,9 @@
 										</div>
 									{/each}
 								</div>
-								{#if scheme.wrong < 0}
-									<p class="text-muted-foreground mt-2 text-[11px] leading-snug">
-										{$t('Partial marks awarded if no wrong option is selected')}
-									</p>
-								{/if}
+								<p class="text-muted-foreground/65 mt-2 text-[11px] leading-snug">
+									{$t('Partial marks awarded if no wrong option is selected')}
+								</p>
 							</div>
 						{/if}
 					</div>
