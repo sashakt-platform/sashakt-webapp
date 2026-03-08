@@ -71,8 +71,10 @@
 	let candidateInput = $state(getExistingInputResponse());
 	let lastSavedInput = $state(getExistingInputResponse());
 
-	const hasUnsavedChanges = $derived(candidateInput.trim() !== lastSavedInput.trim());
-	const hasSavedBefore = $derived(lastSavedInput.trim().length > 0);
+	const hasUnsavedChanges = $derived(
+		String(candidateInput ?? '').trim() !== String(lastSavedInput ?? '').trim()
+	);
+	const hasSavedBefore = $derived(String(lastSavedInput ?? '').trim().length > 0);
 
 	const isSelected = (optionId: number) => {
 		const selected = selectedQuestion(question.id);
@@ -338,16 +340,17 @@
 
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 
+		const inputValue = String(candidateInput ?? '');
 		if (answeredQuestion) {
 			selectedQuestions = selectedQuestions.map((q) =>
-				q.question_revision_id === question.id ? { ...q, response: candidateInput } : q
+				q.question_revision_id === question.id ? { ...q, response: inputValue } : q
 			);
 		} else {
 			selectedQuestions = [
 				...selectedQuestions,
 				{
 					question_revision_id: question.id,
-					response: candidateInput,
+					response: inputValue,
 					visited: true,
 					time_spent: 0,
 					bookmarked: currentBookmarked
@@ -357,7 +360,7 @@
 		updateStore();
 
 		try {
-			await submitAnswer(question.id, candidateInput, currentBookmarked);
+			await submitAnswer(question.id, inputValue, currentBookmarked);
 			lastSavedInput = candidateInput;
 		} catch {
 			selectedQuestions = previousState;
@@ -518,7 +521,7 @@
 						variant="default"
 						size="sm"
 						onclick={handleSubjectiveSubmit}
-						disabled={isSubmitting || !candidateInput.trim() || !hasUnsavedChanges}
+						disabled={isSubmitting || !String(candidateInput ?? '').trim() || !hasUnsavedChanges}
 					>
 						{#if !hasUnsavedChanges && hasSavedBefore}
 							<Check class="mr-1 h-4 w-4" />
@@ -562,7 +565,10 @@
 							: 'border-red-400 bg-red-100 text-red-700'}
 				{@const candidateResponse = currentSelection?.response}
 				{@const correctAnswer = currentSelection?.correct_answer}
-				<div data-testid="numerical-answer-feedback" class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}>
+				<div
+					data-testid="numerical-answer-feedback"
+					class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}
+				>
 					{#if typeof candidateResponse === 'string' && candidateResponse.trim()}
 						<p class="w-full text-sm whitespace-pre-wrap">{candidateResponse}</p>
 						{#if isCorrect === true}
@@ -586,17 +592,18 @@
 			{:else}
 				<div class="flex flex-col gap-2">
 					<input
+						type="number"
+						step={question.question_type === question_type_enum.NUMERICALDECIMAL ? 'any' : '1'}
 						class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 						placeholder={$t('Type your answer here...')}
 						bind:value={candidateInput}
-						inputmode="numeric"
 					/>
 					<div class="flex items-center justify-between">
 						<Button
 							variant="default"
 							size="sm"
 							onclick={handleSubjectiveSubmit}
-							disabled={isSubmitting || !candidateInput.trim() || !hasUnsavedChanges}
+							disabled={isSubmitting || !String(candidateInput ?? "").trim() || !hasUnsavedChanges}
 						>
 							{#if !hasUnsavedChanges && hasSavedBefore}
 								<Check class="mr-1 h-4 w-4" />

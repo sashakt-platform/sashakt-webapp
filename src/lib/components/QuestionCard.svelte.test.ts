@@ -1032,7 +1032,7 @@ describe('QuestionCard', () => {
 			});
 
 			const input = screen.getByPlaceholderText(/type your answer here/i);
-			expect(input).toHaveValue('8');
+			expect(input).toHaveValue(8);
 		});
 
 		it('should show Saved state when question was previously answered without changes', () => {
