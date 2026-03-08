@@ -6,13 +6,14 @@ export const isNumericalAnswerCorrect = (
 	submittedAnswer: string,
 	correctAnswer: number
 ): boolean | null => {
-	if (submittedAnswer == null) return null;
+	const answerStr = String(submittedAnswer ?? '');
+	if (!answerStr.trim()) return null;
 	if (correctAnswer == null) return null;
 	if (questionType === question_type_enum.NUMERICALINTEGER) {
-		const submittedNum = parseFloat(submittedAnswer);
+		const submittedNum = parseFloat(answerStr);
 		return submittedNum === correctAnswer;
 	} else if (questionType === question_type_enum.NUMERICALDECIMAL) {
-		const submittedNum = parseFloat(submittedAnswer);
+		const submittedNum = parseFloat(answerStr);
 		if (!Number.isFinite(submittedNum) || !Number.isFinite(correctAnswer)) return null;
 		return Math.abs(submittedNum - correctAnswer) <= TOLERANCE;
 	}
