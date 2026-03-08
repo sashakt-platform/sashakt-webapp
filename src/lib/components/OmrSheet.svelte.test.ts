@@ -395,7 +395,7 @@ describe('OmrSheet', () => {
 	describe('Numerical integer questions', () => {
 		it('renders an input field (not radio or checkbox)', () => {
 			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
-			expect(screen.getByRole('textbox')).toBeInTheDocument();
+			expect(screen.getByRole('spinbutton')).toBeInTheDocument();
 			expect(screen.queryAllByRole('radio')).toHaveLength(0);
 			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
 		});
@@ -407,13 +407,13 @@ describe('OmrSheet', () => {
 
 		it('Save Answer button is enabled after typing a value', async () => {
 			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
-			await fireEvent.input(screen.getByRole('textbox'), { target: { value: '8' } });
+			await fireEvent.input(screen.getByRole('spinbutton'), { target: { value: '8' } });
 			expect(screen.getByRole('button', { name: /save answer/i })).toBeEnabled();
 		});
 
 		it('calls fetch with the entered value when Save Answer is clicked', async () => {
 			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
-			await fireEvent.input(screen.getByRole('textbox'), { target: { value: '8' } });
+			await fireEvent.input(screen.getByRole('spinbutton'), { target: { value: '8' } });
 			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
 
 			await waitFor(() => {
@@ -426,7 +426,7 @@ describe('OmrSheet', () => {
 
 		it('shows Saved state after a successful save', async () => {
 			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
-			await fireEvent.input(screen.getByRole('textbox'), { target: { value: '8' } });
+			await fireEvent.input(screen.getByRole('spinbutton'), { target: { value: '8' } });
 			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
 
 			await waitFor(() => {
@@ -436,7 +436,7 @@ describe('OmrSheet', () => {
 
 		it('shows Update Answer after modifying a saved answer', async () => {
 			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
-			const input = screen.getByRole('textbox');
+			const input = screen.getByRole('spinbutton');
 
 			await fireEvent.input(input, { target: { value: '8' } });
 			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
@@ -462,21 +462,21 @@ describe('OmrSheet', () => {
 			]);
 
 			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
-			expect(screen.getByRole('textbox')).toHaveValue('8');
+			expect(screen.getByRole('spinbutton')).toHaveValue(8);
 		});
 	});
 
 	describe('Numerical decimal questions', () => {
 		it('renders an input field (not radio or checkbox)', () => {
 			render(OmrSheet, { props: makeProps([mockNumericalDecimalQuestion]) });
-			expect(screen.getByRole('textbox')).toBeInTheDocument();
+			expect(screen.getByRole('spinbutton')).toBeInTheDocument();
 			expect(screen.queryAllByRole('radio')).toHaveLength(0);
 			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
 		});
 
 		it('calls fetch with the decimal value when Save Answer is clicked', async () => {
 			render(OmrSheet, { props: makeProps([mockNumericalDecimalQuestion]) });
-			await fireEvent.input(screen.getByRole('textbox'), { target: { value: '3.14' } });
+			await fireEvent.input(screen.getByRole('spinbutton'), { target: { value: '3.14' } });
 			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
 
 			await waitFor(() => {
@@ -489,7 +489,7 @@ describe('OmrSheet', () => {
 
 		it('shows Saved state after saving a decimal answer', async () => {
 			render(OmrSheet, { props: makeProps([mockNumericalDecimalQuestion]) });
-			await fireEvent.input(screen.getByRole('textbox'), { target: { value: '3.14' } });
+			await fireEvent.input(screen.getByRole('spinbutton'), { target: { value: '3.14' } });
 			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
 
 			await waitFor(() => {

@@ -159,7 +159,7 @@
 	const handleSubjectiveSubmit = async (question: TQuestion) => {
 		if (submittingQuestion === question.id) return;
 
-		const text = candidateInput[question.id] ?? '';
+		const text = String(candidateInput[question.id] ?? '');
 		const existing = selections.find((s) => s.question_revision_id === question.id);
 
 		const previousSelections = JSON.parse(JSON.stringify(selections));
@@ -222,8 +222,8 @@
 				{#if question_type === question_type_enum.SUBJECTIVE || question_type === question_type_enum.NUMERICALINTEGER || question_type === question_type_enum.NUMERICALDECIMAL}
 					{@const currentInput = candidateInput[question.id] ?? ''}
 					{@const savedInput = lastSavedInput[question.id] ?? ''}
-					{@const hasUnsavedChanges = currentInput.trim() !== savedInput.trim()}
-					{@const hasSavedBefore = savedInput.trim().length > 0}
+					{@const hasUnsavedChanges = String(currentInput).trim() !== String(savedInput).trim()}
+					{@const hasSavedBefore = String(savedInput).trim().length > 0}
 					<div class="flex w-full flex-col gap-2">
 						{#if question_type == question_type_enum.SUBJECTIVE}
 							<textarea
@@ -234,10 +234,11 @@
 							></textarea>
 						{:else}
 							<input
+								type="number"
+								step={question_type === question_type_enum.NUMERICALDECIMAL ? 'any' : '1'}
 								class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 								placeholder={$t('Type your answer here...')}
 								bind:value={candidateInput[question.id]}
-								inputmode="numeric"
 							/>
 						{/if}
 						<div class="flex items-center justify-between">
@@ -245,7 +246,7 @@
 								size="sm"
 								onclick={() => handleSubjectiveSubmit(question)}
 								disabled={submittingQuestion === question.id ||
-									!currentInput.trim() ||
+									!String(currentInput).trim() ||
 									!hasUnsavedChanges}
 							>
 								{#if !hasUnsavedChanges && hasSavedBefore}
