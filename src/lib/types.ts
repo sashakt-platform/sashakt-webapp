@@ -33,10 +33,18 @@ export enum question_type_enum {
 	NUMERICALDECIMAL = 'numerical-decimal'
 }
 
+export type TPartialMark = {
+	num_correct_selected: number;
+	marks: number;
+};
+
 export type TMarks = {
 	correct: number;
 	wrong: number;
 	skipped: number;
+	partial?: {
+		correct_answers: TPartialMark[];
+	};
 };
 
 export type TQuestion = {
