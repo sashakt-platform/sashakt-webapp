@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/svelte';
+import { render, screen, waitFor, within } from '@testing-library/svelte';
 import QuestionCard from './QuestionCard.svelte';
 import { fireEvent } from '@testing-library/svelte';
 import {
@@ -1234,8 +1234,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByText('Correct')).toBeInTheDocument();
-			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+			const feedback = screen.getByTestId('numerical-answer-feedback');
+			expect(within(feedback).getByText('Correct')).toBeInTheDocument();
+			expect(within(feedback).queryByText('Wrong')).not.toBeInTheDocument();
 		});
 
 		it('should show Wrong feedback when integer answer does not match correct answer', () => {
@@ -1261,7 +1262,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByText('Wrong')).toBeInTheDocument();
+			expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')).toBeInTheDocument();
 		});
 
 		it('should display the correct answer when integer answer is wrong', () => {
@@ -1342,8 +1343,9 @@ describe('QuestionCard', () => {
 					}
 				});
 
-				expect(screen.getByText('Correct')).toBeInTheDocument();
-				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+				const feedback = screen.getByTestId('numerical-answer-feedback');
+				expect(within(feedback).getByText('Correct')).toBeInTheDocument();
+				expect(within(feedback).queryByText('Wrong')).not.toBeInTheDocument();
 			});
 
 			it('should show Wrong when submitted answer is non-zero and correct answer is 0', () => {
@@ -1369,7 +1371,7 @@ describe('QuestionCard', () => {
 					}
 				});
 
-				expect(screen.getByText('Wrong')).toBeInTheDocument();
+				expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')).toBeInTheDocument();
 			});
 
 			it('should display "0" as the correct answer when response is wrong and correct answer is 0', () => {
@@ -1396,7 +1398,7 @@ describe('QuestionCard', () => {
 				});
 
 				// '0' should appear as the correct answer in the feedback panel
-				expect(screen.getByText('0')).toBeInTheDocument();
+				expect(within(screen.getByTestId('numerical-correct-answer')).getByText('0')).toBeInTheDocument();
 			});
 		});
 	});
@@ -1441,8 +1443,9 @@ describe('QuestionCard', () => {
 			});
 
 			// |3.16 - 3.14| = 0.02 <= 0.05, so correct
-			expect(screen.getByText('Correct')).toBeInTheDocument();
-			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+			const feedback1 = screen.getByTestId('numerical-answer-feedback');
+			expect(within(feedback1).getByText('Correct')).toBeInTheDocument();
+			expect(within(feedback1).queryByText('Wrong')).not.toBeInTheDocument();
 		});
 
 		it('should show Wrong feedback when decimal answer is outside 0.05 tolerance', () => {
@@ -1469,7 +1472,7 @@ describe('QuestionCard', () => {
 			});
 
 			// |2.5 - 3.14| = 0.64 > 0.05, so wrong
-			expect(screen.getByText('Wrong')).toBeInTheDocument();
+			expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')).toBeInTheDocument();
 		});
 
 		it('should show Correct feedback when decimal answer exactly matches correct answer', () => {
@@ -1495,7 +1498,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByText('Correct')).toBeInTheDocument();
+			expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Correct')).toBeInTheDocument();
 		});
 
 		it('should show Not Attempted when locked with no decimal response', () => {
@@ -1600,8 +1603,9 @@ describe('QuestionCard', () => {
 				});
 
 				// |0 - 0| = 0 <= 0.5
-				expect(screen.getByText('Correct')).toBeInTheDocument();
-				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
+				const feedback = screen.getByTestId('numerical-answer-feedback');
+				expect(within(feedback).getByText('Correct')).toBeInTheDocument();
+				expect(within(feedback).queryByText('Wrong')).not.toBeInTheDocument();
 			});
 
 			it('should show Correct when decimal answer is within 0.05 tolerance of 0', () => {
@@ -1628,7 +1632,7 @@ describe('QuestionCard', () => {
 				});
 
 				// |0.03 - 0| = 0.03 <= 0.05
-				expect(screen.getByText('Correct')).toBeInTheDocument();
+				expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Correct')).toBeInTheDocument();
 			});
 
 			it('should show Wrong when decimal answer is outside 0.05 tolerance of 0', () => {
@@ -1655,7 +1659,7 @@ describe('QuestionCard', () => {
 				});
 
 				// |0.6 - 0| = 0.6 > 0.05
-				expect(screen.getByText('Wrong')).toBeInTheDocument();
+				expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')).toBeInTheDocument();
 			});
 
 			it('should display "0" as the correct answer when decimal response is wrong and correct answer is 0', () => {
@@ -1681,7 +1685,7 @@ describe('QuestionCard', () => {
 					}
 				});
 
-				expect(screen.getByText('0')).toBeInTheDocument();
+				expect(within(screen.getByTestId('numerical-correct-answer')).getByText('0')).toBeInTheDocument();
 			});
 		});
 	});

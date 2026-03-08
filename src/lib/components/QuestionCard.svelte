@@ -562,7 +562,7 @@
 							: 'border-red-400 bg-red-100 text-red-700'}
 				{@const candidateResponse = currentSelection?.response}
 				{@const correctAnswer = currentSelection?.correct_answer}
-				<div class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}>
+				<div data-testid="numerical-answer-feedback" class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}>
 					{#if typeof candidateResponse === 'string' && candidateResponse.trim()}
 						<p class="w-full text-sm whitespace-pre-wrap">{candidateResponse}</p>
 						{#if isCorrect === true}
@@ -574,8 +574,9 @@
 						<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
 					{/if}
 				</div>
-				{#if !isCorrect}
+				{#if isCorrect === false}
 					<div
+						data-testid="numerical-correct-answer"
 						class="mt-4 flex flex-row rounded-xl border border-green-400 bg-green-100 px-4 py-4 text-green-700"
 					>
 						<p class="w-full text-sm whitespace-pre-wrap">{correctAnswer}</p>
