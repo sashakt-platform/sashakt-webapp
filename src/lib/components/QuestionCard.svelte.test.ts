@@ -422,6 +422,96 @@ describe('QuestionCard', () => {
 		});
 	});
 
+	describe('showMarkForReview prop', () => {
+		it('should show "Mark for review" button by default when prop is not provided', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+		});
+
+		it('should show "Mark for review" button when showMarkForReview is true', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [],
+					showMarkForReview: true
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+		});
+
+		it('should hide "Mark for review" button when showMarkForReview is false', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [],
+					showMarkForReview: false
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /mark for review/i })).not.toBeInTheDocument();
+		});
+
+		it('should hide "mark for review" button when showMarkForReview is false and question is bookmarked', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [
+						{
+							question_revision_id: mockSingleChoiceQuestion.id,
+							response: [],
+							visited: true,
+							time_spent: 0,
+							bookmarked: true,
+							is_reviewed: false
+						}
+					],
+					showMarkForReview: false
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /mark for review/i })).not.toBeInTheDocument();
+		});
+
+		it('should not affect other card elements when showMarkForReview is false', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [],
+					showMarkForReview: false
+				}
+			});
+
+			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
+			mockSingleChoiceQuestion.options.forEach((option) => {
+				expect(
+					screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))
+				).toBeInTheDocument();
+			});
+		});
+	});
+
 	describe('Subjective question functionality', () => {
 		it('should render textarea for subjective questions', () => {
 			render(QuestionCard, {
@@ -1262,7 +1352,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')).toBeInTheDocument();
+			expect(
+				within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+			).toBeInTheDocument();
 		});
 
 		it('should display the correct answer when integer answer is wrong', () => {
@@ -1371,7 +1463,9 @@ describe('QuestionCard', () => {
 					}
 				});
 
-				expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')).toBeInTheDocument();
+				expect(
+					within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+				).toBeInTheDocument();
 			});
 
 			it('should display "0" as the correct answer when response is wrong and correct answer is 0', () => {
@@ -1398,7 +1492,9 @@ describe('QuestionCard', () => {
 				});
 
 				// '0' should appear as the correct answer in the feedback panel
-				expect(within(screen.getByTestId('numerical-correct-answer')).getByText('0')).toBeInTheDocument();
+				expect(
+					within(screen.getByTestId('numerical-correct-answer')).getByText('0')
+				).toBeInTheDocument();
 			});
 		});
 	});
@@ -1472,7 +1568,9 @@ describe('QuestionCard', () => {
 			});
 
 			// |2.5 - 3.14| = 0.64 > 0.05, so wrong
-			expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')).toBeInTheDocument();
+			expect(
+				within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+			).toBeInTheDocument();
 		});
 
 		it('should show Correct feedback when decimal answer exactly matches correct answer', () => {
@@ -1498,7 +1596,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Correct')).toBeInTheDocument();
+			expect(
+				within(screen.getByTestId('numerical-answer-feedback')).getByText('Correct')
+			).toBeInTheDocument();
 		});
 
 		it('should show Not Attempted when locked with no decimal response', () => {
@@ -1632,7 +1732,9 @@ describe('QuestionCard', () => {
 				});
 
 				// |0.03 - 0| = 0.03 <= 0.05
-				expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Correct')).toBeInTheDocument();
+				expect(
+					within(screen.getByTestId('numerical-answer-feedback')).getByText('Correct')
+				).toBeInTheDocument();
 			});
 
 			it('should show Wrong when decimal answer is outside 0.05 tolerance of 0', () => {
@@ -1659,7 +1761,9 @@ describe('QuestionCard', () => {
 				});
 
 				// |0.6 - 0| = 0.6 > 0.05
-				expect(within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')).toBeInTheDocument();
+				expect(
+					within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+				).toBeInTheDocument();
 			});
 
 			it('should display "0" as the correct answer when decimal response is wrong and correct answer is 0', () => {
@@ -1685,7 +1789,9 @@ describe('QuestionCard', () => {
 					}
 				});
 
-				expect(within(screen.getByTestId('numerical-correct-answer')).getByText('0')).toBeInTheDocument();
+				expect(
+					within(screen.getByTestId('numerical-correct-answer')).getByText('0')
+				).toBeInTheDocument();
 			});
 		});
 	});
