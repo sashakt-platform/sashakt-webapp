@@ -151,6 +151,7 @@
 									{totalQuestions}
 									bind:selectedQuestions
 									showFeedback={testDetails?.show_feedback_immediately ?? false}
+									showMarkForReview={testDetails?.bookmark ?? true}
 								/>
 							</div>
 						{/each}

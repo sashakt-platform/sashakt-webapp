@@ -21,7 +21,8 @@
 		candidate,
 		totalQuestions,
 		selectedQuestions = $bindable(),
-		showFeedback = false
+		showFeedback = false,
+		showMarkForReview = true
 	}: {
 		question: TQuestion;
 		candidate: TCandidate;
@@ -29,6 +30,7 @@
 		totalQuestions: number;
 		selectedQuestions: TSelection[];
 		showFeedback?: boolean;
+		showMarkForReview?: boolean;
 	} = $props();
 
 	const options = question.options;
@@ -603,7 +605,7 @@
 							variant="default"
 							size="sm"
 							onclick={handleSubjectiveSubmit}
-							disabled={isSubmitting || !String(candidateInput ?? "").trim() || !hasUnsavedChanges}
+							disabled={isSubmitting || !String(candidateInput ?? '').trim() || !hasUnsavedChanges}
 						>
 							{#if !hasUnsavedChanges && hasSavedBefore}
 								<Check class="mr-1 h-4 w-4" />
@@ -666,16 +668,18 @@
 			</Button>
 		{/if}
 
-		<Button
-			variant="outline"
-			class="mt-4 w-full {isQuestionBookmarked
-				? 'border-amber-500 bg-amber-50 text-amber-700 hover:bg-amber-100'
-				: ''}"
-			onclick={handleBookmark}
-			disabled={isLocked}
-		>
-			<Bookmark class="mr-2 h-4 w-4 {isQuestionBookmarked ? 'fill-amber-500' : ''}" />
-			{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
-		</Button>
+		{#if showMarkForReview}
+			<Button
+				variant="outline"
+				class="mt-4 w-full {isQuestionBookmarked
+					? 'border-amber-500 bg-amber-50 text-amber-700 hover:bg-amber-100'
+					: ''}"
+				onclick={handleBookmark}
+				disabled={isLocked}
+			>
+				<Bookmark class="mr-2 h-4 w-4 {isQuestionBookmarked ? 'fill-amber-500' : ''}" />
+				{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
+			</Button>
+		{/if}
 	</Card.Content>
 </Card.Root>
