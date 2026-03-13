@@ -11,7 +11,7 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
-	import { question_type_enum, type TCandidate, type TQuestion, type TSelection } from '$lib/types';
+	import { question_type_enum, type TCandidate, type TMatrixOptions, type TOptions, type TQuestion, type TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
 
@@ -482,7 +482,8 @@
 					})()}
 					disabled={isLocked}
 				>
-					{#each options as option, index (index)}
+					{@const typedOptions = options as TOptions[]}
+					{#each typedOptions as option, index (index)}
 						{@const uid = `${question.id}-${option.key}`}
 						{@const feedbackClass = optionFeedbackClass(option.id)}
 						{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
@@ -619,8 +620,23 @@
 					</div>
 				</div>
 			{/if}
+		{:else if question.question_type === question_type_enum.MATRIXMATCH}
+			{@const matrix = options as TMatrixOptions}
+			<div class="grid grid-cols-2 gap-4">
+				{#each [matrix.rows, matrix.columns] as col (col.label)}
+					<div>
+						<p class="text-muted-foreground mb-2 text-sm font-semibold">{col.label}</p>
+						<div class="space-y-2">
+							{#each col.items as item (item.id)}
+								<div class="rounded-xl border px-4 py-3 text-sm">{item.key}. {item.value}</div>
+							{/each}
+						</div>
+					</div>
+				{/each}
+			</div>
 		{:else}
-			{#each options as option (option.id)}
+			{@const typedOptions = options as TOptions[]}
+			{#each typedOptions as option (option.id)}
 				{@const uid = `${question.id}-${option.key}`}
 				{@const feedbackClass = optionFeedbackClass(option.id)}
 				{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
