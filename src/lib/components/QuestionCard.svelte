@@ -11,7 +11,14 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
-	import { question_type_enum, type TCandidate, type TQuestion, type TSelection } from '$lib/types';
+	import {
+		question_type_enum,
+		type TCandidate,
+		type TMatrixOptions,
+		type TOptions,
+		type TQuestion,
+		type TSelection
+	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
 
@@ -33,7 +40,7 @@
 		showMarkForReview?: boolean;
 	} = $props();
 
-	const options = question.options;
+	const options = question.options as TOptions[];
 
 	// key to force remount of RadioGroup on error, this is to prevent radio button from being checked
 	let radioGroupKey = $state(0);
@@ -331,6 +338,61 @@
 
 	const isQuestionBookmarked = $derived(selectedQuestion(question.id)?.bookmarked ?? false);
 
+	const parseMatrixResponse = (response: number[] | string | undefined): Record<string, number> => {
+		if (typeof response !== 'string' || !response) return {};
+		try {
+			return JSON.parse(response);
+		} catch {
+			return {};
+		}
+	};
+
+	const matrixResponse = $derived(parseMatrixResponse(selectedQuestion(question.id)?.response));
+
+	const getMatrixSelection = (rowId: number): number | undefined => matrixResponse[String(rowId)];
+
+	const handleMatrixSelection = async (rowId: number, columnId: number) => {
+		if (isLocked || isSubmitting) return;
+
+		const answeredQuestion = selectedQuestion(question.id);
+		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
+
+		const current = parseMatrixResponse(answeredQuestion?.response);
+		const newMatrix = { ...current, [rowId]: columnId };
+		const newResponse = JSON.stringify(newMatrix);
+
+		isSubmitting = true;
+		saveError = null;
+
+		try {
+			await submitAnswer(question.id, newResponse, currentBookmarked);
+
+			if (answeredQuestion) {
+				selectedQuestions = selectedQuestions.map((q) =>
+					q.question_revision_id === question.id ? { ...q, response: newResponse } : q
+				);
+			} else {
+				selectedQuestions = [
+					...selectedQuestions,
+					{
+						question_revision_id: question.id,
+						response: newResponse,
+						visited: true,
+						time_spent: 0,
+						bookmarked: currentBookmarked,
+						is_reviewed: false
+					}
+				];
+			}
+			updateStore();
+		} catch {
+			saveError = 'Failed to save your answer. Please try again.';
+			setTimeout(() => (saveError = null), 5000);
+		} finally {
+			isSubmitting = false;
+		}
+	};
+
 	const handleSubjectiveSubmit = async () => {
 		if (isSubmitting) return;
 
@@ -619,6 +681,44 @@
 					</div>
 				</div>
 			{/if}
+		{:else if question.question_type === question_type_enum.MATRIXRATING}
+			{@const matrixOpts = question.options as TMatrixOptions}
+			<div class="overflow-x-auto">
+				<table class="w-full border-collapse text-sm">
+					<thead>
+						<tr>
+							<th class="border border-gray-300 bg-gray-100 px-4 py-3 text-left font-semibold">
+								{matrixOpts.rows.label}
+							</th>
+							{#each matrixOpts.columns.items as col (col.id)}
+								<th class="border border-gray-300 bg-gray-100 px-4 py-3 text-center font-semibold">
+									{col.key} – {col.value}
+								</th>
+							{/each}
+						</tr>
+					</thead>
+					<tbody>
+						{#each matrixOpts.rows.items as row (row.id)}
+							<tr class="hover:bg-gray-50">
+								<td class="border border-gray-300 px-4 py-3 font-medium">{row.value}</td>
+								{#each matrixOpts.columns.items as col (col.id)}
+									<td class="border border-gray-300 px-4 py-3 text-center">
+										<input
+											type="radio"
+											name="matrix-{question.id}-row-{row.id}"
+											value={col.id}
+											checked={getMatrixSelection(row.id) === col.id}
+											disabled={isLocked}
+											class="accent-primary h-4 w-4 cursor-pointer disabled:cursor-not-allowed"
+											onchange={() => handleMatrixSelection(row.id, col.id)}
+										/>
+									</td>
+								{/each}
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
 		{:else}
 			{#each options as option (option.id)}
 				{@const uid = `${question.id}-${option.key}`}

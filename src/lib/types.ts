@@ -30,8 +30,20 @@ export enum question_type_enum {
 	MULTIPLE = 'multi-choice',
 	SUBJECTIVE = 'subjective',
 	NUMERICALINTEGER = 'numerical-integer',
-	NUMERICALDECIMAL = 'numerical-decimal'
+	NUMERICALDECIMAL = 'numerical-decimal',
+	MATRIXRATING = 'matrix-rating'
 }
+
+export type TMatrixOptions = {
+	rows: {
+		label: string;
+		items: TOptions[];
+	};
+	columns: {
+		label: string;
+		items: TOptions[];
+	};
+};
 
 export type TPartialMark = {
 	num_correct_selected: number;
@@ -52,7 +64,7 @@ export type TQuestion = {
 	question_text: string;
 	instructions: string;
 	question_type: question_type_enum;
-	options: TOptions[];
+	options: TOptions[] | TMatrixOptions;
 	subjective_answer_limit: number;
 	is_mandatory: boolean;
 	marking_scheme: TMarks;
