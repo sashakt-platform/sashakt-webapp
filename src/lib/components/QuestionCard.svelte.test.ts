@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/svelte';
 import QuestionCard from './QuestionCard.svelte';
 import { fireEvent } from '@testing-library/svelte';
+import type { TSelection } from '$lib/types';
 import {
 	mockCandidate,
 	mockSingleChoiceQuestion,
@@ -11,6 +12,8 @@ import {
 	mockSubjectiveQuestionNoLimit,
 	mockNumericalIntegerQuestion,
 	mockNumericalDecimalQuestion,
+	mockMatrixRatingQuestion,
+	mockMatrixRatingOptions,
 	createMockResponse
 } from '$lib/test-utils';
 
@@ -2080,6 +2083,186 @@ describe('QuestionCard', () => {
 			expect(
 				screen.getByText(/Partial marks awarded if no wrong option is selected/i)
 			).toBeInTheDocument();
+		});
+	});
+
+	describe('Matrix Rating question', () => {
+		const defaultProps = {
+			serialNumber: 1,
+			candidate: mockCandidate,
+			totalQuestions: 10,
+			selectedQuestions: [] as TSelection[]
+		};
+
+		it('should render question text', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixRatingQuestion, ...defaultProps }
+			});
+
+			expect(screen.getByText(mockMatrixRatingQuestion.question_text)).toBeInTheDocument();
+		});
+
+		it('should render the rows label as the first column header', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixRatingQuestion, ...defaultProps }
+			});
+
+			expect(screen.getByText(mockMatrixRatingOptions.rows.label)).toBeInTheDocument();
+		});
+
+		it('should render all column headers', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixRatingQuestion, ...defaultProps }
+			});
+
+			mockMatrixRatingOptions.columns.items.forEach((col) => {
+				expect(screen.getByText(`${col.key} – ${col.value}`)).toBeInTheDocument();
+			});
+		});
+
+		it('should render all row labels', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixRatingQuestion, ...defaultProps }
+			});
+
+			mockMatrixRatingOptions.rows.items.forEach((row) => {
+				expect(screen.getByText(row.value)).toBeInTheDocument();
+			});
+		});
+
+		it('should render one radio per cell (rows × columns)', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixRatingQuestion, ...defaultProps }
+			});
+
+			const radios = screen.getAllByRole('radio');
+			expect(radios).toHaveLength(
+				mockMatrixRatingOptions.rows.items.length * mockMatrixRatingOptions.columns.items.length
+			);
+		});
+
+		it('should render all radios unchecked when no prior selection exists', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixRatingQuestion, ...defaultProps }
+			});
+
+			screen.getAllByRole('radio').forEach((radio) => {
+				expect(radio).not.toBeChecked();
+			});
+		});
+
+		it('should pre-check the saved radio for a previously answered row', () => {
+			const selectedQuestions: TSelection[] = [
+				{
+					question_revision_id: mockMatrixRatingQuestion.id,
+					response: JSON.stringify({ '1': 2 }),
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockMatrixRatingQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions
+				}
+			});
+
+			const row1Radios = screen
+				.getAllByRole('radio')
+				.filter(
+					(r) =>
+						(r as HTMLInputElement).name ===
+						`matrix-${mockMatrixRatingQuestion.id}-row-${mockMatrixRatingOptions.rows.items[0].id}`
+				);
+			const checkedRadio = row1Radios.find((r) => (r as HTMLInputElement).checked);
+			expect(checkedRadio).toBeDefined();
+			expect((checkedRadio as HTMLInputElement).value).toBe('2');
+		});
+
+		it('should call the submit API with a JSON-encoded matrix response when a radio is changed', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			render(QuestionCard, {
+				props: { question: mockMatrixRatingQuestion, ...defaultProps }
+			});
+
+			const firstRadio = screen
+				.getAllByRole('radio')
+				.find(
+					(r) =>
+						(r as HTMLInputElement).name ===
+						`matrix-${mockMatrixRatingQuestion.id}-row-${mockMatrixRatingOptions.rows.items[0].id}`
+				) as HTMLElement;
+
+			await fireEvent.change(firstRadio);
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalledWith(
+					expect.stringContaining('/api/submit-answer'),
+					expect.objectContaining({
+						method: 'POST',
+						body: expect.stringContaining(`"question_revision_id":${mockMatrixRatingQuestion.id}`)
+					})
+				);
+			});
+		});
+
+		it('should show an error message when the API call fails', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(QuestionCard, {
+				props: { question: mockMatrixRatingQuestion, ...defaultProps }
+			});
+
+			const firstRadio = screen
+				.getAllByRole('radio')
+				.find(
+					(r) =>
+						(r as HTMLInputElement).name ===
+						`matrix-${mockMatrixRatingQuestion.id}-row-${mockMatrixRatingOptions.rows.items[0].id}`
+				) as HTMLElement;
+
+			await fireEvent.change(firstRadio);
+
+			await waitFor(() => {
+				expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
+			});
+		});
+
+		it('should disable all radios when the question is locked (is_reviewed)', () => {
+			const selectedQuestions: TSelection[] = [
+				{
+					question_revision_id: mockMatrixRatingQuestion.id,
+					response: JSON.stringify({ '1': 1 }),
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: true
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockMatrixRatingQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions,
+					showFeedback: true
+				}
+			});
+
+			screen.getAllByRole('radio').forEach((radio) => {
+				expect(radio).toBeDisabled();
+			});
 		});
 	});
 });

@@ -4,7 +4,7 @@
 
 import { vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
-import type { TCandidate, TQuestion, TResultData, TSelection, TTestSession } from './types';
+import type { TCandidate, TMatrixOptions, TOptions, TQuestion, TResultData, TSelection, TTestSession } from './types';
 import { init, register, waitLocale, locale } from 'svelte-i18n';
 import { languages, DEFAULT_LANGUAGE } from './utils';
 
@@ -138,6 +138,37 @@ export const mockNumericalDecimalQuestion: TQuestion = {
 	subjective_answer_limit: 0,
 	is_mandatory: false,
 	marking_scheme: { correct: 2, wrong: 0, skipped: 0 },
+	media: null
+};
+
+export const mockMatrixRatingOptions: TMatrixOptions = {
+	rows: {
+		label: 'Subjects',
+		items: [
+			{ id: 1, key: 'math', value: 'Math' },
+			{ id: 2, key: 'physics', value: 'Physics' },
+			{ id: 3, key: 'chemistry', value: 'Chemistry' }
+		]
+	},
+	columns: {
+		label: 'Difficulty Rating',
+		items: [
+			{ id: 1, key: '1', value: 'Very difficult' },
+			{ id: 2, key: '2', value: 'A little difficult' },
+			{ id: 3, key: '3', value: 'Okay / manageable' }
+		]
+	}
+};
+
+export const mockMatrixRatingQuestion: TQuestion = {
+	id: 8,
+	question_text: 'How difficult do you find the following subjects?',
+	instructions: 'Rate each subject',
+	question_type: 'matrix-rating' as any,
+	options: mockMatrixRatingOptions as unknown as TOptions[],
+	subjective_answer_limit: 0,
+	is_mandatory: true,
+	marking_scheme: { correct: 0, wrong: 0, skipped: 0 },
 	media: null
 };
 

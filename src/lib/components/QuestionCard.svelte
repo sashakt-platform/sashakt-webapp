@@ -15,7 +15,6 @@
 		question_type_enum,
 		type TCandidate,
 		type TMatrixOptions,
-		type TOptions,
 		type TQuestion,
 		type TSelection
 	} from '$lib/types';
@@ -40,7 +39,7 @@
 		showMarkForReview?: boolean;
 	} = $props();
 
-	const options = question.options as TOptions[];
+	const options = question.options;
 
 	// key to force remount of RadioGroup on error, this is to prevent radio button from being checked
 	let radioGroupKey = $state(0);
@@ -682,7 +681,7 @@
 				</div>
 			{/if}
 		{:else if question.question_type === question_type_enum.MATRIXRATING}
-			{@const matrixOpts = question.options as TMatrixOptions}
+			{@const matrixOpts = question.options as unknown as TMatrixOptions}
 			<div class="overflow-x-auto">
 				<table class="w-full border-collapse text-sm">
 					<thead>
