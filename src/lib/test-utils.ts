@@ -5,7 +5,15 @@
 import { vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
 import { question_type_enum } from './types';
-import type { TCandidate, TMatrixOptions, TOptions, TQuestion, TResultData, TSelection, TTestSession } from './types';
+import type {
+	TCandidate,
+	TMatrixOptions,
+	TOptions,
+	TQuestion,
+	TResultData,
+	TSelection,
+	TTestSession
+} from './types';
 import { init, register, waitLocale, locale } from 'svelte-i18n';
 import { languages, DEFAULT_LANGUAGE } from './utils';
 
@@ -170,6 +178,33 @@ export const mockMatrixRatingQuestion: TQuestion = {
 	subjective_answer_limit: 0,
 	is_mandatory: true,
 	marking_scheme: { correct: 0, wrong: 0, skipped: 0 },
+	media: null
+};
+
+export const mockMatrixMatchQuestion: TQuestion = {
+	id: 8,
+	question_text: 'Match the following items correctly.',
+	instructions: 'Match each item in Column A with its corresponding item in Column B.',
+	question_type: 'matrix-match' as any,
+	options: {
+		rows: {
+			label: 'Column A',
+			items: [
+				{ id: 801, key: 'A', value: 'Apple' },
+				{ id: 802, key: 'B', value: 'Banana' }
+			]
+		},
+		columns: {
+			label: 'Column B',
+			items: [
+				{ id: 901, key: 'P', value: 'Red fruit' },
+				{ id: 902, key: 'Q', value: 'Yellow fruit' }
+			]
+		}
+	} as TMatrixOptions,
+	subjective_answer_limit: 0,
+	is_mandatory: false,
+	marking_scheme: { correct: 2, wrong: 0, skipped: 0 },
 	media: null
 };
 

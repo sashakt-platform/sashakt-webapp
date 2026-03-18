@@ -15,6 +15,7 @@
 		question_type_enum,
 		type TCandidate,
 		type TMatrixOptions,
+		type TOptions,
 		type TQuestion,
 		type TSelection
 	} from '$lib/types';
@@ -79,6 +80,74 @@
 	let candidateInput = $state(getExistingInputResponse());
 	let lastSavedInput = $state(getExistingInputResponse());
 
+	const getExistingMatrixSelections = () => {
+		const selected = selectedQuestion(question.id);
+		if (typeof selected?.response === 'string' && selected.response) {
+			try {
+				const parsed = JSON.parse(selected.response) as Record<string, number | number[]>;
+				return Object.fromEntries(
+					Object.entries(parsed).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
+				) as Record<string, number[]>;
+			} catch {
+				return {};
+			}
+		}
+		return {};
+	};
+	let matrixSelections = $state<Record<string, number[]>>(getExistingMatrixSelections());
+
+	const handleMatrixSelection = async (rowKey: string, colId: number) => {
+		if (isLocked || isSubmitting) return;
+
+		const answeredQuestion = selectedQuestion(question.id);
+		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
+
+		const current = matrixSelections[rowKey] ?? [];
+		const newSelections = {
+			...matrixSelections,
+			[rowKey]: current.includes(colId) ? current.filter((id) => id !== colId) : [...current, colId]
+		};
+
+		const serialized = JSON.stringify(newSelections);
+		const previousSelections = { ...matrixSelections };
+		matrixSelections = newSelections;
+
+		isSubmitting = true;
+		saveError = null;
+		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+
+		if (answeredQuestion) {
+			selectedQuestions = selectedQuestions.map((q) =>
+				q.question_revision_id === question.id ? { ...q, response: serialized } : q
+			);
+		} else {
+			selectedQuestions = [
+				...selectedQuestions,
+				{
+					question_revision_id: question.id,
+					response: serialized,
+					visited: true,
+					time_spent: 0,
+					bookmarked: currentBookmarked,
+					is_reviewed: false
+				}
+			];
+		}
+		updateStore();
+
+		try {
+			await submitAnswer(question.id, serialized, currentBookmarked);
+		} catch {
+			matrixSelections = previousSelections;
+			selectedQuestions = previousState;
+			updateStore();
+			saveError = 'Failed to save your answer. Please try again.';
+			setTimeout(() => (saveError = null), 5000);
+		} finally {
+			isSubmitting = false;
+		}
+	};
+
 	const hasUnsavedChanges = $derived(
 		String(candidateInput ?? '').trim() !== String(lastSavedInput ?? '').trim()
 	);
@@ -86,15 +155,15 @@
 
 	const isSelected = (optionId: number) => {
 		const selected = selectedQuestion(question.id);
-		return selected?.response.includes(optionId);
+		return Array.isArray(selected?.response) && selected.response.includes(optionId);
 	};
 
 	const optionFeedbackClass = (optionId: number) => {
 		if (!isFeedbackViewed || !correctAnswer) return '';
-		if (correctAnswer.includes(optionId)) {
+		if (Array.isArray(correctAnswer) && correctAnswer.includes(optionId)) {
 			return 'bg-green-100 border-green-500 text-green-700';
 		}
-		if (currentSelection?.response.includes(optionId)) {
+		if (Array.isArray(currentSelection?.response) && currentSelection.response.includes(optionId)) {
 			return 'bg-red-100 border-red-500 text-red-700';
 		}
 		return '';
@@ -102,8 +171,9 @@
 
 	const getOptionFeedbackStatus = (optionId: number): 'correct' | 'wrong' | 'none' => {
 		if (!isFeedbackViewed || !correctAnswer) return 'none';
-		if (correctAnswer.includes(optionId)) return 'correct';
-		if (currentSelection?.response.includes(optionId)) return 'wrong';
+		if (Array.isArray(correctAnswer) && correctAnswer.includes(optionId)) return 'correct';
+		if (Array.isArray(currentSelection?.response) && currentSelection.response.includes(optionId))
+			return 'wrong';
 		return 'none';
 	};
 
@@ -543,7 +613,8 @@
 					})()}
 					disabled={isLocked}
 				>
-					{#each options as option, index (index)}
+					{@const typedOptions = options as TOptions[]}
+					{#each typedOptions as option, index (index)}
 						{@const uid = `${question.id}-${option.key}`}
 						{@const feedbackClass = optionFeedbackClass(option.id)}
 						{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
@@ -680,6 +751,67 @@
 					</div>
 				</div>
 			{/if}
+		{:else if question.question_type === question_type_enum.MATRIXMATCH}
+			{@const matrix = options as TMatrixOptions}
+			{@const matrixRows = matrix.rows.items}
+			{@const matrixColumns = matrix.columns.items}
+
+			<div class="mb-5 grid grid-cols-2 gap-6 border-b border-gray-200 pb-5">
+				<div>
+					<p class="mb-2 text-sm font-semibold text-gray-700">{matrix.rows.label}</p>
+					<div class="flex flex-col gap-2">
+						{#each matrixRows as row (row.id)}
+							<p class="text-sm text-gray-800">
+								<span class="font-semibold">{row.key}.</span>
+								<span class="ml-1">{row.value}</span>
+							</p>
+						{/each}
+					</div>
+				</div>
+				<div>
+					<p class="mb-2 text-sm font-semibold text-gray-700">{matrix.columns.label}</p>
+					<div class="flex flex-col gap-2">
+						{#each matrixColumns as col (col.id)}
+							<p class="text-sm text-gray-800">
+								<span class="font-semibold">{col.key}.</span>
+								<span class="ml-1">{col.value}</span>
+							</p>
+						{/each}
+					</div>
+				</div>
+			</div>
+
+			<div class="overflow-x-auto">
+				<table class="border-collapse text-sm">
+					<thead>
+						<tr>
+							<th class="w-10 px-3 py-2"></th>
+							{#each matrixColumns as col (col.id)}
+								<th class="px-5 py-2 text-center text-sm font-semibold text-gray-700">
+									{col.key}
+								</th>
+							{/each}
+						</tr>
+					</thead>
+					<tbody>
+						{#each matrixRows as row (row.id)}
+							<tr>
+								<td class="px-3 py-3 text-sm font-semibold text-gray-700">{row.key}</td>
+								{#each matrixColumns as col (col.id)}
+									{@const isChecked = (matrixSelections[row.key] ?? []).includes(col.id)}
+									<td class="px-5 py-3 text-center">
+										<Checkbox
+											checked={isChecked}
+											disabled={isLocked}
+											onCheckedChange={() => handleMatrixSelection(row.key, col.id)}
+										/>
+									</td>
+								{/each}
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
 		{:else if question.question_type === question_type_enum.MATRIXRATING}
 			{@const matrixOpts = question.options as unknown as TMatrixOptions}
 			<div class="overflow-x-auto">
@@ -719,7 +851,8 @@
 				</table>
 			</div>
 		{:else}
-			{#each options as option (option.id)}
+			{@const typedOptions = options as TOptions[]}
+			{#each typedOptions as option (option.id)}
 				{@const uid = `${question.id}-${option.key}`}
 				{@const feedbackClass = optionFeedbackClass(option.id)}
 				{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
@@ -757,7 +890,7 @@
 			{/each}
 		{/if}
 
-		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== question_type_enum.SUBJECTIVE && question.question_type !== question_type_enum.MATRIXRATING}
+		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== 'matrix-match' && question.question_type !== question_type_enum.MATRIXRATING}
 			<Button
 				variant="outline"
 				class="mt-4 w-full border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"

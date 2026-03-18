@@ -14,6 +14,7 @@ import {
 	mockNumericalDecimalQuestion,
 	mockMatrixRatingQuestion,
 	mockMatrixRatingOptions,
+	mockMatrixMatchQuestion,
 	createMockResponse
 } from '$lib/test-utils';
 
@@ -2286,6 +2287,145 @@ describe('QuestionCard', () => {
 
 			screen.getAllByRole('radio').forEach((radio) => {
 				expect(radio).toBeDisabled();
+			});
+		});
+	});
+
+	describe('MATRIXMATCH question type', () => {
+		const defaultProps = {
+			serialNumber: 1,
+			candidate: mockCandidate,
+			totalQuestions: 10,
+			selectedQuestions: []
+		};
+
+		it('should render question text', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps }
+			});
+
+			expect(screen.getByText(mockMatrixMatchQuestion.question_text)).toBeInTheDocument();
+		});
+
+		it('should render row and column labels', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps }
+			});
+
+			expect(screen.getByText('Column A')).toBeInTheDocument();
+			expect(screen.getByText('Column B')).toBeInTheDocument();
+		});
+
+		it('should render row values with keys', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps }
+			});
+
+			expect(screen.getByText('Apple')).toBeInTheDocument();
+			expect(screen.getByText('Banana')).toBeInTheDocument();
+		});
+
+		it('should render column values with keys', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps }
+			});
+
+			expect(screen.getByText('Red fruit')).toBeInTheDocument();
+			expect(screen.getByText('Yellow fruit')).toBeInTheDocument();
+		});
+
+		it('should render column keys as table headers', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps }
+			});
+
+			const headers = screen.getAllByRole('columnheader');
+			const headerTexts = headers.map((h) => h.textContent?.trim()).filter(Boolean);
+			expect(headerTexts).toContain('P');
+			expect(headerTexts).toContain('Q');
+		});
+
+		it('should render row keys in the table body', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps }
+			});
+
+			const table = screen.getByRole('table');
+			expect(within(table).getByText('A')).toBeInTheDocument();
+			expect(within(table).getByText('B')).toBeInTheDocument();
+		});
+
+		it('should render rows × columns checkboxes', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps }
+			});
+
+			const checkboxes = screen.getAllByRole('checkbox');
+			expect(checkboxes).toHaveLength(4);
+		});
+
+		it('should render all checkboxes unchecked by default', () => {
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps }
+			});
+
+			const checkboxes = screen.getAllByRole('checkbox');
+			checkboxes.forEach((cb) => {
+				expect(cb).toHaveAttribute('aria-checked', 'false');
+			});
+		});
+
+		it('should reflect existing selections as checked checkboxes', () => {
+			const existingResponse = JSON.stringify({ A: [901] });
+			const selectedQuestions = [
+				{
+					question_revision_id: mockMatrixMatchQuestion.id,
+					response: existingResponse,
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps, selectedQuestions }
+			});
+
+			const checkboxes = screen.getAllByRole('checkbox');
+			expect(checkboxes[0]).toHaveAttribute('aria-checked', 'true');
+			expect(checkboxes[1]).toHaveAttribute('aria-checked', 'false');
+		});
+
+		it('should toggle off a checked checkbox when clicked again', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(createMockResponse({}) as unknown as Response);
+
+			const existingResponse = JSON.stringify({ A: [901] });
+			const selectedQuestions = [
+				{
+					question_revision_id: mockMatrixMatchQuestion.id,
+					response: existingResponse,
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps, selectedQuestions }
+			});
+
+			const checkboxes = screen.getAllByRole('checkbox');
+
+			await checkboxes[0].click();
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalled();
+				const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+				const parsed = JSON.parse(body.response);
+
+				expect(parsed['A']).toEqual([]);
 			});
 		});
 	});

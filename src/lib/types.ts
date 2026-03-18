@@ -31,7 +31,8 @@ export enum question_type_enum {
 	SUBJECTIVE = 'subjective',
 	NUMERICALINTEGER = 'numerical-integer',
 	NUMERICALDECIMAL = 'numerical-decimal',
-	MATRIXRATING = 'matrix-rating'
+	MATRIXRATING = 'matrix-rating',
+	MATRIXMATCH = 'matrix-match'
 }
 
 export type TMatrixOptions = {
@@ -64,7 +65,7 @@ export type TQuestion = {
 	question_text: string;
 	instructions: string;
 	question_type: question_type_enum;
-	options: TOptions[];
+	options: TOptions[] | TMatrixOptions;
 	subjective_answer_limit: number;
 	is_mandatory: boolean;
 	marking_scheme: TMarks;
