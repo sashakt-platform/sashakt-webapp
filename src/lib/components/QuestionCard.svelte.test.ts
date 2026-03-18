@@ -1957,6 +1957,30 @@ describe('QuestionCard', () => {
 
 			expect(screen.queryByRole('button', { name: /view result/i })).not.toBeInTheDocument();
 		});
+
+		it('hides the button for matrix-rating regardless of showFeedback and answered state', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockMatrixRatingQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [
+						{
+							question_revision_id: mockMatrixRatingQuestion.id,
+							response: JSON.stringify({ '1': 1 }),
+							visited: true,
+							time_spent: 10,
+							bookmarked: false,
+							is_reviewed: false
+						}
+					],
+					showFeedback: true
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /view result/i })).not.toBeInTheDocument();
+		});
 	});
 
 	describe('Marking scheme tooltip', () => {
