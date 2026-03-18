@@ -96,55 +96,77 @@
 	};
 	let matrixSelections = $state<Record<string, number[]>>(getExistingMatrixSelections());
 
-	const handleMatrixSelection = async (rowKey: string, colId: number) => {
+	const handleMatrixInput = async (rowKey: string | number, colId: number) => {
 		if (isLocked || isSubmitting) return;
 
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
 
-		const current = matrixSelections[rowKey] ?? [];
-		const newSelections = {
-			...matrixSelections,
-			[rowKey]: current.includes(colId) ? current.filter((id) => id !== colId) : [...current, colId]
+		const applyUpdate = (newResponse: string) => {
+			if (answeredQuestion) {
+				selectedQuestions = selectedQuestions.map((q) =>
+					q.question_revision_id === question.id ? { ...q, response: newResponse } : q
+				);
+			} else {
+				selectedQuestions = [
+					...selectedQuestions,
+					{
+						question_revision_id: question.id,
+						response: newResponse,
+						visited: true,
+						time_spent: 0,
+						bookmarked: currentBookmarked,
+						is_reviewed: false
+					}
+				];
+			}
 		};
-
-		const serialized = JSON.stringify(newSelections);
-		const previousSelections = { ...matrixSelections };
-		matrixSelections = newSelections;
 
 		isSubmitting = true;
 		saveError = null;
-		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 
-		if (answeredQuestion) {
-			selectedQuestions = selectedQuestions.map((q) =>
-				q.question_revision_id === question.id ? { ...q, response: serialized } : q
-			);
-		} else {
-			selectedQuestions = [
-				...selectedQuestions,
-				{
-					question_revision_id: question.id,
-					response: serialized,
-					visited: true,
-					time_spent: 0,
-					bookmarked: currentBookmarked,
-					is_reviewed: false
-				}
-			];
-		}
-		updateStore();
+		if (question.question_type === question_type_enum.MATRIXMATCH) {
+			const key = String(rowKey);
+			const current = matrixSelections[key] ?? [];
+			const newSelections = {
+				...matrixSelections,
+				[key]: current.includes(colId) ? current.filter((id) => id !== colId) : [...current, colId]
+			};
+			const serialized = JSON.stringify(newSelections);
+			const prevSelections = { ...matrixSelections };
+			const prevState = JSON.parse(JSON.stringify(selectedQuestions));
 
-		try {
-			await submitAnswer(question.id, serialized, currentBookmarked);
-		} catch {
-			matrixSelections = previousSelections;
-			selectedQuestions = previousState;
+			matrixSelections = newSelections;
+			applyUpdate(serialized);
 			updateStore();
-			saveError = 'Failed to save your answer. Please try again.';
-			setTimeout(() => (saveError = null), 5000);
-		} finally {
-			isSubmitting = false;
+
+			try {
+				await submitAnswer(question.id, serialized, currentBookmarked);
+			} catch {
+				matrixSelections = prevSelections;
+				selectedQuestions = prevState;
+				updateStore();
+				saveError = 'Failed to save your answer. Please try again.';
+				setTimeout(() => (saveError = null), 5000);
+			} finally {
+				isSubmitting = false;
+			}
+		} else {
+			const newResponse = JSON.stringify({
+				...parseMatrixResponse(answeredQuestion?.response),
+				[rowKey]: colId
+			});
+
+			try {
+				await submitAnswer(question.id, newResponse, currentBookmarked);
+				applyUpdate(newResponse);
+				updateStore();
+			} catch {
+				saveError = 'Failed to save your answer. Please try again.';
+				setTimeout(() => (saveError = null), 5000);
+			} finally {
+				isSubmitting = false;
+			}
 		}
 	};
 
@@ -420,47 +442,6 @@
 
 	const getMatrixSelection = (rowId: number): number | undefined => matrixResponse[String(rowId)];
 
-	const handleMatrixRatingSelection = async (rowId: number, columnId: number) => {
-		if (isLocked || isSubmitting) return;
-
-		const answeredQuestion = selectedQuestion(question.id);
-		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-
-		const current = parseMatrixResponse(answeredQuestion?.response);
-		const newMatrix = { ...current, [rowId]: columnId };
-		const newResponse = JSON.stringify(newMatrix);
-
-		isSubmitting = true;
-		saveError = null;
-
-		try {
-			await submitAnswer(question.id, newResponse, currentBookmarked);
-
-			if (answeredQuestion) {
-				selectedQuestions = selectedQuestions.map((q) =>
-					q.question_revision_id === question.id ? { ...q, response: newResponse } : q
-				);
-			} else {
-				selectedQuestions = [
-					...selectedQuestions,
-					{
-						question_revision_id: question.id,
-						response: newResponse,
-						visited: true,
-						time_spent: 0,
-						bookmarked: currentBookmarked,
-						is_reviewed: false
-					}
-				];
-			}
-			updateStore();
-		} catch {
-			saveError = 'Failed to save your answer. Please try again.';
-			setTimeout(() => (saveError = null), 5000);
-		} finally {
-			isSubmitting = false;
-		}
-	};
 
 	const handleSubjectiveSubmit = async () => {
 		if (isSubmitting) return;
@@ -803,7 +784,7 @@
 										<Checkbox
 											checked={isChecked}
 											disabled={isLocked}
-											onCheckedChange={() => handleMatrixSelection(row.key, col.id)}
+											onCheckedChange={() => handleMatrixInput(row.key, col.id)}
 										/>
 									</td>
 								{/each}
@@ -841,7 +822,7 @@
 											checked={getMatrixSelection(row.id) === col.id}
 											disabled={isLocked}
 											class="accent-primary h-4 w-4 cursor-pointer disabled:cursor-not-allowed"
-											onchange={() => handleMatrixRatingSelection(row.id, col.id)}
+											onchange={() => handleMatrixInput(row.id, col.id)}
 										/>
 									</td>
 								{/each}
