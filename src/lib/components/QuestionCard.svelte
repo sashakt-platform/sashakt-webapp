@@ -420,7 +420,7 @@
 
 	const getMatrixSelection = (rowId: number): number | undefined => matrixResponse[String(rowId)];
 
-	const handleMatrixSelection = async (rowId: number, columnId: number) => {
+	const handleMatrixRatingSelection = async (rowId: number, columnId: number) => {
 		if (isLocked || isSubmitting) return;
 
 		const answeredQuestion = selectedQuestion(question.id);
@@ -841,7 +841,7 @@
 											checked={getMatrixSelection(row.id) === col.id}
 											disabled={isLocked}
 											class="accent-primary h-4 w-4 cursor-pointer disabled:cursor-not-allowed"
-											onchange={() => handleMatrixSelection(row.id, col.id)}
+											onchange={() => handleMatrixRatingSelection(row.id, col.id)}
 										/>
 									</td>
 								{/each}
