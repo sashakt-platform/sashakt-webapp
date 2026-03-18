@@ -11,6 +11,7 @@
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
+	import { parseMatrixResponse } from '$lib/helpers/matrixHelpers';
 	import {
 		question_type_enum,
 		type TCandidate,
@@ -185,23 +186,16 @@
 		}
 	};
 
-	const parseMatrixResponse = (questionId: number): Record<string, number> => {
-		const sel = selections.find((s) => s.question_revision_id === questionId);
-		if (typeof sel?.response !== 'string' || !sel.response) return {};
-		try {
-			return JSON.parse(sel.response);
-		} catch {
-			return {};
-		}
-	};
+	const getMatrixResponseForQuestion = (questionId: number): Record<string, number> =>
+		parseMatrixResponse(selections.find((s) => s.question_revision_id === questionId)?.response);
 
 	const getMatrixSelection = (questionId: number, rowId: number): number | undefined =>
-		parseMatrixResponse(questionId)[String(rowId)];
+		getMatrixResponseForQuestion(questionId)[String(rowId)];
 
 	const handleMatrixSelection = async (question: TQuestion, rowId: number, columnId: number) => {
 		if (submittingQuestion === question.id) return;
 
-		const current = parseMatrixResponse(question.id);
+		const current = getMatrixResponseForQuestion(question.id);
 		const newResponse = JSON.stringify({ ...current, [rowId]: columnId });
 
 		const previousSelections = JSON.parse(JSON.stringify(selections));

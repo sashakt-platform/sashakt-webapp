@@ -11,6 +11,7 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
+	import { parseMatrixResponse } from '$lib/helpers/matrixHelpers';
 	import {
 		question_type_enum,
 		type TCandidate,
@@ -429,19 +430,9 @@
 
 	const isQuestionBookmarked = $derived(selectedQuestion(question.id)?.bookmarked ?? false);
 
-	const parseMatrixResponse = (response: number[] | string | undefined): Record<string, number> => {
-		if (typeof response !== 'string' || !response) return {};
-		try {
-			return JSON.parse(response);
-		} catch {
-			return {};
-		}
-	};
-
 	const matrixResponse = $derived(parseMatrixResponse(selectedQuestion(question.id)?.response));
 
 	const getMatrixSelection = (rowId: number): number | undefined => matrixResponse[String(rowId)];
-
 
 	const handleSubjectiveSubmit = async () => {
 		if (isSubmitting) return;
