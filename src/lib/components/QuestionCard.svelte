@@ -797,7 +797,7 @@
 			{/each}
 		{/if}
 
-		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective'}
+		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== 'matrix-match'}
 			<Button
 				variant="outline"
 				class="mt-4 w-full border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"
