@@ -11,7 +11,13 @@
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
-	import { question_type_enum, type TCandidate, type TQuestion, type TSelection } from '$lib/types';
+	import {
+		question_type_enum,
+		type TCandidate,
+		type TMatrixOptions,
+		type TQuestion,
+		type TSelection
+	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 
 	let {
@@ -145,6 +151,58 @@
 		submittingQuestion = question.id;
 
 		updateSelections(question.id, newResponse);
+
+		try {
+			await submitAnswer(question.id, newResponse);
+		} catch {
+			selections = previousSelections;
+			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
+		} finally {
+			submittingQuestion = null;
+		}
+	};
+
+	const parseMatrixResponse = (questionId: number): Record<string, number> => {
+		const sel = selections.find((s) => s.question_revision_id === questionId);
+		if (typeof sel?.response !== 'string' || !sel.response) return {};
+		try {
+			return JSON.parse(sel.response);
+		} catch {
+			return {};
+		}
+	};
+
+	const getMatrixSelection = (questionId: number, rowId: number): number | undefined =>
+		parseMatrixResponse(questionId)[String(rowId)];
+
+	const handleMatrixSelection = async (question: TQuestion, rowId: number, columnId: number) => {
+		if (submittingQuestion === question.id) return;
+
+		const current = parseMatrixResponse(question.id);
+		const newResponse = JSON.stringify({ ...current, [rowId]: columnId });
+
+		const previousSelections = JSON.parse(JSON.stringify(selections));
+		submittingQuestion = question.id;
+
+		const existing = selections.find((s) => s.question_revision_id === question.id);
+		if (existing) {
+			selections = selections.map((s) =>
+				s.question_revision_id === question.id ? { ...s, response: newResponse } : s
+			);
+		} else {
+			selections = [
+				...selections,
+				{
+					question_revision_id: question.id,
+					response: newResponse,
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+		}
+		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
 
 		try {
 			await submitAnswer(question.id, newResponse);
@@ -321,7 +379,46 @@
 							</Label>
 						{/each}
 					</RadioGroup.Root>
-				{/if}
+			{:else if question_type === question_type_enum.MATRIXRATING}
+				{@const matrixOpts = question.options as unknown as TMatrixOptions}
+				<div class="overflow-x-auto">
+					<table class="w-full border-collapse text-xs sm:text-sm">
+						<thead>
+							<tr>
+								<th class="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold">
+									{matrixOpts.rows.label}
+								</th>
+								{#each matrixOpts.columns.items as col (col.id)}
+									<th
+										class="border border-gray-300 bg-gray-100 px-3 py-2 text-center font-semibold"
+									>
+										{col.key}
+									</th>
+								{/each}
+							</tr>
+						</thead>
+						<tbody>
+							{#each matrixOpts.rows.items as row (row.id)}
+								<tr class="hover:bg-gray-50">
+									<td class="border border-gray-300 px-3 py-2 font-medium">{row.value}</td>
+									{#each matrixOpts.columns.items as col (col.id)}
+										<td class="border border-gray-300 px-3 py-2 text-center">
+											<input
+												type="radio"
+												name="omr-matrix-{question.id}-row-{row.id}"
+												value={col.id}
+												checked={getMatrixSelection(question.id, row.id) === col.id}
+												class="accent-primary h-4 w-4 cursor-pointer"
+												onchange={() => handleMatrixSelection(question, row.id, col.id)}
+											/>
+										</td>
+									{/each}
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{/if}
 			</div>
 		{/each}
 	</div>
