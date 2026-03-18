@@ -9,9 +9,10 @@ import {
 	mockSubjectiveQuestion,
 	mockNumericalIntegerQuestion,
 	mockNumericalDecimalQuestion,
+	mockMatrixMatchQuestion,
 	createMockResponse
 } from '$lib/test-utils';
-import type { TQuestion, TSelection } from '$lib/types';
+import type { TQuestion, TSelection, TMatrixOptions, TOptions } from '$lib/types';
 import { createTestSessionStore } from '$lib/helpers/testSession';
 
 vi.mock('$app/forms', () => ({ enhance: () => () => {} }));
@@ -84,12 +85,16 @@ describe('OmrSheet', () => {
 
 		it('renders option keys A B C D for single-choice', () => {
 			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
-			['A', 'B', 'C', 'D'].forEach((key) => expect(screen.getByText(key)).toBeInTheDocument());
+			['A', 'B', 'C', 'D'].forEach((key) => {
+				expect(screen.getByText(key)).toBeInTheDocument();
+			});
 		});
 
 		it('renders option keys A B C D for multichoice', () => {
 			render(OmrSheet, { props: makeProps([mockMultipleChoiceQuestion]) });
-			['A', 'B', 'C', 'D'].forEach((key) => expect(screen.getByText(key)).toBeInTheDocument());
+			['A', 'B', 'C', 'D'].forEach((key) => {
+				expect(screen.getByText(key)).toBeInTheDocument();
+			});
 		});
 
 		it('renders a Submit button', () => {
@@ -102,19 +107,23 @@ describe('OmrSheet', () => {
 	describe('Single-choice questions', () => {
 		it('renders a radio button for each option', () => {
 			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
-			expect(screen.getAllByRole('radio')).toHaveLength(mockSingleChoiceQuestion.options.length);
+			expect(screen.getAllByRole('radio')).toHaveLength(
+				(mockSingleChoiceQuestion.options as TOptions[]).length
+			);
 		});
 
 		it('shows no radio selected when there is no prior answer', () => {
 			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
-			screen.getAllByRole('radio').forEach((r) => expect(r).not.toBeChecked());
+			screen.getAllByRole('radio').forEach((r) => {
+				expect(r).not.toBeChecked();
+			});
 		});
 
 		it('pre-selects the saved answer on load', () => {
 			withSelections([
 				{
 					question_revision_id: mockSingleChoiceQuestion.id,
-					response: [mockSingleChoiceQuestion.options[1].id],
+					response: [(mockSingleChoiceQuestion.options as TOptions[])[1].id],
 					visited: true,
 					time_spent: 0,
 					bookmarked: false,
@@ -133,7 +142,7 @@ describe('OmrSheet', () => {
 			withSelections([
 				{
 					question_revision_id: mockSingleChoiceQuestion.id,
-					response: [mockSingleChoiceQuestion.options[0].id],
+					response: [(mockSingleChoiceQuestion.options as TOptions[])[0].id],
 					visited: true,
 					time_spent: 0,
 					bookmarked: false,
@@ -172,7 +181,7 @@ describe('OmrSheet', () => {
 					expect.objectContaining({ method: 'POST' })
 				);
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
-				expect(body.response).toContain(mockSingleChoiceQuestion.options[0].id);
+				expect(body.response).toContain((mockSingleChoiceQuestion.options as TOptions[])[0].id);
 			});
 		});
 
@@ -190,7 +199,7 @@ describe('OmrSheet', () => {
 		});
 
 		it('shows loading state (pointer-events-none) while submitting', async () => {
-			let resolveFetch!: (v: unknown) => void;
+			let resolveFetch!: (value: Response | PromiseLike<Response>) => void;
 			vi.mocked(fetch).mockImplementationOnce(
 				() => new Promise((resolve) => (resolveFetch = resolve))
 			);
@@ -215,13 +224,15 @@ describe('OmrSheet', () => {
 		it('renders a checkbox for each option', () => {
 			render(OmrSheet, { props: makeProps([mockMultipleChoiceQuestion]) });
 			expect(screen.getAllByRole('checkbox')).toHaveLength(
-				mockMultipleChoiceQuestion.options.length
+				(mockMultipleChoiceQuestion.options as TOptions[]).length
 			);
 		});
 
 		it('shows no checkbox checked when there is no prior answer', () => {
 			render(OmrSheet, { props: makeProps([mockMultipleChoiceQuestion]) });
-			screen.getAllByRole('checkbox').forEach((cb) => expect(cb).not.toBeChecked());
+			screen.getAllByRole('checkbox').forEach((cb) => {
+				expect(cb).not.toBeChecked();
+			});
 		});
 
 		it('pre-checks saved answers on load', () => {
@@ -229,8 +240,8 @@ describe('OmrSheet', () => {
 				{
 					question_revision_id: mockMultipleChoiceQuestion.id,
 					response: [
-						mockMultipleChoiceQuestion.options[0].id,
-						mockMultipleChoiceQuestion.options[2].id
+						(mockMultipleChoiceQuestion.options as TOptions[])[0].id,
+						(mockMultipleChoiceQuestion.options as TOptions[])[2].id
 					],
 					visited: true,
 					time_spent: 0,
@@ -276,7 +287,7 @@ describe('OmrSheet', () => {
 			withSelections([
 				{
 					question_revision_id: mockMultipleChoiceQuestion.id,
-					response: [mockMultipleChoiceQuestion.options[0].id],
+					response: [(mockMultipleChoiceQuestion.options as TOptions[])[0].id],
 					visited: true,
 					time_spent: 0,
 					bookmarked: false,
@@ -417,9 +428,7 @@ describe('OmrSheet', () => {
 			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
 
 			await waitFor(() => {
-				const body = JSON.parse(
-					(vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
-				);
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
 				expect(body.response).toBe('8');
 			});
 		});
@@ -480,9 +489,7 @@ describe('OmrSheet', () => {
 			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
 
 			await waitFor(() => {
-				const body = JSON.parse(
-					(vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
-				);
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
 				expect(body.response).toBe('3.14');
 			});
 		});
@@ -498,6 +505,191 @@ describe('OmrSheet', () => {
 		});
 	});
 
+	describe('Matrix match questions', () => {
+		it('renders column headers for each matrix column', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+			const matrix = mockMatrixMatchQuestion.options as TMatrixOptions;
+			matrix.columns.items.forEach((col) => {
+				expect(screen.getByText(col.key)).toBeInTheDocument();
+			});
+		});
+
+		it('renders row keys in the first cell of each row', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+			const matrix = mockMatrixMatchQuestion.options as TMatrixOptions;
+			matrix.rows.items.forEach((row) => {
+				expect(screen.getByText(row.key)).toBeInTheDocument();
+			});
+		});
+
+		it('renders a checkbox for each row-column combination', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+			const matrix = mockMatrixMatchQuestion.options as TMatrixOptions;
+			const expectedCount = matrix.rows.items.length * matrix.columns.items.length;
+			expect(screen.getAllByRole('checkbox')).toHaveLength(expectedCount);
+		});
+
+		it('shows all checkboxes unchecked when there is no prior answer', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+			screen.getAllByRole('checkbox').forEach((cb) => {
+				expect(cb).not.toBeChecked();
+			});
+		});
+
+		it('does not render any radio buttons', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+		});
+
+		it('pre-checks saved matrix selections on load', () => {
+			withSelections([
+				{
+					question_revision_id: mockMatrixMatchQuestion.id,
+					response: JSON.stringify({ A: [901], B: [902] }),
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			]);
+
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+			screen.logTestingPlaygroundURL();
+
+			const checkboxes = screen.getAllByRole('checkbox');
+
+			expect(checkboxes[0]).toBeChecked();
+			expect(checkboxes[1]).not.toBeChecked();
+			expect(checkboxes[2]).not.toBeChecked();
+			expect(checkboxes[3]).toBeChecked();
+		});
+
+		it('calls fetch when a matrix checkbox is clicked', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('checkbox')[0]);
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalledWith(
+					'/test/test-slug/api/submit-answer',
+					expect.objectContaining({ method: 'POST' })
+				);
+			});
+		});
+
+		it('sends serialized JSON with the correct row-column mapping', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('checkbox')[0]);
+
+			await waitFor(() => {
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				const response = JSON.parse(body.response);
+				expect(response.A).toContain(901);
+			});
+		});
+
+		it('toggles off a checked checkbox when clicked again', async () => {
+			withSelections([
+				{
+					question_revision_id: mockMatrixMatchQuestion.id,
+					response: JSON.stringify({ A: [901] }),
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			]);
+
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+
+			const checkboxes = screen.getAllByRole('checkbox');
+			expect(checkboxes[0]).toBeChecked();
+			await fireEvent.click(checkboxes[0]);
+
+			await waitFor(() => {
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				const response = JSON.parse(body.response);
+				expect(response.A ?? []).not.toContain(901);
+			});
+		});
+
+		it('allows selecting multiple columns for the same row', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+
+			const checkboxes = screen.getAllByRole('checkbox');
+			await fireEvent.click(checkboxes[0]);
+			await fireEvent.click(checkboxes[1]);
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalledTimes(2);
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[1][1] as RequestInit).body as string);
+				const response = JSON.parse(body.response);
+				expect(response.A).toContain(901);
+				expect(response.A).toContain(902);
+			});
+		});
+
+		it('selecting in one row does not affect other rows', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('checkbox')[0]);
+			await waitFor(() => {
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				const response = JSON.parse(body.response);
+				expect(response.B ?? []).toHaveLength(0);
+			});
+		});
+
+		it('reverts matrix selection when the API call fails', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+
+			const checkboxes = screen.getAllByRole('checkbox');
+			await fireEvent.click(checkboxes[0]);
+
+			await waitFor(() => {
+				expect(checkboxes[0]).not.toBeChecked();
+			});
+		});
+
+		it('shows loading state while submitting a matrix selection', async () => {
+			let resolveFetch!: (value: Response | PromiseLike<Response>) => void;
+			vi.mocked(fetch).mockImplementationOnce(
+				() => new Promise((resolve) => (resolveFetch = resolve))
+			);
+
+			render(OmrSheet, { props: makeProps([mockMatrixMatchQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('checkbox')[0]);
+
+			await waitFor(() => {
+				expect(document.querySelector('.pointer-events-none')).toBeInTheDocument();
+			});
+
+			resolveFetch(createMockResponse({ success: true }));
+
+			await waitFor(() => {
+				expect(document.querySelector('.pointer-events-none')).not.toBeInTheDocument();
+			});
+		});
+
+		it('renders correctly alongside other question types', () => {
+			render(OmrSheet, {
+				props: makeProps([mockSingleChoiceQuestion, mockMatrixMatchQuestion])
+			});
+
+			expect(screen.getAllByRole('radio')).toHaveLength(
+				(mockSingleChoiceQuestion.options as TOptions[]).length
+			);
+
+			const matrix = mockMatrixMatchQuestion.options as TMatrixOptions;
+			const expectedCheckboxes = matrix.rows.items.length * matrix.columns.items.length;
+			expect(screen.getAllByRole('checkbox')).toHaveLength(expectedCheckboxes);
+		});
+	});
+
 	describe('Mixed question types in one sheet', () => {
 		it('renders radio buttons, checkboxes and textarea together', () => {
 			render(OmrSheet, {
@@ -508,9 +700,11 @@ describe('OmrSheet', () => {
 				])
 			});
 
-			expect(screen.getAllByRole('radio')).toHaveLength(mockSingleChoiceQuestion.options.length);
+			expect(screen.getAllByRole('radio')).toHaveLength(
+				(mockSingleChoiceQuestion.options as TOptions[]).length
+			);
 			expect(screen.getAllByRole('checkbox')).toHaveLength(
-				mockMultipleChoiceQuestion.options.length
+				(mockMultipleChoiceQuestion.options as TOptions[]).length
 			);
 			expect(screen.getByRole('textbox')).toBeInTheDocument();
 		});
