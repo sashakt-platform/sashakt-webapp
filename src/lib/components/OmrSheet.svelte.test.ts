@@ -512,7 +512,6 @@ describe('OmrSheet', () => {
 
 		it('renders all row labels', () => {
 			render(OmrSheet, { props: makeProps([mockMatrixRatingQuestion]) });
-			screen.logTestingPlaygroundURL();
 			mockMatrixRatingOptions.rows.items.forEach((row) => {
 				expect(screen.getByText(row.value)).toBeInTheDocument();
 			});
