@@ -4,6 +4,7 @@
 
 import { vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
+import { question_type_enum } from './types';
 import type { TCandidate, TMatrixOptions, TOptions, TQuestion, TResultData, TSelection, TTestSession } from './types';
 import { init, register, waitLocale, locale } from 'svelte-i18n';
 import { languages, DEFAULT_LANGUAGE } from './utils';
@@ -164,7 +165,7 @@ export const mockMatrixRatingQuestion: TQuestion = {
 	id: 8,
 	question_text: 'How difficult do you find the following subjects?',
 	instructions: 'Rate each subject',
-	question_type: 'matrix-rating' as any,
+	question_type: question_type_enum.MATRIXRATING,
 	options: mockMatrixRatingOptions as unknown as TOptions[],
 	subjective_answer_limit: 0,
 	is_mandatory: true,
