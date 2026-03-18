@@ -409,6 +409,7 @@
 												value={col.id}
 												checked={getMatrixSelection(question.id, row.id) === col.id}
 												class="accent-primary h-4 w-4 cursor-pointer"
+												aria-label="{row.value} – {col.key}"
 												onchange={() => handleMatrixSelection(question, row.id, col.id)}
 											/>
 										</td>
