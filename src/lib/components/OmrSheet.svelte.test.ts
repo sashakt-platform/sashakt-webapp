@@ -9,6 +9,8 @@ import {
 	mockSubjectiveQuestion,
 	mockNumericalIntegerQuestion,
 	mockNumericalDecimalQuestion,
+	mockMatrixRatingQuestion,
+	mockMatrixRatingOptions,
 	createMockResponse
 } from '$lib/test-utils';
 import type { TQuestion, TSelection } from '$lib/types';
@@ -417,9 +419,7 @@ describe('OmrSheet', () => {
 			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
 
 			await waitFor(() => {
-				const body = JSON.parse(
-					(vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
-				);
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
 				expect(body.response).toBe('8');
 			});
 		});
@@ -480,9 +480,7 @@ describe('OmrSheet', () => {
 			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
 
 			await waitFor(() => {
-				const body = JSON.parse(
-					(vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
-				);
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
 				expect(body.response).toBe('3.14');
 			});
 		});
@@ -494,6 +492,125 @@ describe('OmrSheet', () => {
 
 			await waitFor(() => {
 				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('Matrix Rating questions', () => {
+		it('renders the rows label as the first column header', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixRatingQuestion]) });
+			expect(screen.getByText(mockMatrixRatingOptions.rows.label)).toBeInTheDocument();
+		});
+
+		it('renders column keys as headers (not values)', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixRatingQuestion]) });
+			mockMatrixRatingOptions.columns.items.forEach((col) => {
+				expect(screen.getByText(col.key)).toBeInTheDocument();
+				expect(screen.queryByText(`${col.key} – ${col.value}`)).not.toBeInTheDocument();
+			});
+		});
+
+		it('renders all row labels', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixRatingQuestion]) });
+			screen.logTestingPlaygroundURL();
+			mockMatrixRatingOptions.rows.items.forEach((row) => {
+				expect(screen.getByText(row.value)).toBeInTheDocument();
+			});
+		});
+
+		it('renders one radio per cell (rows × columns)', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixRatingQuestion]) });
+			const expectedCount =
+				mockMatrixRatingOptions.rows.items.length * mockMatrixRatingOptions.columns.items.length;
+			expect(screen.getAllByRole('radio')).toHaveLength(expectedCount);
+		});
+
+		it('renders all radios unchecked when there is no prior answer', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixRatingQuestion]) });
+			screen.getAllByRole('radio').forEach((r) => expect(r).not.toBeChecked());
+		});
+
+		it('pre-checks the saved radio for each row on load', () => {
+			const savedRow = mockMatrixRatingOptions.rows.items[0];
+			const savedCol = mockMatrixRatingOptions.columns.items[1];
+
+			withSelections([
+				{
+					question_revision_id: mockMatrixRatingQuestion.id,
+					response: JSON.stringify({ [savedRow.id]: savedCol.id }),
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			]);
+
+			render(OmrSheet, { props: makeProps([mockMatrixRatingQuestion]) });
+
+			const radiosForRow = screen
+				.getAllByRole('radio')
+				.filter(
+					(r) =>
+						(r as HTMLInputElement).name ===
+						`omr-matrix-${mockMatrixRatingQuestion.id}-row-${savedRow.id}`
+				);
+			const checked = radiosForRow.find((r) => (r as HTMLInputElement).checked);
+			expect(checked).toBeDefined();
+			expect((checked as HTMLInputElement).value).toBe(String(savedCol.id));
+		});
+
+		it('calls fetch with a JSON-encoded matrix response when a radio is changed', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixRatingQuestion]) });
+
+			const firstRow = mockMatrixRatingOptions.rows.items[0];
+			const firstCol = mockMatrixRatingOptions.columns.items[0];
+			const radio = screen
+				.getAllByRole('radio')
+				.find(
+					(r) =>
+						(r as HTMLInputElement).name ===
+						`omr-matrix-${mockMatrixRatingQuestion.id}-row-${firstRow.id}`
+				) as HTMLElement;
+
+			await fireEvent.change(radio);
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalledWith(
+					'/test/test-slug/api/submit-answer',
+					expect.objectContaining({ method: 'POST' })
+				);
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				expect(body.question_revision_id).toBe(mockMatrixRatingQuestion.id);
+				const parsed = JSON.parse(body.response);
+				expect(parsed[String(firstRow.id)]).toBe(firstCol.id);
+			});
+		});
+
+		it('reverts selection when the API call fails', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(OmrSheet, { props: makeProps([mockMatrixRatingQuestion]) });
+
+			const firstRow = mockMatrixRatingOptions.rows.items[0];
+			const radio = screen
+				.getAllByRole('radio')
+				.find(
+					(r) =>
+						(r as HTMLInputElement).name ===
+						`omr-matrix-${mockMatrixRatingQuestion.id}-row-${firstRow.id}`
+				) as HTMLElement;
+
+			await fireEvent.change(radio);
+
+			await waitFor(() => {
+				screen
+					.getAllByRole('radio')
+					.filter(
+						(r) =>
+							(r as HTMLInputElement).name ===
+							`omr-matrix-${mockMatrixRatingQuestion.id}-row-${firstRow.id}`
+					)
+					.forEach((r) => expect(r).not.toBeChecked());
 			});
 		});
 	});
