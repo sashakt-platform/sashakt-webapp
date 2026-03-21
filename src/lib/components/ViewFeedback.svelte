@@ -10,6 +10,7 @@
 	import { t } from 'svelte-i18n';
 	import { question_type_enum } from '$lib/types';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
+	import QuestionMedia from './QuestionMedia.svelte';
 
 	let {
 		feedback = [],
@@ -99,6 +100,7 @@
 								{item.question.instructions}
 							</span>
 						{/if}
+						<QuestionMedia media={item.question.media} />
 					</Card.Description>
 				</Card.Header>
 
@@ -156,21 +158,25 @@
 
 								<Label
 									for={uid}
-									class={`mb-2 flex cursor-not-allowed items-center justify-between rounded-xl border px-4 py-5 ${optionClass(
+									class={`mb-2 flex cursor-not-allowed flex-col rounded-xl border px-4 py-5 ${optionClass(
 										option.id,
 										item.fb.submitted_answer,
 										item.fb.correct_answer
 									)}`}
 								>
-									<span>{option.key}. {option.value}</span>
-
-									<div class="flex items-center gap-1">
-										{#if status === 'correct'}
-											{@render showCorrectWrongMark('correct')}
-										{:else if status === 'wrong'}
-											{@render showCorrectWrongMark('wrong')}
-										{/if}
+									<div class="flex w-full items-center justify-between">
+										<span>{option.key}. {option.value}</span>
+										<div class="flex items-center gap-1">
+											{#if status === 'correct'}
+												{@render showCorrectWrongMark('correct')}
+											{:else if status === 'wrong'}
+												{@render showCorrectWrongMark('wrong')}
+											{/if}
+										</div>
 									</div>
+									{#if option.media}
+										<QuestionMedia media={option.media} />
+									{/if}
 								</Label>
 							{/each}
 						</RadioGroup.Root>
@@ -185,21 +191,25 @@
 
 							<Label
 								for={uid}
-								class={`mb-2 flex w-full cursor-not-allowed items-center justify-between rounded-xl border px-4 py-5 ${optionClass(
+								class={`mb-2 flex w-full cursor-not-allowed flex-col rounded-xl border px-4 py-5 ${optionClass(
 									option.id,
 									item.fb.submitted_answer,
 									item.fb.correct_answer
 								)}`}
 							>
-								<span>{option.key}. {option.value}</span>
-
-								<div class="flex items-center gap-1">
-									{#if status === 'correct'}
-										{@render showCorrectWrongMark('correct')}
-									{:else if status === 'wrong'}
-										{@render showCorrectWrongMark('wrong')}
-									{/if}
+								<div class="flex w-full items-center justify-between">
+									<span>{option.key}. {option.value}</span>
+									<div class="flex items-center gap-1">
+										{#if status === 'correct'}
+											{@render showCorrectWrongMark('correct')}
+										{:else if status === 'wrong'}
+											{@render showCorrectWrongMark('wrong')}
+										{/if}
+									</div>
 								</div>
+								{#if option.media}
+									<QuestionMedia media={option.media} />
+								{/if}
 							</Label>
 						{/each}
 					{/if}

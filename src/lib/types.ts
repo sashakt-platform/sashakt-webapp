@@ -19,10 +19,33 @@ export type TTestSession = {
 	currentPage: number;
 };
 
+export type TMediaImage = {
+	gcs_path: string;
+	url?: string;
+	alt_text?: string;
+	content_type: string;
+	size_bytes: number;
+	uploaded_at: string;
+};
+
+export type TExternalMedia = {
+	type: string;
+	provider: string;
+	url: string;
+	embed_url?: string | null;
+	thumbnail_url?: string | null;
+};
+
+export type TMedia = {
+	image?: TMediaImage | null;
+	external_media?: TExternalMedia | null;
+};
+
 export type TOptions = {
 	id: number;
 	key: string;
 	value: string;
+	media?: TMedia | null;
 };
 
 export enum question_type_enum {
@@ -56,7 +79,7 @@ export type TQuestion = {
 	subjective_answer_limit: number;
 	is_mandatory: boolean;
 	marking_scheme: TMarks;
-	media: Record<string, unknown> | null;
+	media: TMedia | null;
 };
 
 // Form Field Types
