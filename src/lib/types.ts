@@ -31,12 +31,19 @@ export enum question_type_enum {
 	SUBJECTIVE = 'subjective',
 	NUMERICALINTEGER = 'numerical-integer',
 	NUMERICALDECIMAL = 'numerical-decimal',
+	MATRIXRATING = 'matrix-rating',
 	MATRIXMATCH = 'matrix-match'
 }
 
 export type TMatrixOptions = {
-	rows: { label: string; items: TOptions[] };
-	columns: { label: string; items: TOptions[] };
+	rows: {
+		label: string;
+		items: TOptions[];
+	};
+	columns: {
+		label: string;
+		items: TOptions[];
+	};
 };
 
 export type TPartialMark = {

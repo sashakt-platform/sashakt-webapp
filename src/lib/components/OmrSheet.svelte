@@ -11,12 +11,13 @@
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
+	import { parseMatrixResponse } from '$lib/helpers/matrixHelpers';
 	import {
 		question_type_enum,
 		type TCandidate,
+		type TMatrixOptions,
 		type TQuestion,
-		type TSelection,
-		type TMatrixOptions
+		type TSelection
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 
@@ -174,6 +175,51 @@
 		submittingQuestion = question.id;
 
 		updateSelections(question.id, newResponse);
+
+		try {
+			await submitAnswer(question.id, newResponse);
+		} catch {
+			selections = previousSelections;
+			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
+		} finally {
+			submittingQuestion = null;
+		}
+	};
+
+	const getMatrixResponseForQuestion = (questionId: number): Record<string, number> =>
+		parseMatrixResponse(selections.find((s) => s.question_revision_id === questionId)?.response);
+
+	const getMatrixSelection = (questionId: number, rowId: number): number | undefined =>
+		getMatrixResponseForQuestion(questionId)[String(rowId)];
+
+	const handleMatrixSelection = async (question: TQuestion, rowId: number, columnId: number) => {
+		if (submittingQuestion === question.id) return;
+
+		const current = getMatrixResponseForQuestion(question.id);
+		const newResponse = JSON.stringify({ ...current, [rowId]: columnId });
+
+		const previousSelections = JSON.parse(JSON.stringify(selections));
+		submittingQuestion = question.id;
+
+		const existing = selections.find((s) => s.question_revision_id === question.id);
+		if (existing) {
+			selections = selections.map((s) =>
+				s.question_revision_id === question.id ? { ...s, response: newResponse } : s
+			);
+		} else {
+			selections = [
+				...selections,
+				{
+					question_revision_id: question.id,
+					response: newResponse,
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+		}
+		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
 
 		try {
 			await submitAnswer(question.id, newResponse);
@@ -401,6 +447,46 @@
 							</Label>
 						{/each}
 					</RadioGroup.Root>
+				{:else if question_type === question_type_enum.MATRIXRATING}
+					{@const matrixOpts = question.options as unknown as TMatrixOptions}
+					<div class="overflow-x-auto">
+						<table class="w-full border-collapse text-xs sm:text-sm">
+							<thead>
+								<tr>
+									<th class="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold">
+										{matrixOpts.rows.label}
+									</th>
+									{#each matrixOpts.columns.items as col (col.id)}
+										<th
+											class="border border-gray-300 bg-gray-100 px-3 py-2 text-center font-semibold"
+										>
+											{col.key}
+										</th>
+									{/each}
+								</tr>
+							</thead>
+							<tbody>
+								{#each matrixOpts.rows.items as row (row.id)}
+									<tr class="hover:bg-gray-50">
+										<td class="border border-gray-300 px-3 py-2 font-medium">{row.value}</td>
+										{#each matrixOpts.columns.items as col (col.id)}
+											<td class="border border-gray-300 px-3 py-2 text-center">
+												<input
+													type="radio"
+													name="omr-matrix-{question.id}-row-{row.id}"
+													value={col.id}
+													checked={getMatrixSelection(question.id, row.id) === col.id}
+													class="accent-primary h-4 w-4 cursor-pointer"
+													aria-label="{row.value} – {col.key}"
+													onchange={() => handleMatrixSelection(question, row.id, col.id)}
+												/>
+											</td>
+										{/each}
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
 				{:else if question_type === question_type_enum.MATRIXMATCH}
 					{@const matrix = question.options as TMatrixOptions}
 					{@const matrixRows = matrix.rows.items}
@@ -422,13 +508,13 @@
 											<td class="px-3 py-3 font-semibold text-gray-700">{row.key}</td>
 											{#each matrixColumns as col (col.id)}
 												{@const isChecked = (
-													matrixSelections[question.id]?.[row.key] ?? []
+													matrixSelections[question.id]?.[String(row.id)] ?? []
 												).includes(col.id)}
 												<td class="px-5 py-3 text-center">
 													<Checkbox
 														checked={isChecked}
 														onCheckedChange={async () => {
-															await handleMatrixSelect(question, row.key, col.id);
+															await handleMatrixSelect(question, String(row.id), col.id);
 														}}
 													/>
 												</td>
