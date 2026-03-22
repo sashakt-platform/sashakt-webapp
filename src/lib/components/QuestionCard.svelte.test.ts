@@ -2376,7 +2376,7 @@ describe('QuestionCard', () => {
 		});
 
 		it('should reflect existing selections as checked checkboxes', () => {
-			const existingResponse = JSON.stringify({ A: [901] });
+			const existingResponse = JSON.stringify({ 801: [901] });
 			const selectedQuestions = [
 				{
 					question_revision_id: mockMatrixMatchQuestion.id,
@@ -2400,7 +2400,7 @@ describe('QuestionCard', () => {
 		it('should toggle off a checked checkbox when clicked again', async () => {
 			vi.mocked(fetch).mockResolvedValueOnce(createMockResponse({}) as unknown as Response);
 
-			const existingResponse = JSON.stringify({ A: [901] });
+			const existingResponse = JSON.stringify({ 801: [901] });
 			const selectedQuestions = [
 				{
 					question_revision_id: mockMatrixMatchQuestion.id,
@@ -2425,7 +2425,7 @@ describe('QuestionCard', () => {
 				const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
 				const parsed = JSON.parse(body.response);
 
-				expect(parsed['A']).toEqual([]);
+				expect(parsed['801']).toEqual([]);
 			});
 		});
 	});

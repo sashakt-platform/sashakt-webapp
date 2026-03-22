@@ -547,7 +547,7 @@ describe('OmrSheet', () => {
 			withSelections([
 				{
 					question_revision_id: mockMatrixMatchQuestion.id,
-					response: JSON.stringify({ A: [901], B: [902] }),
+					response: JSON.stringify({ 801: [901], 802: [902] }),
 					visited: true,
 					time_spent: 0,
 					bookmarked: false,
@@ -587,7 +587,7 @@ describe('OmrSheet', () => {
 			await waitFor(() => {
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
 				const response = JSON.parse(body.response);
-				expect(response.A).toContain(901);
+				expect(response['801']).toContain(901);
 			});
 		});
 
@@ -595,7 +595,7 @@ describe('OmrSheet', () => {
 			withSelections([
 				{
 					question_revision_id: mockMatrixMatchQuestion.id,
-					response: JSON.stringify({ A: [901] }),
+					response: JSON.stringify({ 801: [901] }),
 					visited: true,
 					time_spent: 0,
 					bookmarked: false,
@@ -612,7 +612,7 @@ describe('OmrSheet', () => {
 			await waitFor(() => {
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
 				const response = JSON.parse(body.response);
-				expect(response.A ?? []).not.toContain(901);
+				expect(response['801'] ?? []).not.toContain(901);
 			});
 		});
 
@@ -627,8 +627,8 @@ describe('OmrSheet', () => {
 				expect(fetch).toHaveBeenCalledTimes(2);
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[1][1] as RequestInit).body as string);
 				const response = JSON.parse(body.response);
-				expect(response.A).toContain(901);
-				expect(response.A).toContain(902);
+				expect(response['801']).toContain(901);
+				expect(response['801']).toContain(902);
 			});
 		});
 
@@ -639,7 +639,7 @@ describe('OmrSheet', () => {
 			await waitFor(() => {
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
 				const response = JSON.parse(body.response);
-				expect(response.B ?? []).toHaveLength(0);
+				expect(response['802'] ?? []).toHaveLength(0);
 			});
 		});
 
