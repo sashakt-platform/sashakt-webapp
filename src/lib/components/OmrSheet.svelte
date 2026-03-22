@@ -508,13 +508,13 @@
 											<td class="px-3 py-3 font-semibold text-gray-700">{row.key}</td>
 											{#each matrixColumns as col (col.id)}
 												{@const isChecked = (
-													matrixSelections[question.id]?.[row.key] ?? []
+													matrixSelections[question.id]?.[String(row.id)] ?? []
 												).includes(col.id)}
 												<td class="px-5 py-3 text-center">
 													<Checkbox
 														checked={isChecked}
 														onCheckedChange={async () => {
-															await handleMatrixSelect(question, row.key, col.id);
+															await handleMatrixSelect(question, String(row.id), col.id);
 														}}
 													/>
 												</td>

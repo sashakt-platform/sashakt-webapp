@@ -770,12 +770,12 @@
 							<tr>
 								<td class="px-3 py-3 text-sm font-semibold text-gray-700">{row.key}</td>
 								{#each matrixColumns as col (col.id)}
-									{@const isChecked = (matrixSelections[row.key] ?? []).includes(col.id)}
+									{@const isChecked = (matrixSelections[row.id] ?? []).includes(col.id)}
 									<td class="px-5 py-3 text-center">
 										<Checkbox
 											checked={isChecked}
 											disabled={isLocked}
-											onCheckedChange={() => handleMatrixInput(row.key, col.id)}
+											onCheckedChange={() => handleMatrixInput(row.id, col.id)}
 										/>
 									</td>
 								{/each}
