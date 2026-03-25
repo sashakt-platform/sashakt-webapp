@@ -8,6 +8,7 @@ import { question_type_enum } from './types';
 import type {
 	TCandidate,
 	TMatrixOptions,
+	TMedia,
 	TOptions,
 	TQuestion,
 	TResultData,
@@ -206,6 +207,98 @@ export const mockMatrixMatchQuestion: TQuestion = {
 	is_mandatory: false,
 	marking_scheme: { correct: 2, wrong: 0, skipped: 0 },
 	media: null
+};
+
+// Mock media data
+export const mockImageMedia: TMedia = {
+	image: {
+		gcs_path: 'tests/images/diagram.png',
+		url: 'https://storage.example.com/diagram.png',
+		alt_text: 'A diagram showing the question',
+		content_type: 'image/png',
+		size_bytes: 12345,
+		uploaded_at: '2025-01-01T00:00:00Z'
+	},
+	external_media: null
+};
+
+export const mockYoutubeMedia: TMedia = {
+	image: null,
+	external_media: {
+		type: 'video',
+		provider: 'youtube',
+		url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+		embed_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+		thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg'
+	}
+};
+
+export const mockVimeoMedia: TMedia = {
+	image: null,
+	external_media: {
+		type: 'video',
+		provider: 'vimeo',
+		url: 'https://vimeo.com/123456',
+		embed_url: 'https://player.vimeo.com/video/123456',
+		thumbnail_url: null
+	}
+};
+
+export const mockSpotifyMedia: TMedia = {
+	image: null,
+	external_media: {
+		type: 'audio',
+		provider: 'spotify',
+		url: 'https://open.spotify.com/track/abc123',
+		embed_url: 'https://open.spotify.com/embed/track/abc123',
+		thumbnail_url: null
+	}
+};
+
+export const mockGenericExternalMedia: TMedia = {
+	image: null,
+	external_media: {
+		type: 'link',
+		provider: 'generic',
+		url: 'https://example.com/resource',
+		embed_url: null,
+		thumbnail_url: null
+	}
+};
+
+export const mockImageAndExternalMedia: TMedia = {
+	image: {
+		gcs_path: 'tests/images/photo.jpg',
+		url: 'https://storage.example.com/photo.jpg',
+		alt_text: 'A photo',
+		content_type: 'image/jpeg',
+		size_bytes: 54321,
+		uploaded_at: '2025-01-01T00:00:00Z'
+	},
+	external_media: {
+		type: 'video',
+		provider: 'youtube',
+		url: 'https://www.youtube.com/watch?v=abc123',
+		embed_url: 'https://www.youtube.com/embed/abc123',
+		thumbnail_url: null
+	}
+};
+
+export const mockQuestionWithMedia: TQuestion = {
+	id: 10,
+	question_text: 'Look at the image and select the correct answer.',
+	instructions: 'Use the diagram to answer',
+	question_type: 'single-choice' as any,
+	options: [
+		{ id: 1001, key: 'A', value: 'Option A', media: mockImageMedia },
+		{ id: 1002, key: 'B', value: 'Option B', media: mockYoutubeMedia },
+		{ id: 1003, key: 'C', value: 'Option C' },
+		{ id: 1004, key: 'D', value: 'Option D' }
+	],
+	subjective_answer_limit: 0,
+	is_mandatory: true,
+	marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
+	media: mockImageMedia
 };
 
 export const mockQuestions: TQuestion[] = [

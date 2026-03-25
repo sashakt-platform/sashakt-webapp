@@ -7,7 +7,10 @@ import {
 	mockSubjectiveQuestion,
 	mockNumericalIntegerQuestion,
 	mockNumericalDecimalQuestion,
-	mockTestQuestionsResponse
+	mockTestQuestionsResponse,
+	mockQuestionWithMedia,
+	mockImageMedia,
+	mockYoutubeMedia
 } from '$lib/test-utils';
 
 const createFeedback = (
@@ -252,9 +255,7 @@ describe('ViewFeedback', () => {
 		};
 
 		it('should render numerical-integer question text', () => {
-			const feedback = [
-				{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }
-			];
+			const feedback = [{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -264,9 +265,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should display the submitted integer answer', () => {
-			const feedback = [
-				{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }
-			];
+			const feedback = [{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -276,9 +275,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should show Correct and apply green styling when integer answer exactly matches', () => {
-			const feedback = [
-				{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }
-			];
+			const feedback = [{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }];
 
 			const { container } = render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -290,9 +287,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should show Wrong and apply red styling when integer answer does not match', () => {
-			const feedback = [
-				{ question_revision_id: 6, submitted_answer: '5', correct_answer: 8 }
-			];
+			const feedback = [{ question_revision_id: 6, submitted_answer: '5', correct_answer: 8 }];
 
 			const { container } = render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -303,9 +298,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should display the correct answer panel when integer answer is wrong', () => {
-			const feedback = [
-				{ question_revision_id: 6, submitted_answer: '5', correct_answer: 8 }
-			];
+			const feedback = [{ question_revision_id: 6, submitted_answer: '5', correct_answer: 8 }];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -317,9 +310,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should show Not Attempted when submitted_answer is empty', () => {
-			const feedback = [
-				{ question_revision_id: 6, submitted_answer: '', correct_answer: 8 }
-			];
+			const feedback = [{ question_revision_id: 6, submitted_answer: '', correct_answer: 8 }];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -337,9 +328,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should apply gray styling when no correct_answer is provided', () => {
-			const feedback = [
-				{ question_revision_id: 6, submitted_answer: '8', correct_answer: null }
-			];
+			const feedback = [{ question_revision_id: 6, submitted_answer: '8', correct_answer: null }];
 
 			const { container } = render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -349,9 +338,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should not show Wrong mark in the response area when correct_answer is not provided', () => {
-			const feedback = [
-				{ question_revision_id: 6, submitted_answer: '8', correct_answer: null }
-			];
+			const feedback = [{ question_revision_id: 6, submitted_answer: '8', correct_answer: null }];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -365,9 +352,7 @@ describe('ViewFeedback', () => {
 
 		describe('correct answer is zero (integer)', () => {
 			it('should show Correct when submitted answer is "0" and correct_answer is 0', () => {
-				const feedback = [
-					{ question_revision_id: 6, submitted_answer: '0', correct_answer: 0 }
-				];
+				const feedback = [{ question_revision_id: 6, submitted_answer: '0', correct_answer: 0 }];
 
 				render(ViewFeedback, {
 					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -378,9 +363,7 @@ describe('ViewFeedback', () => {
 			});
 
 			it('should show green styling when integer answer is 0 and correct answer is 0', () => {
-				const feedback = [
-					{ question_revision_id: 6, submitted_answer: '0', correct_answer: 0 }
-				];
+				const feedback = [{ question_revision_id: 6, submitted_answer: '0', correct_answer: 0 }];
 
 				const { container } = render(ViewFeedback, {
 					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -390,9 +373,7 @@ describe('ViewFeedback', () => {
 			});
 
 			it('should show Wrong when submitted answer is non-zero and correct_answer is 0', () => {
-				const feedback = [
-					{ question_revision_id: 6, submitted_answer: '5', correct_answer: 0 }
-				];
+				const feedback = [{ question_revision_id: 6, submitted_answer: '5', correct_answer: 0 }];
 
 				render(ViewFeedback, {
 					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -402,9 +383,7 @@ describe('ViewFeedback', () => {
 			});
 
 			it('should display "0" as the correct answer when integer response is wrong and correct_answer is 0', () => {
-				const feedback = [
-					{ question_revision_id: 6, submitted_answer: '5', correct_answer: 0 }
-				];
+				const feedback = [{ question_revision_id: 6, submitted_answer: '5', correct_answer: 0 }];
 
 				render(ViewFeedback, {
 					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
@@ -463,9 +442,7 @@ describe('ViewFeedback', () => {
 
 		it('should show Wrong when decimal answer is outside 0.05 tolerance', () => {
 			// |2.5 - 3.14| = 0.64 > 0.05
-			const feedback = [
-				{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }
-			];
+			const feedback = [{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
@@ -487,9 +464,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should apply red styling when decimal answer is wrong', () => {
-			const feedback = [
-				{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }
-			];
+			const feedback = [{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }];
 
 			const { container } = render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
@@ -499,9 +474,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should display the correct answer panel when decimal answer is wrong', () => {
-			const feedback = [
-				{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }
-			];
+			const feedback = [{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
@@ -512,9 +485,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should show Not Attempted when submitted_answer is empty', () => {
-			const feedback = [
-				{ question_revision_id: 7, submitted_answer: '', correct_answer: 3.14 }
-			];
+			const feedback = [{ question_revision_id: 7, submitted_answer: '', correct_answer: 3.14 }];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
@@ -533,9 +504,7 @@ describe('ViewFeedback', () => {
 
 		describe('correct answer is zero (decimal)', () => {
 			it('should show Correct when submitted answer is "0" and correct_answer is 0', () => {
-				const feedback = [
-					{ question_revision_id: 7, submitted_answer: '0', correct_answer: 0 }
-				];
+				const feedback = [{ question_revision_id: 7, submitted_answer: '0', correct_answer: 0 }];
 
 				render(ViewFeedback, {
 					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
@@ -547,9 +516,7 @@ describe('ViewFeedback', () => {
 			});
 
 			it('should show Correct when decimal answer is within 0.05 tolerance of 0', () => {
-				const feedback = [
-					{ question_revision_id: 7, submitted_answer: '0.03', correct_answer: 0 }
-				];
+				const feedback = [{ question_revision_id: 7, submitted_answer: '0.03', correct_answer: 0 }];
 
 				render(ViewFeedback, {
 					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
@@ -560,9 +527,7 @@ describe('ViewFeedback', () => {
 			});
 
 			it('should show Wrong when decimal answer is outside 0.05 tolerance of 0', () => {
-				const feedback = [
-					{ question_revision_id: 7, submitted_answer: '0.6', correct_answer: 0 }
-				];
+				const feedback = [{ question_revision_id: 7, submitted_answer: '0.6', correct_answer: 0 }];
 
 				render(ViewFeedback, {
 					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
@@ -573,9 +538,7 @@ describe('ViewFeedback', () => {
 			});
 
 			it('should apply green styling when decimal answer is 0 and correct answer is 0', () => {
-				const feedback = [
-					{ question_revision_id: 7, submitted_answer: '0', correct_answer: 0 }
-				];
+				const feedback = [{ question_revision_id: 7, submitted_answer: '0', correct_answer: 0 }];
 
 				const { container } = render(ViewFeedback, {
 					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
@@ -585,9 +548,7 @@ describe('ViewFeedback', () => {
 			});
 
 			it('should display "0" as the correct answer when decimal response is wrong and correct_answer is 0', () => {
-				const feedback = [
-					{ question_revision_id: 7, submitted_answer: '0.6', correct_answer: 0 }
-				];
+				const feedback = [{ question_revision_id: 7, submitted_answer: '0.6', correct_answer: 0 }];
 
 				render(ViewFeedback, {
 					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
@@ -638,6 +599,67 @@ describe('ViewFeedback', () => {
 			// renders its own "Correct" label → two "Correct" elements total.
 			expect(screen.getAllByText('Correct')).toHaveLength(2);
 			expect(screen.getByText('Wrong')).toBeInTheDocument();
+		});
+	});
+
+	describe('media support in feedback', () => {
+		const testQuestionsWithMedia = {
+			question_revisions: [mockQuestionWithMedia],
+			question_pagination: 5
+		};
+
+		it('should render question-level media image in feedback', () => {
+			const feedback = [createFeedback(10, [1001], [1002])];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithMedia }
+			});
+
+			const images = screen.getAllByRole('img');
+			const questionImage = images.find(
+				(img) => img.getAttribute('src') === mockImageMedia.image!.url
+			);
+			expect(questionImage).toBeInTheDocument();
+			expect(questionImage).toHaveAttribute('alt', mockImageMedia.image!.alt_text);
+		});
+
+		it('should render option-level media in feedback for single-choice', () => {
+			const feedback = [createFeedback(10, [1001], [1002])];
+
+			const { container } = render(ViewFeedback, {
+				props: { feedback, testQuestions: testQuestionsWithMedia }
+			});
+
+			// Option B has YouTube embed media
+			const iframes = container.querySelectorAll('iframe');
+			const youtubeIframe = Array.from(iframes).find(
+				(iframe) => iframe.getAttribute('src') === mockYoutubeMedia.external_media!.embed_url
+			);
+			expect(youtubeIframe).toBeInTheDocument();
+		});
+
+		it('should render option-level media in feedback for multi-choice', () => {
+			const multiChoiceWithMedia = {
+				...mockQuestionWithMedia,
+				id: 11,
+				question_type: 'multi-choice' as any
+			};
+			const testQuestions = {
+				question_revisions: [multiChoiceWithMedia],
+				question_pagination: 5
+			};
+			const feedback = [createFeedback(11, [1001], [1002])];
+
+			const { container } = render(ViewFeedback, {
+				props: { feedback, testQuestions }
+			});
+
+			// Option B has YouTube embed media
+			const iframes = container.querySelectorAll('iframe');
+			const youtubeIframe = Array.from(iframes).find(
+				(iframe) => iframe.getAttribute('src') === mockYoutubeMedia.external_media!.embed_url
+			);
+			expect(youtubeIframe).toBeInTheDocument();
 		});
 	});
 

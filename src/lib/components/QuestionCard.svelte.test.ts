@@ -15,6 +15,9 @@ import {
 	mockMatrixRatingQuestion,
 	mockMatrixRatingOptions,
 	mockMatrixMatchQuestion,
+	mockQuestionWithMedia,
+	mockImageMedia,
+	mockYoutubeMedia,
 	createMockResponse
 } from '$lib/test-utils';
 
@@ -2427,6 +2430,83 @@ describe('QuestionCard', () => {
 
 				expect(parsed['801']).toEqual([]);
 			});
+		});
+	});
+
+	describe('media support', () => {
+		it('should render question-level media image', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockQuestionWithMedia,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const images = screen.getAllByRole('img');
+			const questionImage = images.find(
+				(img) => img.getAttribute('src') === mockImageMedia.image!.url
+			);
+			expect(questionImage).toBeInTheDocument();
+			expect(questionImage).toHaveAttribute('alt', mockImageMedia.image!.alt_text);
+		});
+
+		it('should render option-level media image', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockQuestionWithMedia,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			// Option A has image media - the question image and option A image are both the same mockImageMedia
+			const images = screen.getAllByRole('img');
+			// There should be at least 2 images (question-level + option A)
+			expect(images.length).toBeGreaterThanOrEqual(2);
+		});
+
+		it('should render option-level YouTube embed', () => {
+			const { container } = render(QuestionCard, {
+				props: {
+					question: mockQuestionWithMedia,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			// Option B has YouTube media
+			const iframes = container.querySelectorAll('iframe');
+			const youtubeIframe = Array.from(iframes).find(
+				(iframe) => iframe.getAttribute('src') === mockYoutubeMedia.external_media!.embed_url
+			);
+			expect(youtubeIframe).toBeInTheDocument();
+		});
+
+		it('should not render media for options without media', () => {
+			const questionNoMedia = {
+				...mockSingleChoiceQuestion,
+				media: null
+			};
+
+			const { container } = render(QuestionCard, {
+				props: {
+					question: questionNoMedia,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(container.querySelector('iframe')).not.toBeInTheDocument();
+			expect(screen.queryByRole('img')).not.toBeInTheDocument();
 		});
 	});
 });
