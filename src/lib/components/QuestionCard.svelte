@@ -740,10 +740,13 @@
 					<p class="mb-2 text-sm font-semibold text-gray-700">{matrix.rows.label}</p>
 					<div class="flex flex-col gap-2">
 						{#each matrixRows as row (row.id)}
-							<p class="text-sm text-gray-800">
+							<div class="text-sm text-gray-800">
 								<span class="font-semibold">{row.key}.</span>
 								<span class="ml-1">{row.value}</span>
-							</p>
+								{#if row.media}
+									<QuestionMedia media={row.media} />
+								{/if}
+							</div>
 						{/each}
 					</div>
 				</div>
@@ -751,10 +754,13 @@
 					<p class="mb-2 text-sm font-semibold text-gray-700">{matrix.columns.label}</p>
 					<div class="flex flex-col gap-2">
 						{#each matrixColumns as col (col.id)}
-							<p class="text-sm text-gray-800">
+							<div class="text-sm text-gray-800">
 								<span class="font-semibold">{col.key}.</span>
 								<span class="ml-1">{col.value}</span>
-							</p>
+								{#if col.media}
+									<QuestionMedia media={col.media} />
+								{/if}
+							</div>
 						{/each}
 					</div>
 				</div>
