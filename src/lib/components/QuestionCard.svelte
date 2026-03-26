@@ -22,6 +22,7 @@
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
+	import QuestionMedia from './QuestionMedia.svelte';
 
 	let {
 		question,
@@ -562,6 +563,7 @@
 					{question.instructions}
 				</span>
 			{/if}
+			<QuestionMedia media={question.media} />
 		</Card.Description>
 	</Card.Header>
 
@@ -592,7 +594,7 @@
 						{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
 						<Label
 							for={uid}
-							class={`cursor-pointer space-x-2 rounded-xl border px-4 py-5 ${
+							class={`cursor-pointer rounded-xl border px-4 py-5 ${
 								isFeedbackViewed
 									? feedbackClass || ''
 									: isSelected(option.id)
@@ -600,16 +602,21 @@
 										: ''
 							} ${isLocked ? 'cursor-not-allowed' : ''}`}
 						>
-							<span>{option.key}. {option.value}</span>
-							<div class="float-end flex items-center gap-1">
-								{#if feedbackStatus === 'correct'}
-									{@render showCorrectWrongMark('correct')}
-								{:else if feedbackStatus === 'wrong'}
-									{@render showCorrectWrongMark('wrong')}
-								{:else}
-									<RadioGroup.Item value={option.id.toString()} id={uid} disabled={isLocked} />
-								{/if}
+							<div class="flex w-full items-center justify-between">
+								<span>{option.key}. {option.value}</span>
+								<div class="flex items-center gap-1">
+									{#if feedbackStatus === 'correct'}
+										{@render showCorrectWrongMark('correct')}
+									{:else if feedbackStatus === 'wrong'}
+										{@render showCorrectWrongMark('wrong')}
+									{:else}
+										<RadioGroup.Item value={option.id.toString()} id={uid} disabled={isLocked} />
+									{/if}
+								</div>
 							</div>
+							{#if option.media}
+								<QuestionMedia media={option.media} />
+							{/if}
 						</Label>
 					{/each}
 				</RadioGroup.Root>
@@ -733,10 +740,13 @@
 					<p class="mb-2 text-sm font-semibold text-gray-700">{matrix.rows.label}</p>
 					<div class="flex flex-col gap-2">
 						{#each matrixRows as row (row.id)}
-							<p class="text-sm text-gray-800">
+							<div class="text-sm text-gray-800">
 								<span class="font-semibold">{row.key}.</span>
 								<span class="ml-1">{row.value}</span>
-							</p>
+								{#if row.media}
+									<QuestionMedia media={row.media} />
+								{/if}
+							</div>
 						{/each}
 					</div>
 				</div>
@@ -744,10 +754,13 @@
 					<p class="mb-2 text-sm font-semibold text-gray-700">{matrix.columns.label}</p>
 					<div class="flex flex-col gap-2">
 						{#each matrixColumns as col (col.id)}
-							<p class="text-sm text-gray-800">
+							<div class="text-sm text-gray-800">
 								<span class="font-semibold">{col.key}.</span>
 								<span class="ml-1">{col.value}</span>
-							</p>
+								{#if col.media}
+									<QuestionMedia media={col.media} />
+								{/if}
+							</div>
 						{/each}
 					</div>
 				</div>
@@ -839,24 +852,29 @@
 									: ''
 						} ${isLocked ? 'cursor-not-allowed' : ''}`}
 					>
-						<span>{option.key}. {option.value}</span>
-						<div class="float-end flex items-center gap-1">
-							{#if feedbackStatus === 'correct'}
-								{@render showCorrectWrongMark('correct')}
-							{:else if feedbackStatus === 'wrong'}
-								{@render showCorrectWrongMark('wrong')}
-							{:else}
-								<Checkbox
-									id={uid}
-									value={option.id.toString()}
-									checked={isSelected(option.id)}
-									disabled={isLocked}
-									onCheckedChange={async (check) => {
-										await handleSelection(question.id, option.id, check === false);
-									}}
-								/>
-							{/if}
+						<div class="flex w-full items-center justify-between">
+							<span>{option.key}. {option.value}</span>
+							<div class="flex items-center gap-1">
+								{#if feedbackStatus === 'correct'}
+									{@render showCorrectWrongMark('correct')}
+								{:else if feedbackStatus === 'wrong'}
+									{@render showCorrectWrongMark('wrong')}
+								{:else}
+									<Checkbox
+										id={uid}
+										value={option.id.toString()}
+										checked={isSelected(option.id)}
+										disabled={isLocked}
+										onCheckedChange={async (check) => {
+											await handleSelection(question.id, option.id, check === false);
+										}}
+									/>
+								{/if}
+							</div>
 						</div>
+						{#if option.media}
+							<QuestionMedia media={option.media} />
+						{/if}
 					</Label>
 				</div>
 			{/each}
