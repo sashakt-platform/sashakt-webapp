@@ -55,7 +55,10 @@ export enum question_type_enum {
 	NUMERICALINTEGER = 'numerical-integer',
 	NUMERICALDECIMAL = 'numerical-decimal',
 	MATRIXRATING = 'matrix-rating',
-	MATRIXMATCH = 'matrix-match'
+	MATRIXMATCH = 'matrix-match',
+	MATRIXINPUT = 'matrix-input',
+	MATRIXSTRING = 'matrix-string',
+	MATRIXNUMBER = 'matrix-number'
 }
 
 export type TMatrixOptions = {
@@ -66,6 +69,17 @@ export type TMatrixOptions = {
 	columns: {
 		label: string;
 		items: TOptions[];
+	};
+};
+
+export type TMatrixInputOptions = {
+	rows: {
+		label: string;
+		items: TOptions[];
+	};
+	columns: {
+		label: string;
+		input_type: 'text' | 'number';
 	};
 };
 
