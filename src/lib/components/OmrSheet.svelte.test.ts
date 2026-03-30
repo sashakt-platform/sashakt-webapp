@@ -12,6 +12,10 @@ import {
 	mockMatrixRatingQuestion,
 	mockMatrixRatingOptions,
 	mockMatrixMatchQuestion,
+	mockMatrixInputTextQuestion,
+	mockMatrixInputNumberQuestion,
+	mockMatrixInputTextOptions,
+	mockMatrixInputNumberOptions,
 	createMockResponse
 } from '$lib/test-utils';
 import type { TQuestion, TSelection, TMatrixOptions, TOptions } from '$lib/types';
@@ -806,6 +810,301 @@ describe('OmrSheet', () => {
 							`omr-matrix-${mockMatrixRatingQuestion.id}-row-${firstRow.id}`
 					)
 					.forEach((r) => expect(r).not.toBeChecked());
+			});
+		});
+	});
+
+	describe('Matrix Input (text) questions', () => {
+		it('renders row and column labels as table headers', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			expect(screen.getByText(mockMatrixInputTextOptions.rows.label)).toBeInTheDocument();
+			expect(screen.getByText(mockMatrixInputTextOptions.columns.label)).toBeInTheDocument();
+		});
+
+		it('renders a text input for each row', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			expect(screen.getAllByRole('textbox')).toHaveLength(
+				mockMatrixInputTextOptions.rows.items.length
+			);
+		});
+
+		it('renders all inputs empty when there is no prior answer', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			screen.getAllByRole('textbox').forEach((input) => {
+				expect(input).toHaveValue('');
+			});
+		});
+
+		it('renders the Save Answer button', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
+		});
+
+		it('Save Answer button is disabled when all inputs are empty', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
+		});
+
+		it('Save Answer button is enabled after typing into an input', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			const inputs = screen.getAllByRole('textbox');
+			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeEnabled();
+		});
+
+		it('pre-fills inputs from saved selections on load', () => {
+			withSelections([
+				{
+					question_revision_id: mockMatrixInputTextQuestion.id,
+					response: JSON.stringify({ '1': 'Paris', '2': 'Tokyo' }),
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			]);
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+			expect(inputs[0]).toHaveValue('Paris');
+			expect(inputs[1]).toHaveValue('Tokyo');
+		});
+
+		it('calls fetch with serialized JSON when Save Answer is clicked', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			const inputs = screen.getAllByRole('textbox');
+			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalledWith(
+					'/test/test-slug/api/submit-answer',
+					expect.objectContaining({ method: 'POST' })
+				);
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				const response = JSON.parse(body.response);
+				expect(response['1']).toBe('Paris');
+			});
+		});
+
+		it('excludes empty row values from the serialized payload', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			const inputs = screen.getAllByRole('textbox');
+			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				const response = JSON.parse(body.response);
+				expect(response['2']).toBeUndefined();
+			});
+		});
+
+		it('sends null response when all rows are cleared', async () => {
+			withSelections([
+				{
+					question_revision_id: mockMatrixInputTextQuestion.id,
+					response: JSON.stringify({ '1': 'Paris' }),
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			]);
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			const inputs = screen.getAllByRole('textbox');
+
+			await fireEvent.input(inputs[0], { target: { value: '' } });
+			await fireEvent.click(screen.getByRole('button', { name: /update answer/i }));
+
+			await waitFor(() => {
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				expect(body.response).toBeNull();
+			});
+		});
+
+		it('shows Saved state after a successful save', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			const inputs = screen.getAllByRole('textbox');
+			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+			});
+		});
+
+		it('shows Update Answer after modifying a previously saved answer', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			const inputs = screen.getAllByRole('textbox');
+
+			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await waitFor(() => screen.getByRole('button', { name: /saved/i }));
+
+			await fireEvent.input(inputs[0], { target: { value: 'Lyon' } });
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
+			});
+		});
+
+		it('whitespace-only input does not count as a change', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			const inputs = screen.getAllByRole('textbox');
+			await fireEvent.input(inputs[0], { target: { value: '   ' } });
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
+		});
+
+		it('keeps Save Answer enabled after a failed save (no silent data loss)', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			const inputs = screen.getAllByRole('textbox');
+			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
+			});
+		});
+
+		it('shows loading state while submitting', async () => {
+			let resolveFetch!: (value: Response | PromiseLike<Response>) => void;
+			vi.mocked(fetch).mockImplementationOnce(
+				() => new Promise((resolve) => (resolveFetch = resolve))
+			);
+
+			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
+			const inputs = screen.getAllByRole('textbox');
+			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				expect(document.querySelector('.pointer-events-none')).toBeInTheDocument();
+			});
+
+			resolveFetch(createMockResponse({ success: true }));
+
+			await waitFor(() => {
+				expect(document.querySelector('.pointer-events-none')).not.toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('Matrix Input (number) questions', () => {
+		it('renders a number input (spinbutton) for each row', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			expect(screen.getAllByRole('spinbutton')).toHaveLength(
+				mockMatrixInputNumberOptions.rows.items.length
+			);
+		});
+
+		it('does not render any radio buttons or checkboxes', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+		});
+
+		it('renders all number inputs empty when there is no prior answer', () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			screen.getAllByRole('spinbutton').forEach((input) => {
+				expect(input).toHaveValue(null);
+			});
+		});
+
+		it('pre-fills number inputs from saved selections on load', () => {
+			withSelections([
+				{
+					question_revision_id: mockMatrixInputNumberQuestion.id,
+					response: JSON.stringify({ '1': '5', '2': '10' }),
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			]);
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+			expect(inputs[0]).toHaveValue(5);
+			expect(inputs[1]).toHaveValue(10);
+		});
+
+		it('calls fetch with the number value when Save Answer is clicked', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			const inputs = screen.getAllByRole('spinbutton');
+			await fireEvent.input(inputs[0], { target: { value: '7' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				const response = JSON.parse(body.response);
+				expect(response['1']).toBe('7');
+			});
+		});
+
+		it('blocks non-numeric key input (e.g. letter "a")', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			const input = screen.getAllByRole('spinbutton')[0];
+			const notPrevented = await fireEvent.keyDown(input, { key: 'a' });
+			expect(notPrevented).toBe(false);
+		});
+
+		it('allows digit key input', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			const input = screen.getAllByRole('spinbutton')[0];
+			const notPrevented = await fireEvent.keyDown(input, { key: '5' });
+			expect(notPrevented).toBe(true);
+		});
+
+		it('allows decimal point key input', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			const input = screen.getAllByRole('spinbutton')[0];
+			const notPrevented = await fireEvent.keyDown(input, { key: '.' });
+			expect(notPrevented).toBe(true);
+		});
+
+		it('allows minus sign key input', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			const input = screen.getAllByRole('spinbutton')[0];
+			const notPrevented = await fireEvent.keyDown(input, { key: '-' });
+			expect(notPrevented).toBe(true);
+		});
+
+		it('allows Backspace key', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			const input = screen.getAllByRole('spinbutton')[0];
+			const notPrevented = await fireEvent.keyDown(input, { key: 'Backspace' });
+			expect(notPrevented).toBe(true);
+		});
+
+		it('allows Ctrl+C shortcut (does not block keyboard shortcuts)', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			const input = screen.getAllByRole('spinbutton')[0];
+			const notPrevented = await fireEvent.keyDown(input, { key: 'c', ctrlKey: true });
+			expect(notPrevented).toBe(true);
+		});
+
+		it('shows Saved state after successfully saving a number answer', async () => {
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			const inputs = screen.getAllByRole('spinbutton');
+			await fireEvent.input(inputs[0], { target: { value: '42' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+			});
+		});
+
+		it('keeps Save Answer enabled after a failed save', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
+			const inputs = screen.getAllByRole('spinbutton');
+			await fireEvent.input(inputs[0], { target: { value: '42' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
 			});
 		});
 	});
