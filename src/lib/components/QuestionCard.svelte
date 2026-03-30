@@ -83,19 +83,20 @@
 	let candidateInput = $state(getExistingInputResponse());
 	let lastSavedInput = $state(getExistingInputResponse());
 
-	const getExistingMatrixSelections = () => {
-		const selected = selectedQuestion(question.id);
-		if (typeof selected?.response === 'string' && selected.response) {
-			try {
-				const parsed = JSON.parse(selected.response) as Record<string, number | number[]>;
-				return Object.fromEntries(
-					Object.entries(parsed).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
-				) as Record<string, number[]>;
-			} catch {
-				return {};
-			}
+	const parseJsonResponse = <T,>(response: number[] | string | undefined): Record<string, T> => {
+		if (typeof response !== 'string' || !response) return {};
+		try {
+			return JSON.parse(response) as Record<string, T>;
+		} catch {
+			return {};
 		}
-		return {};
+	};
+
+	const getExistingMatrixSelections = (): Record<string, number[]> => {
+		const parsed = parseJsonResponse<number | number[]>(selectedQuestion(question.id)?.response);
+		return Object.fromEntries(
+			Object.entries(parsed).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
+		);
 	};
 	let matrixSelections = $state<Record<string, number[]>>(getExistingMatrixSelections());
 
@@ -104,19 +105,8 @@
 		type === question_type_enum.MATRIXSTRING ||
 		type === question_type_enum.MATRIXNUMBER;
 
-	const getExistingMatrixInputValues = (): Record<string, string> => {
-		const selected = selectedQuestion(question.id);
-		if (typeof selected?.response === 'string' && selected.response) {
-			try {
-				return JSON.parse(selected.response) as Record<string, string>;
-			} catch {
-				return {};
-			}
-		}
-		return {};
-	};
 	let matrixInputValues = $state<Record<string, string>>(
-		isMatrixInputType(question.question_type) ? getExistingMatrixInputValues() : {}
+		parseJsonResponse<string>(selectedQuestion(question.id)?.response)
 	);
 	let lastSavedMatrixInputValues = $state<Record<string, string>>({ ...matrixInputValues });
 
@@ -125,14 +115,18 @@
 		matrixInputValues = { ...matrixInputValues, [String(rowId)]: value };
 	};
 
+	const blockNonNumericKey = (e: KeyboardEvent) => {
+		if (!/[\d.-]/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) {
+			e.preventDefault();
+		}
+	};
+
 	const handleMatrixInputSave = async () => {
 		if (isLocked || isSubmitting) return;
 
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
 		const serialized = JSON.stringify(matrixInputValues);
-
-		const previousValues = { ...lastSavedMatrixInputValues };
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 
 		isSubmitting = true;
@@ -161,7 +155,6 @@
 			await submitAnswer(question.id, serialized, currentBookmarked);
 			lastSavedMatrixInputValues = { ...matrixInputValues };
 		} catch {
-			matrixInputValues = previousValues;
 			selectedQuestions = previousState;
 			updateStore();
 			saveError = 'Failed to save your answer. Please try again.';
@@ -947,13 +940,7 @@
 										class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 										value={matrixInputValues[String(row.id)] ?? ''}
 										disabled={isLocked}
-										onkeydown={inputType === 'number'
-											? (e) => {
-													if (!/[\d.-]/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) {
-														e.preventDefault();
-													}
-												}
-											: undefined}
+										onkeydown={inputType === 'number' ? blockNonNumericKey : undefined}
 										oninput={(e) =>
 											handleMatrixInputChange(row.id, (e.target as HTMLInputElement).value)}
 									/>
