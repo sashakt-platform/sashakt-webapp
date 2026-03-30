@@ -2746,6 +2746,41 @@ describe('QuestionCard', () => {
 				expect(event.defaultPrevented).toBe(false);
 			});
 
+			it('should allow Home and End in number inputs', async () => {
+				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
+				const input = screen.getAllByRole('spinbutton')[0];
+				for (const key of ['Home', 'End']) {
+					const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+					input.dispatchEvent(event);
+					expect(event.defaultPrevented).toBe(false);
+				}
+			});
+
+			it('should allow ArrowUp and ArrowDown in number inputs', async () => {
+				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
+				const input = screen.getAllByRole('spinbutton')[0];
+				for (const key of ['ArrowUp', 'ArrowDown']) {
+					const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+					input.dispatchEvent(event);
+					expect(event.defaultPrevented).toBe(false);
+				}
+			});
+
+			it('should allow Ctrl/Cmd shortcuts in number inputs', async () => {
+				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
+				const input = screen.getAllByRole('spinbutton')[0];
+				for (const modifier of ['ctrlKey', 'metaKey'] as const) {
+					const event = new KeyboardEvent('keydown', {
+						key: 'a',
+						[modifier]: true,
+						bubbles: true,
+						cancelable: true
+					});
+					input.dispatchEvent(event);
+					expect(event.defaultPrevented).toBe(false);
+				}
+			});
+
 			it('should not block keys in text inputs', async () => {
 				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
 				const input = screen.getAllByRole('textbox')[0];

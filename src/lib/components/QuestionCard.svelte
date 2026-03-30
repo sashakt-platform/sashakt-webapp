@@ -111,7 +111,8 @@
 	};
 
 	const blockNonNumericKey = (e: KeyboardEvent) => {
-		if (!/[\d.-]/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) {
+		if (e.metaKey || e.ctrlKey) return;
+		if (!['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End'].includes(e.key) && !/[\d.-]/.test(e.key)) {
 			e.preventDefault();
 		}
 	};
