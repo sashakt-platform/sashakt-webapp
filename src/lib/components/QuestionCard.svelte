@@ -110,6 +110,9 @@
 		matrixInputValues = { ...matrixInputValues, [String(rowId)]: value };
 	};
 
+	const normalizeMatrixInputValues = (values: Record<string, string>): Record<string, string> =>
+		Object.fromEntries(Object.entries(values).filter(([, v]) => v.trim().length > 0));
+
 	const blockNonNumericKey = (e: KeyboardEvent) => {
 		if (e.metaKey || e.ctrlKey) return;
 		if (!['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End'].includes(e.key) && !/[\d.-]/.test(e.key)) {
@@ -122,7 +125,8 @@
 
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-		const serialized = JSON.stringify(matrixInputValues);
+		const normalized = normalizeMatrixInputValues(matrixInputValues);
+		const serialized = Object.keys(normalized).length > 0 ? JSON.stringify(normalized) : '';
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 
 		isSubmitting = true;
@@ -153,7 +157,7 @@
 		} catch {
 			selectedQuestions = previousState;
 			updateStore();
-			saveError = 'Failed to save your answer. Please try again.';
+			saveError = $t('Failed to save your answer. Please try again.');
 			setTimeout(() => (saveError = null), 5000);
 		} finally {
 			isSubmitting = false;
@@ -161,7 +165,8 @@
 	};
 
 	const hasUnsavedMatrixInputChanges = $derived(
-		JSON.stringify(matrixInputValues) !== JSON.stringify(lastSavedMatrixInputValues)
+		JSON.stringify(normalizeMatrixInputValues(matrixInputValues)) !==
+			JSON.stringify(normalizeMatrixInputValues(lastSavedMatrixInputValues))
 	);
 	const hasSavedMatrixInputBefore = $derived(
 		Object.values(lastSavedMatrixInputValues).some((v) => v.trim().length > 0)
@@ -217,7 +222,7 @@
 				matrixSelections = prevSelections;
 				selectedQuestions = prevState;
 				updateStore();
-				saveError = 'Failed to save your answer. Please try again.';
+				saveError = $t('Failed to save your answer. Please try again.');
 				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
@@ -233,7 +238,7 @@
 				applyUpdate(newResponse);
 				updateStore();
 			} catch {
-				saveError = 'Failed to save your answer. Please try again.';
+				saveError = $t('Failed to save your answer. Please try again.');
 				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
@@ -355,7 +360,7 @@
 			} catch {
 				// force complete remount of RadioGroup
 				radioGroupKey++;
-				saveError = 'Failed to save your answer. Please try again.';
+				saveError = $t('Failed to save your answer. Please try again.');
 				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
@@ -402,7 +407,7 @@
 				// revert on error
 				selectedQuestions = previousState;
 				updateStore();
-				saveError = 'Failed to save your answer. Please try again.';
+				saveError = $t('Failed to save your answer. Please try again.');
 				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
@@ -540,7 +545,7 @@
 		} catch {
 			selectedQuestions = previousState;
 			updateStore();
-			saveError = 'Failed to save your answer. Please try again.';
+			saveError = $t('Failed to save your answer. Please try again.');
 			setTimeout(() => (saveError = null), 5000);
 		} finally {
 			isSubmitting = false;
