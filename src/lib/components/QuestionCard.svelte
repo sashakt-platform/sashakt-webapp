@@ -11,7 +11,12 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
-	import { parseMatrixResponse } from '$lib/helpers/matrixHelpers';
+	import {
+		parseMatrixResponse,
+		parseJsonRecord,
+		normalizeMatrixInputValues,
+		blockNonNumericKey
+	} from '$lib/helpers/matrixHelpers';
 	import {
 		question_type_enum,
 		type TCandidate,
@@ -83,17 +88,8 @@
 	let candidateInput = $state(getExistingInputResponse());
 	let lastSavedInput = $state(getExistingInputResponse());
 
-	const parseJsonResponse = <T,>(response: number[] | string | undefined): Record<string, T> => {
-		if (typeof response !== 'string' || !response) return {};
-		try {
-			return JSON.parse(response) as Record<string, T>;
-		} catch {
-			return {};
-		}
-	};
-
 	const getExistingMatrixSelections = (): Record<string, number[]> => {
-		const parsed = parseJsonResponse<number | number[]>(selectedQuestion(question.id)?.response);
+		const parsed = parseJsonRecord<number | number[]>(selectedQuestion(question.id)?.response);
 		return Object.fromEntries(
 			Object.entries(parsed).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
 		);
@@ -101,23 +97,13 @@
 	let matrixSelections = $state<Record<string, number[]>>(getExistingMatrixSelections());
 
 	let matrixInputValues = $state<Record<string, string>>(
-		parseJsonResponse<string>(selectedQuestion(question.id)?.response)
+		parseJsonRecord<string>(selectedQuestion(question.id)?.response)
 	);
 	let lastSavedMatrixInputValues = $state<Record<string, string>>({ ...matrixInputValues });
 
 	const handleMatrixInputChange = (rowId: number, value: string) => {
 		if (isLocked || isSubmitting) return;
 		matrixInputValues = { ...matrixInputValues, [String(rowId)]: value };
-	};
-
-	const normalizeMatrixInputValues = (values: Record<string, string>): Record<string, string> =>
-		Object.fromEntries(Object.entries(values).filter(([, v]) => v.trim().length > 0));
-
-	const blockNonNumericKey = (e: KeyboardEvent) => {
-		if (e.metaKey || e.ctrlKey) return;
-		if (!['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End'].includes(e.key) && !/[\d.-]/.test(e.key)) {
-			e.preventDefault();
-		}
 	};
 
 	const handleMatrixInputSave = async () => {
