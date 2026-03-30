@@ -100,7 +100,7 @@ export type TQuestion = {
 	question_text: string;
 	instructions: string;
 	question_type: question_type_enum;
-	options: TOptions[] | TMatrixOptions;
+	options: TOptions[] | TMatrixOptions | TMatrixInputOptions;
 	subjective_answer_limit: number;
 	is_mandatory: boolean;
 	marking_scheme: TMarks;

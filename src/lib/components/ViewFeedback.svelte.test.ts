@@ -747,22 +747,21 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should show Not Applicable for matrix-input question', () => {
-			const matrixInputQuestion = {
-				...mockMatrixInputTextQuestion,
-				id: -99,
-				question_type: 'matrix-input' as any
-			};
 			const testQuestions = {
-				question_revisions: [matrixInputQuestion],
+				question_revisions: [mockMatrixInputTextQuestion],
 				question_pagination: 5
 			};
 			const feedback = [
-				{ question_revision_id: 99, submitted_answer: '{"1":"Paris"}', correct_answer: [] }
+				{
+					question_revision_id: mockMatrixInputTextQuestion.id,
+					submitted_answer: '{"1":"Paris"}',
+					correct_answer: []
+				}
 			];
 
 			render(ViewFeedback, { props: { feedback, testQuestions } });
 
-			expect(screen.getByText(matrixInputQuestion.question_text)).toBeInTheDocument();
+			expect(screen.getByText(mockMatrixInputTextQuestion.question_text)).toBeInTheDocument();
 			expect(screen.getByText('Not Applicable')).toBeInTheDocument();
 		});
 

@@ -910,7 +910,7 @@
 				</table>
 			</div>
 		{:else if question.question_type === question_type_enum.MATRIXINPUT}
-			{@const matrixOpts = question.options as unknown as TMatrixInputOptions}
+			{@const matrixOpts = question.options as TMatrixInputOptions}
 			{@const inputType = matrixOpts.columns.input_type}
 			<div class="overflow-x-auto">
 				<table class="w-full border-collapse text-sm">
