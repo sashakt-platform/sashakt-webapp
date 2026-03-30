@@ -100,11 +100,6 @@
 	};
 	let matrixSelections = $state<Record<string, number[]>>(getExistingMatrixSelections());
 
-	const isMatrixInputType = (type: string) =>
-		type === question_type_enum.MATRIXINPUT ||
-		type === question_type_enum.MATRIXSTRING ||
-		type === question_type_enum.MATRIXNUMBER;
-
 	let matrixInputValues = $state<Record<string, string>>(
 		parseJsonResponse<string>(selectedQuestion(question.id)?.response)
 	);
@@ -908,13 +903,9 @@
 					</tbody>
 				</table>
 			</div>
-		{:else if isMatrixInputType(question.question_type)}
+		{:else if question.question_type === question_type_enum.MATRIXINPUT}
 			{@const matrixOpts = question.options as unknown as TMatrixInputOptions}
-			{@const inputType =
-				question.question_type === question_type_enum.MATRIXNUMBER ||
-				matrixOpts.columns.input_type === 'number'
-					? 'number'
-					: 'text'}
+			{@const inputType = matrixOpts.columns.input_type}
 			<div class="overflow-x-auto">
 				<table class="w-full border-collapse text-sm">
 					<thead>
@@ -1012,7 +1003,7 @@
 			{/each}
 		{/if}
 
-		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== 'matrix-match' && question.question_type !== question_type_enum.MATRIXRATING && !isMatrixInputType(question.question_type)}
+		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== 'matrix-match' && question.question_type !== question_type_enum.MATRIXRATING && question.question_type !== question_type_enum.MATRIXINPUT}
 			<Button
 				variant="outline"
 				class="mt-4 w-full border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"

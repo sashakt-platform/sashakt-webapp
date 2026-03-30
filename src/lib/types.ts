@@ -56,9 +56,7 @@ export enum question_type_enum {
 	NUMERICALDECIMAL = 'numerical-decimal',
 	MATRIXRATING = 'matrix-rating',
 	MATRIXMATCH = 'matrix-match',
-	MATRIXINPUT = 'matrix-input',
-	MATRIXSTRING = 'matrix-string',
-	MATRIXNUMBER = 'matrix-number'
+	MATRIXINPUT = 'matrix-input'
 }
 
 export type TMatrixOptions = {

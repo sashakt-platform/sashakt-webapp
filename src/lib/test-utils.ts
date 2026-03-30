@@ -210,7 +210,7 @@ export const mockMatrixMatchQuestion: TQuestion = {
 	media: null
 };
 
-export const mockMatrixStringOptions: TMatrixInputOptions = {
+export const mockMatrixInputTextOptions: TMatrixInputOptions = {
 	rows: {
 		label: 'Country',
 		items: [
@@ -221,7 +221,7 @@ export const mockMatrixStringOptions: TMatrixInputOptions = {
 	columns: { label: 'Capital City', input_type: 'text' }
 };
 
-export const mockMatrixNumberOptions: TMatrixInputOptions = {
+export const mockMatrixInputNumberOptions: TMatrixInputOptions = {
 	rows: {
 		label: 'Item',
 		items: [
@@ -232,24 +232,24 @@ export const mockMatrixNumberOptions: TMatrixInputOptions = {
 	columns: { label: 'Quantity', input_type: 'number' }
 };
 
-export const mockMatrixStringQuestion: TQuestion = {
+export const mockMatrixInputTextQuestion: TQuestion = {
 	id: 9,
 	question_text: 'Enter the capital city for each country.',
 	instructions: '',
-	question_type: question_type_enum.MATRIXSTRING,
-	options: mockMatrixStringOptions as unknown as TOptions[],
+	question_type: question_type_enum.MATRIXINPUT,
+	options: mockMatrixInputTextOptions as unknown as TOptions[],
 	subjective_answer_limit: 0,
 	is_mandatory: false,
 	marking_scheme: { correct: 0, wrong: 0, skipped: 0 },
 	media: null
 };
 
-export const mockMatrixNumberQuestion: TQuestion = {
+export const mockMatrixInputNumberQuestion: TQuestion = {
 	id: 10,
 	question_text: 'Enter the quantity for each item.',
 	instructions: '',
-	question_type: question_type_enum.MATRIXNUMBER,
-	options: mockMatrixNumberOptions as unknown as TOptions[],
+	question_type: question_type_enum.MATRIXINPUT,
+	options: mockMatrixInputNumberOptions as unknown as TOptions[],
 	subjective_answer_limit: 0,
 	is_mandatory: false,
 	marking_scheme: { correct: 0, wrong: 0, skipped: 0 },
