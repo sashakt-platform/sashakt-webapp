@@ -59,22 +59,18 @@ export enum question_type_enum {
 	MATRIXINPUT = 'matrix-input'
 }
 
+export type TMatrixRow = {
+	label: string;
+	items: TOptions[];
+};
+
 export type TMatrixOptions = {
-	rows: {
-		label: string;
-		items: TOptions[];
-	};
-	columns: {
-		label: string;
-		items: TOptions[];
-	};
+	rows: TMatrixRow;
+	columns: TMatrixRow;
 };
 
 export type TMatrixInputOptions = {
-	rows: {
-		label: string;
-		items: TOptions[];
-	};
+	rows: TMatrixRow;
 	columns: {
 		label: string;
 		input_type: 'text' | 'number';

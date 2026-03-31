@@ -12,7 +12,6 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import {
-		parseMatrixResponse,
 		parseJsonRecord,
 		normalizeMatrixInputValues,
 		blockNonNumericKey
@@ -29,6 +28,7 @@
 	import { t } from 'svelte-i18n';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
 	import QuestionMedia from './QuestionMedia.svelte';
+	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
 
 	let {
 		question,
@@ -215,7 +215,7 @@
 			}
 		} else {
 			const newResponse = JSON.stringify({
-				...parseMatrixResponse(answeredQuestion?.response),
+				...parseJsonRecord<number>(answeredQuestion?.response),
 				[rowKey]: colId
 			});
 
@@ -491,7 +491,7 @@
 
 	const isQuestionBookmarked = $derived(selectedQuestion(question.id)?.bookmarked ?? false);
 
-	const matrixResponse = $derived(parseMatrixResponse(selectedQuestion(question.id)?.response));
+	const matrixResponse = $derived(parseJsonRecord<number>(selectedQuestion(question.id)?.response));
 
 	const getMatrixSelection = (rowId: number): number | undefined => matrixResponse[String(rowId)];
 
@@ -519,7 +519,8 @@
 					response: inputValue,
 					visited: true,
 					time_spent: 0,
-					bookmarked: currentBookmarked
+					bookmarked: currentBookmarked,
+					is_reviewed: false
 				}
 			];
 		}
@@ -934,21 +935,12 @@
 				</table>
 			</div>
 			<div class="mt-3 flex items-center">
-				<Button
-					variant="default"
-					size="sm"
+				<SaveAnswerButton
 					onclick={handleMatrixInputSave}
-					disabled={isSubmitting || !hasUnsavedMatrixInputChanges}
-				>
-					{#if !hasUnsavedMatrixInputChanges && hasSavedMatrixInputBefore}
-						<Check class="mr-1 h-4 w-4" />
-						{$t('Saved')}
-					{:else if hasSavedMatrixInputBefore}
-						{$t('Update Answer')}
-					{:else}
-						{$t('Save Answer')}
-					{/if}
-				</Button>
+					disabled={isSubmitting}
+					hasUnsaved={hasUnsavedMatrixInputChanges}
+					hasSaved={hasSavedMatrixInputBefore}
+				/>
 			</div>
 		{:else}
 			{@const typedOptions = options as TOptions[]}

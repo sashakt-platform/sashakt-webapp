@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import Check from '@lucide/svelte/icons/check';
 	import { Button } from '$lib/components/ui/button';
+	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
@@ -12,7 +12,6 @@
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import {
-		parseMatrixResponse,
 		parseJsonRecord,
 		normalizeMatrixInputValues,
 		blockNonNumericKey
@@ -153,7 +152,7 @@
 		return await res.json();
 	};
 
-	const updateSelections = (questionId: number, newResponse: number[]) => {
+	const updateSelections = (questionId: number, newResponse: number[] | string) => {
 		const existing = selections.find((s) => s.question_revision_id === questionId);
 		if (existing) {
 			selections = selections.map((s) =>
@@ -208,7 +207,9 @@
 	};
 
 	const getMatrixResponseForQuestion = (questionId: number): Record<string, number> =>
-		parseMatrixResponse(selections.find((s) => s.question_revision_id === questionId)?.response);
+		parseJsonRecord<number>(
+			selections.find((s) => s.question_revision_id === questionId)?.response
+		);
 
 	const getMatrixSelection = (questionId: number, rowId: number): number | undefined =>
 		getMatrixResponseForQuestion(questionId)[String(rowId)];
@@ -321,25 +322,7 @@
 		const previousSelections = JSON.parse(JSON.stringify(selections));
 		submittingQuestion = question.id;
 
-		const existing = selections.find((s) => s.question_revision_id === question.id);
-		if (existing) {
-			selections = selections.map((s) =>
-				s.question_revision_id === question.id ? { ...s, response: serialized } : s
-			);
-		} else {
-			selections = [
-				...selections,
-				{
-					question_revision_id: question.id,
-					response: serialized,
-					visited: true,
-					time_spent: 0,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			];
-		}
-		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
+		updateSelections(question.id, serialized);
 
 		try {
 			await submitAnswer(question.id, serialized);
@@ -396,23 +379,6 @@
 	<h1 class="mb-6 text-center text-xl font-semibold text-slate-800">{$t('OMR Sheet')}</h1>
 
 	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
-		{#snippet saveAnswerButton(
-			onclick: () => void,
-			disabled: boolean,
-			hasUnsaved: boolean,
-			hasSaved: boolean
-		)}
-			<Button size="sm" {onclick} disabled={disabled || !hasUnsaved}>
-				{#if !hasUnsaved && hasSaved}
-					<Check class="mr-1 h-4 w-4" />{$t('Saved')}
-				{:else if hasSaved}
-					{$t('Update Answer')}
-				{:else}
-					{$t('Save Answer')}
-				{/if}
-			</Button>
-		{/snippet}
-
 		{#each questions as question, i (question.id)}
 			{@const question_type = question.question_type}
 			<div
@@ -455,12 +421,12 @@
 							/>
 						{/if}
 						<div class="flex items-center justify-between">
-							{@render saveAnswerButton(
-								() => handleSubjectiveSubmit(question),
-								submittingQuestion === question.id || !String(currentInput).trim(),
-								hasUnsavedChanges,
-								hasSavedBefore
-							)}
+							<SaveAnswerButton
+								onclick={() => handleSubjectiveSubmit(question)}
+								disabled={submittingQuestion === question.id || !String(currentInput).trim()}
+								hasUnsaved={hasUnsavedChanges}
+								hasSaved={hasSavedBefore}
+							/>
 							{#if question.subjective_answer_limit}
 								{@const remaining = question.subjective_answer_limit - currentInput.length}
 								<span
@@ -611,9 +577,9 @@
 					{@const currentValues = matrixInputValues[question.id] ?? {}}
 					{@const savedValues = lastSavedMatrixInputValues[question.id] ?? {}}
 					{@const normalizedCurrent = normalizeMatrixInputValues(currentValues)}
+					{@const normalizedSaved = normalizeMatrixInputValues(savedValues)}
 					{@const hasUnsavedChanges =
-						JSON.stringify(normalizedCurrent) !==
-						JSON.stringify(normalizeMatrixInputValues(savedValues))}
+						JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedSaved)}
 					{@const hasSavedBefore = Object.values(savedValues).some((v) => v.trim().length > 0)}
 					{@const thClass = 'border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold'}
 					{@const tdClass = 'border border-gray-300 px-3 py-2'}
@@ -653,12 +619,12 @@
 							</table>
 						</div>
 						<div class="flex items-center justify-between">
-							{@render saveAnswerButton(
-								() => handleMatrixInputSave(question),
-								submittingQuestion === question.id,
-								hasUnsavedChanges,
-								hasSavedBefore
-							)}
+							<SaveAnswerButton
+								onclick={() => handleMatrixInputSave(question)}
+								disabled={submittingQuestion === question.id}
+								hasUnsaved={hasUnsavedChanges}
+								hasSaved={hasSavedBefore}
+							/>
 						</div>
 					</div>
 				{/if}
