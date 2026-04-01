@@ -192,11 +192,10 @@ describe('OmrSheet', () => {
 
 			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
 
-			const radios = screen.getAllByRole('radio');
-			await fireEvent.click(radios[0]);
+			await fireEvent.click(screen.getAllByRole('radio')[0]);
 
 			await waitFor(() => {
-				expect(radios[0]).not.toBeChecked();
+				expect(screen.getAllByRole('radio')[0]).not.toBeChecked();
 			});
 		});
 
