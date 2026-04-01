@@ -506,6 +506,12 @@
 	{/if}
 {/snippet}
 
+{#if saveError}
+	<div class="border-destructive bg-destructive/10 text-destructive rounded-lg border p-3 text-sm">
+		{saveError}
+	</div>
+{/if}
+
 {#if mode !== 'omr'}
 	<Card.Root
 		class="mb-4 w-full rounded-xl shadow-md {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
@@ -582,13 +588,6 @@
 		</Card.Header>
 
 		<Card.Content class="p-5 pt-1">
-			{#if saveError}
-				<div
-					class="border-destructive bg-destructive/10 text-destructive mb-4 rounded-lg border p-3 text-sm"
-				>
-					{saveError}
-				</div>
-			{/if}
 			{#if question.question_type === question_type_enum.SINGLE}
 				{#key radioGroupKey}
 					<RadioGroup.Root
