@@ -21,7 +21,7 @@
 	import type { TQuestion, TQuestionSetCandidate } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
-	let { candidate, testQuestions, testDetails } = $props();
+	let { candidate, testQuestions, testDetails = null } = $props();
 	let isSubmittingTest = $state(false);
 
 	// for controlling confirmation dialog display

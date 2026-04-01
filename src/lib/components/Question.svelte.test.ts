@@ -172,8 +172,8 @@ describe('Question', () => {
 		});
 
 		await vi.waitFor(() => {
-			expect(screen.getByText('Physics')).toBeInTheDocument();
-			expect(screen.getByText('Section A')).toBeInTheDocument();
+			expect(screen.getAllByText('Physics').length).toBeGreaterThan(0);
+			expect(screen.getAllByText('Section A').length).toBeGreaterThan(0);
 		});
 	});
 });

@@ -136,9 +136,7 @@ describe('LandingPage', () => {
 		expect(screen.getByText('Sections')).toBeInTheDocument();
 		expect(screen.getByText('Physics')).toBeInTheDocument();
 		expect(screen.getByText('Chemistry')).toBeInTheDocument();
-		expect(
-			screen.getByText('You may attempt up to 1 questions in this section.')
-		).toBeInTheDocument();
+		expect(screen.getAllByText('You may attempt all questions in this section.')).toHaveLength(2);
 	});
 
 	it('should not render instructions section when no instructions', () => {

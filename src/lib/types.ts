@@ -9,7 +9,7 @@ export type TSelection = {
 	visited: boolean;
 	time_spent: number;
 	bookmarked: boolean;
-	is_reviewed: boolean;
+	is_reviewed?: boolean;
 	correct_answer?: number[] | number | null;
 };
 
@@ -19,10 +19,33 @@ export type TTestSession = {
 	currentPage: number;
 };
 
+export type TMediaImage = {
+	gcs_path: string;
+	url?: string;
+	alt_text?: string;
+	content_type: string;
+	size_bytes: number;
+	uploaded_at: string;
+};
+
+export type TExternalMedia = {
+	type: string;
+	provider: string;
+	url: string;
+	embed_url?: string | null;
+	thumbnail_url?: string | null;
+};
+
+export type TMedia = {
+	image?: TMediaImage | null;
+	external_media?: TExternalMedia | null;
+};
+
 export type TOptions = {
 	id: number;
 	key: string;
 	value: string;
+	media?: TMedia | null;
 };
 
 export enum question_type_enum {
@@ -30,8 +53,21 @@ export enum question_type_enum {
 	MULTIPLE = 'multi-choice',
 	SUBJECTIVE = 'subjective',
 	NUMERICALINTEGER = 'numerical-integer',
-	NUMERICALDECIMAL = 'numerical-decimal'
+	NUMERICALDECIMAL = 'numerical-decimal',
+	MATRIXRATING = 'matrix-rating',
+	MATRIXMATCH = 'matrix-match'
 }
+
+export type TMatrixOptions = {
+	rows: {
+		label: string;
+		items: TOptions[];
+	};
+	columns: {
+		label: string;
+		items: TOptions[];
+	};
+};
 
 export type TPartialMark = {
 	num_correct_selected: number;
@@ -52,11 +88,11 @@ export type TQuestion = {
 	question_text: string;
 	instructions: string;
 	question_type: question_type_enum;
-	options: TOptions[];
+	options: TOptions[] | TMatrixOptions;
 	subjective_answer_limit: number;
 	is_mandatory: boolean;
 	marking_scheme: TMarks | null;
-	media: Record<string, unknown> | null;
+	media: TMedia | null;
 };
 
 export type TQuestionSetBase = {

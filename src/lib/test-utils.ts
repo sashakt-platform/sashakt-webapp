@@ -4,8 +4,12 @@
 
 import { vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
+import { question_type_enum } from './types';
 import type {
 	TCandidate,
+	TMatrixOptions,
+	TMedia,
+	TOptions,
 	TQuestion,
 	TQuestionSetCandidate,
 	TQuestionSetSummary,
@@ -23,7 +27,7 @@ export const mockCandidate: TCandidate = {
 };
 
 // Mock test questions
-export const mockSingleChoiceQuestion: TQuestion = {
+export const mockSingleChoiceQuestion = {
 	id: 1,
 	question_text: 'What is 2 + 2?',
 	instructions: 'Select the correct answer',
@@ -38,9 +42,9 @@ export const mockSingleChoiceQuestion: TQuestion = {
 	is_mandatory: true,
 	marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
 	media: null
-};
+} satisfies TQuestion;
 
-export const mockMultipleChoiceQuestion: TQuestion = {
+export const mockMultipleChoiceQuestion = {
 	id: 2,
 	question_text: 'Which are prime numbers?',
 	instructions: 'Select all that apply',
@@ -55,9 +59,9 @@ export const mockMultipleChoiceQuestion: TQuestion = {
 	is_mandatory: false,
 	marking_scheme: { correct: 2, wrong: -1, skipped: 0 },
 	media: null
-};
+} satisfies TQuestion;
 
-export const mockOptionalQuestion: TQuestion = {
+export const mockOptionalQuestion = {
 	id: 3,
 	question_text: 'What is the capital of France?',
 	instructions: '',
@@ -72,9 +76,9 @@ export const mockOptionalQuestion: TQuestion = {
 	is_mandatory: false,
 	marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
 	media: null
-};
+} satisfies TQuestion;
 
-export const mockSubjectiveQuestion: TQuestion = {
+export const mockSubjectiveQuestion = {
 	id: 4,
 	question_text: 'Explain the process of photosynthesis.',
 	instructions: 'Write your answer in detail',
@@ -84,9 +88,9 @@ export const mockSubjectiveQuestion: TQuestion = {
 	is_mandatory: true,
 	marking_scheme: { correct: 5, wrong: 0, skipped: 0 },
 	media: null
-};
+} satisfies TQuestion;
 
-export const mockMultiChoiceWithPartialMarks: TQuestion = {
+export const mockMultiChoiceWithPartialMarks = {
 	id: 6,
 	question_text: 'Which of the following are programming languages?',
 	instructions: 'Select all that apply',
@@ -111,9 +115,9 @@ export const mockMultiChoiceWithPartialMarks: TQuestion = {
 		}
 	},
 	media: null
-};
+} satisfies TQuestion;
 
-export const mockSubjectiveQuestionNoLimit: TQuestion = {
+export const mockSubjectiveQuestionNoLimit = {
 	id: 5,
 	question_text: 'Describe your favorite book.',
 	instructions: '',
@@ -123,9 +127,9 @@ export const mockSubjectiveQuestionNoLimit: TQuestion = {
 	is_mandatory: false,
 	marking_scheme: { correct: 3, wrong: 0, skipped: 0 },
 	media: null
-};
+} satisfies TQuestion;
 
-export const mockNumericalIntegerQuestion: TQuestion = {
+export const mockNumericalIntegerQuestion = {
 	id: 6,
 	question_text: 'What is 5 + 3?',
 	instructions: 'Enter the numerical answer',
@@ -135,9 +139,9 @@ export const mockNumericalIntegerQuestion: TQuestion = {
 	is_mandatory: true,
 	marking_scheme: { correct: 3, wrong: -1, skipped: 0 },
 	media: null
-};
+} satisfies TQuestion;
 
-export const mockNumericalDecimalQuestion: TQuestion = {
+export const mockNumericalDecimalQuestion = {
 	id: 7,
 	question_text: 'What is the value of π (pi)?',
 	instructions: 'Enter up to 2 decimal places',
@@ -147,7 +151,157 @@ export const mockNumericalDecimalQuestion: TQuestion = {
 	is_mandatory: false,
 	marking_scheme: { correct: 2, wrong: 0, skipped: 0 },
 	media: null
+} satisfies TQuestion;
+
+export const mockMatrixRatingOptions: TMatrixOptions = {
+	rows: {
+		label: 'Subjects',
+		items: [
+			{ id: 1, key: 'math', value: 'Math' },
+			{ id: 2, key: 'physics', value: 'Physics' },
+			{ id: 3, key: 'chemistry', value: 'Chemistry' }
+		]
+	},
+	columns: {
+		label: 'Difficulty Rating',
+		items: [
+			{ id: 1, key: '1', value: 'Very difficult' },
+			{ id: 2, key: '2', value: 'A little difficult' },
+			{ id: 3, key: '3', value: 'Okay / manageable' }
+		]
+	}
 };
+
+export const mockMatrixRatingQuestion = {
+	id: 8,
+	question_text: 'How difficult do you find the following subjects?',
+	instructions: 'Rate each subject',
+	question_type: question_type_enum.MATRIXRATING,
+	options: mockMatrixRatingOptions as unknown as TOptions[],
+	subjective_answer_limit: 0,
+	is_mandatory: true,
+	marking_scheme: { correct: 0, wrong: 0, skipped: 0 },
+	media: null
+} satisfies TQuestion;
+
+export const mockMatrixMatchQuestion = {
+	id: 8,
+	question_text: 'Match the following items correctly.',
+	instructions: 'Match each item in Column A with its corresponding item in Column B.',
+	question_type: 'matrix-match' as any,
+	options: {
+		rows: {
+			label: 'Column A',
+			items: [
+				{ id: 801, key: 'A', value: 'Apple' },
+				{ id: 802, key: 'B', value: 'Banana' }
+			]
+		},
+		columns: {
+			label: 'Column B',
+			items: [
+				{ id: 901, key: 'P', value: 'Red fruit' },
+				{ id: 902, key: 'Q', value: 'Yellow fruit' }
+			]
+		}
+	} as TMatrixOptions,
+	subjective_answer_limit: 0,
+	is_mandatory: false,
+	marking_scheme: { correct: 2, wrong: 0, skipped: 0 },
+	media: null
+} satisfies TQuestion;
+
+// Mock media data
+export const mockImageMedia: TMedia = {
+	image: {
+		gcs_path: 'tests/images/diagram.png',
+		url: 'https://storage.example.com/diagram.png',
+		alt_text: 'A diagram showing the question',
+		content_type: 'image/png',
+		size_bytes: 12345,
+		uploaded_at: '2025-01-01T00:00:00Z'
+	},
+	external_media: null
+};
+
+export const mockYoutubeMedia: TMedia = {
+	image: null,
+	external_media: {
+		type: 'video',
+		provider: 'youtube',
+		url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+		embed_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+		thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg'
+	}
+};
+
+export const mockVimeoMedia: TMedia = {
+	image: null,
+	external_media: {
+		type: 'video',
+		provider: 'vimeo',
+		url: 'https://vimeo.com/123456',
+		embed_url: 'https://player.vimeo.com/video/123456',
+		thumbnail_url: null
+	}
+};
+
+export const mockSpotifyMedia: TMedia = {
+	image: null,
+	external_media: {
+		type: 'audio',
+		provider: 'spotify',
+		url: 'https://open.spotify.com/track/abc123',
+		embed_url: 'https://open.spotify.com/embed/track/abc123',
+		thumbnail_url: null
+	}
+};
+
+export const mockGenericExternalMedia: TMedia = {
+	image: null,
+	external_media: {
+		type: 'link',
+		provider: 'generic',
+		url: 'https://example.com/resource',
+		embed_url: null,
+		thumbnail_url: null
+	}
+};
+
+export const mockImageAndExternalMedia: TMedia = {
+	image: {
+		gcs_path: 'tests/images/photo.jpg',
+		url: 'https://storage.example.com/photo.jpg',
+		alt_text: 'A photo',
+		content_type: 'image/jpeg',
+		size_bytes: 54321,
+		uploaded_at: '2025-01-01T00:00:00Z'
+	},
+	external_media: {
+		type: 'video',
+		provider: 'youtube',
+		url: 'https://www.youtube.com/watch?v=abc123',
+		embed_url: 'https://www.youtube.com/embed/abc123',
+		thumbnail_url: null
+	}
+};
+
+export const mockQuestionWithMedia = {
+	id: 10,
+	question_text: 'Look at the image and select the correct answer.',
+	instructions: 'Use the diagram to answer',
+	question_type: 'single-choice' as any,
+	options: [
+		{ id: 1001, key: 'A', value: 'Option A', media: mockImageMedia },
+		{ id: 1002, key: 'B', value: 'Option B', media: mockYoutubeMedia },
+		{ id: 1003, key: 'C', value: 'Option C' },
+		{ id: 1004, key: 'D', value: 'Option D' }
+	],
+	subjective_answer_limit: 0,
+	is_mandatory: true,
+	marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
+	media: mockImageMedia
+} satisfies TQuestion;
 
 export const mockQuestions: TQuestion[] = [
 	mockSingleChoiceQuestion,

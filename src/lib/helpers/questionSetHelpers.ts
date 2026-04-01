@@ -34,11 +34,15 @@ export function normalizeTestQuestions(testQuestions?: TTestQuestionsResponse | 
 	isSectioned: boolean;
 	sectionByQuestionId: Map<number, TQuestionSetCandidate>;
 } {
-	const questions = testQuestions?.question_revisions ?? [];
 	const questionSets = sortQuestionSets(testQuestions?.question_sets).map((questionSet) => ({
 		...questionSet,
 		question_revisions: questionSet.question_revisions ?? []
 	}));
+	const flatQuestionsFromSets = questionSets.flatMap((questionSet) => questionSet.question_revisions);
+	const questions =
+		(testQuestions?.question_revisions?.length ?? 0) > 0
+			? testQuestions?.question_revisions ?? []
+			: flatQuestionsFromSets;
 	const sectionByQuestionId = new Map<number, TQuestionSetCandidate>();
 
 	for (const questionSet of questionSets) {
