@@ -30,7 +30,9 @@ describe('QuestionCard', () => {
 	});
 
 	it('should clear a saved single-choice answer', async () => {
-		vi.mocked(fetch).mockResolvedValue(createMockResponse({ success: true }) as unknown as Response);
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ success: true }) as unknown as Response
+		);
 
 		render(QuestionCard, {
 			props: {
@@ -84,12 +86,11 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		expect(screen.getByText('3')).toBeInTheDocument();
-		expect(screen.getByText('OF 10')).toBeInTheDocument();
+		expect(screen.getByRole('heading', { name: /3 OF 10/i })).toBeInTheDocument();
 	});
 
 	it('should render all options for single-choice question', () => {
-		render(QuestionCard, {
+		const { container } = render(QuestionCard, {
 			props: {
 				question: mockSingleChoiceQuestion,
 				serialNumber: 1,
@@ -99,13 +100,19 @@ describe('QuestionCard', () => {
 			}
 		});
 
+		const labels = Array.from(container.querySelectorAll('label'));
 		mockSingleChoiceQuestion.options.forEach((option) => {
-			expect(screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))).toBeInTheDocument();
+			const label = labels.find(
+				(node) =>
+					node.textContent?.includes(`${option.key}.`) &&
+					node.textContent?.includes(String(option.value))
+			);
+			expect(label).toBeTruthy();
 		});
 	});
 
 	it('should render all options for multiple-choice question', () => {
-		render(QuestionCard, {
+		const { container } = render(QuestionCard, {
 			props: {
 				question: mockMultipleChoiceQuestion,
 				serialNumber: 1,
@@ -115,8 +122,14 @@ describe('QuestionCard', () => {
 			}
 		});
 
+		const labels = Array.from(container.querySelectorAll('label'));
 		mockMultipleChoiceQuestion.options.forEach((option) => {
-			expect(screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))).toBeInTheDocument();
+			const label = labels.find(
+				(node) =>
+					node.textContent?.includes(`${option.key}.`) &&
+					node.textContent?.includes(String(option.value))
+			);
+			expect(label).toBeTruthy();
 		});
 	});
 
@@ -196,6 +209,37 @@ describe('QuestionCard', () => {
 		});
 
 		expect(screen.getByText(mockSingleChoiceQuestion.instructions)).toBeInTheDocument();
+	});
+
+	it('should render question html and option html content', () => {
+		const { container } = render(QuestionCard, {
+			props: {
+				question: {
+					...mockSingleChoiceQuestion,
+					question_text: '<p>What is <strong>2 + 2</strong>?</p>',
+					instructions: '<p>Pick the <em>best</em> answer.</p>',
+					options: [
+						{ ...mockSingleChoiceQuestion.options[0], value: '<p>3</p>' },
+						{ ...mockSingleChoiceQuestion.options[1], value: '<p><strong>4</strong></p>' },
+						{ ...mockSingleChoiceQuestion.options[2], value: '<p>5</p>' },
+						{ ...mockSingleChoiceQuestion.options[3], value: '<p>6</p>' }
+					]
+				},
+				serialNumber: 1,
+				candidate: mockCandidate,
+				totalQuestions: 10,
+				selectedQuestions: []
+			}
+		});
+
+		expect(container.textContent).toContain('What is 2 + 2?');
+		expect(container.textContent).toContain('Pick the best answer.');
+		const labels = Array.from(container.querySelectorAll('label'));
+		const optionB = labels.find(
+			(node) => node.textContent?.includes('B.') && node.textContent?.includes('4')
+		);
+		expect(optionB).toBeTruthy();
+		expect(screen.queryByText(/<p>What is/)).not.toBeInTheDocument();
 	});
 
 	it('should render radio buttons for single-choice questions', () => {
@@ -431,9 +475,9 @@ describe('QuestionCard', () => {
 			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
 			await bookmarkButton.click();
 
-			await waitFor(() => {
-				expect(screen.getByText(/failed to save bookmark/i)).toBeInTheDocument();
-			});
+				await waitFor(() => {
+					expect(screen.getByText(/network error|failed to save bookmark/i)).toBeInTheDocument();
+				});
 		});
 
 		it('should revert bookmark state on API failure', async () => {
@@ -529,7 +573,7 @@ describe('QuestionCard', () => {
 		});
 
 		it('should not affect other card elements when showMarkForReview is false', () => {
-			render(QuestionCard, {
+			const { container } = render(QuestionCard, {
 				props: {
 					question: mockSingleChoiceQuestion,
 					serialNumber: 1,
@@ -541,10 +585,14 @@ describe('QuestionCard', () => {
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
+			const labels = Array.from(container.querySelectorAll('label'));
 			mockSingleChoiceQuestion.options.forEach((option) => {
-				expect(
-					screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))
-				).toBeInTheDocument();
+				const label = labels.find(
+					(node) =>
+						node.textContent?.includes(`${option.key}.`) &&
+						node.textContent?.includes(String(option.value))
+				);
+				expect(label).toBeTruthy();
 			});
 		});
 	});
@@ -789,9 +837,9 @@ describe('QuestionCard', () => {
 			const saveButton = screen.getByRole('button', { name: /save answer/i });
 			await saveButton.click();
 
-			await waitFor(() => {
-				expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
-			});
+				await waitFor(() => {
+					expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
+				});
 		});
 
 		it('should display existing answer when question was previously answered', () => {
@@ -1267,9 +1315,9 @@ describe('QuestionCard', () => {
 			const saveButton = screen.getByRole('button', { name: /save answer/i });
 			await saveButton.click();
 
-			await waitFor(() => {
-				expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
-			});
+				await waitFor(() => {
+					expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
+				});
 		});
 
 		it('should show View Result button for answered numerical-integer question when showFeedback is true', () => {
@@ -2290,9 +2338,9 @@ describe('QuestionCard', () => {
 
 			await fireEvent.change(firstRadio);
 
-			await waitFor(() => {
-				expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
-			});
+				await waitFor(() => {
+					expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
+				});
 		});
 
 		it('should disable all radios when the question is locked (is_reviewed)', () => {

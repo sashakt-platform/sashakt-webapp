@@ -14,6 +14,7 @@
 	import { t } from 'svelte-i18n';
 	import { question_type_enum } from '$lib/types';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
+	import RichText from './RichText.svelte';
 	import QuestionMedia from './QuestionMedia.svelte';
 
 	let {
@@ -94,11 +95,12 @@
 			</Card.Title>
 
 			<Card.Description class="text-base font-medium">
-				{item.question.question_text}
+				<RichText content={item.question.question_text} />
 				{#if item.question.instructions}
-					<span class="text-muted-foreground mt-2 block text-sm">
-						{item.question.instructions}
-					</span>
+					<RichText
+						content={item.question.instructions}
+						class="text-muted-foreground mt-2 text-sm"
+					/>
 				{/if}
 				<QuestionMedia media={item.question.media} />
 			</Card.Description>
@@ -166,8 +168,11 @@
 								item.fb.correct_answer
 							)}`}
 						>
-							<div class="flex w-full items-center justify-between">
-								<span>{option.key}. {option.value}</span>
+							<div class="flex w-full items-start justify-between gap-3">
+								<div class="flex min-w-0 items-start gap-2">
+									<span class="shrink-0">{option.key}.</span>
+									<RichText content={option.value} class="min-w-0 flex-1" />
+								</div>
 								<div class="flex items-center gap-1">
 									{#if status === 'correct'}
 										{@render showCorrectWrongMark('correct')}
@@ -199,8 +204,11 @@
 							item.fb.correct_answer
 						)}`}
 					>
-						<div class="flex w-full items-center justify-between">
-							<span>{option.key}. {option.value}</span>
+						<div class="flex w-full items-start justify-between gap-3">
+							<div class="flex min-w-0 items-start gap-2">
+								<span class="shrink-0">{option.key}.</span>
+								<RichText content={option.value} class="min-w-0 flex-1" />
+							</div>
 							<div class="flex items-center gap-1">
 								{#if status === 'correct'}
 									{@render showCorrectWrongMark('correct')}
@@ -238,13 +246,13 @@
 			<div class="mb-4 w-full max-w-sm rounded-2xl border bg-slate-50 p-4">
 				<p class="text-sm font-semibold text-slate-800">{group.section.title}</p>
 				{#if group.section.description}
-					<p class="text-muted-foreground mt-1 text-sm">{group.section.description}</p>
+					<RichText
+						content={group.section.description}
+						class="text-muted-foreground mt-1 text-sm"
+					/>
 				{/if}
 				<p class="text-muted-foreground mt-2 text-sm">
-					{#if canAttemptAllQuestions(
-						group.section.max_questions_allowed_to_attempt,
-						group.questions.length
-					)}
+					{#if canAttemptAllQuestions(group.section.max_questions_allowed_to_attempt, group.questions.length)}
 						{$t('You may attempt all questions in this section.')}
 					{:else}
 						{$t('You may attempt up to {count} questions in this section.', {

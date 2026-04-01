@@ -22,6 +22,7 @@
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
+	import RichText from './RichText.svelte';
 	import QuestionMedia from './QuestionMedia.svelte';
 
 	let {
@@ -48,6 +49,7 @@
 	let radioGroupKey = $state(0);
 	let isSubmitting = $state(false);
 	let saveError = $state<string | null>(null);
+	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 
 	const sessionStore = createTestSessionStore(candidate);
 	const selectedQuestion = (questionId: number) => {
@@ -184,6 +186,15 @@
 		return (response?.length ?? 0) > 0;
 	};
 	const hasClearableAnswer = $derived(hasAttemptedResponse(currentSelection?.response));
+	const isSectionLimitWarning = $derived(saveError?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false);
+
+	const getErrorMessage = (error: unknown, fallback: string) =>
+		error instanceof Error && error.message ? error.message : fallback;
+
+	const setTransientSaveError = (error: unknown, fallback: string) => {
+		saveError = getErrorMessage(error, fallback);
+		setTimeout(() => (saveError = null), 5000);
+	};
 
 	const isSelected = (optionId: number) => {
 		const selected = selectedQuestion(question.id);
@@ -291,11 +302,10 @@
 					];
 				}
 				updateStore();
-			} catch {
+			} catch (error) {
 				// force complete remount of RadioGroup
 				radioGroupKey++;
-				saveError = 'Failed to save your answer. Please try again.';
-				setTimeout(() => (saveError = null), 5000);
+				setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 			} finally {
 				isSubmitting = false;
 			}
@@ -337,12 +347,11 @@
 
 			try {
 				await submitAnswer(questionId, newResponse);
-			} catch {
+			} catch (error) {
 				// revert on error
 				selectedQuestions = previousState;
 				updateStore();
-				saveError = 'Failed to save your answer. Please try again.';
-				setTimeout(() => (saveError = null), 5000);
+				setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 			} finally {
 				isSubmitting = false;
 			}
@@ -420,7 +429,7 @@
 
 		try {
 			await submitAnswer(question.id, currentResponse ?? [], newBookmarked);
-		} catch {
+		} catch (error) {
 			// revert on error
 			if (answeredQuestion) {
 				selectedQuestions = selectedQuestions.map((q) =>
@@ -430,8 +439,7 @@
 				selectedQuestions = selectedQuestions.filter((q) => q.question_revision_id !== question.id);
 			}
 			updateStore();
-			saveError = 'Failed to save bookmark. Please try again.';
-			setTimeout(() => (saveError = null), 5000);
+			setTransientSaveError(error, 'Failed to save bookmark. Please try again.');
 		} finally {
 			isSubmitting = false;
 		}
@@ -483,7 +491,7 @@
 			if (question.question_type === question_type_enum.SINGLE) {
 				radioGroupKey++;
 			}
-		} catch {
+		} catch (error) {
 			selectedQuestions = previousState;
 			updateStore();
 
@@ -497,8 +505,7 @@
 				matrixSelections = previousMatrixSelections;
 			}
 
-			saveError = 'Failed to clear your answer. Please try again.';
-			setTimeout(() => (saveError = null), 5000);
+			setTransientSaveError(error, 'Failed to clear your answer. Please try again.');
 		} finally {
 			isSubmitting = false;
 		}
@@ -541,11 +548,10 @@
 		try {
 			await submitAnswer(question.id, inputValue, currentBookmarked);
 			lastSavedInput = candidateInput;
-		} catch {
+		} catch (error) {
 			selectedQuestions = previousState;
 			updateStore();
-			saveError = 'Failed to save your answer. Please try again.';
-			setTimeout(() => (saveError = null), 5000);
+			setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 		} finally {
 			isSubmitting = false;
 		}
@@ -627,14 +633,14 @@
 			{/if}
 		</Card.Title>
 		<Card.Description class="text-base/normal font-medium">
-			{question.question_text}
-			{#if question.is_mandatory}
-				<span class="ml-1 text-red-500">*</span>
-			{/if}
+			<div class="flex items-start gap-1">
+				<RichText content={question.question_text} class="min-w-0 flex-1" />
+				{#if question.is_mandatory}
+					<span class="shrink-0 text-red-500">*</span>
+				{/if}
+			</div>
 			{#if question.instructions}
-				<span class="text-muted-foreground mt-2 block text-sm">
-					{question.instructions}
-				</span>
+				<RichText content={question.instructions} class="text-muted-foreground mt-2 text-sm" />
 			{/if}
 			<QuestionMedia media={question.media} />
 		</Card.Description>
@@ -643,9 +649,18 @@
 	<Card.Content class="p-5 pt-1">
 		{#if saveError}
 			<div
-				class="border-destructive bg-destructive/10 text-destructive mb-4 rounded-lg border p-3 text-sm"
+				class={`mb-4 rounded-lg border p-3 text-sm ${
+					isSectionLimitWarning
+						? 'border-amber-300 bg-amber-50 text-amber-900'
+						: 'border-destructive bg-destructive/10 text-destructive'
+				}`}
 			>
 				{saveError}
+				{#if isSectionLimitWarning}
+					<p class="mt-2 text-xs text-amber-800">
+						{$t('Clear another answered question in this section to attempt this one.')}
+					</p>
+				{/if}
 			</div>
 		{/if}
 		{#if question.question_type === question_type_enum.SINGLE}
@@ -675,8 +690,11 @@
 										: ''
 							} ${isLocked ? 'cursor-not-allowed' : ''}`}
 						>
-							<div class="flex w-full items-center justify-between">
-								<span>{option.key}. {option.value}</span>
+							<div class="flex w-full items-start justify-between gap-3">
+								<div class="flex min-w-0 items-start gap-2">
+									<span class="shrink-0">{option.key}.</span>
+									<RichText content={option.value} class="min-w-0 flex-1" />
+								</div>
 								<div class="flex items-center gap-1">
 									{#if feedbackStatus === 'correct'}
 										{@render showCorrectWrongMark('correct')}
@@ -925,8 +943,11 @@
 									: ''
 						} ${isLocked ? 'cursor-not-allowed' : ''}`}
 					>
-						<div class="flex w-full items-center justify-between">
-							<span>{option.key}. {option.value}</span>
+						<div class="flex w-full items-start justify-between gap-3">
+							<div class="flex min-w-0 items-start gap-2">
+								<span class="shrink-0">{option.key}.</span>
+								<RichText content={option.value} class="min-w-0 flex-1" />
+							</div>
 							<div class="flex items-center gap-1">
 								{#if feedbackStatus === 'correct'}
 									{@render showCorrectWrongMark('correct')}
@@ -963,27 +984,29 @@
 			</Button>
 		{/if}
 
-		<Button
-			variant="outline"
-			class="mt-4 w-full"
-			onclick={handleClearAnswer}
-			disabled={isLocked || !hasClearableAnswer}
-		>
-			{$t('Clear answer')}
-		</Button>
-
-		{#if showMarkForReview}
+		<div class="mt-4 flex flex-col gap-3 sm:flex-row">
 			<Button
 				variant="outline"
-				class="mt-4 w-full {isQuestionBookmarked
-					? 'border-amber-500 bg-amber-50 text-amber-700 hover:bg-amber-100'
-					: ''}"
-				onclick={handleBookmark}
-				disabled={isLocked}
+				class="w-full sm:flex-1"
+				onclick={handleClearAnswer}
+				disabled={isLocked || !hasClearableAnswer}
 			>
-				<Bookmark class="mr-2 h-4 w-4 {isQuestionBookmarked ? 'fill-amber-500' : ''}" />
-				{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
+				{$t('Clear answer')}
 			</Button>
-		{/if}
+
+			{#if showMarkForReview}
+				<Button
+					variant="outline"
+					class="w-full sm:flex-1 {isQuestionBookmarked
+						? 'border-amber-500 bg-amber-50 text-amber-700 hover:bg-amber-100'
+						: ''}"
+					onclick={handleBookmark}
+					disabled={isLocked}
+				>
+					<Bookmark class="mr-2 h-4 w-4 {isQuestionBookmarked ? 'fill-amber-500' : ''}" />
+					{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
+				</Button>
+			{/if}
+		</div>
 	</Card.Content>
 </Card.Root>

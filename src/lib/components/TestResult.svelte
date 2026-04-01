@@ -2,16 +2,22 @@
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
+	import {
+		buildQuestionSetGroups,
+		getQuestionSetQuestionCount,
+		normalizeTestQuestions
+	} from '$lib/helpers/questionSetHelpers';
 	import { t } from 'svelte-i18n';
-	import type { TResultData, TFeedback } from '$lib/types';
+	import type { TResultData, TFeedback, TTestQuestionsResponse } from '$lib/types';
 
 	let {
 		resultData,
 		testDetails,
 		feedback = null,
+		testQuestions = null,
 		onViewFeedback = () => {}
 	}: {
-		resultData: TResultData;
+		resultData: TResultData | null;
 		testDetails: {
 			name: string;
 			link: string;
@@ -19,6 +25,7 @@
 			show_feedback_on_completion?: boolean;
 		};
 		feedback?: TFeedback[] | null;
+		testQuestions?: TTestQuestionsResponse | null;
 		onViewFeedback?: () => void;
 	} = $props();
 
@@ -28,6 +35,32 @@
 		? (resultData.correct_answer || 0) + (resultData.incorrect_answer || 0)
 		: 0;
 	const notAttempted = totalQuestions - attempted;
+	const normalizedTestQuestions = $derived(normalizeTestQuestions(testQuestions));
+	const feedbackByQuestionId = $derived(
+		new Map((feedback ?? []).map((entry) => [entry.question_revision_id, entry]))
+	);
+	const sectionSummaries = $derived(
+		buildQuestionSetGroups(
+			normalizedTestQuestions.questions,
+			normalizedTestQuestions.questionSets
+		).map((group) => {
+			const attemptedCount = group.questions.filter((question) => {
+				const entry = feedbackByQuestionId.get(question.id);
+				if (!entry) return false;
+				if (typeof entry.submitted_answer === 'string') {
+					return entry.submitted_answer.trim().length > 0;
+				}
+				return entry.submitted_answer.length > 0;
+			}).length;
+
+			return {
+				title: group.section.title,
+				questionCount: getQuestionSetQuestionCount(group.section),
+				attemptedCount,
+				allowedCount: group.section.max_questions_allowed_to_attempt
+			};
+		})
+	);
 
 	let isDownloading = $state(false);
 	let downloadError = $state<string | null>(null);
@@ -115,6 +148,33 @@
 				{/if}
 			</Table.Body>
 		</Table.Root>
+
+		{#if sectionSummaries.length > 0}
+			<p class="text-accent-foreground mt-6 border-b py-2 text-sm font-bold uppercase">
+				{$t('Section summary')}
+			</p>
+
+			<Table.Root class="bg-accent mt-4 rounded-xl text-start">
+				<Table.Header>
+					<Table.Row>
+						<Table.Head>{$t('Section')}</Table.Head>
+						<Table.Head>{$t('Questions')}</Table.Head>
+						<Table.Head>{$t('Attempted')}</Table.Head>
+						<Table.Head>{$t('Allowed')}</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each sectionSummaries as section (`${section.title}-${section.questionCount}`)}
+						<Table.Row>
+							<Table.Cell>{section.title}</Table.Cell>
+							<Table.Cell>{section.questionCount}</Table.Cell>
+							<Table.Cell>{section.attemptedCount}</Table.Cell>
+							<Table.Cell>{section.allowedCount}</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		{/if}
 
 		{#if resultData.certificate_download_url}
 			<div class="mt-6">

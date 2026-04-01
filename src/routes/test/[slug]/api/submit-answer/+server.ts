@@ -68,8 +68,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
 			try {
 				const errorData = await res.json();
-				errorMessage =
-					errorData?.detail || errorData?.message || errorData?.error || errorMessage;
+				errorMessage = errorData?.detail || errorData?.message || errorData?.error || errorMessage;
 			} catch {}
 
 			return new Response(JSON.stringify({ success: false, error: errorMessage }), {

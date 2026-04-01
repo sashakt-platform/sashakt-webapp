@@ -139,6 +139,27 @@ describe('LandingPage', () => {
 		expect(screen.getAllByText('You may attempt all questions in this section.')).toHaveLength(2);
 	});
 
+	it('should render question set descriptions as html', () => {
+		render(LandingPage, {
+			props: {
+				testDetails: {
+					...defaultTestDetails,
+					question_sets: [
+						{
+							...mockQuestionSetSummaries[0],
+							description: '<u>Single correct option</u><br>Correct: <strong>+4</strong>'
+						}
+					]
+				}
+			}
+		});
+
+		expect(screen.getByText('Single correct option')).toBeInTheDocument();
+		expect(screen.getByText('Correct:')).toBeInTheDocument();
+		expect(screen.getByText('+4')).toBeInTheDocument();
+		expect(screen.queryByText(/<u>Single correct option<\/u>/)).not.toBeInTheDocument();
+	});
+
 	it('should not render instructions section when no instructions', () => {
 		const testDetailsNoInstructions = {
 			...defaultTestDetails,
@@ -251,7 +272,6 @@ describe('LandingPage - OMR Mode', () => {
 		expect(button).toBeInTheDocument();
 		expect(button.getAttribute('type')).toBe('submit');
 	});
-
 });
 
 describe('Support for Localization', () => {

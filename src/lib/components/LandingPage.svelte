@@ -15,6 +15,7 @@
 	} from '$lib/helpers/questionSetHelpers';
 	import type { TQuestionSetSummary } from '$lib/types';
 	import PreTestTimer from './PreTestTimer.svelte';
+	import RichText from './RichText.svelte';
 	import { t } from 'svelte-i18n';
 
 	let { testDetails, showProfileForm = $bindable() } = $props();
@@ -55,7 +56,7 @@
 	);
 </script>
 
-<section class="mx-auto max-w-xl p-6">
+<section class="mx-auto max-w-xl p-6 pb-32">
 	<h1 class="mb-4 text-xl font-semibold">{testDetails.name}</h1>
 	<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">{$t('Test Overview')}</h2>
 
@@ -76,48 +77,48 @@
 			<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">
 				{$t('General Instructions')}
 			</h2>
-			<p
+			<RichText
+				content={testDetails.start_instructions}
 				class="text-accent-foreground mt-3 rounded-lg px-4 py-5 text-[13px]/relaxed font-normal shadow"
-			>
-				{@html testDetails.start_instructions}
-			</p>
-			{/if}
-		</div>
-		{#if questionSets.length > 0}
-			<div class="mt-8">
-				<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">{$t('Sections')}</h2>
-				<div class="space-y-3">
-					{#each questionSets as questionSet (`${questionSet.id ?? questionSet.title}-${questionSet.display_order}`)}
-						<div class="rounded-2xl border p-4">
-							<div class="flex items-start justify-between gap-4">
-								<div>
-									<h3 class="text-sm font-semibold">{questionSet.title}</h3>
-									{#if questionSet.description}
-										<p class="text-muted-foreground mt-1 text-sm">{questionSet.description}</p>
-									{/if}
-								</div>
-								<p class="text-muted-foreground shrink-0 text-xs">
-									{getQuestionSetQuestionCount(questionSet)} {$t('questions')}
-								</p>
-							</div>
-							<p class="text-muted-foreground mt-3 text-sm">
-								{#if canAttemptAllQuestions(
-									questionSet.max_questions_allowed_to_attempt,
-									getQuestionSetQuestionCount(questionSet)
-								)}
-									{$t('You may attempt all questions in this section.')}
-								{:else}
-									{$t('You may attempt up to {count} questions in this section.', {
-										values: { count: questionSet.max_questions_allowed_to_attempt }
-									})}
+			/>
+		{/if}
+	</div>
+	{#if questionSets.length > 0}
+		<div class="mt-8">
+			<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">{$t('Sections')}</h2>
+			<div class="space-y-3">
+				{#each questionSets as questionSet (`${questionSet.id ?? questionSet.title}-${questionSet.display_order}`)}
+					<div class="rounded-2xl border p-4">
+						<div class="flex items-start justify-between gap-4">
+							<div>
+								<h3 class="text-sm font-semibold">{questionSet.title}</h3>
+								{#if questionSet.description}
+									<RichText
+										content={questionSet.description}
+										class="text-muted-foreground mt-1 text-sm"
+									/>
 								{/if}
+							</div>
+							<p class="text-muted-foreground shrink-0 text-xs">
+								{getQuestionSetQuestionCount(questionSet)}
+								{$t('questions')}
 							</p>
 						</div>
-					{/each}
-				</div>
+						<p class="text-muted-foreground mt-3 text-sm">
+							{#if canAttemptAllQuestions(questionSet.max_questions_allowed_to_attempt, getQuestionSetQuestionCount(questionSet))}
+								{$t('You may attempt all questions in this section.')}
+							{:else}
+								{$t('You may attempt up to {count} questions in this section.', {
+									values: { count: questionSet.max_questions_allowed_to_attempt }
+								})}
+							{/if}
+						</p>
+					</div>
+				{/each}
 			</div>
-		{/if}
-	</section>
+		</div>
+	{/if}
+</section>
 
 {#if createError}
 	<div class="fixed right-0 bottom-20 left-0 z-20 mx-auto w-3/5 px-4">

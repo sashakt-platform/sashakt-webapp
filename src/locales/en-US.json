@@ -92,6 +92,7 @@
 	"Update Answer": "Update Answer",
 	"Save Answer": "Save Answer",
 	"Clear answer": "Clear answer",
+	"Clear another answered question in this section to attempt this one.": "Clear another answered question in this section to attempt this one.",
 	"You may attempt all questions in this section.": "You may attempt all questions in this section.",
 	"You may attempt up to {count} questions in this section.": "You may attempt up to {count} questions in this section.",
 	"characters remaining": "characters remaining",

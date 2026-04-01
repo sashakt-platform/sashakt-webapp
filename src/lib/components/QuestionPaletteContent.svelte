@@ -5,11 +5,9 @@
 		isQuestionAnswered,
 		isQuestionBookmarked
 	} from '$lib/helpers/questionPaletteHelpers';
-	import {
-		buildQuestionSetGroups,
-		canAttemptAllQuestions
-	} from '$lib/helpers/questionSetHelpers';
+	import { buildQuestionSetGroups, canAttemptAllQuestions } from '$lib/helpers/questionSetHelpers';
 	import type { TQuestion, TQuestionSetCandidate, TSelection } from '$lib/types';
+	import RichText from './RichText.svelte';
 	import { t } from 'svelte-i18n';
 
 	let {
@@ -33,7 +31,9 @@
 
 	const stats = $derived(countQuestionStatuses(questions, selections));
 	const groupedQuestionSets = $derived(buildQuestionSetGroups(questions, questionSets));
-	const questionIndexById = $derived(new Map(questions.map((question, index) => [question.id, index])));
+	const questionIndexById = $derived(
+		new Map(questions.map((question, index) => [question.id, index]))
+	);
 </script>
 
 <!-- Stats Legend -->
@@ -97,15 +97,13 @@
 				<div class="rounded-xl border bg-slate-50 p-3">
 					<p class="text-sm font-semibold text-slate-800">{group.section.title}</p>
 					{#if group.section.description}
-						<p class="text-muted-foreground mt-1 text-xs leading-relaxed">
-							{group.section.description}
-						</p>
+						<RichText
+							content={group.section.description}
+							class="text-muted-foreground mt-1 text-xs leading-relaxed"
+						/>
 					{/if}
 					<p class="text-muted-foreground mt-2 text-xs leading-relaxed">
-						{#if canAttemptAllQuestions(
-							group.section.max_questions_allowed_to_attempt,
-							group.questions.length
-						)}
+						{#if canAttemptAllQuestions(group.section.max_questions_allowed_to_attempt, group.questions.length)}
 							{$t('You may attempt all questions in this section.')}
 						{:else}
 							{$t('You may attempt up to {count} questions in this section.', {

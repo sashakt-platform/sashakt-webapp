@@ -38,10 +38,12 @@ export function normalizeTestQuestions(testQuestions?: TTestQuestionsResponse | 
 		...questionSet,
 		question_revisions: questionSet.question_revisions ?? []
 	}));
-	const flatQuestionsFromSets = questionSets.flatMap((questionSet) => questionSet.question_revisions);
+	const flatQuestionsFromSets = questionSets.flatMap(
+		(questionSet) => questionSet.question_revisions
+	);
 	const questions =
 		(testQuestions?.question_revisions?.length ?? 0) > 0
-			? testQuestions?.question_revisions ?? []
+			? (testQuestions?.question_revisions ?? [])
 			: flatQuestionsFromSets;
 	const sectionByQuestionId = new Map<number, TQuestionSetCandidate>();
 

@@ -60,6 +60,7 @@
 			resultData={form.result}
 			testDetails={data.testData}
 			feedback={form.feedback}
+			testQuestions={form.testQuestions}
 			onViewFeedback={handleViewFeedback}
 		/>
 	{:else if !data.candidate && !showProfileForm}

@@ -8,10 +8,7 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import {
-		canAttemptAllQuestions,
-		normalizeTestQuestions
-	} from '$lib/helpers/questionSetHelpers';
+	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
@@ -25,6 +22,7 @@
 		type TSelection
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
+	import RichText from './RichText.svelte';
 
 	let {
 		candidate,
@@ -43,6 +41,7 @@
 	let isSubmittingTest = $state(false);
 	let submitDialogOpen = $state(false);
 	let submitError = $state<string | null>(null);
+	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 
 	$effect(() => {
 		if (page.form?.submitTest === false || page.form?.error || submitError) {
@@ -124,13 +123,16 @@
 
 	const clearQuestionError = (questionId: number) => {
 		if (!(questionId in questionErrors)) return;
-		const { [questionId]: _removed, ...rest } = questionErrors;
+		const { [questionId]: __removed, ...rest } = questionErrors;
 		questionErrors = rest;
 	};
 
 	const setQuestionError = (questionId: number, message: string) => {
 		questionErrors = { ...questionErrors, [questionId]: message };
 	};
+
+	const isSectionLimitMessage = (message: string | null | undefined) =>
+		message?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false;
 
 	const isSelected = (questionId: number, optionId: number) => {
 		return getSelectedOptionIds(questionId).includes(optionId);
@@ -198,7 +200,6 @@
 		}
 
 		const previousSelections = JSON.parse(JSON.stringify(selections));
-		const previousMatrixSelections = JSON.parse(JSON.stringify(matrixSelections));
 		submittingQuestion = question.id;
 		clearQuestionError(question.id);
 
@@ -331,7 +332,6 @@
 		const existing = selections.find((s) => s.question_revision_id === question.id);
 
 		const previousSelections = JSON.parse(JSON.stringify(selections));
-		const previousMatrixSelections = JSON.parse(JSON.stringify(matrixSelections));
 		submittingQuestion = question.id;
 		clearQuestionError(question.id);
 
@@ -414,8 +414,9 @@
 
 			if (typeof clearedResponse === 'string') {
 				candidateInput[question.id] = String(
-					previousSelections.find((selection: TSelection) => selection.question_revision_id === question.id)
-						?.response ?? ''
+					previousSelections.find(
+						(selection: TSelection) => selection.question_revision_id === question.id
+					)?.response ?? ''
 				);
 				lastSavedInput[question.id] = candidateInput[question.id];
 			} else if (question.question_type === question_type_enum.MATRIXMATCH) {
@@ -435,20 +436,38 @@
 <div class="min-h-screen bg-blue-50 p-4 pb-20 lg:p-6 lg:pb-20">
 	<h1 class="mb-6 text-center text-xl font-semibold text-slate-800">{$t('OMR Sheet')}</h1>
 
-		<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
-			{#each questions as question, i (question.id)}
-				{@const section = sectionByQuestionId.get(question.id) ?? null}
-				{#if section && i === 0}
+	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+		{#each questions as question, i (question.id)}
+			{@const section = sectionByQuestionId.get(question.id) ?? null}
+			{#if section && i === 0}
+				<div class="rounded-2xl border bg-slate-50 p-4">
+					<p class="text-sm font-semibold text-slate-800">{section.title}</p>
+					{#if section.description}
+						<RichText content={section.description} class="text-muted-foreground mt-1 text-sm" />
+					{/if}
+					<p class="text-muted-foreground mt-2 text-sm">
+						{#if canAttemptAllQuestions(section.max_questions_allowed_to_attempt, section.question_revisions.length)}
+							{$t('You may attempt all questions in this section.')}
+						{:else}
+							{$t('You may attempt up to {count} questions in this section.', {
+								values: { count: section.max_questions_allowed_to_attempt }
+							})}
+						{/if}
+					</p>
+				</div>
+			{:else if section}
+				{@const previousQuestion = questions[i - 1]}
+				{@const previousSection = previousQuestion
+					? (sectionByQuestionId.get(previousQuestion.id) ?? null)
+					: null}
+				{#if previousSection?.id !== section.id}
 					<div class="rounded-2xl border bg-slate-50 p-4">
 						<p class="text-sm font-semibold text-slate-800">{section.title}</p>
 						{#if section.description}
-							<p class="text-muted-foreground mt-1 text-sm">{section.description}</p>
+							<RichText content={section.description} class="text-muted-foreground mt-1 text-sm" />
 						{/if}
 						<p class="text-muted-foreground mt-2 text-sm">
-							{#if canAttemptAllQuestions(
-								section.max_questions_allowed_to_attempt,
-								section.question_revisions.length
-							)}
+							{#if canAttemptAllQuestions(section.max_questions_allowed_to_attempt, section.question_revisions.length)}
 								{$t('You may attempt all questions in this section.')}
 							{:else}
 								{$t('You may attempt up to {count} questions in this section.', {
@@ -457,35 +476,11 @@
 							{/if}
 						</p>
 					</div>
-				{:else if section}
-					{@const previousQuestion = questions[i - 1]}
-					{@const previousSection = previousQuestion
-						? sectionByQuestionId.get(previousQuestion.id) ?? null
-						: null}
-					{#if previousSection?.id !== section.id}
-						<div class="rounded-2xl border bg-slate-50 p-4">
-							<p class="text-sm font-semibold text-slate-800">{section.title}</p>
-							{#if section.description}
-								<p class="text-muted-foreground mt-1 text-sm">{section.description}</p>
-							{/if}
-							<p class="text-muted-foreground mt-2 text-sm">
-								{#if canAttemptAllQuestions(
-									section.max_questions_allowed_to_attempt,
-									section.question_revisions.length
-								)}
-									{$t('You may attempt all questions in this section.')}
-								{:else}
-									{$t('You may attempt up to {count} questions in this section.', {
-										values: { count: section.max_questions_allowed_to_attempt }
-									})}
-								{/if}
-							</p>
-						</div>
-					{/if}
 				{/if}
-				{@const question_type = question.question_type}
-				<div
-					class="flex items-center gap-6 sm:gap-10 {submittingQuestion === question.id
+			{/if}
+			{@const question_type = question.question_type}
+			<div
+				class="flex items-center gap-6 sm:gap-10 {submittingQuestion === question.id
 					? 'pointer-events-none'
 					: ''}"
 			>
@@ -509,9 +504,18 @@
 					<div class="flex w-full flex-col gap-2">
 						{#if questionErrors[question.id]}
 							<div
-								class="border-destructive bg-destructive/10 text-destructive rounded-lg border p-3 text-sm"
+								class={`rounded-lg border p-3 text-sm ${
+									isSectionLimitMessage(questionErrors[question.id])
+										? 'border-amber-300 bg-amber-50 text-amber-900'
+										: 'border-destructive bg-destructive/10 text-destructive'
+								}`}
 							>
 								{questionErrors[question.id]}
+								{#if isSectionLimitMessage(questionErrors[question.id])}
+									<p class="mt-2 text-xs text-amber-800">
+										{$t('Clear another answered question in this section to attempt this one.')}
+									</p>
+								{/if}
 							</div>
 						{/if}
 						{#if question_type == question_type_enum.SUBJECTIVE}
@@ -665,7 +669,9 @@
 							<table class="w-full border-collapse text-xs sm:text-sm">
 								<thead>
 									<tr>
-										<th class="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold">
+										<th
+											class="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold"
+										>
 											{matrixOpts.rows.label}
 										</th>
 										{#each matrixOpts.columns.items as col (col.id)}
