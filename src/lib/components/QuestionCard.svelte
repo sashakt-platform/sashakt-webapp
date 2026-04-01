@@ -27,9 +27,9 @@
 
 	let {
 		question,
-		serialNumber,
+		serialNumber = 0,
 		candidate,
-		totalQuestions,
+		totalQuestions = 0,
 		selectedQuestions = $bindable(),
 		showFeedback = false,
 		showMarkForReview = true,
@@ -38,8 +38,8 @@
 	}: {
 		question: TQuestion;
 		candidate: TCandidate;
-		serialNumber: number;
-		totalQuestions: number;
+		serialNumber?: number;
+		totalQuestions?: number;
 		selectedQuestions: TSelection[];
 		showFeedback?: boolean;
 		showMarkForReview?: boolean;
