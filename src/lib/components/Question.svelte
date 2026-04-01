@@ -16,7 +16,7 @@
 	import type { TQuestion } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
-	let { candidate, testQuestions, testDetails } = $props();
+	let { candidate, testQuestions, testDetails, omrMode = false } = $props();
 	let isSubmittingTest = $state(false);
 
 	// for controlling confirmation dialog display
@@ -128,7 +128,28 @@
 	</Dialog.Content>
 {/snippet}
 
-{#if paginationReady}
+{#if omrMode}
+	<div class="min-h-screen bg-blue-50 p-4 pb-20 lg:p-6 lg:pb-20">
+		<h1 class="mb-6 text-center text-xl font-semibold text-slate-800">{$t('OMR Sheet')}</h1>
+		<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+			{#each questions as question, i (question.id)}
+				<QuestionCard mode="omr" {question} {candidate} questionIndex={i} bind:selectedQuestions />
+			{/each}
+		</div>
+		<div
+			class="fixed inset-x-0 bottom-0 z-10 flex w-full items-center justify-between bg-white p-2 shadow-md lg:rounded-xl"
+		>
+			<div></div>
+			<SubmitDialog
+				bind:open={submitDialogOpen}
+				isSubmitting={isSubmittingTest}
+				{submitError}
+				answeredAllMandatory={answeredAllMandatory(selectedQuestions, questions)}
+				formEnhance={handleSubmitTestEnhance}
+			/>
+		</div>
+	</div>
+{:else if paginationReady}
 	<div class="flex min-h-screen gap-6 bg-blue-50 p-4 lg:p-6">
 		<!-- Main question content -->
 		<div class="flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">

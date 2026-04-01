@@ -3,7 +3,6 @@
 	import LandingPage from '$lib/components/LandingPage.svelte';
 	import { DynamicForm } from '$lib/components/form';
 	import Question from '$lib/components/Question.svelte';
-	import OmrSheet from '$lib/components/OmrSheet.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
 	import type { PageProps } from './$types';
 	import { locale } from 'svelte-i18n';
@@ -74,19 +73,12 @@
 	{:else if !data.candidate && hasOmrChoice}
 		<CandidateProfile testDetails={data.testData} formResponses={candidateFormResponses} />
 	{:else if data.testQuestions?.question_revisions}
-		{#if data.candidate.use_omr === 'true' || data.testData?.omr === 'ALWAYS'}
-			<OmrSheet
-				candidate={data.candidate}
-				testDetails={data.testData}
-				testQuestions={data.testQuestions}
-			/>
-		{:else}
-			<Question
-				testQuestions={data.testQuestions}
-				candidate={data.candidate}
-				testDetails={data.testData}
-			/>
-		{/if}
+		<Question
+			testQuestions={data.testQuestions}
+			candidate={data.candidate}
+			testDetails={data.testData}
+			omrMode={data.candidate.use_omr === 'true' || data.testData?.omr === 'ALWAYS'}
+		/>
 	{:else if data.testQuestions === null && data.timeLeft == 0}
 		<p>{$t('Sorry, you have exceeded the time limit for this test.')}</p>
 	{:else}
