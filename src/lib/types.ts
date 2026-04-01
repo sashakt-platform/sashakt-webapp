@@ -10,7 +10,7 @@ export type TSelection = {
 	time_spent: number;
 	bookmarked: boolean;
 	is_reviewed: boolean;
-	correct_answer?: number[];
+	correct_answer?: number[] | number | null;
 };
 
 export type TTestSession = {
@@ -55,8 +55,31 @@ export type TQuestion = {
 	options: TOptions[];
 	subjective_answer_limit: number;
 	is_mandatory: boolean;
-	marking_scheme: TMarks;
+	marking_scheme: TMarks | null;
 	media: Record<string, unknown> | null;
+};
+
+export type TQuestionSetBase = {
+	id?: number | null;
+	title: string;
+	description?: string | null;
+	display_order: number;
+	max_questions_allowed_to_attempt: number;
+	marking_scheme?: TMarks | null;
+};
+
+export type TQuestionSetCandidate = TQuestionSetBase & {
+	question_revisions: TQuestion[];
+};
+
+export type TQuestionSetSummary = TQuestionSetBase & {
+	question_count: number;
+};
+
+export type TTestQuestionsResponse = {
+	question_revisions: TQuestion[];
+	question_sets?: TQuestionSetCandidate[] | null;
+	question_pagination?: number | null;
 };
 
 // Form Field Types
@@ -129,6 +152,6 @@ export type TResultData = {
 
 export type TFeedback = {
 	question_revision_id: number;
-	submitted_answer: number[];
-	correct_answer: number[];
+	submitted_answer: number[] | string;
+	correct_answer: number[] | number;
 };

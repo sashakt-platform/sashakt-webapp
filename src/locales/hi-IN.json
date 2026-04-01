@@ -45,6 +45,7 @@
 	"Mandatory": "अनिवार्य",
 	"Go to question {number}": "प्रश्न {number} पर जाएं",
 	"Question Palette": "प्रश्न पैलेट",
+	"Sections": "सेक्शन",
 	"Question palette tabs": "प्रश्न पैलेट टैब",
 	"Instructions": "निर्देश",
 	"No instructions available.": "कोई निर्देश उपलब्ध नहीं हैं।",
@@ -83,6 +84,9 @@
 	"Saved": "",
 	"Update Answer": "",
 	"Save Answer": "",
+	"Clear answer": "उत्तर साफ़ करें",
+	"You may attempt all questions in this section.": "आप इस सेक्शन के सभी प्रश्नों का प्रयास कर सकते हैं।",
+	"You may attempt up to {count} questions in this section.": "आप इस सेक्शन में अधिकतम {count} प्रश्नों का प्रयास कर सकते हैं।",
 	"characters remaining": "",
 	"Character limit reached": "",
 	"Select an option": "",
@@ -104,4 +108,3 @@
 	"mark": "अंक",
 	"marks": "अंक"
 }
-

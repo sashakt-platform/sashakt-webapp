@@ -7,6 +7,11 @@
 	import Check from '@lucide/svelte/icons/check';
 	import X from '@lucide/svelte/icons/x';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import {
+		buildQuestionSetGroups,
+		canAttemptAllQuestions,
+		normalizeTestQuestions
+	} from '$lib/helpers/questionSetHelpers';
 	import { t } from 'svelte-i18n';
 	import { question_type_enum } from '$lib/types';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
@@ -36,7 +41,7 @@
 	};
 
 	const feedbackWithQuestions = $derived(
-		(testQuestions?.question_revisions ?? []).map((question: any) => {
+		(normalizeTestQuestions(testQuestions).questions ?? []).map((question: any) => {
 			const fb = (feedback ?? []).find((f: any) => f.question_revision_id === question.id);
 
 			const feedbackData = fb ?? {
@@ -46,6 +51,10 @@
 			};
 			return { fb: feedbackData, question };
 		})
+	);
+	const normalizedTestQuestions = $derived(normalizeTestQuestions(testQuestions));
+	const feedbackQuestionSetGroups = $derived(
+		buildQuestionSetGroups(normalizedTestQuestions.questions, normalizedTestQuestions.questionSets)
 	);
 </script>
 
@@ -77,75 +86,258 @@
 			{$t('No feedback available. You did not attempt any questions.')}
 		</p>
 	{/if}
-	{#each feedbackWithQuestions as item, idx (item.question.id)}
-		{#if item.question}
-			<Card.Root class="mb-6 w-full max-w-sm rounded-xl shadow-md">
-				<Card.Header class="p-5">
-					<Card.Title class="mb-5 border-b pb-3 text-sm">
-						{idx + 1} <span>{$t('OF')} {feedbackWithQuestions.length}</span>
+	{#if feedbackQuestionSetGroups.length > 0}
+		{#each feedbackQuestionSetGroups as group (`${group.section.id ?? group.section.title}-${group.startIndex}`)}
+			<div class="mb-4 w-full max-w-sm rounded-2xl border bg-slate-50 p-4">
+				<p class="text-sm font-semibold text-slate-800">{group.section.title}</p>
+				{#if group.section.description}
+					<p class="text-muted-foreground mt-1 text-sm">{group.section.description}</p>
+				{/if}
+				<p class="text-muted-foreground mt-2 text-sm">
+					{#if canAttemptAllQuestions(
+						group.section.max_questions_allowed_to_attempt,
+						group.questions.length
+					)}
+						{$t('You may attempt all questions in this section.')}
+					{:else}
+						{$t('You may attempt up to {count} questions in this section.', {
+							values: { count: group.section.max_questions_allowed_to_attempt }
+						})}
+					{/if}
+				</p>
+			</div>
+			{#each group.questions as question, sectionIndex (question.id)}
+				{@const item = feedbackWithQuestions.find((entry) => entry.question.id === question.id)}
+				{#if item}
+					{@const idx = group.startIndex + sectionIndex}
+					<Card.Root class="mb-6 w-full max-w-sm rounded-xl shadow-md">
+						<Card.Header class="p-5">
+							<Card.Title class="mb-5 border-b pb-3 text-sm">
+								{idx + 1} <span>{$t('OF')} {feedbackWithQuestions.length}</span>
 
-						{#if item.question?.marking_scheme}
-							{@const mark = item.question.marking_scheme.correct}
-							<span class="text-muted-foreground float-end">
-								{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}
-							</span>
-						{/if}
-					</Card.Title>
-
-					<Card.Description class="text-base font-medium">
-						{item.question.question_text}
-						{#if item.question.instructions}
-							<span class="text-muted-foreground mt-2 block text-sm">
-								{item.question.instructions}
-							</span>
-						{/if}
-					</Card.Description>
-				</Card.Header>
-
-				<Card.Content class="p-5 pt-1">
-					{#if item.question.question_type === 'subjective'}
-						<div class="rounded-xl border px-4 py-4">
-							{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
-								<p class="text-sm whitespace-pre-wrap">{item.fb.submitted_answer}</p>
-							{:else}
-								<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
-							{/if}
-						</div>
-					{:else if item.question.question_type === question_type_enum.NUMERICALINTEGER || item.question.question_type === question_type_enum.NUMERICALDECIMAL}
-						{@const isCorrect = isNumericalAnswerCorrect(
-							item.question.question_type,
-							item.fb.submitted_answer,
-							item.fb.correct_answer
-						)}
-						{@const feedbackClass =
-							isCorrect === null
-								? 'border-gray-300 bg-white text-gray-700'
-								: isCorrect
-									? 'border-green-400 bg-green-100 text-green-700'
-									: 'border-red-400 bg-red-100 text-red-700'}
-
-						<div class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}>
-							{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
-								<p class="w-full text-sm whitespace-pre-wrap">{item.fb.submitted_answer}</p>
-								{#if isCorrect === true}
-									{@render showCorrectWrongMark('correct')}
-								{:else if isCorrect === false}
-									{@render showCorrectWrongMark('wrong')}
+								{#if item.question?.marking_scheme}
+									{@const mark = item.question.marking_scheme.correct}
+									<span class="text-muted-foreground float-end">
+										{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}
+									</span>
 								{/if}
+							</Card.Title>
+
+							<Card.Description class="text-base font-medium">
+								{item.question.question_text}
+								{#if item.question.instructions}
+									<span class="text-muted-foreground mt-2 block text-sm">
+										{item.question.instructions}
+									</span>
+								{/if}
+							</Card.Description>
+						</Card.Header>
+
+						<Card.Content class="p-5 pt-1">
+							{#if item.question.question_type === 'subjective'}
+								<div class="rounded-xl border px-4 py-4">
+									{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
+										<p class="text-sm whitespace-pre-wrap">{item.fb.submitted_answer}</p>
+									{:else}
+										<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
+									{/if}
+								</div>
+							{:else if item.question.question_type === question_type_enum.NUMERICALINTEGER || item.question.question_type === question_type_enum.NUMERICALDECIMAL}
+								{@const isCorrect = isNumericalAnswerCorrect(
+									item.question.question_type,
+									item.fb.submitted_answer,
+									item.fb.correct_answer
+								)}
+								{@const feedbackClass =
+									isCorrect === null
+										? 'border-gray-300 bg-white text-gray-700'
+										: isCorrect
+											? 'border-green-400 bg-green-100 text-green-700'
+											: 'border-red-400 bg-red-100 text-red-700'}
+
+								<div class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}>
+									{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
+										<p class="w-full text-sm whitespace-pre-wrap">{item.fb.submitted_answer}</p>
+										{#if isCorrect === true}
+											{@render showCorrectWrongMark('correct')}
+										{:else if isCorrect === false}
+											{@render showCorrectWrongMark('wrong')}
+										{/if}
+									{:else}
+										<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
+									{/if}
+								</div>
+								{#if !isCorrect}
+									<div
+										class="mt-4 flex flex-row rounded-xl border border-green-400 bg-green-100 px-4 py-4 text-green-700"
+									>
+										<p class="w-full text-sm whitespace-pre-wrap">{item.fb.correct_answer}</p>
+										{@render showCorrectWrongMark('correct')}
+									</div>
+								{/if}
+							{:else if item.question.question_type === 'single-choice'}
+								<RadioGroup.Root value={item.fb.submitted_answer[0]?.toString()} disabled>
+									{#each item.question.options as option (option.id)}
+										{@const uid = `${item.question.id}-${option.key}`}
+										{@const status = getOptionStatus(
+											option.id,
+											item.fb.submitted_answer,
+											item.fb.correct_answer
+										)}
+
+										<Label
+											for={uid}
+											class={`mb-2 flex cursor-not-allowed items-center justify-between rounded-xl border px-4 py-5 ${optionClass(
+												option.id,
+												item.fb.submitted_answer,
+												item.fb.correct_answer
+											)}`}
+										>
+											<span>{option.key}. {option.value}</span>
+
+											<div class="flex items-center gap-1">
+												{#if status === 'correct'}
+													{@render showCorrectWrongMark('correct')}
+												{:else if status === 'wrong'}
+													{@render showCorrectWrongMark('wrong')}
+												{/if}
+											</div>
+										</Label>
+									{/each}
+								</RadioGroup.Root>
 							{:else}
-								<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
+								{#each item.question.options as option (option.id)}
+									{@const uid = `${item.question.id}-${option.key}`}
+									{@const status = getOptionStatus(
+										option.id,
+										item.fb.submitted_answer,
+										item.fb.correct_answer
+									)}
+
+									<Label
+										for={uid}
+										class={`mb-2 flex w-full cursor-not-allowed items-center justify-between rounded-xl border px-4 py-5 ${optionClass(
+											option.id,
+											item.fb.submitted_answer,
+											item.fb.correct_answer
+										)}`}
+									>
+										<span>{option.key}. {option.value}</span>
+
+										<div class="flex items-center gap-1">
+											{#if status === 'correct'}
+												{@render showCorrectWrongMark('correct')}
+											{:else if status === 'wrong'}
+												{@render showCorrectWrongMark('wrong')}
+											{/if}
+										</div>
+									</Label>
+								{/each}
 							{/if}
-						</div>
-						{#if !isCorrect}
-							<div
-								class="mt-4 flex flex-row rounded-xl border border-green-400 bg-green-100 px-4 py-4 text-green-700"
-							>
-								<p class="w-full text-sm whitespace-pre-wrap">{item.fb.correct_answer}</p>
-								{@render showCorrectWrongMark('correct')}
+						</Card.Content>
+					</Card.Root>
+				{/if}
+			{/each}
+		{/each}
+	{:else}
+		{#each feedbackWithQuestions as item, idx (item.question.id)}
+			{#if item.question}
+				<Card.Root class="mb-6 w-full max-w-sm rounded-xl shadow-md">
+					<Card.Header class="p-5">
+						<Card.Title class="mb-5 border-b pb-3 text-sm">
+							{idx + 1} <span>{$t('OF')} {feedbackWithQuestions.length}</span>
+
+							{#if item.question?.marking_scheme}
+								{@const mark = item.question.marking_scheme.correct}
+								<span class="text-muted-foreground float-end">
+									{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}
+								</span>
+							{/if}
+						</Card.Title>
+
+						<Card.Description class="text-base font-medium">
+							{item.question.question_text}
+							{#if item.question.instructions}
+								<span class="text-muted-foreground mt-2 block text-sm">
+									{item.question.instructions}
+								</span>
+							{/if}
+						</Card.Description>
+					</Card.Header>
+
+					<Card.Content class="p-5 pt-1">
+						{#if item.question.question_type === 'subjective'}
+							<div class="rounded-xl border px-4 py-4">
+								{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
+									<p class="text-sm whitespace-pre-wrap">{item.fb.submitted_answer}</p>
+								{:else}
+									<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
+								{/if}
 							</div>
-						{/if}
-					{:else if item.question.question_type === 'single-choice'}
-						<RadioGroup.Root value={item.fb.submitted_answer[0]?.toString()} disabled>
+						{:else if item.question.question_type === question_type_enum.NUMERICALINTEGER || item.question.question_type === question_type_enum.NUMERICALDECIMAL}
+							{@const isCorrect = isNumericalAnswerCorrect(
+								item.question.question_type,
+								item.fb.submitted_answer,
+								item.fb.correct_answer
+							)}
+							{@const feedbackClass =
+								isCorrect === null
+									? 'border-gray-300 bg-white text-gray-700'
+									: isCorrect
+										? 'border-green-400 bg-green-100 text-green-700'
+										: 'border-red-400 bg-red-100 text-red-700'}
+
+							<div class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}>
+								{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
+									<p class="w-full text-sm whitespace-pre-wrap">{item.fb.submitted_answer}</p>
+									{#if isCorrect === true}
+										{@render showCorrectWrongMark('correct')}
+									{:else if isCorrect === false}
+										{@render showCorrectWrongMark('wrong')}
+									{/if}
+								{:else}
+									<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
+								{/if}
+							</div>
+							{#if !isCorrect}
+								<div
+									class="mt-4 flex flex-row rounded-xl border border-green-400 bg-green-100 px-4 py-4 text-green-700"
+								>
+									<p class="w-full text-sm whitespace-pre-wrap">{item.fb.correct_answer}</p>
+									{@render showCorrectWrongMark('correct')}
+								</div>
+							{/if}
+						{:else if item.question.question_type === 'single-choice'}
+							<RadioGroup.Root value={item.fb.submitted_answer[0]?.toString()} disabled>
+								{#each item.question.options as option (option.id)}
+									{@const uid = `${item.question.id}-${option.key}`}
+									{@const status = getOptionStatus(
+										option.id,
+										item.fb.submitted_answer,
+										item.fb.correct_answer
+									)}
+
+									<Label
+										for={uid}
+										class={`mb-2 flex cursor-not-allowed items-center justify-between rounded-xl border px-4 py-5 ${optionClass(
+											option.id,
+											item.fb.submitted_answer,
+											item.fb.correct_answer
+										)}`}
+									>
+										<span>{option.key}. {option.value}</span>
+
+										<div class="flex items-center gap-1">
+											{#if status === 'correct'}
+												{@render showCorrectWrongMark('correct')}
+											{:else if status === 'wrong'}
+												{@render showCorrectWrongMark('wrong')}
+											{/if}
+										</div>
+									</Label>
+								{/each}
+							</RadioGroup.Root>
+						{:else}
 							{#each item.question.options as option (option.id)}
 								{@const uid = `${item.question.id}-${option.key}`}
 								{@const status = getOptionStatus(
@@ -156,7 +348,7 @@
 
 								<Label
 									for={uid}
-									class={`mb-2 flex cursor-not-allowed items-center justify-between rounded-xl border px-4 py-5 ${optionClass(
+									class={`mb-2 flex w-full cursor-not-allowed items-center justify-between rounded-xl border px-4 py-5 ${optionClass(
 										option.id,
 										item.fb.submitted_answer,
 										item.fb.correct_answer
@@ -173,42 +365,14 @@
 									</div>
 								</Label>
 							{/each}
-						</RadioGroup.Root>
-					{:else}
-						{#each item.question.options as option (option.id)}
-							{@const uid = `${item.question.id}-${option.key}`}
-							{@const status = getOptionStatus(
-								option.id,
-								item.fb.submitted_answer,
-								item.fb.correct_answer
-							)}
-
-							<Label
-								for={uid}
-								class={`mb-2 flex w-full cursor-not-allowed items-center justify-between rounded-xl border px-4 py-5 ${optionClass(
-									option.id,
-									item.fb.submitted_answer,
-									item.fb.correct_answer
-								)}`}
-							>
-								<span>{option.key}. {option.value}</span>
-
-								<div class="flex items-center gap-1">
-									{#if status === 'correct'}
-										{@render showCorrectWrongMark('correct')}
-									{:else if status === 'wrong'}
-										{@render showCorrectWrongMark('wrong')}
-									{/if}
-								</div>
-							</Label>
-						{/each}
-					{/if}
-				</Card.Content>
-			</Card.Root>
-		{:else}
-			<p class="text-center text-sm text-red-500">
-				{$t('Question not found for feedback #{number}', { values: { number: idx + 1 } })}
-			</p>
-		{/if}
-	{/each}
+						{/if}
+					</Card.Content>
+				</Card.Root>
+			{:else}
+				<p class="text-center text-sm text-red-500">
+					{$t('Question not found for feedback #{number}', { values: { number: idx + 1 } })}
+				</p>
+			{/if}
+		{/each}
+	{/if}
 </div>

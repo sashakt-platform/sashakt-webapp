@@ -4,6 +4,7 @@ import { fireEvent } from '@testing-library/svelte';
 import OmrSheet from './OmrSheet.svelte';
 import {
 	mockCandidate,
+	mockQuestionSets,
 	mockSingleChoiceQuestion,
 	mockMultipleChoiceQuestion,
 	mockSubjectiveQuestion,
@@ -97,6 +98,22 @@ describe('OmrSheet', () => {
 			const submitButtons = screen.getAllByRole('button', { name: /submit/i });
 			expect(submitButtons.length).toBeGreaterThanOrEqual(1);
 		});
+
+		it('renders section heading when question sets are provided', () => {
+			render(OmrSheet, {
+				props: {
+					candidate: mockCandidate,
+					testDetails: {},
+					testQuestions: {
+						question_revisions: [mockSingleChoiceQuestion, mockMultipleChoiceQuestion],
+						question_sets: [mockQuestionSets[0]]
+					}
+				}
+			});
+
+			expect(screen.getByText('Physics')).toBeInTheDocument();
+			expect(screen.getByText('Section A')).toBeInTheDocument();
+		});
 	});
 
 	describe('Single-choice questions', () => {
@@ -186,6 +203,28 @@ describe('OmrSheet', () => {
 
 			await waitFor(() => {
 				expect(radios[0]).not.toBeChecked();
+			});
+		});
+
+		it('clears a saved single-choice answer', async () => {
+			withSelections([
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [mockSingleChoiceQuestion.options[0].id],
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			]);
+
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getByRole('button', { name: 'Clear answer' }));
+
+			await waitFor(() => {
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				expect(body.response).toBeNull();
 			});
 		});
 

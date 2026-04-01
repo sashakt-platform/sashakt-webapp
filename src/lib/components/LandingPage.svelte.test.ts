@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import LandingPage from './LandingPage.svelte';
-import { mockTestData, setLocaleForTests } from '$lib/test-utils';
+import { mockQuestionSetSummaries, mockTestData, setLocaleForTests } from '$lib/test-utils';
 
 // Mock SvelteKit modules
 vi.mock('$app/environment', () => ({
@@ -121,6 +121,24 @@ describe('LandingPage', () => {
 
 		expect(screen.getByText('General Instructions')).toBeInTheDocument();
 		expect(screen.getByText('Please read carefully before starting.')).toBeInTheDocument();
+	});
+
+	it('should render question set summaries when present', () => {
+		render(LandingPage, {
+			props: {
+				testDetails: {
+					...defaultTestDetails,
+					question_sets: mockQuestionSetSummaries
+				}
+			}
+		});
+
+		expect(screen.getByText('Sections')).toBeInTheDocument();
+		expect(screen.getByText('Physics')).toBeInTheDocument();
+		expect(screen.getByText('Chemistry')).toBeInTheDocument();
+		expect(
+			screen.getByText('You may attempt up to 1 questions in this section.')
+		).toBeInTheDocument();
 	});
 
 	it('should not render instructions section when no instructions', () => {

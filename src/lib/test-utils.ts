@@ -4,7 +4,15 @@
 
 import { vi } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
-import type { TCandidate, TQuestion, TResultData, TSelection, TTestSession } from './types';
+import type {
+	TCandidate,
+	TQuestion,
+	TQuestionSetCandidate,
+	TQuestionSetSummary,
+	TResultData,
+	TSelection,
+	TTestSession
+} from './types';
 import { init, register, waitLocale, locale } from 'svelte-i18n';
 import { languages, DEFAULT_LANGUAGE } from './utils';
 
@@ -147,6 +155,48 @@ export const mockQuestions: TQuestion[] = [
 	mockOptionalQuestion
 ];
 
+export const mockQuestionSets: TQuestionSetCandidate[] = [
+	{
+		id: 11,
+		title: 'Physics',
+		description: 'Section A',
+		display_order: 1,
+		max_questions_allowed_to_attempt: 2,
+		marking_scheme: { correct: 4, wrong: -1, skipped: 0 },
+		question_revisions: [mockSingleChoiceQuestion, mockMultipleChoiceQuestion]
+	},
+	{
+		id: 12,
+		title: 'Chemistry',
+		description: 'Section B',
+		display_order: 2,
+		max_questions_allowed_to_attempt: 1,
+		marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
+		question_revisions: [mockOptionalQuestion]
+	}
+];
+
+export const mockQuestionSetSummaries: TQuestionSetSummary[] = [
+	{
+		id: 11,
+		title: 'Physics',
+		description: 'Section A',
+		display_order: 1,
+		max_questions_allowed_to_attempt: 2,
+		marking_scheme: { correct: 4, wrong: -1, skipped: 0 },
+		question_count: 2
+	},
+	{
+		id: 12,
+		title: 'Chemistry',
+		description: 'Section B',
+		display_order: 2,
+		max_questions_allowed_to_attempt: 1,
+		marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
+		question_count: 1
+	}
+];
+
 // Mock selections (answered questions)
 export const mockSelection: TSelection = {
 	question_revision_id: 1,
@@ -191,12 +241,19 @@ export const mockTestData = {
 	locale: DEFAULT_LANGUAGE,
 	show_question_palette: true,
 	omr: 'NEVER',
-	show_feedback_on_completion: true
+	show_feedback_on_completion: true,
+	question_sets: null
 };
 
 // Mock test questions response (from backend)
 export const mockTestQuestionsResponse = {
 	question_revisions: mockQuestions,
+	question_pagination: 5
+};
+
+export const mockSectionedTestQuestionsResponse = {
+	question_revisions: mockQuestions,
+	question_sets: mockQuestionSets,
 	question_pagination: 5
 };
 

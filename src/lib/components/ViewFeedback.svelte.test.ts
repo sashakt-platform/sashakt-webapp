@@ -7,6 +7,7 @@ import {
 	mockSubjectiveQuestion,
 	mockNumericalIntegerQuestion,
 	mockNumericalDecimalQuestion,
+	mockSectionedTestQuestionsResponse,
 	mockTestQuestionsResponse
 } from '$lib/test-utils';
 
@@ -64,6 +65,17 @@ describe('ViewFeedback', () => {
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.instructions)).toBeInTheDocument();
+		});
+
+		it('should render section summaries when question sets are present', () => {
+			const feedback = [createFeedback(1, [102], [102]), createFeedback(2, [201], [201, 202])];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: mockSectionedTestQuestionsResponse }
+			});
+
+			expect(screen.getByText('Physics')).toBeInTheDocument();
+			expect(screen.getByText('Section A')).toBeInTheDocument();
 		});
 	});
 

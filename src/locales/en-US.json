@@ -52,6 +52,7 @@
 	"Mandatory": "Mandatory",
 	"Go to question {number}": "Go to question {number}",
 	"Question Palette": "Question Palette",
+	"Sections": "Sections",
 	"Question palette tabs": "Question palette tabs",
 	"Instructions": "Instructions",
 	"No instructions available.": "No instructions available.",
@@ -90,6 +91,9 @@
 	"Saved": "Saved",
 	"Update Answer": "Update Answer",
 	"Save Answer": "Save Answer",
+	"Clear answer": "Clear answer",
+	"You may attempt all questions in this section.": "You may attempt all questions in this section.",
+	"You may attempt up to {count} questions in this section.": "You may attempt up to {count} questions in this section.",
 	"characters remaining": "characters remaining",
 	"Character limit reached": "Character limit reached",
 	"Select an option": "Select an option",
@@ -104,4 +108,3 @@
 	"Please select your preference": "Please select your preference",
 	"OMR Sheet": ""
 }
-

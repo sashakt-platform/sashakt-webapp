@@ -77,6 +77,14 @@
 		String(candidateInput ?? '').trim() !== String(lastSavedInput ?? '').trim()
 	);
 	const hasSavedBefore = $derived(String(lastSavedInput ?? '').trim().length > 0);
+	const hasAttemptedResponse = (response: number[] | string | undefined): boolean => {
+		if (typeof response === 'string') {
+			return response.trim().length > 0;
+		}
+
+		return (response?.length ?? 0) > 0;
+	};
+	const hasClearableAnswer = $derived(hasAttemptedResponse(currentSelection?.response));
 
 	const isSelected = (optionId: number) => {
 		const selected = selectedQuestion(question.id);
@@ -243,13 +251,13 @@
 
 	const submitAnswer = async (
 		questionId: number,
-		response: number[] | string,
+		response: number[] | string | null,
 		bookmarked?: boolean,
 		is_reviewed?: boolean
 	) => {
 		const data = {
 			question_revision_id: questionId,
-			response: response.length > 0 ? response : null,
+			response: response == null ? null : response.length > 0 ? response : null,
 			candidate,
 			bookmarked,
 			is_reviewed
@@ -330,6 +338,67 @@
 	};
 
 	const isQuestionBookmarked = $derived(selectedQuestion(question.id)?.bookmarked ?? false);
+
+	const handleClearAnswer = async () => {
+		if (isLocked || isSubmitting || !hasClearableAnswer) return;
+
+		const answeredQuestion = selectedQuestion(question.id);
+		if (!answeredQuestion) return;
+
+		const currentBookmarked = answeredQuestion.bookmarked ?? false;
+		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+		const clearedResponse =
+			question.question_type === question_type_enum.SUBJECTIVE ||
+			question.question_type === question_type_enum.NUMERICALINTEGER ||
+			question.question_type === question_type_enum.NUMERICALDECIMAL
+				? ''
+				: [];
+
+		isSubmitting = true;
+		saveError = null;
+
+		selectedQuestions = selectedQuestions.map((selection) =>
+			selection.question_revision_id === question.id
+				? {
+						...selection,
+						response: clearedResponse,
+						visited: true,
+						bookmarked: currentBookmarked,
+						is_reviewed: false,
+						correct_answer: undefined
+					}
+				: selection
+		);
+		updateStore();
+
+		if (typeof clearedResponse === 'string') {
+			candidateInput = '';
+			lastSavedInput = '';
+		}
+
+		try {
+			await submitAnswer(question.id, clearedResponse, currentBookmarked);
+			if (question.question_type === question_type_enum.SINGLE) {
+				radioGroupKey++;
+			}
+		} catch {
+			selectedQuestions = previousState;
+			updateStore();
+
+			if (typeof clearedResponse === 'string') {
+				const previousResponse = previousState.find(
+					(selection: TSelection) => selection.question_revision_id === question.id
+				)?.response;
+				candidateInput = typeof previousResponse === 'string' ? previousResponse : '';
+				lastSavedInput = candidateInput;
+			}
+
+			saveError = 'Failed to clear your answer. Please try again.';
+			setTimeout(() => (saveError = null), 5000);
+		} finally {
+			isSubmitting = false;
+		}
+	};
 
 	const handleSubjectiveSubmit = async () => {
 		if (isSubmitting) return;
@@ -667,6 +736,15 @@
 				{$t('View Feedback')}
 			</Button>
 		{/if}
+
+		<Button
+			variant="outline"
+			class="mt-4 w-full"
+			onclick={handleClearAnswer}
+			disabled={isLocked || !hasClearableAnswer}
+		>
+			{$t('Clear answer')}
+		</Button>
 
 		{#if showMarkForReview}
 			<Button

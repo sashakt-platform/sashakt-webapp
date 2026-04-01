@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import QuestionPaletteContent from './QuestionPaletteContent.svelte';
-import type { TQuestion, TSelection } from '$lib/types';
+import type { TQuestion, TQuestionSetCandidate, TSelection } from '$lib/types';
 
 // Helper to create mock questions
 const createQuestion = (id: number, isMandatory: boolean): TQuestion => ({
@@ -26,7 +26,8 @@ const createSelection = (
 	response,
 	visited: true,
 	time_spent: 10,
-	bookmarked
+	bookmarked,
+	is_reviewed: false
 });
 
 describe('QuestionPaletteContent', () => {
@@ -240,5 +241,49 @@ describe('QuestionPaletteContent', () => {
 		const grid = container.querySelector('.grid-cols-5');
 		// When maxRows is not provided, no inline max-height style should be applied
 		expect(grid?.getAttribute('style')).toBeNull();
+	});
+
+	it('should render grouped section headings when question sets are provided', () => {
+		const questions = [
+			createQuestion(1, false),
+			createQuestion(2, false),
+			createQuestion(3, false)
+		];
+		const questionSets: TQuestionSetCandidate[] = [
+			{
+				id: 10,
+				title: 'Physics',
+				description: 'Section A',
+				display_order: 1,
+				max_questions_allowed_to_attempt: 2,
+				marking_scheme: null,
+				question_revisions: [questions[0], questions[1]]
+			},
+			{
+				id: 11,
+				title: 'Chemistry',
+				description: 'Section B',
+				display_order: 2,
+				max_questions_allowed_to_attempt: 1,
+				marking_scheme: null,
+				question_revisions: [questions[2]]
+			}
+		];
+
+		render(QuestionPaletteContent, {
+			props: {
+				questions,
+				questionSets,
+				selections: [],
+				currentQuestionIndex: 0,
+				onNavigate: vi.fn()
+			}
+		});
+
+		expect(screen.getByText('Physics')).toBeInTheDocument();
+		expect(screen.getByText('Chemistry')).toBeInTheDocument();
+		expect(
+			screen.getByText('You may attempt up to 1 questions in this section.')
+		).toBeInTheDocument();
 	});
 });

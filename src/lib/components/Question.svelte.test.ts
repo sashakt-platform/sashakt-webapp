@@ -1,7 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import Question from './Question.svelte';
-import { mockCandidate, mockQuestions, mockTestData, setLocaleForTests } from '$lib/test-utils';
+import {
+	mockCandidate,
+	mockQuestions,
+	mockSectionedTestQuestionsResponse,
+	mockTestData,
+	setLocaleForTests
+} from '$lib/test-utils';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -150,6 +156,24 @@ describe('Question', () => {
 			mockQuestions.forEach((q) => {
 				expect(screen.getByText(q.question_text)).toBeInTheDocument();
 			});
+		});
+	});
+
+	it('should render section header for sectioned tests', async () => {
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: {
+					...mockSectionedTestQuestionsResponse,
+					question_pagination: 2
+				},
+				testDetails
+			}
+		});
+
+		await vi.waitFor(() => {
+			expect(screen.getByText('Physics')).toBeInTheDocument();
+			expect(screen.getByText('Section A')).toBeInTheDocument();
 		});
 	});
 });

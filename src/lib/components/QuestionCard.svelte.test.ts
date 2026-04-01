@@ -22,6 +22,36 @@ describe('QuestionCard', () => {
 		vi.clearAllMocks();
 	});
 
+	it('should clear a saved single-choice answer', async () => {
+		vi.mocked(fetch).mockResolvedValue(createMockResponse({ success: true }) as unknown as Response);
+
+		render(QuestionCard, {
+			props: {
+				question: mockSingleChoiceQuestion,
+				serialNumber: 1,
+				candidate: mockCandidate,
+				totalQuestions: 10,
+				selectedQuestions: [
+					{
+						question_revision_id: mockSingleChoiceQuestion.id,
+						response: [mockSingleChoiceQuestion.options[0].id],
+						visited: true,
+						time_spent: 0,
+						bookmarked: false,
+						is_reviewed: false
+					}
+				]
+			}
+		});
+
+		await fireEvent.click(screen.getByRole('button', { name: 'Clear answer' }));
+
+		await waitFor(() => {
+			const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+			expect(body.response).toBeNull();
+		});
+	});
+
 	it('should render question text', () => {
 		render(QuestionCard, {
 			props: {

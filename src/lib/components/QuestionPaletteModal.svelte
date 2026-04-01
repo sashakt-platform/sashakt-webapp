@@ -1,23 +1,25 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog';
 	import QuestionPaletteContent from './QuestionPaletteContent.svelte';
-	import type { TQuestion, TSelection } from '$lib/types';
+	import type { TQuestion, TQuestionSetCandidate, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
 	let {
-		open = $bindable(false),
-		questions,
-		selections,
-		currentQuestionIndex,
-		instructions,
-		onNavigate
-	}: {
-		open: boolean;
-		questions: TQuestion[];
-		selections: TSelection[];
-		currentQuestionIndex: number;
-		instructions: string | undefined;
-		onNavigate: (questionIndex: number) => void;
+			open = $bindable(false),
+			questions,
+			questionSets = [],
+			selections,
+			currentQuestionIndex,
+			instructions,
+			onNavigate
+		}: {
+			open: boolean;
+			questions: TQuestion[];
+			questionSets?: TQuestionSetCandidate[];
+			selections: TSelection[];
+			currentQuestionIndex: number;
+			instructions: string | undefined;
+			onNavigate: (questionIndex: number) => void;
 	} = $props();
 
 	let activeTab = $state<'palette' | 'instructions'>('palette');
@@ -62,12 +64,13 @@
 		<div class="max-h-[calc(80vh-48px)] overflow-y-auto p-4">
 			{#if activeTab === 'palette'}
 				<div id="palette-panel">
-					<QuestionPaletteContent
-						{questions}
-						{selections}
-						{currentQuestionIndex}
-						onNavigate={handleQuestionClick}
-						maxRows={5}
+						<QuestionPaletteContent
+							{questions}
+							questionSets={questionSets}
+							{selections}
+							{currentQuestionIndex}
+							onNavigate={handleQuestionClick}
+							maxRows={5}
 					/>
 				</div>
 			{:else}
