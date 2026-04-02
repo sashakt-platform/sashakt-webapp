@@ -8,6 +8,7 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
@@ -27,7 +28,7 @@
 		testQuestions
 	}: { candidate: TCandidate; testDetails: any; testQuestions: any } = $props();
 
-	const questions: TQuestion[] = testQuestions.question_revisions;
+	const questions: TQuestion[] = normalizeTestQuestions(testQuestions).questions;
 	const sessionStore = createTestSessionStore(candidate);
 	let selections = $state<TSelection[]>(sessionStore.current.selections);
 	let submittingQuestion = $state<number | null>(null);

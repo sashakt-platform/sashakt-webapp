@@ -11,6 +11,7 @@ import type {
 	TMedia,
 	TOptions,
 	TQuestion,
+	TQuestionSetCandidate,
 	TResultData,
 	TSelection,
 	TTestSession
@@ -307,6 +308,27 @@ export const mockQuestions: TQuestion[] = [
 	mockOptionalQuestion
 ];
 
+export const mockQuestionSets: TQuestionSetCandidate[] = [
+	{
+		id: 11,
+		title: 'Physics',
+		description: 'Section A',
+		display_order: 1,
+		max_questions_allowed_to_attempt: 2,
+		marking_scheme: { correct: 4, wrong: -1, skipped: 0 },
+		question_revisions: [mockSingleChoiceQuestion, mockMultipleChoiceQuestion]
+	},
+	{
+		id: 12,
+		title: 'Chemistry',
+		description: 'Section B',
+		display_order: 2,
+		max_questions_allowed_to_attempt: 1,
+		marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
+		question_revisions: [mockOptionalQuestion]
+	}
+];
+
 // Mock selections (answered questions)
 export const mockSelection: TSelection = {
 	question_revision_id: 1,
@@ -357,6 +379,12 @@ export const mockTestData = {
 // Mock test questions response (from backend)
 export const mockTestQuestionsResponse = {
 	question_revisions: mockQuestions,
+	question_pagination: 5
+};
+
+export const mockSectionedTestQuestionsResponse = {
+	question_revisions: [],
+	question_sets: mockQuestionSets,
 	question_pagination: 5
 };
 

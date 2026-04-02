@@ -12,6 +12,7 @@ import {
 	mockMatrixRatingQuestion,
 	mockMatrixRatingOptions,
 	mockMatrixMatchQuestion,
+	mockSectionedTestQuestionsResponse,
 	createMockResponse
 } from '$lib/test-utils';
 import type { TQuestion, TSelection, TMatrixOptions, TOptions } from '$lib/types';
@@ -103,6 +104,20 @@ describe('OmrSheet', () => {
 			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
 			const submitButtons = screen.getAllByRole('button', { name: /submit/i });
 			expect(submitButtons.length).toBeGreaterThanOrEqual(1);
+		});
+
+		it('renders sectioned payloads in the existing flat OMR flow', () => {
+			render(OmrSheet, {
+				props: {
+					candidate: mockCandidate,
+					testDetails: {},
+					testQuestions: mockSectionedTestQuestionsResponse
+				}
+			});
+
+			expect(screen.getByText('Q.1:')).toBeInTheDocument();
+			expect(screen.getByText('Q.2:')).toBeInTheDocument();
+			expect(screen.getByText('Q.3:')).toBeInTheDocument();
 		});
 	});
 

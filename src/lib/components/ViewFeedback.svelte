@@ -7,6 +7,7 @@
 	import Check from '@lucide/svelte/icons/check';
 	import X from '@lucide/svelte/icons/x';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { t } from 'svelte-i18n';
 	import { question_type_enum } from '$lib/types';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
@@ -36,8 +37,10 @@
 		return 'none';
 	};
 
+	const questions = $derived(normalizeTestQuestions(testQuestions).questions);
+
 	const feedbackWithQuestions = $derived(
-		(testQuestions?.question_revisions ?? []).map((question: any) => {
+		questions.map((question: any) => {
 			const fb = (feedback ?? []).find((f: any) => f.question_revision_id === question.id);
 
 			const feedbackData = fb ?? {

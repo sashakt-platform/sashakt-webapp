@@ -7,6 +7,7 @@ import {
 	mockSubjectiveQuestion,
 	mockNumericalIntegerQuestion,
 	mockNumericalDecimalQuestion,
+	mockSectionedTestQuestionsResponse,
 	mockTestQuestionsResponse,
 	mockQuestionWithMedia,
 	mockImageMedia,
@@ -67,6 +68,18 @@ describe('ViewFeedback', () => {
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.instructions)).toBeInTheDocument();
+		});
+
+		it('should render sectioned payloads in the existing flat feedback flow', () => {
+			const feedback = [createFeedback(1, [102], [102]), createFeedback(2, [201], [201, 202])];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: mockSectionedTestQuestionsResponse }
+			});
+
+			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
+			expect(screen.getByText(mockMultipleChoiceQuestion.question_text)).toBeInTheDocument();
+			expect(screen.getByText('A. 3')).toBeInTheDocument();
 		});
 	});
 
