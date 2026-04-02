@@ -22,8 +22,10 @@
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
+	import { SELECTED_OPTION_CLASS } from '$lib/helpers/questionStyles';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import OmrCard from './OmrCard.svelte';
+	import SaveAnswerButton from './SaveAnswerButton.svelte';
 
 	let {
 		question,
@@ -609,7 +611,7 @@
 									isFeedbackViewed
 										? feedbackClass || ''
 										: isSelected(option.id)
-											? 'bg-primary text-muted *:border-muted *:text-muted'
+											? SELECTED_OPTION_CLASS
 											: ''
 								} ${isLocked ? 'cursor-not-allowed' : ''}`}
 							>
@@ -646,21 +648,12 @@
 						maxlength={question.subjective_answer_limit || undefined}
 					></textarea>
 					<div class="flex items-center justify-between">
-						<Button
-							variant="default"
-							size="sm"
+						<SaveAnswerButton
 							onclick={handleSubjectiveSubmit}
 							disabled={isSubmitting || !String(candidateInput ?? '').trim() || !hasUnsavedChanges}
-						>
-							{#if !hasUnsavedChanges && hasSavedBefore}
-								<Check class="mr-1 h-4 w-4" />
-								{$t('Saved')}
-							{:else if hasSavedBefore}
-								{$t('Update Answer')}
-							{:else}
-								{$t('Save Answer')}
-							{/if}
-						</Button>
+							{hasUnsavedChanges}
+							{hasSavedBefore}
+						/>
 						{#if question.subjective_answer_limit}
 							{@const remaining = question.subjective_answer_limit - (candidateInput ?? '').length}
 							<div class="flex flex-col">
@@ -728,23 +721,12 @@
 							bind:value={candidateInput}
 						/>
 						<div class="flex items-center justify-between">
-							<Button
-								variant="default"
-								size="sm"
+							<SaveAnswerButton
 								onclick={handleSubjectiveSubmit}
-								disabled={isSubmitting ||
-									!String(candidateInput ?? '').trim() ||
-									!hasUnsavedChanges}
-							>
-								{#if !hasUnsavedChanges && hasSavedBefore}
-									<Check class="mr-1 h-4 w-4" />
-									{$t('Saved')}
-								{:else if hasSavedBefore}
-									{$t('Update Answer')}
-								{:else}
-									{$t('Save Answer')}
-								{/if}
-							</Button>
+								disabled={isSubmitting || !String(candidateInput ?? '').trim() || !hasUnsavedChanges}
+								{hasUnsavedChanges}
+								{hasSavedBefore}
+							/>
 						</div>
 					</div>
 				{/if}
@@ -801,7 +783,7 @@
 								<tr>
 									<td class="px-3 py-3 text-sm font-semibold text-gray-700">{row.key}</td>
 									{#each matrixColumns as col (col.id)}
-										{@const isChecked = (matrixSelections[row.id] ?? []).includes(col.id)}
+										{@const isChecked = (matrixSelections[String(row.id)] ?? []).includes(col.id)}
 										<td class="px-5 py-3 text-center">
 											<Checkbox
 												checked={isChecked}
@@ -868,7 +850,7 @@
 								isFeedbackViewed
 									? feedbackClass || ''
 									: isSelected(option.id)
-										? 'bg-primary text-muted *:border-muted *:text-muted'
+										? SELECTED_OPTION_CLASS
 										: ''
 							} ${isLocked ? 'cursor-not-allowed' : ''}`}
 						>

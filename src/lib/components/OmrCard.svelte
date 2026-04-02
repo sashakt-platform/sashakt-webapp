@@ -1,10 +1,8 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import Check from '@lucide/svelte/icons/check';
 	import {
 		question_type_enum,
 		type TMatrixOptions,
@@ -12,6 +10,8 @@
 		type TQuestion
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
+	import { SELECTED_OPTION_CLASS } from '$lib/helpers/questionStyles';
+	import SaveAnswerButton from './SaveAnswerButton.svelte';
 
 	let {
 		question,
@@ -71,19 +71,12 @@
 				oninput={(e) => onCandidateInputChange?.(e.currentTarget.value)}
 			></textarea>
 			<div class="flex items-center justify-between">
-				<Button
-					size="sm"
+				<SaveAnswerButton
 					onclick={onSubjectiveSubmit}
 					disabled={isSubmitting || !String(candidateInput).trim() || !hasUnsavedChanges}
-				>
-					{#if !hasUnsavedChanges && hasSavedBefore}
-						<Check class="mr-1 h-4 w-4" />{$t('Saved')}
-					{:else if hasSavedBefore}
-						{$t('Update Answer')}
-					{:else}
-						{$t('Save Answer')}
-					{/if}
-				</Button>
+					{hasUnsavedChanges}
+					{hasSavedBefore}
+				/>
 				{#if question.subjective_answer_limit}
 					{@const remaining = question.subjective_answer_limit - candidateInput.length}
 					<span
@@ -105,7 +98,7 @@
 					class="flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm sm:px-5 sm:py-4 sm:text-base {isSelected(
 						option.id
 					)
-						? 'bg-primary text-muted *:border-muted *:text-muted'
+						? SELECTED_OPTION_CLASS
 						: ''}"
 				>
 					{option.key}
@@ -139,7 +132,7 @@
 						class="flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm sm:px-5 sm:py-4 sm:text-base {isSelected(
 							option.id
 						)
-							? 'bg-primary text-muted *:border-muted *:text-muted'
+							? SELECTED_OPTION_CLASS
 							: ''}"
 					>
 						{option.key}
@@ -159,19 +152,12 @@
 				oninput={(e) => onCandidateInputChange?.(e.currentTarget.value)}
 			/>
 			<div class="flex items-center justify-between">
-				<Button
-					size="sm"
+				<SaveAnswerButton
 					onclick={onSubjectiveSubmit}
 					disabled={isSubmitting || !String(candidateInput).trim() || !hasUnsavedChanges}
-				>
-					{#if !hasUnsavedChanges && hasSavedBefore}
-						<Check class="mr-1 h-4 w-4" />{$t('Saved')}
-					{:else if hasSavedBefore}
-						{$t('Update Answer')}
-					{:else}
-						{$t('Save Answer')}
-					{/if}
-				</Button>
+					{hasUnsavedChanges}
+					{hasSavedBefore}
+				/>
 			</div>
 		</div>
 	{:else if question.question_type === question_type_enum.MATRIXMATCH}
