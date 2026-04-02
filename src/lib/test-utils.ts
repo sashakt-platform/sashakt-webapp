@@ -12,7 +12,6 @@ import type {
 	TOptions,
 	TQuestion,
 	TQuestionSetCandidate,
-	TQuestionSetSummary,
 	TResultData,
 	TSelection,
 	TTestSession
@@ -27,7 +26,7 @@ export const mockCandidate: TCandidate = {
 };
 
 // Mock test questions
-export const mockSingleChoiceQuestion = {
+export const mockSingleChoiceQuestion: TQuestion = {
 	id: 1,
 	question_text: 'What is 2 + 2?',
 	instructions: 'Select the correct answer',
@@ -42,9 +41,9 @@ export const mockSingleChoiceQuestion = {
 	is_mandatory: true,
 	marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
 	media: null
-} satisfies TQuestion;
+};
 
-export const mockMultipleChoiceQuestion = {
+export const mockMultipleChoiceQuestion: TQuestion = {
 	id: 2,
 	question_text: 'Which are prime numbers?',
 	instructions: 'Select all that apply',
@@ -59,9 +58,9 @@ export const mockMultipleChoiceQuestion = {
 	is_mandatory: false,
 	marking_scheme: { correct: 2, wrong: -1, skipped: 0 },
 	media: null
-} satisfies TQuestion;
+};
 
-export const mockOptionalQuestion = {
+export const mockOptionalQuestion: TQuestion = {
 	id: 3,
 	question_text: 'What is the capital of France?',
 	instructions: '',
@@ -76,9 +75,9 @@ export const mockOptionalQuestion = {
 	is_mandatory: false,
 	marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
 	media: null
-} satisfies TQuestion;
+};
 
-export const mockSubjectiveQuestion = {
+export const mockSubjectiveQuestion: TQuestion = {
 	id: 4,
 	question_text: 'Explain the process of photosynthesis.',
 	instructions: 'Write your answer in detail',
@@ -88,9 +87,9 @@ export const mockSubjectiveQuestion = {
 	is_mandatory: true,
 	marking_scheme: { correct: 5, wrong: 0, skipped: 0 },
 	media: null
-} satisfies TQuestion;
+};
 
-export const mockMultiChoiceWithPartialMarks = {
+export const mockMultiChoiceWithPartialMarks: TQuestion = {
 	id: 6,
 	question_text: 'Which of the following are programming languages?',
 	instructions: 'Select all that apply',
@@ -115,9 +114,9 @@ export const mockMultiChoiceWithPartialMarks = {
 		}
 	},
 	media: null
-} satisfies TQuestion;
+};
 
-export const mockSubjectiveQuestionNoLimit = {
+export const mockSubjectiveQuestionNoLimit: TQuestion = {
 	id: 5,
 	question_text: 'Describe your favorite book.',
 	instructions: '',
@@ -127,9 +126,9 @@ export const mockSubjectiveQuestionNoLimit = {
 	is_mandatory: false,
 	marking_scheme: { correct: 3, wrong: 0, skipped: 0 },
 	media: null
-} satisfies TQuestion;
+};
 
-export const mockNumericalIntegerQuestion = {
+export const mockNumericalIntegerQuestion: TQuestion = {
 	id: 6,
 	question_text: 'What is 5 + 3?',
 	instructions: 'Enter the numerical answer',
@@ -139,9 +138,9 @@ export const mockNumericalIntegerQuestion = {
 	is_mandatory: true,
 	marking_scheme: { correct: 3, wrong: -1, skipped: 0 },
 	media: null
-} satisfies TQuestion;
+};
 
-export const mockNumericalDecimalQuestion = {
+export const mockNumericalDecimalQuestion: TQuestion = {
 	id: 7,
 	question_text: 'What is the value of π (pi)?',
 	instructions: 'Enter up to 2 decimal places',
@@ -151,7 +150,7 @@ export const mockNumericalDecimalQuestion = {
 	is_mandatory: false,
 	marking_scheme: { correct: 2, wrong: 0, skipped: 0 },
 	media: null
-} satisfies TQuestion;
+};
 
 export const mockMatrixRatingOptions: TMatrixOptions = {
 	rows: {
@@ -172,7 +171,7 @@ export const mockMatrixRatingOptions: TMatrixOptions = {
 	}
 };
 
-export const mockMatrixRatingQuestion = {
+export const mockMatrixRatingQuestion: TQuestion = {
 	id: 8,
 	question_text: 'How difficult do you find the following subjects?',
 	instructions: 'Rate each subject',
@@ -182,9 +181,9 @@ export const mockMatrixRatingQuestion = {
 	is_mandatory: true,
 	marking_scheme: { correct: 0, wrong: 0, skipped: 0 },
 	media: null
-} satisfies TQuestion;
+};
 
-export const mockMatrixMatchQuestion = {
+export const mockMatrixMatchQuestion: TQuestion = {
 	id: 8,
 	question_text: 'Match the following items correctly.',
 	instructions: 'Match each item in Column A with its corresponding item in Column B.',
@@ -209,7 +208,7 @@ export const mockMatrixMatchQuestion = {
 	is_mandatory: false,
 	marking_scheme: { correct: 2, wrong: 0, skipped: 0 },
 	media: null
-} satisfies TQuestion;
+};
 
 // Mock media data
 export const mockImageMedia: TMedia = {
@@ -286,7 +285,7 @@ export const mockImageAndExternalMedia: TMedia = {
 	}
 };
 
-export const mockQuestionWithMedia = {
+export const mockQuestionWithMedia: TQuestion = {
 	id: 10,
 	question_text: 'Look at the image and select the correct answer.',
 	instructions: 'Use the diagram to answer',
@@ -301,7 +300,7 @@ export const mockQuestionWithMedia = {
 	is_mandatory: true,
 	marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
 	media: mockImageMedia
-} satisfies TQuestion;
+};
 
 export const mockQuestions: TQuestion[] = [
 	mockSingleChoiceQuestion,
@@ -327,27 +326,6 @@ export const mockQuestionSets: TQuestionSetCandidate[] = [
 		max_questions_allowed_to_attempt: 1,
 		marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
 		question_revisions: [mockOptionalQuestion]
-	}
-];
-
-export const mockQuestionSetSummaries: TQuestionSetSummary[] = [
-	{
-		id: 11,
-		title: 'Physics',
-		description: 'Section A',
-		display_order: 1,
-		max_questions_allowed_to_attempt: 2,
-		marking_scheme: { correct: 4, wrong: -1, skipped: 0 },
-		question_count: 2
-	},
-	{
-		id: 12,
-		title: 'Chemistry',
-		description: 'Section B',
-		display_order: 2,
-		max_questions_allowed_to_attempt: 1,
-		marking_scheme: { correct: 1, wrong: 0, skipped: 0 },
-		question_count: 1
 	}
 ];
 
@@ -395,8 +373,7 @@ export const mockTestData = {
 	locale: DEFAULT_LANGUAGE,
 	show_question_palette: true,
 	omr: 'NEVER',
-	show_feedback_on_completion: true,
-	question_sets: null
+	show_feedback_on_completion: true
 };
 
 // Mock test questions response (from backend)
@@ -406,7 +383,7 @@ export const mockTestQuestionsResponse = {
 };
 
 export const mockSectionedTestQuestionsResponse = {
-	question_revisions: mockQuestions,
+	question_revisions: [],
 	question_sets: mockQuestionSets,
 	question_pagination: 5
 };

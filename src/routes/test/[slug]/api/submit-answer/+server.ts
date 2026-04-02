@@ -64,17 +64,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		);
 
 		if (!res.ok) {
-			let errorMessage = `Failed to save answer: ${res.status} ${res.statusText}`;
-
-			try {
-				const errorData = await res.json();
-				errorMessage = errorData?.detail || errorData?.message || errorData?.error || errorMessage;
-			} catch {}
-
-			return new Response(JSON.stringify({ success: false, error: errorMessage }), {
-				status: res.status,
-				headers: { 'Content-Type': 'application/json' }
-			});
+			throw new Error(`Failed to save answer: ${res.status} ${res.statusText}`);
 		}
 
 		let correct_answer = null;

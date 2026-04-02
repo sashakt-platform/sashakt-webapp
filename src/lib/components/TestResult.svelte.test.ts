@@ -4,7 +4,6 @@ import TestResult from './TestResult.svelte';
 import {
 	mockResultData,
 	mockResultDataWithCertificate,
-	mockSectionedTestQuestionsResponse,
 	mockTestData,
 	setLocaleForTests
 } from '$lib/test-utils';
@@ -233,29 +232,6 @@ describe('TestResult - View Feedback button', () => {
 		await fireEvent.click(button);
 
 		expect(onViewFeedback).toHaveBeenCalledOnce();
-	});
-});
-
-describe('TestResult - Section summary', () => {
-	it('should render section-wise summary on final result page for sectioned tests', () => {
-		render(TestResult, {
-			props: {
-				resultData: mockResultData,
-				testDetails: mockTestData,
-				testQuestions: mockSectionedTestQuestionsResponse,
-				feedback: [
-					{ question_revision_id: 1, submitted_answer: [101], correct_answer: [102] },
-					{ question_revision_id: 2, submitted_answer: [201], correct_answer: [201, 202] }
-				]
-			}
-		});
-
-		expect(screen.getByText('Section summary')).toBeInTheDocument();
-		expect(screen.getByText('Physics')).toBeInTheDocument();
-		expect(screen.getByText('Chemistry')).toBeInTheDocument();
-		expect(screen.getByText('Questions')).toBeInTheDocument();
-		expect(screen.getByText('Attempted')).toBeInTheDocument();
-		expect(screen.getByText('Allowed')).toBeInTheDocument();
 	});
 });
 

@@ -8,7 +8,7 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
+	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
@@ -17,12 +17,10 @@
 		question_type_enum,
 		type TCandidate,
 		type TMatrixOptions,
-		type TOptions,
 		type TQuestion,
 		type TSelection
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
-	import RichText from './RichText.svelte';
 
 	let {
 		candidate,
@@ -30,18 +28,14 @@
 		testQuestions
 	}: { candidate: TCandidate; testDetails: any; testQuestions: any } = $props();
 
-	const normalizedQuestionData = $derived(normalizeTestQuestions(testQuestions));
-	const questions: TQuestion[] = $derived(normalizedQuestionData.questions);
-	const sectionByQuestionId = $derived(normalizedQuestionData.sectionByQuestionId);
+	const questions: TQuestion[] = normalizeTestQuestions(testQuestions).questions;
 	const sessionStore = createTestSessionStore(candidate);
 	let selections = $state<TSelection[]>(sessionStore.current.selections);
 	let submittingQuestion = $state<number | null>(null);
-	let questionErrors = $state<Record<number, string>>({});
 
 	let isSubmittingTest = $state(false);
 	let submitDialogOpen = $state(false);
 	let submitError = $state<string | null>(null);
-	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 
 	$effect(() => {
 		if (page.form?.submitTest === false || page.form?.error || submitError) {
@@ -113,27 +107,6 @@
 		return Array.isArray(resp) ? resp : [];
 	};
 
-	const hasAttemptedResponse = (response: number[] | string | undefined): boolean => {
-		if (typeof response === 'string') {
-			return response.trim().length > 0;
-		}
-
-		return (response?.length ?? 0) > 0;
-	};
-
-	const clearQuestionError = (questionId: number) => {
-		if (!(questionId in questionErrors)) return;
-		const { [questionId]: __removed, ...rest } = questionErrors;
-		questionErrors = rest;
-	};
-
-	const setQuestionError = (questionId: number, message: string) => {
-		questionErrors = { ...questionErrors, [questionId]: message };
-	};
-
-	const isSectionLimitMessage = (message: string | null | undefined) =>
-		message?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false;
-
 	const isSelected = (questionId: number, optionId: number) => {
 		return getSelectedOptionIds(questionId).includes(optionId);
 	};
@@ -201,19 +174,14 @@
 
 		const previousSelections = JSON.parse(JSON.stringify(selections));
 		submittingQuestion = question.id;
-		clearQuestionError(question.id);
 
 		updateSelections(question.id, newResponse);
 
 		try {
 			await submitAnswer(question.id, newResponse);
-		} catch (error) {
+		} catch {
 			selections = previousSelections;
 			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to save your answer. Please try again.'
-			);
 		} finally {
 			submittingQuestion = null;
 		}
@@ -233,7 +201,6 @@
 
 		const previousSelections = JSON.parse(JSON.stringify(selections));
 		submittingQuestion = question.id;
-		clearQuestionError(question.id);
 
 		const existing = selections.find((s) => s.question_revision_id === question.id);
 		if (existing) {
@@ -257,13 +224,9 @@
 
 		try {
 			await submitAnswer(question.id, newResponse);
-		} catch (error) {
+		} catch {
 			selections = previousSelections;
 			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to save your answer. Please try again.'
-			);
 		} finally {
 			submittingQuestion = null;
 		}
@@ -285,7 +248,6 @@
 
 		const previousMatrixSelections = JSON.parse(JSON.stringify(matrixSelections));
 		const previousSelections = JSON.parse(JSON.stringify(selections));
-		clearQuestionError(question.id);
 
 		matrixSelections = { ...matrixSelections, [question.id]: newQuestionSelections };
 
@@ -312,14 +274,10 @@
 		submittingQuestion = question.id;
 		try {
 			await submitAnswer(question.id, serialized);
-		} catch (error) {
+		} catch {
 			matrixSelections = previousMatrixSelections;
 			selections = previousSelections;
 			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to save your answer. Please try again.'
-			);
 		} finally {
 			submittingQuestion = null;
 		}
@@ -333,7 +291,6 @@
 
 		const previousSelections = JSON.parse(JSON.stringify(selections));
 		submittingQuestion = question.id;
-		clearQuestionError(question.id);
 
 		if (existing) {
 			selections = selections.map((s) =>
@@ -357,76 +314,9 @@
 		try {
 			await submitAnswer(question.id, text);
 			lastSavedInput[question.id] = text;
-		} catch (error) {
+		} catch {
 			selections = previousSelections;
 			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to save your answer. Please try again.'
-			);
-		} finally {
-			submittingQuestion = null;
-		}
-	};
-
-	const clearAnswer = async (question: TQuestion) => {
-		if (submittingQuestion === question.id) return;
-
-		const existing = selections.find((s) => s.question_revision_id === question.id);
-		if (!existing || !hasAttemptedResponse(existing.response)) return;
-
-		const previousSelections = JSON.parse(JSON.stringify(selections));
-		const previousMatrixSelections = JSON.parse(JSON.stringify(matrixSelections));
-		submittingQuestion = question.id;
-		clearQuestionError(question.id);
-
-		const clearedResponse =
-			question.question_type === question_type_enum.SUBJECTIVE ||
-			question.question_type === question_type_enum.NUMERICALINTEGER ||
-			question.question_type === question_type_enum.NUMERICALDECIMAL
-				? ''
-				: [];
-
-		selections = selections.map((selection) =>
-			selection.question_revision_id === question.id
-				? {
-						...selection,
-						response: clearedResponse,
-						visited: true,
-						is_reviewed: false
-					}
-				: selection
-		);
-		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
-
-		if (typeof clearedResponse === 'string') {
-			candidateInput[question.id] = '';
-			lastSavedInput[question.id] = '';
-		} else if (question.question_type === question_type_enum.MATRIXMATCH) {
-			matrixSelections = { ...matrixSelections, [question.id]: {} };
-		}
-
-		try {
-			await submitAnswer(question.id, clearedResponse);
-		} catch (error) {
-			selections = previousSelections;
-			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-
-			if (typeof clearedResponse === 'string') {
-				candidateInput[question.id] = String(
-					previousSelections.find(
-						(selection: TSelection) => selection.question_revision_id === question.id
-					)?.response ?? ''
-				);
-				lastSavedInput[question.id] = candidateInput[question.id];
-			} else if (question.question_type === question_type_enum.MATRIXMATCH) {
-				matrixSelections = previousMatrixSelections;
-			}
-
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to clear your answer. Please try again.'
-			);
 		} finally {
 			submittingQuestion = null;
 		}
@@ -438,46 +328,6 @@
 
 	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
 		{#each questions as question, i (question.id)}
-			{@const section = sectionByQuestionId.get(question.id) ?? null}
-			{#if section && i === 0}
-				<div class="rounded-2xl border bg-slate-50 p-4">
-					<p class="text-sm font-semibold text-slate-800">{section.title}</p>
-					{#if section.description}
-						<RichText content={section.description} class="text-muted-foreground mt-1 text-sm" />
-					{/if}
-					<p class="text-muted-foreground mt-2 text-sm">
-						{#if canAttemptAllQuestions(section.max_questions_allowed_to_attempt, section.question_revisions.length)}
-							{$t('You may attempt all questions in this section.')}
-						{:else}
-							{$t('You may attempt up to {count} questions in this section.', {
-								values: { count: section.max_questions_allowed_to_attempt }
-							})}
-						{/if}
-					</p>
-				</div>
-			{:else if section}
-				{@const previousQuestion = questions[i - 1]}
-				{@const previousSection = previousQuestion
-					? (sectionByQuestionId.get(previousQuestion.id) ?? null)
-					: null}
-				{#if previousSection?.id !== section.id}
-					<div class="rounded-2xl border bg-slate-50 p-4">
-						<p class="text-sm font-semibold text-slate-800">{section.title}</p>
-						{#if section.description}
-							<RichText content={section.description} class="text-muted-foreground mt-1 text-sm" />
-						{/if}
-						<p class="text-muted-foreground mt-2 text-sm">
-							{#if canAttemptAllQuestions(section.max_questions_allowed_to_attempt, section.question_revisions.length)}
-								{$t('You may attempt all questions in this section.')}
-							{:else}
-								{$t('You may attempt up to {count} questions in this section.', {
-									values: { count: section.max_questions_allowed_to_attempt }
-								})}
-							{/if}
-						</p>
-					</div>
-				{/if}
-			{/if}
 			{@const question_type = question.question_type}
 			<div
 				class="flex items-center gap-6 sm:gap-10 {submittingQuestion === question.id
@@ -502,22 +352,6 @@
 					{@const hasUnsavedChanges = String(currentInput).trim() !== String(savedInput).trim()}
 					{@const hasSavedBefore = String(savedInput).trim().length > 0}
 					<div class="flex w-full flex-col gap-2">
-						{#if questionErrors[question.id]}
-							<div
-								class={`rounded-lg border p-3 text-sm ${
-									isSectionLimitMessage(questionErrors[question.id])
-										? 'border-amber-300 bg-amber-50 text-amber-900'
-										: 'border-destructive bg-destructive/10 text-destructive'
-								}`}
-							>
-								{questionErrors[question.id]}
-								{#if isSectionLimitMessage(questionErrors[question.id])}
-									<p class="mt-2 text-xs text-amber-800">
-										{$t('Clear another answered question in this section to attempt this one.')}
-									</p>
-								{/if}
-							</div>
-						{/if}
 						{#if question_type == question_type_enum.SUBJECTIVE}
 							<textarea
 								class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
@@ -535,35 +369,21 @@
 							/>
 						{/if}
 						<div class="flex items-center justify-between">
-							<div class="flex items-center gap-2">
-								<Button
-									size="sm"
-									onclick={() => handleSubjectiveSubmit(question)}
-									disabled={submittingQuestion === question.id ||
-										!String(currentInput).trim() ||
-										!hasUnsavedChanges}
-								>
-									{#if !hasUnsavedChanges && hasSavedBefore}
-										<Check class="mr-1 h-4 w-4" />{$t('Saved')}
-									{:else if hasSavedBefore}
-										{$t('Update Answer')}
-									{:else}
-										{$t('Save Answer')}
-									{/if}
-								</Button>
-								<Button
-									size="sm"
-									variant="outline"
-									onclick={() => clearAnswer(question)}
-									disabled={submittingQuestion === question.id ||
-										!hasAttemptedResponse(
-											selections.find((selection) => selection.question_revision_id === question.id)
-												?.response
-										)}
-								>
-									{$t('Clear answer')}
-								</Button>
-							</div>
+							<Button
+								size="sm"
+								onclick={() => handleSubjectiveSubmit(question)}
+								disabled={submittingQuestion === question.id ||
+									!String(currentInput).trim() ||
+									!hasUnsavedChanges}
+							>
+								{#if !hasUnsavedChanges && hasSavedBefore}
+									<Check class="mr-1 h-4 w-4" />{$t('Saved')}
+								{:else if hasSavedBefore}
+									{$t('Update Answer')}
+								{:else}
+									{$t('Save Answer')}
+								{/if}
+							</Button>
 							{#if question.subjective_answer_limit}
 								{@const remaining = question.subjective_answer_limit - currentInput.length}
 								<span
@@ -578,147 +398,95 @@
 						</div>
 					</div>
 				{:else if question_type === question_type_enum.MULTIPLE}
-					{@const typedOptions = question.options as TOptions[]}
-					<div class="w-full space-y-3">
-						<div class="grid grid-cols-4 gap-2 sm:gap-3">
-							{#each typedOptions as option (option.id)}
-								{@const uid = `omr-${question.id}-${option.key}`}
-								<Label
-									for={uid}
-									class="flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm sm:px-5 sm:py-4 sm:text-base {isSelected(
-										question.id,
-										option.id
-									)
-										? 'bg-primary text-muted *:border-muted *:text-muted'
-										: ''}"
-								>
-									{option.key}
-									<Checkbox
-										id={uid}
-										value={option.id.toString()}
-										class="ml-2 data-[state=checked]:bg-transparent data-[state=checked]:text-current sm:ml-3"
-										checked={isSelected(question.id, option.id)}
-										onCheckedChange={async (check) => {
-											await handleSelect(question, option.id, check === false);
-										}}
-									/>
-								</Label>
-							{/each}
-						</div>
-						<div class="flex justify-end">
-							<Button
-								size="sm"
-								variant="outline"
-								onclick={() => clearAnswer(question)}
-								disabled={submittingQuestion === question.id ||
-									!hasAttemptedResponse(
-										selections.find((selection) => selection.question_revision_id === question.id)
-											?.response
-									)}
+					<div class="grid grid-cols-4 gap-2 sm:gap-3">
+						{#each question.options as option (option.id)}
+							{@const uid = `omr-${question.id}-${option.key}`}
+							<Label
+								for={uid}
+								class="flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm sm:px-5 sm:py-4 sm:text-base {isSelected(
+									question.id,
+									option.id
+								)
+									? 'bg-primary text-muted *:border-muted *:text-muted'
+									: ''}"
 							>
-								{$t('Clear answer')}
-							</Button>
-						</div>
+								{option.key}
+								<Checkbox
+									id={uid}
+									value={option.id.toString()}
+									class="ml-2 data-[state=checked]:bg-transparent data-[state=checked]:text-current sm:ml-3"
+									checked={isSelected(question.id, option.id)}
+									onCheckedChange={async (check) => {
+										await handleSelect(question, option.id, check === false);
+									}}
+								/>
+							</Label>
+						{/each}
 					</div>
 				{:else if question_type === question_type_enum.SINGLE}
-					{@const typedOptions = question.options as TOptions[]}
-					<div class="w-full space-y-3">
-						<RadioGroup.Root
-							class="grid grid-cols-4 gap-2 sm:gap-3"
-							orientation="horizontal"
-							onValueChange={async (optionId) => {
-								await handleSelect(question, Number(optionId));
-							}}
-							value={getSelectedOptionIds(question.id)[0]?.toString()}
-						>
-							{#each typedOptions as option (option.id)}
-								{@const uid = `omr-${question.id}-${option.key}`}
-								<Label
-									for={uid}
-									class="flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm sm:px-5 sm:py-4 sm:text-base {isSelected(
-										question.id,
-										option.id
-									)
-										? 'bg-primary text-muted *:border-muted *:text-muted'
-										: ''}"
-								>
-									{option.key}
-									<RadioGroup.Item value={option.id.toString()} id={uid} class="ml-2 sm:ml-3" />
-								</Label>
-							{/each}
-						</RadioGroup.Root>
-						<div class="flex justify-end">
-							<Button
-								size="sm"
-								variant="outline"
-								onclick={() => clearAnswer(question)}
-								disabled={submittingQuestion === question.id ||
-									!hasAttemptedResponse(
-										selections.find((selection) => selection.question_revision_id === question.id)
-											?.response
-									)}
+					<RadioGroup.Root
+						class="grid grid-cols-4 gap-2 sm:gap-3"
+						orientation="horizontal"
+						onValueChange={async (optionId) => {
+							await handleSelect(question, Number(optionId));
+						}}
+						value={getSelectedOptionIds(question.id)[0]?.toString()}
+					>
+						{#each question.options as option (option.id)}
+							{@const uid = `omr-${question.id}-${option.key}`}
+							<Label
+								for={uid}
+								class="flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm sm:px-5 sm:py-4 sm:text-base {isSelected(
+									question.id,
+									option.id
+								)
+									? 'bg-primary text-muted *:border-muted *:text-muted'
+									: ''}"
 							>
-								{$t('Clear answer')}
-							</Button>
-						</div>
-					</div>
+								{option.key}
+								<RadioGroup.Item value={option.id.toString()} id={uid} class="ml-2 sm:ml-3" />
+							</Label>
+						{/each}
+					</RadioGroup.Root>
 				{:else if question_type === question_type_enum.MATRIXRATING}
 					{@const matrixOpts = question.options as unknown as TMatrixOptions}
-					<div class="w-full space-y-3">
-						<div class="overflow-x-auto">
-							<table class="w-full border-collapse text-xs sm:text-sm">
-								<thead>
-									<tr>
+					<div class="overflow-x-auto">
+						<table class="w-full border-collapse text-xs sm:text-sm">
+							<thead>
+								<tr>
+									<th class="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold">
+										{matrixOpts.rows.label}
+									</th>
+									{#each matrixOpts.columns.items as col (col.id)}
 										<th
-											class="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold"
+											class="border border-gray-300 bg-gray-100 px-3 py-2 text-center font-semibold"
 										>
-											{matrixOpts.rows.label}
+											{col.key}
 										</th>
+									{/each}
+								</tr>
+							</thead>
+							<tbody>
+								{#each matrixOpts.rows.items as row (row.id)}
+									<tr class="hover:bg-gray-50">
+										<td class="border border-gray-300 px-3 py-2 font-medium">{row.value}</td>
 										{#each matrixOpts.columns.items as col (col.id)}
-											<th
-												class="border border-gray-300 bg-gray-100 px-3 py-2 text-center font-semibold"
-											>
-												{col.key}
-											</th>
+											<td class="border border-gray-300 px-3 py-2 text-center">
+												<input
+													type="radio"
+													name="omr-matrix-{question.id}-row-{row.id}"
+													value={col.id}
+													checked={getMatrixSelection(question.id, row.id) === col.id}
+													class="accent-primary h-4 w-4 cursor-pointer"
+													aria-label="{row.value} – {col.key}"
+													onchange={() => handleMatrixSelection(question, row.id, col.id)}
+												/>
+											</td>
 										{/each}
 									</tr>
-								</thead>
-								<tbody>
-									{#each matrixOpts.rows.items as row (row.id)}
-										<tr class="hover:bg-gray-50">
-											<td class="border border-gray-300 px-3 py-2 font-medium">{row.value}</td>
-											{#each matrixOpts.columns.items as col (col.id)}
-												<td class="border border-gray-300 px-3 py-2 text-center">
-													<input
-														type="radio"
-														name="omr-matrix-{question.id}-row-{row.id}"
-														value={col.id}
-														checked={getMatrixSelection(question.id, row.id) === col.id}
-														class="accent-primary h-4 w-4 cursor-pointer"
-														aria-label="{row.value} – {col.key}"
-														onchange={() => handleMatrixSelection(question, row.id, col.id)}
-													/>
-												</td>
-											{/each}
-										</tr>
-									{/each}
-								</tbody>
-							</table>
-						</div>
-						<div class="flex justify-end">
-							<Button
-								size="sm"
-								variant="outline"
-								onclick={() => clearAnswer(question)}
-								disabled={submittingQuestion === question.id ||
-									!hasAttemptedResponse(
-										selections.find((selection) => selection.question_revision_id === question.id)
-											?.response
-									)}
-							>
-								{$t('Clear answer')}
-							</Button>
-						</div>
+								{/each}
+							</tbody>
+						</table>
 					</div>
 				{:else if question_type === question_type_enum.MATRIXMATCH}
 					{@const matrix = question.options as TMatrixOptions}
@@ -756,20 +524,6 @@
 									{/each}
 								</tbody>
 							</table>
-						</div>
-						<div class="flex justify-end">
-							<Button
-								size="sm"
-								variant="outline"
-								onclick={() => clearAnswer(question)}
-								disabled={submittingQuestion === question.id ||
-									!hasAttemptedResponse(
-										selections.find((selection) => selection.question_revision_id === question.id)
-											?.response
-									)}
-							>
-								{$t('Clear answer')}
-							</Button>
 						</div>
 					</div>
 				{/if}

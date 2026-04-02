@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import LandingPage from './LandingPage.svelte';
-import { mockQuestionSetSummaries, mockTestData, setLocaleForTests } from '$lib/test-utils';
+import { mockTestData, setLocaleForTests } from '$lib/test-utils';
 
 // Mock SvelteKit modules
 vi.mock('$app/environment', () => ({
@@ -123,43 +123,6 @@ describe('LandingPage', () => {
 		expect(screen.getByText('Please read carefully before starting.')).toBeInTheDocument();
 	});
 
-	it('should render question set summaries when present', () => {
-		render(LandingPage, {
-			props: {
-				testDetails: {
-					...defaultTestDetails,
-					question_sets: mockQuestionSetSummaries
-				}
-			}
-		});
-
-		expect(screen.getByText('Sections')).toBeInTheDocument();
-		expect(screen.getByText('Physics')).toBeInTheDocument();
-		expect(screen.getByText('Chemistry')).toBeInTheDocument();
-		expect(screen.getAllByText('You may attempt all questions in this section.')).toHaveLength(2);
-	});
-
-	it('should render question set descriptions as html', () => {
-		render(LandingPage, {
-			props: {
-				testDetails: {
-					...defaultTestDetails,
-					question_sets: [
-						{
-							...mockQuestionSetSummaries[0],
-							description: '<u>Single correct option</u><br>Correct: <strong>+4</strong>'
-						}
-					]
-				}
-			}
-		});
-
-		expect(screen.getByText('Single correct option')).toBeInTheDocument();
-		expect(screen.getByText('Correct:')).toBeInTheDocument();
-		expect(screen.getByText('+4')).toBeInTheDocument();
-		expect(screen.queryByText(/<u>Single correct option<\/u>/)).not.toBeInTheDocument();
-	});
-
 	it('should not render instructions section when no instructions', () => {
 		const testDetailsNoInstructions = {
 			...defaultTestDetails,
@@ -272,6 +235,7 @@ describe('LandingPage - OMR Mode', () => {
 		expect(button).toBeInTheDocument();
 		expect(button.getAttribute('type')).toBe('submit');
 	});
+
 });
 
 describe('Support for Localization', () => {

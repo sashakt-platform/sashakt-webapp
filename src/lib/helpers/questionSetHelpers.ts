@@ -1,19 +1,8 @@
-import type {
-	TQuestion,
-	TQuestionSetCandidate,
-	TQuestionSetSummary,
-	TTestQuestionsResponse
-} from '$lib/types';
+import type { TQuestion, TTestQuestionsResponse } from '$lib/types';
 
 type TQuestionSetLike = {
 	id?: number | null;
 	display_order: number;
-};
-
-export type TQuestionSetGroup = {
-	section: TQuestionSetCandidate;
-	questions: TQuestion[];
-	startIndex: number;
 };
 
 export function sortQuestionSets<T extends TQuestionSetLike>(
@@ -30,9 +19,6 @@ export function sortQuestionSets<T extends TQuestionSetLike>(
 
 export function normalizeTestQuestions(testQuestions?: TTestQuestionsResponse | null): {
 	questions: TQuestion[];
-	questionSets: TQuestionSetCandidate[];
-	isSectioned: boolean;
-	sectionByQuestionId: Map<number, TQuestionSetCandidate>;
 } {
 	const questionSets = sortQuestionSets(testQuestions?.question_sets).map((questionSet) => ({
 		...questionSet,
@@ -45,67 +31,8 @@ export function normalizeTestQuestions(testQuestions?: TTestQuestionsResponse | 
 		(testQuestions?.question_revisions?.length ?? 0) > 0
 			? (testQuestions?.question_revisions ?? [])
 			: flatQuestionsFromSets;
-	const sectionByQuestionId = new Map<number, TQuestionSetCandidate>();
-
-	for (const questionSet of questionSets) {
-		for (const question of questionSet.question_revisions) {
-			sectionByQuestionId.set(question.id, questionSet);
-		}
-	}
 
 	return {
-		questions,
-		questionSets,
-		isSectioned: questionSets.length > 0,
-		sectionByQuestionId
+		questions
 	};
-}
-
-export function buildQuestionSetGroups(
-	questions: TQuestion[],
-	questionSets: TQuestionSetCandidate[]
-): TQuestionSetGroup[] {
-	if (questionSets.length === 0) {
-		return [];
-	}
-
-	const questionIndexById = new Map(questions.map((question, index) => [question.id, index]));
-
-	return questionSets
-		.map((questionSet) => {
-			const groupedQuestions = questionSet.question_revisions.filter((question) =>
-				questionIndexById.has(question.id)
-			);
-			const startIndex =
-				groupedQuestions.length > 0
-					? Math.min(
-							...groupedQuestions.map((question) => questionIndexById.get(question.id) ?? Infinity)
-						)
-					: Infinity;
-
-			return {
-				section: questionSet,
-				questions: groupedQuestions,
-				startIndex
-			};
-		})
-		.filter((group) => group.questions.length > 0)
-		.sort((a, b) => a.startIndex - b.startIndex);
-}
-
-export function canAttemptAllQuestions(
-	maxQuestionsAllowedToAttempt: number,
-	questionCount: number
-): boolean {
-	return maxQuestionsAllowedToAttempt >= questionCount;
-}
-
-export function getQuestionSetQuestionCount(
-	questionSet: TQuestionSetCandidate | TQuestionSetSummary
-): number {
-	if ('question_count' in questionSet) {
-		return questionSet.question_count;
-	}
-
-	return questionSet.question_revisions.length;
 }

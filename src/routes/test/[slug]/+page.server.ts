@@ -41,11 +41,11 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 
 			if (timerResponse.time_left == null || timerResponse.time_left > 0) {
 				const useOmr =
-					locals.testData.omr === 'ALWAYS'
-						? 'true'
-						: locals.testData.omr === 'OPTIONAL'
-							? candidate.use_omr
-							: undefined;
+				locals.testData.omr === 'ALWAYS'
+					? 'true'
+					: locals.testData.omr === 'OPTIONAL'
+						? candidate.use_omr
+						: undefined;
 				testQuestionsResponse = await getTestQuestions(
 					candidate.candidate_test_id,
 					candidate.candidate_uuid,
@@ -202,7 +202,7 @@ export const actions = {
 				let feedback = null;
 				let testQuestions = null;
 
-				if (locals.testData.show_feedback_on_completion || locals.testData.question_sets?.length) {
+				if (locals.testData.show_feedback_on_completion) {
 					try {
 						const [feedbackResponse, testQuestionsData] = await Promise.all([
 							fetch(
@@ -211,7 +211,6 @@ export const actions = {
 							),
 							getTestQuestions(candidate.candidate_test_id, candidate.candidate_uuid)
 						]);
-						testQuestions = testQuestionsData;
 						if (feedbackResponse.ok) {
 							const feedbackData = await feedbackResponse.json();
 							feedback = feedbackData.map(
@@ -236,6 +235,7 @@ export const actions = {
 									};
 								}
 							);
+							testQuestions = testQuestionsData;
 						}
 					} catch (error) {
 						console.error('Error fetching feedback:', error);

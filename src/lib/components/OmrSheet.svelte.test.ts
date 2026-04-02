@@ -4,7 +4,6 @@ import { fireEvent } from '@testing-library/svelte';
 import OmrSheet from './OmrSheet.svelte';
 import {
 	mockCandidate,
-	mockQuestionSets,
 	mockSingleChoiceQuestion,
 	mockMultipleChoiceQuestion,
 	mockSubjectiveQuestion,
@@ -13,6 +12,7 @@ import {
 	mockMatrixRatingQuestion,
 	mockMatrixRatingOptions,
 	mockMatrixMatchQuestion,
+	mockSectionedTestQuestionsResponse,
 	createMockResponse
 } from '$lib/test-utils';
 import type { TQuestion, TSelection, TMatrixOptions, TOptions } from '$lib/types';
@@ -106,20 +106,18 @@ describe('OmrSheet', () => {
 			expect(submitButtons.length).toBeGreaterThanOrEqual(1);
 		});
 
-		it('renders section heading when question sets are provided', () => {
+		it('renders sectioned payloads in the existing flat OMR flow', () => {
 			render(OmrSheet, {
 				props: {
 					candidate: mockCandidate,
 					testDetails: {},
-					testQuestions: {
-						question_revisions: [mockSingleChoiceQuestion, mockMultipleChoiceQuestion],
-						question_sets: [mockQuestionSets[0]]
-					}
+					testQuestions: mockSectionedTestQuestionsResponse
 				}
 			});
 
-			expect(screen.getByText('Physics')).toBeInTheDocument();
-			expect(screen.getByText('Section A')).toBeInTheDocument();
+			expect(screen.getByText('Q.1:')).toBeInTheDocument();
+			expect(screen.getByText('Q.2:')).toBeInTheDocument();
+			expect(screen.getByText('Q.3:')).toBeInTheDocument();
 		});
 	});
 
@@ -214,28 +212,6 @@ describe('OmrSheet', () => {
 
 			await waitFor(() => {
 				expect(radios[0]).not.toBeChecked();
-			});
-		});
-
-		it('clears a saved single-choice answer', async () => {
-			withSelections([
-				{
-					question_revision_id: mockSingleChoiceQuestion.id,
-					response: [mockSingleChoiceQuestion.options[0].id],
-					visited: true,
-					time_spent: 0,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			]);
-
-			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
-
-			await fireEvent.click(screen.getByRole('button', { name: 'Clear answer' }));
-
-			await waitFor(() => {
-				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
-				expect(body.response).toBeNull();
 			});
 		});
 

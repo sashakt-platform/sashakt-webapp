@@ -1,18 +1,16 @@
 <script lang="ts">
 	import Info from '@lucide/svelte/icons/info';
 	import QuestionPaletteContent from './QuestionPaletteContent.svelte';
-	import type { TQuestion, TQuestionSetCandidate, TSelection } from '$lib/types';
+	import type { TQuestion, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
 	let {
 		questions,
-		questionSets = [],
 		selections,
 		currentQuestionIndex,
 		onNavigate
 	}: {
 		questions: TQuestion[];
-		questionSets?: TQuestionSetCandidate[];
 		selections: TSelection[];
 		currentQuestionIndex: number;
 		onNavigate: (questionIndex: number) => void;
@@ -28,12 +26,6 @@
 	</div>
 
 	<div class="overflow-y-auto p-4 pt-2">
-		<QuestionPaletteContent
-			{questions}
-			{questionSets}
-			{selections}
-			{currentQuestionIndex}
-			{onNavigate}
-		/>
+		<QuestionPaletteContent {questions} {selections} {currentQuestionIndex} {onNavigate} />
 	</div>
 </div>

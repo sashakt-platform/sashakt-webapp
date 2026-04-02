@@ -137,6 +137,21 @@ describe('Question', () => {
 		expect(screen.queryByText(mockQuestions[1].question_text)).not.toBeInTheDocument();
 	});
 
+	it('should render sectioned payloads in the existing flat question flow', async () => {
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: { ...mockSectionedTestQuestionsResponse, question_pagination: 2 },
+				testDetails
+			}
+		});
+
+		await vi.waitFor(() => {
+			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+			expect(screen.getByText(mockQuestions[1].question_text)).toBeInTheDocument();
+		});
+	});
+
 	it('should handle questions without pagination', async () => {
 		const noPaginationQuestions = {
 			question_revisions: mockQuestions,
@@ -156,24 +171,6 @@ describe('Question', () => {
 			mockQuestions.forEach((q) => {
 				expect(screen.getByText(q.question_text)).toBeInTheDocument();
 			});
-		});
-	});
-
-	it('should render section header for sectioned tests', async () => {
-		render(Question, {
-			props: {
-				candidate: mockCandidate,
-				testQuestions: {
-					...mockSectionedTestQuestionsResponse,
-					question_pagination: 2
-				},
-				testDetails
-			}
-		});
-
-		await vi.waitFor(() => {
-			expect(screen.getAllByText('Physics').length).toBeGreaterThan(0);
-			expect(screen.getAllByText('Section A').length).toBeGreaterThan(0);
 		});
 	});
 });

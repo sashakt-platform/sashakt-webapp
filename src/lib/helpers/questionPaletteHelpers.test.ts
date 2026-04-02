@@ -29,8 +29,7 @@ const createSelection = (
 	response,
 	visited: true,
 	time_spent: 10,
-	bookmarked,
-	is_reviewed: false
+	bookmarked
 });
 
 describe('isQuestionAnswered', () => {
