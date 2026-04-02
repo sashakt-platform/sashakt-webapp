@@ -16,7 +16,7 @@ import type { TMatrixOptions, TOptions } from '$lib/types';
 
 function baseProps(overrides = {}) {
 	return {
-		questionIndex: 0,
+		serialNumber: 1,
 		isSubmitting: false,
 		radioGroupKey: 0,
 		selectedOptionIds: [],
@@ -37,9 +37,9 @@ describe('OmrCard', () => {
 			expect(screen.getByText('Q.1:')).toBeInTheDocument();
 		});
 
-		it('renders Q.3: for index 2', () => {
+		it('renders Q.3: for serialNumber 3', () => {
 			render(OmrCard, {
-				props: { question: mockSingleChoiceQuestion, ...baseProps({ questionIndex: 2 }) }
+				props: { question: mockSingleChoiceQuestion, ...baseProps({ serialNumber: 3 }) }
 			});
 			expect(screen.getByText('Q.3:')).toBeInTheDocument();
 		});

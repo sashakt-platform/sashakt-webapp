@@ -133,7 +133,7 @@
 		<h1 class="mb-6 text-center text-xl font-semibold text-slate-800">{$t('OMR Sheet')}</h1>
 		<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
 			{#each questions as question, i (question.id)}
-				<QuestionCard mode="omr" {question} {candidate} questionIndex={i} bind:selectedQuestions />
+				<QuestionCard mode="omr" {question} {candidate} serialNumber={i + 1} bind:selectedQuestions />
 			{/each}
 		</div>
 		<div

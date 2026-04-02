@@ -5,12 +5,17 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import Check from '@lucide/svelte/icons/check';
-	import { question_type_enum, type TMatrixOptions, type TOptions, type TQuestion } from '$lib/types';
+	import {
+		question_type_enum,
+		type TMatrixOptions,
+		type TOptions,
+		type TQuestion
+	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 
 	let {
 		question,
-		questionIndex,
+		serialNumber,
 		isSubmitting,
 		radioGroupKey,
 		selectedOptionIds,
@@ -26,7 +31,7 @@
 		onMatrixInput
 	}: {
 		question: TQuestion;
-		questionIndex: number;
+		serialNumber: number;
 		isSubmitting: boolean;
 		radioGroupKey: number;
 		selectedOptionIds: number[];
@@ -43,13 +48,11 @@
 	} = $props();
 </script>
 
-<div
-	class="flex items-center gap-6 sm:gap-10 {isSubmitting ? 'pointer-events-none' : ''}"
->
+<div class="flex items-center gap-6 sm:gap-10 {isSubmitting ? 'pointer-events-none' : ''}">
 	<div class="flex items-center gap-1.5">
 		<Spinner class={isSubmitting ? '' : 'invisible'} />
 		<div class="flex min-w-12 items-center justify-end gap-0.5 sm:min-w-16">
-			<span class="text-sm font-medium text-slate-700 sm:text-lg">Q.{questionIndex + 1}:</span>
+			<span class="text-sm font-medium text-slate-700 sm:text-lg">Q.{serialNumber}:</span>
 			<span
 				class="text-sm leading-none font-bold text-red-500 sm:text-lg {question.is_mandatory
 					? ''
@@ -84,9 +87,7 @@
 				{#if question.subjective_answer_limit}
 					{@const remaining = question.subjective_answer_limit - candidateInput.length}
 					<span
-						class="text-sm {remaining <= 0
-							? 'font-medium text-red-500'
-							: 'text-muted-foreground'}"
+						class="text-sm {remaining <= 0 ? 'font-medium text-red-500' : 'text-muted-foreground'}"
 					>
 						{remaining}
 						{$t('characters remaining')}

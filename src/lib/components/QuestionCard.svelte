@@ -33,8 +33,7 @@
 		selectedQuestions = $bindable(),
 		showFeedback = false,
 		showMarkForReview = true,
-		mode = 'normal',
-		questionIndex = 0
+		mode = 'normal'
 	}: {
 		question: TQuestion;
 		candidate: TCandidate;
@@ -44,7 +43,6 @@
 		showFeedback?: boolean;
 		showMarkForReview?: boolean;
 		mode?: 'normal' | 'omr';
-		questionIndex?: number;
 	} = $props();
 
 	const options = question.options;
@@ -623,7 +621,12 @@
 										{:else if feedbackStatus === 'wrong'}
 											{@render showCorrectWrongMark('wrong')}
 										{:else}
-											<RadioGroup.Item value={option.id.toString()} id={uid} disabled={isLocked} />
+											<RadioGroup.Item
+											value={option.id.toString()}
+											id={uid}
+											disabled={isLocked}
+											class={isSelected(option.id) ? 'border-muted text-muted' : ''}
+										/>
 										{/if}
 									</div>
 								</div>
@@ -882,6 +885,7 @@
 											value={option.id.toString()}
 											checked={isSelected(option.id)}
 											disabled={isLocked}
+											class={isSelected(option.id) ? 'border-muted' : ''}
 											onCheckedChange={async (check) => {
 												await handleSelection(question.id, option.id, check === false);
 											}}
@@ -925,7 +929,7 @@
 {:else}
 	<OmrCard
 		{question}
-		{questionIndex}
+		{serialNumber}
 		{isSubmitting}
 		{radioGroupKey}
 		{selectedOptionIds}
