@@ -15,6 +15,10 @@ import {
 	mockMatrixRatingQuestion,
 	mockMatrixRatingOptions,
 	mockMatrixMatchQuestion,
+	mockMatrixInputTextQuestion,
+	mockMatrixInputTextOptions,
+	mockMatrixInputNumberQuestion,
+	mockMatrixInputNumberOptions,
 	mockQuestionWithMedia,
 	mockImageMedia,
 	mockYoutubeMedia,
@@ -2507,6 +2511,290 @@ describe('QuestionCard', () => {
 
 			expect(container.querySelector('iframe')).not.toBeInTheDocument();
 			expect(screen.queryByRole('img')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('Matrix Input question types', () => {
+		const defaultProps = {
+			serialNumber: 1,
+			candidate: mockCandidate,
+			totalQuestions: 10,
+			selectedQuestions: [] as TSelection[]
+		};
+
+		describe('rendering', () => {
+			it('should render question text', () => {
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+				expect(screen.getByText(mockMatrixInputTextQuestion.question_text)).toBeInTheDocument();
+			});
+
+			it('should render rows label as first column header', () => {
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+				expect(screen.getByText(mockMatrixInputTextOptions.rows.label)).toBeInTheDocument();
+			});
+
+			it('should render columns label as second column header', () => {
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+				expect(screen.getByText(mockMatrixInputTextOptions.columns.label)).toBeInTheDocument();
+			});
+
+			it('should render each row key and value', () => {
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+				mockMatrixInputTextOptions.rows.items.forEach((row) => {
+					expect(screen.getByText(new RegExp(`${row.key}\\.`))).toBeInTheDocument();
+					expect(screen.getByText(row.value)).toBeInTheDocument();
+				});
+			});
+
+			it('should render one input per row', () => {
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+				const inputs = screen.getAllByRole('textbox');
+				expect(inputs).toHaveLength(mockMatrixInputTextOptions.rows.items.length);
+			});
+
+			it('should render text inputs when columns.input_type is text', () => {
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+				screen.getAllByRole('textbox').forEach((input) => {
+					expect(input).toHaveAttribute('type', 'text');
+				});
+			});
+
+			it('should render number inputs when columns.input_type is number', () => {
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
+				const inputs = screen.getAllByRole('spinbutton');
+				expect(inputs).toHaveLength(mockMatrixInputNumberOptions.rows.items.length);
+				inputs.forEach((input) => expect(input).toHaveAttribute('type', 'number'));
+			});
+
+			it('should render all inputs empty when no prior response', () => {
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+				screen.getAllByRole('textbox').forEach((input) => {
+					expect(input).toHaveValue('');
+				});
+			});
+
+			it('should pre-fill inputs from existing JSON response', () => {
+				const selectedQuestions: TSelection[] = [
+					{
+						question_revision_id: mockMatrixInputTextQuestion.id,
+						response: JSON.stringify({ '1': 'Paris', '2': 'Tokyo' }),
+						visited: true,
+						time_spent: 0,
+						bookmarked: false,
+						is_reviewed: false
+					}
+				];
+				render(QuestionCard, {
+					props: { question: mockMatrixInputTextQuestion, ...defaultProps, selectedQuestions }
+				});
+				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+				expect(inputs[0].value).toBe('Paris');
+				expect(inputs[1].value).toBe('Tokyo');
+			});
+
+			it('should show Save Answer button initially', () => {
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+				expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
+			});
+		});
+
+		describe('save interaction', () => {
+			it('should call fetch with JSON-encoded row values on save', async () => {
+				vi.mocked(fetch).mockResolvedValueOnce(
+					createMockResponse({ success: true }) as unknown as Response
+				);
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+
+				const inputs = screen.getAllByRole('textbox');
+				await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+				await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+				await waitFor(() => {
+					expect(fetch).toHaveBeenCalledWith(
+						expect.stringContaining('/api/submit-answer'),
+						expect.objectContaining({ method: 'POST' })
+					);
+					const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+					const response = JSON.parse(body.response);
+					expect(response['1']).toBe('Paris');
+				});
+			});
+
+			it('should show Saved after a successful save with no pending changes', async () => {
+				vi.mocked(fetch).mockResolvedValueOnce(
+					createMockResponse({ success: true }) as unknown as Response
+				);
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+
+				const inputs = screen.getAllByRole('textbox');
+				await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+				await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+				await waitFor(() => {
+					expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+				});
+			});
+
+			it('should show Update Answer after save when new changes are made', async () => {
+				vi.mocked(fetch).mockResolvedValueOnce(
+					createMockResponse({ success: true }) as unknown as Response
+				);
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+
+				const inputs = screen.getAllByRole('textbox');
+				await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+				await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+				await waitFor(() =>
+					expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument()
+				);
+
+				await fireEvent.input(inputs[0], { target: { value: 'Lyon' } });
+				expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
+			});
+
+			it('should show error message when API call fails', async () => {
+				vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+
+				const inputs = screen.getAllByRole('textbox');
+				await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+				await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+				await waitFor(() => {
+					expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
+				});
+			});
+
+			it('should keep input value after API failure', async () => {
+				vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+
+				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+				await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
+				await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+				await waitFor(() =>
+					expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument()
+				);
+				expect(inputs[0].value).toBe('Paris');
+			});
+		});
+
+		describe('locked state', () => {
+			it('should disable all inputs when is_reviewed is true', () => {
+				const selectedQuestions: TSelection[] = [
+					{
+						question_revision_id: mockMatrixInputTextQuestion.id,
+						response: JSON.stringify({ '1': 'Paris' }),
+						visited: true,
+						time_spent: 0,
+						bookmarked: false,
+						is_reviewed: true
+					}
+				];
+				render(QuestionCard, {
+					props: { question: mockMatrixInputTextQuestion, ...defaultProps, selectedQuestions }
+				});
+				screen.getAllByRole('textbox').forEach((input) => {
+					expect(input).toBeDisabled();
+				});
+			});
+		});
+
+		describe('number input key blocking', () => {
+			it('typing text in number input should not change the value', async () => {
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
+				const input = screen.getAllByRole('spinbutton')[0];
+				await fireEvent.input(input, { target: { value: 'a' } });
+				expect((input as HTMLInputElement).value).toBe('');
+			});
+
+			it('should allow digit keys in number inputs', async () => {
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
+				const input = screen.getAllByRole('spinbutton')[0];
+				const event = new KeyboardEvent('keydown', { key: '5', bubbles: true, cancelable: true });
+				input.dispatchEvent(event);
+				expect(event.defaultPrevented).toBe(false);
+			});
+
+			it('should allow Backspace in number inputs', async () => {
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
+				const input = screen.getAllByRole('spinbutton')[0];
+				const event = new KeyboardEvent('keydown', {
+					key: 'Backspace',
+					bubbles: true,
+					cancelable: true
+				});
+				input.dispatchEvent(event);
+				expect(event.defaultPrevented).toBe(false);
+			});
+
+			it('should allow minus sign in number inputs', async () => {
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
+				const input = screen.getAllByRole('spinbutton')[0];
+				const event = new KeyboardEvent('keydown', { key: '-', bubbles: true, cancelable: true });
+				input.dispatchEvent(event);
+				expect(event.defaultPrevented).toBe(false);
+			});
+
+			it('should allow Home and End in number inputs', async () => {
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
+				const input = screen.getAllByRole('spinbutton')[0];
+				for (const key of ['Home', 'End']) {
+					const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+					input.dispatchEvent(event);
+					expect(event.defaultPrevented).toBe(false);
+				}
+			});
+
+			it('should allow ArrowUp and ArrowDown in number inputs', async () => {
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
+				const input = screen.getAllByRole('spinbutton')[0];
+				for (const key of ['ArrowUp', 'ArrowDown']) {
+					const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+					input.dispatchEvent(event);
+					expect(event.defaultPrevented).toBe(false);
+				}
+			});
+
+			it('should allow Ctrl/Cmd shortcuts in number inputs', async () => {
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
+				const input = screen.getAllByRole('spinbutton')[0];
+				for (const modifier of ['ctrlKey', 'metaKey'] as const) {
+					const event = new KeyboardEvent('keydown', {
+						key: 'a',
+						[modifier]: true,
+						bubbles: true,
+						cancelable: true
+					});
+					input.dispatchEvent(event);
+					expect(event.defaultPrevented).toBe(false);
+				}
+			});
+
+			it('should not block keys in text inputs', async () => {
+				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
+				const input = screen.getAllByRole('textbox')[0];
+				const event = new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true });
+				input.dispatchEvent(event);
+				expect(event.defaultPrevented).toBe(false);
+			});
 		});
 	});
 });
