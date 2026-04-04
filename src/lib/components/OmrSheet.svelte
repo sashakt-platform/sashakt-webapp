@@ -11,11 +11,7 @@
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
-	import {
-		parseJsonRecord,
-		normalizeMatrixInputValues,
-		blockNonNumericKey
-	} from '$lib/helpers/matrixHelpers';
+	import { parseJsonRecord, normalizeMatrixInputValues } from '$lib/helpers/matrixHelpers';
 	import {
 		question_type_enum,
 		type TCandidate,
@@ -604,7 +600,6 @@
 													class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 													value={currentValues[String(row.id)] ?? ''}
 													disabled={submittingQuestion === question.id}
-													onkeydown={inputType === 'number' ? blockNonNumericKey : undefined}
 													oninput={(e) =>
 														handleMatrixInputChange(
 															question.id,

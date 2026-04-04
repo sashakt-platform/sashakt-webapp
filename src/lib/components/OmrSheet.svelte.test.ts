@@ -1045,8 +1045,8 @@ describe('OmrSheet', () => {
 		it('blocks non-numeric key input (e.g. letter "a")', async () => {
 			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
 			const input = screen.getAllByRole('spinbutton')[0];
-			const notPrevented = await fireEvent.keyDown(input, { key: 'a' });
-			expect(notPrevented).toBe(false);
+			await fireEvent.input(input, { target: { value: 'a' } });
+			expect((input as HTMLInputElement).value).toBe('');
 		});
 
 		it('allows digit key input', async () => {

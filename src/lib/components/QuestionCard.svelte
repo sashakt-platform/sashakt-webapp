@@ -11,11 +11,7 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
-	import {
-		parseJsonRecord,
-		normalizeMatrixInputValues,
-		blockNonNumericKey
-	} from '$lib/helpers/matrixHelpers';
+	import { parseJsonRecord, normalizeMatrixInputValues } from '$lib/helpers/matrixHelpers';
 	import {
 		question_type_enum,
 		type TCandidate,
@@ -924,7 +920,6 @@
 										class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 										value={matrixInputValues[String(row.id)] ?? ''}
 										disabled={isLocked}
-										onkeydown={inputType === 'number' ? blockNonNumericKey : undefined}
 										oninput={(e) =>
 											handleMatrixInputChange(row.id, (e.target as HTMLInputElement).value)}
 									/>

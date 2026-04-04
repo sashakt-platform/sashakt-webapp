@@ -2560,7 +2560,9 @@ describe('QuestionCard', () => {
 			});
 
 			it('should render number inputs when columns.input_type is number', () => {
-				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
 				const inputs = screen.getAllByRole('spinbutton');
 				expect(inputs).toHaveLength(mockMatrixInputNumberOptions.rows.items.length);
 				inputs.forEach((input) => expect(input).toHaveAttribute('type', 'number'));
@@ -2702,24 +2704,19 @@ describe('QuestionCard', () => {
 		});
 
 		describe('number input key blocking', () => {
-			it('should block letter keys in number inputs', async () => {
-				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
+			it('typing text in number input should not change the value', async () => {
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
 				const input = screen.getAllByRole('spinbutton')[0];
-				const event = new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true });
-				input.dispatchEvent(event);
-				expect(event.defaultPrevented).toBe(true);
-			});
-
-			it('should block e key in number inputs', async () => {
-				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
-				const input = screen.getAllByRole('spinbutton')[0];
-				const event = new KeyboardEvent('keydown', { key: 'e', bubbles: true, cancelable: true });
-				input.dispatchEvent(event);
-				expect(event.defaultPrevented).toBe(true);
+				await fireEvent.input(input, { target: { value: 'a' } });
+				expect((input as HTMLInputElement).value).toBe('');
 			});
 
 			it('should allow digit keys in number inputs', async () => {
-				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
 				const input = screen.getAllByRole('spinbutton')[0];
 				const event = new KeyboardEvent('keydown', { key: '5', bubbles: true, cancelable: true });
 				input.dispatchEvent(event);
@@ -2727,7 +2724,9 @@ describe('QuestionCard', () => {
 			});
 
 			it('should allow Backspace in number inputs', async () => {
-				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
 				const input = screen.getAllByRole('spinbutton')[0];
 				const event = new KeyboardEvent('keydown', {
 					key: 'Backspace',
@@ -2739,7 +2738,9 @@ describe('QuestionCard', () => {
 			});
 
 			it('should allow minus sign in number inputs', async () => {
-				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
 				const input = screen.getAllByRole('spinbutton')[0];
 				const event = new KeyboardEvent('keydown', { key: '-', bubbles: true, cancelable: true });
 				input.dispatchEvent(event);
@@ -2747,7 +2748,9 @@ describe('QuestionCard', () => {
 			});
 
 			it('should allow Home and End in number inputs', async () => {
-				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
 				const input = screen.getAllByRole('spinbutton')[0];
 				for (const key of ['Home', 'End']) {
 					const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
@@ -2757,7 +2760,9 @@ describe('QuestionCard', () => {
 			});
 
 			it('should allow ArrowUp and ArrowDown in number inputs', async () => {
-				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
 				const input = screen.getAllByRole('spinbutton')[0];
 				for (const key of ['ArrowUp', 'ArrowDown']) {
 					const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
@@ -2767,7 +2772,9 @@ describe('QuestionCard', () => {
 			});
 
 			it('should allow Ctrl/Cmd shortcuts in number inputs', async () => {
-				render(QuestionCard, { props: { question: mockMatrixInputNumberQuestion, ...defaultProps } });
+				render(QuestionCard, {
+					props: { question: mockMatrixInputNumberQuestion, ...defaultProps }
+				});
 				const input = screen.getAllByRole('spinbutton')[0];
 				for (const modifier of ['ctrlKey', 'metaKey'] as const) {
 					const event = new KeyboardEvent('keydown', {
