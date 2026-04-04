@@ -10,7 +10,11 @@ import {
 	mockNumericalDecimalQuestion,
 	mockMatrixMatchQuestion,
 	mockMatrixRatingQuestion,
-	mockMatrixRatingOptions
+	mockMatrixRatingOptions,
+	mockMatrixInputTextQuestion,
+	mockMatrixInputNumberQuestion,
+	mockMatrixInputTextOptions,
+	mockMatrixInputNumberOptions
 } from '$lib/test-utils';
 import type { TMatrixOptions, TOptions } from '$lib/types';
 
@@ -550,6 +554,178 @@ describe('OmrCard', () => {
 		it('does not render checkboxes', () => {
 			render(OmrCard, { props: { question: mockMatrixRatingQuestion, ...baseProps() } });
 			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+		});
+	});
+
+	describe('Matrix input (text) questions', () => {
+		it('renders rows and columns labels as table headers', () => {
+			render(OmrCard, { props: { question: mockMatrixInputTextQuestion, ...baseProps() } });
+			expect(screen.getByText(mockMatrixInputTextOptions.rows.label)).toBeInTheDocument();
+			expect(screen.getByText(mockMatrixInputTextOptions.columns.label)).toBeInTheDocument();
+		});
+
+		it('renders a text input for each row', () => {
+			render(OmrCard, { props: { question: mockMatrixInputTextQuestion, ...baseProps() } });
+			expect(screen.getAllByRole('textbox')).toHaveLength(
+				mockMatrixInputTextOptions.rows.items.length
+			);
+		});
+
+		it('all inputs are empty when matrixInputValues is not provided', () => {
+			render(OmrCard, { props: { question: mockMatrixInputTextQuestion, ...baseProps() } });
+			screen.getAllByRole('textbox').forEach((input) => {
+				expect(input).toHaveValue('');
+			});
+		});
+
+		it('pre-fills inputs from matrixInputValues prop', () => {
+			render(OmrCard, {
+				props: {
+					question: mockMatrixInputTextQuestion,
+					...baseProps({ matrixInputValues: { '1': 'Paris', '2': 'Tokyo' } })
+				}
+			});
+			const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+			expect(inputs[0]).toHaveValue('Paris');
+			expect(inputs[1]).toHaveValue('Tokyo');
+		});
+
+		it('calls onMatrixInputChange with rowId and value on input', async () => {
+			const onMatrixInputChange = vi.fn();
+			render(OmrCard, {
+				props: {
+					question: mockMatrixInputTextQuestion,
+					...baseProps({ onMatrixInputChange })
+				}
+			});
+			await fireEvent.input(screen.getAllByRole('textbox')[0], { target: { value: 'Paris' } });
+			expect(onMatrixInputChange).toHaveBeenCalledWith(
+				mockMatrixInputTextOptions.rows.items[0].id,
+				'Paris'
+			);
+		});
+
+		it('renders the Save Answer button', () => {
+			render(OmrCard, { props: { question: mockMatrixInputTextQuestion, ...baseProps() } });
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
+		});
+
+		it('Save Answer button is disabled when hasUnsavedMatrixInputChanges is false', () => {
+			render(OmrCard, {
+				props: {
+					question: mockMatrixInputTextQuestion,
+					...baseProps({ hasUnsavedMatrixInputChanges: false })
+				}
+			});
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
+		});
+
+		it('Save Answer button is enabled when hasUnsavedMatrixInputChanges is true', () => {
+			render(OmrCard, {
+				props: {
+					question: mockMatrixInputTextQuestion,
+					...baseProps({ hasUnsavedMatrixInputChanges: true })
+				}
+			});
+			expect(screen.getByRole('button', { name: /save answer/i })).toBeEnabled();
+		});
+
+		it('calls onMatrixInputSave when Save Answer is clicked', async () => {
+			const onMatrixInputSave = vi.fn();
+			render(OmrCard, {
+				props: {
+					question: mockMatrixInputTextQuestion,
+					...baseProps({ hasUnsavedMatrixInputChanges: true, onMatrixInputSave })
+				}
+			});
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			expect(onMatrixInputSave).toHaveBeenCalledOnce();
+		});
+
+		it('shows Saved state when hasSavedMatrixInputBefore and no unsaved changes', () => {
+			render(OmrCard, {
+				props: {
+					question: mockMatrixInputTextQuestion,
+					...baseProps({
+						hasUnsavedMatrixInputChanges: false,
+						hasSavedMatrixInputBefore: true
+					})
+				}
+			});
+			expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+		});
+
+		it('shows Update Answer when there are unsaved changes and a previous save', () => {
+			render(OmrCard, {
+				props: {
+					question: mockMatrixInputTextQuestion,
+					...baseProps({
+						hasUnsavedMatrixInputChanges: true,
+						hasSavedMatrixInputBefore: true
+					})
+				}
+			});
+			expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
+		});
+
+		it('disables inputs when isSubmitting is true', () => {
+			render(OmrCard, {
+				props: {
+					question: mockMatrixInputTextQuestion,
+					...baseProps({ isSubmitting: true })
+				}
+			});
+			screen.getAllByRole('textbox').forEach((input) => {
+				expect(input).toBeDisabled();
+			});
+		});
+	});
+
+	describe('Matrix input (number) questions', () => {
+		it('renders a number input (spinbutton) for each row', () => {
+			render(OmrCard, { props: { question: mockMatrixInputNumberQuestion, ...baseProps() } });
+			expect(screen.getAllByRole('spinbutton')).toHaveLength(
+				mockMatrixInputNumberOptions.rows.items.length
+			);
+		});
+
+		it('renders rows and columns labels as table headers', () => {
+			render(OmrCard, { props: { question: mockMatrixInputNumberQuestion, ...baseProps() } });
+			expect(screen.getByText(mockMatrixInputNumberOptions.rows.label)).toBeInTheDocument();
+			expect(screen.getByText(mockMatrixInputNumberOptions.columns.label)).toBeInTheDocument();
+		});
+
+		it('does not render radio buttons or checkboxes', () => {
+			render(OmrCard, { props: { question: mockMatrixInputNumberQuestion, ...baseProps() } });
+			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+		});
+
+		it('pre-fills number inputs from matrixInputValues prop', () => {
+			render(OmrCard, {
+				props: {
+					question: mockMatrixInputNumberQuestion,
+					...baseProps({ matrixInputValues: { '1': '5', '2': '10' } })
+				}
+			});
+			const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+			expect(inputs[0]).toHaveValue(5);
+			expect(inputs[1]).toHaveValue(10);
+		});
+
+		it('calls onMatrixInputChange with rowId and value on input', async () => {
+			const onMatrixInputChange = vi.fn();
+			render(OmrCard, {
+				props: {
+					question: mockMatrixInputNumberQuestion,
+					...baseProps({ onMatrixInputChange })
+				}
+			});
+			await fireEvent.input(screen.getAllByRole('spinbutton')[0], { target: { value: '7' } });
+			expect(onMatrixInputChange).toHaveBeenCalledWith(
+				mockMatrixInputNumberOptions.rows.items[0].id,
+				'7'
+			);
 		});
 	});
 });

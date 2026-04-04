@@ -7,6 +7,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { question_type_enum } from './types';
 import type {
 	TCandidate,
+	TMatrixInputOptions,
 	TMatrixOptions,
 	TMedia,
 	TOptions,
@@ -206,6 +207,52 @@ export const mockMatrixMatchQuestion: TQuestion = {
 	subjective_answer_limit: 0,
 	is_mandatory: false,
 	marking_scheme: { correct: 2, wrong: 0, skipped: 0 },
+	media: null
+};
+
+export const mockMatrixInputTextOptions: TMatrixInputOptions = {
+	rows: {
+		label: 'Country',
+		items: [
+			{ id: 1, key: 'A', value: 'France' },
+			{ id: 2, key: 'B', value: 'Japan' }
+		]
+	},
+	columns: { label: 'Capital City', input_type: 'text' }
+};
+
+export const mockMatrixInputNumberOptions: TMatrixInputOptions = {
+	rows: {
+		label: 'Item',
+		items: [
+			{ id: 1, key: 'A', value: 'Apples' },
+			{ id: 2, key: 'B', value: 'Oranges' }
+		]
+	},
+	columns: { label: 'Quantity', input_type: 'number' }
+};
+
+export const mockMatrixInputTextQuestion: TQuestion = {
+	id: 9,
+	question_text: 'Enter the capital city for each country.',
+	instructions: '',
+	question_type: question_type_enum.MATRIXINPUT,
+	options: mockMatrixInputTextOptions,
+	subjective_answer_limit: 0,
+	is_mandatory: false,
+	marking_scheme: { correct: 0, wrong: 0, skipped: 0 },
+	media: null
+};
+
+export const mockMatrixInputNumberQuestion: TQuestion = {
+	id: 10,
+	question_text: 'Enter the quantity for each item.',
+	instructions: '',
+	question_type: question_type_enum.MATRIXINPUT,
+	options: mockMatrixInputNumberOptions,
+	subjective_answer_limit: 0,
+	is_mandatory: false,
+	marking_scheme: { correct: 0, wrong: 0, skipped: 0 },
 	media: null
 };
 

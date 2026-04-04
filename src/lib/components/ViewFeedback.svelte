@@ -105,7 +105,7 @@
 				</Card.Header>
 
 				<Card.Content class="p-5 pt-1">
-					{#if item.question.question_type === question_type_enum.MATRIXMATCH || item.question.question_type === question_type_enum.MATRIXRATING}
+					{#if item.question.question_type === question_type_enum.MATRIXMATCH || item.question.question_type === question_type_enum.MATRIXRATING || item.question.question_type === question_type_enum.MATRIXINPUT}
 						<p class="text-muted-foreground text-sm italic">{$t('Not Applicable')}</p>
 					{:else if item.question.question_type === 'subjective'}
 						<div class="rounded-xl border px-4 py-4">

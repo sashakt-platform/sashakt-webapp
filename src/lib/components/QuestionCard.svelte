@@ -11,10 +11,11 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
-	import { parseMatrixResponse } from '$lib/helpers/matrixHelpers';
+	import { parseJsonRecord, normalizeMatrixInputValues } from '$lib/helpers/matrixHelpers';
 	import {
 		question_type_enum,
 		type TCandidate,
+		type TMatrixInputOptions,
 		type TMatrixOptions,
 		type TOptions,
 		type TQuestion,
@@ -87,21 +88,75 @@
 	let candidateInput = $state(getExistingInputResponse());
 	let lastSavedInput = $state(getExistingInputResponse());
 
-	const getExistingMatrixSelections = () => {
-		const selected = selectedQuestion(question.id);
-		if (typeof selected?.response === 'string' && selected.response) {
-			try {
-				const parsed = JSON.parse(selected.response) as Record<string, number | number[]>;
-				return Object.fromEntries(
-					Object.entries(parsed).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
-				) as Record<string, number[]>;
-			} catch {
-				return {};
-			}
-		}
-		return {};
+	const getExistingMatrixSelections = (): Record<string, number[]> => {
+		const parsed = parseJsonRecord<number | number[]>(selectedQuestion(question.id)?.response);
+		return Object.fromEntries(
+			Object.entries(parsed).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
+		);
 	};
 	let matrixSelections = $state<Record<string, number[]>>(getExistingMatrixSelections());
+
+	let matrixInputValues = $state<Record<string, string>>(
+		parseJsonRecord<string>(selectedQuestion(question.id)?.response)
+	);
+	let lastSavedMatrixInputValues = $state<Record<string, string>>({ ...matrixInputValues });
+
+	const handleMatrixInputChange = (rowId: number, value: string) => {
+		if (isLocked || isSubmitting) return;
+		matrixInputValues = { ...matrixInputValues, [String(rowId)]: value };
+	};
+
+	const handleMatrixInputSave = async () => {
+		if (isLocked || isSubmitting) return;
+
+		const answeredQuestion = selectedQuestion(question.id);
+		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
+		const normalized = normalizeMatrixInputValues(matrixInputValues);
+		const serialized = Object.keys(normalized).length > 0 ? JSON.stringify(normalized) : '';
+		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+
+		isSubmitting = true;
+		saveError = null;
+
+		if (answeredQuestion) {
+			selectedQuestions = selectedQuestions.map((q) =>
+				q.question_revision_id === question.id ? { ...q, response: serialized } : q
+			);
+		} else {
+			selectedQuestions = [
+				...selectedQuestions,
+				{
+					question_revision_id: question.id,
+					response: serialized,
+					visited: true,
+					time_spent: 0,
+					bookmarked: currentBookmarked,
+					is_reviewed: false
+				}
+			];
+		}
+		updateStore();
+
+		try {
+			await submitAnswer(question.id, serialized, currentBookmarked);
+			lastSavedMatrixInputValues = { ...matrixInputValues };
+		} catch {
+			selectedQuestions = previousState;
+			updateStore();
+			saveError = $t('Failed to save your answer. Please try again.');
+			setTimeout(() => (saveError = null), 5000);
+		} finally {
+			isSubmitting = false;
+		}
+	};
+
+	const hasUnsavedMatrixInputChanges = $derived(
+		JSON.stringify(normalizeMatrixInputValues(matrixInputValues)) !==
+			JSON.stringify(normalizeMatrixInputValues(lastSavedMatrixInputValues))
+	);
+	const hasSavedMatrixInputBefore = $derived(
+		Object.values(lastSavedMatrixInputValues).some((v) => v.trim().length > 0)
+	);
 
 	const handleMatrixInput = async (rowKey: string | number, colId: number) => {
 		if (isLocked || isSubmitting) return;
@@ -153,14 +208,14 @@
 				matrixSelections = prevSelections;
 				selectedQuestions = prevState;
 				updateStore();
-				saveError = 'Failed to save your answer. Please try again.';
+				saveError = $t('Failed to save your answer. Please try again.');
 				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
 			}
 		} else {
 			const newResponse = JSON.stringify({
-				...parseMatrixResponse(answeredQuestion?.response),
+				...parseJsonRecord<number>(answeredQuestion?.response),
 				[rowKey]: colId
 			});
 
@@ -169,7 +224,7 @@
 				applyUpdate(newResponse);
 				updateStore();
 			} catch {
-				saveError = 'Failed to save your answer. Please try again.';
+				saveError = $t('Failed to save your answer. Please try again.');
 				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
@@ -291,7 +346,7 @@
 			} catch {
 				// force complete remount of RadioGroup
 				radioGroupKey++;
-				saveError = 'Failed to save your answer. Please try again.';
+				saveError = $t('Failed to save your answer. Please try again.');
 				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
@@ -338,7 +393,7 @@
 				// revert on error
 				selectedQuestions = previousState;
 				updateStore();
-				saveError = 'Failed to save your answer. Please try again.';
+				saveError = $t('Failed to save your answer. Please try again.');
 				setTimeout(() => (saveError = null), 5000);
 			} finally {
 				isSubmitting = false;
@@ -443,7 +498,7 @@
 		})()
 	);
 
-	const matrixResponse = $derived(parseMatrixResponse(selectedQuestion(question.id)?.response));
+	const matrixResponse = $derived(parseJsonRecord<number>(selectedQuestion(question.id)?.response));
 
 	const getMatrixSelection = (rowId: number): number | undefined => matrixResponse[String(rowId)];
 
@@ -484,7 +539,7 @@
 		} catch {
 			selectedQuestions = previousState;
 			updateStore();
-			saveError = 'Failed to save your answer. Please try again.';
+			saveError = $t('Failed to save your answer. Please try again.');
 			setTimeout(() => (saveError = null), 5000);
 		} finally {
 			isSubmitting = false;
@@ -624,11 +679,11 @@
 											{@render showCorrectWrongMark('wrong')}
 										{:else}
 											<RadioGroup.Item
-											value={option.id.toString()}
-											id={uid}
-											disabled={isLocked}
-											class={isSelected(option.id) ? 'border-muted text-muted' : ''}
-										/>
+												value={option.id.toString()}
+												id={uid}
+												disabled={isLocked}
+												class={isSelected(option.id) ? 'border-muted text-muted' : ''}
+											/>
 										{/if}
 									</div>
 								</div>
@@ -723,7 +778,9 @@
 						<div class="flex items-center justify-between">
 							<SaveAnswerButton
 								onclick={handleSubjectiveSubmit}
-								disabled={isSubmitting || !String(candidateInput ?? '').trim() || !hasUnsavedChanges}
+								disabled={isSubmitting ||
+									!String(candidateInput ?? '').trim() ||
+									!hasUnsavedChanges}
 								{hasUnsavedChanges}
 								{hasSavedBefore}
 							/>
@@ -837,6 +894,51 @@
 						</tbody>
 					</table>
 				</div>
+			{:else if question.question_type === question_type_enum.MATRIXINPUT}
+				{@const matrixOpts = question.options as TMatrixInputOptions}
+				{@const inputType = matrixOpts.columns.input_type}
+				<div class="overflow-x-auto">
+					<table class="w-full border-collapse text-sm">
+						<thead>
+							<tr>
+								<th class="border border-gray-300 bg-gray-100 px-4 py-3 text-left font-semibold">
+									{matrixOpts.rows.label}
+								</th>
+								<th class="border border-gray-300 bg-gray-100 px-4 py-3 text-left font-semibold">
+									{matrixOpts.columns.label}
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each matrixOpts.rows.items as row (row.id)}
+								<tr class="hover:bg-gray-50">
+									<td class="border border-gray-300 px-4 py-3 font-medium">
+										<span class="font-semibold">{row.key}.</span>
+										<span class="ml-1">{row.value}</span>
+									</td>
+									<td class="border border-gray-300 px-4 py-3">
+										<input
+											type={inputType}
+											class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+											value={matrixInputValues[String(row.id)] ?? ''}
+											disabled={isLocked}
+											oninput={(e) =>
+												handleMatrixInputChange(row.id, (e.target as HTMLInputElement).value)}
+										/>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+				<div class="mt-3 flex items-center">
+					<SaveAnswerButton
+						onclick={handleMatrixInputSave}
+						disabled={isSubmitting || !hasUnsavedMatrixInputChanges}
+						hasUnsavedChanges={hasUnsavedMatrixInputChanges}
+						hasSavedBefore={hasSavedMatrixInputBefore}
+					/>
+				</div>
 			{:else}
 				{@const typedOptions = options as TOptions[]}
 				{#each typedOptions as option (option.id)}
@@ -883,7 +985,7 @@
 				{/each}
 			{/if}
 
-			{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== 'matrix-match' && question.question_type !== question_type_enum.MATRIXRATING}
+			{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== 'matrix-match' && question.question_type !== question_type_enum.MATRIXRATING && question.question_type !== question_type_enum.MATRIXINPUT}
 				<Button
 					variant="outline"
 					class="mt-4 w-full border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"
@@ -926,5 +1028,10 @@
 		{matrixSelections}
 		{matrixResponse}
 		onMatrixInput={handleMatrixInput}
+		{matrixInputValues}
+		hasUnsavedMatrixInputChanges={hasUnsavedMatrixInputChanges}
+		hasSavedMatrixInputBefore={hasSavedMatrixInputBefore}
+		onMatrixInputChange={(rowId, value) => handleMatrixInputChange(rowId, value)}
+		onMatrixInputSave={handleMatrixInputSave}
 	/>
 {/if}

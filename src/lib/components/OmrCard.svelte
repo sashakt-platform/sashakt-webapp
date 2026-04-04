@@ -5,6 +5,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import {
 		question_type_enum,
+		type TMatrixInputOptions,
 		type TMatrixOptions,
 		type TOptions,
 		type TQuestion
@@ -28,7 +29,12 @@
 		onCandidateInputChange,
 		matrixSelections = {},
 		matrixResponse = {},
-		onMatrixInput
+		onMatrixInput,
+		matrixInputValues = {},
+		hasUnsavedMatrixInputChanges = false,
+		hasSavedMatrixInputBefore = false,
+		onMatrixInputChange,
+		onMatrixInputSave
 	}: {
 		question: TQuestion;
 		serialNumber: number;
@@ -45,6 +51,11 @@
 		matrixSelections?: Record<string, number[]>;
 		matrixResponse?: Record<string, number>;
 		onMatrixInput?: (rowKey: string | number, colId: number) => Promise<void>;
+		matrixInputValues?: Record<string, string>;
+		hasUnsavedMatrixInputChanges?: boolean;
+		hasSavedMatrixInputBefore?: boolean;
+		onMatrixInputChange?: (rowId: number, value: string) => void;
+		onMatrixInputSave?: () => Promise<void>;
 	} = $props();
 </script>
 
@@ -231,6 +242,50 @@
 					{/each}
 				</tbody>
 			</table>
+		</div>
+	{:else if question.question_type === question_type_enum.MATRIXINPUT}
+		{@const matrixOpts = question.options as TMatrixInputOptions}
+		{@const inputType = matrixOpts.columns.input_type}
+		{@const thClass = 'border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold'}
+		{@const tdClass = 'border border-gray-300 px-3 py-2'}
+		<div class="flex w-full flex-col gap-2">
+			<div class="overflow-x-auto">
+				<table class="w-full border-collapse text-xs sm:text-sm">
+					<thead>
+						<tr>
+							<th class={thClass}>{matrixOpts.rows.label}</th>
+							<th class={thClass}>{matrixOpts.columns.label}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each matrixOpts.rows.items as row (row.id)}
+							<tr class="hover:bg-gray-50">
+								<td class="{tdClass} font-medium">
+									<span class="font-semibold">{row.key}.</span>
+								</td>
+								<td class={tdClass}>
+									<input
+										type={inputType}
+										class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+										value={matrixInputValues[String(row.id)] ?? ''}
+										disabled={isSubmitting}
+										oninput={(e) =>
+											onMatrixInputChange?.(row.id, (e.target as HTMLInputElement).value)}
+									/>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+			<div class="flex items-center justify-between">
+				<SaveAnswerButton
+					onclick={onMatrixInputSave}
+					disabled={isSubmitting || !hasUnsavedMatrixInputChanges}
+					hasUnsavedChanges={hasUnsavedMatrixInputChanges}
+					hasSavedBefore={hasSavedMatrixInputBefore}
+				/>
+			</div>
 		</div>
 	{/if}
 </div>
