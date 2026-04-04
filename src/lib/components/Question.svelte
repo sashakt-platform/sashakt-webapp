@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import InstructionsDialog from '$lib/components/InstructionsDialog.svelte';
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
@@ -9,7 +8,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
-	import { Spinner } from '$lib/components/ui/spinner';
+	import SubmitDialog from '$lib/components/SubmitDialog.svelte';
 	import { countQuestionStatuses } from '$lib/helpers/questionPaletteHelpers';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
@@ -17,7 +16,7 @@
 	import type { TQuestion } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
-	let { candidate, testQuestions, testDetails } = $props();
+	let { candidate, testQuestions, testDetails, omrMode = false } = $props();
 	let isSubmittingTest = $state(false);
 
 	// for controlling confirmation dialog display
@@ -129,7 +128,28 @@
 	</Dialog.Content>
 {/snippet}
 
-{#if paginationReady}
+{#if omrMode}
+	<div class="min-h-screen bg-blue-50 p-4 pb-20 lg:p-6 lg:pb-20">
+		<h1 class="mb-6 text-center text-xl font-semibold text-slate-800">{$t('OMR Sheet')}</h1>
+		<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+			{#each questions as question, i (question.id)}
+				<QuestionCard mode="omr" {question} {candidate} serialNumber={i + 1} bind:selectedQuestions />
+			{/each}
+		</div>
+		<div
+			class="fixed inset-x-0 bottom-0 z-10 flex w-full items-center justify-between bg-white p-2 shadow-md lg:rounded-xl"
+		>
+			<div></div>
+			<SubmitDialog
+				bind:open={submitDialogOpen}
+				isSubmitting={isSubmittingTest}
+				{submitError}
+				answeredAllMandatory={answeredAllMandatory(selectedQuestions, questions)}
+				formEnhance={handleSubmitTestEnhance}
+			/>
+		</div>
+	</div>
+{:else if paginationReady}
 	<div class="flex min-h-screen gap-6 bg-blue-50 p-4 lg:p-6">
 		<!-- Main question content -->
 		<div class="flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
@@ -162,65 +182,13 @@
 						<Pagination.PrevButton />
 
 						{#if currentPage === Math.ceil(totalQuestions / perPage)}
-							<Dialog.Root bind:open={submitDialogOpen}>
-								<Dialog.Trigger>
-									<Button class="w-24">{$t('Submit')}</Button>
-								</Dialog.Trigger>
-								{#if answeredAllMandatory(selectedQuestions, questions)}
-									<Dialog.Content class="w-80 rounded-xl">
-										<Dialog.Title>
-											{#if submitError || page.form?.submitTest === false || page.form?.error}
-												{$t('Submission Failed')}
-											{:else}
-												{$t('Submit test?')}
-											{/if}
-										</Dialog.Title>
-										<Dialog.Description>
-											{#if submitError || page.form?.submitTest === false || page.form?.error}
-												<div class="text-destructive">
-													{#if submitError}
-														<p class="mb-2">{submitError}</p>
-													{:else if page.form?.error}
-														<p class="mb-2">{page.form.error}</p>
-													{:else}
-														<p class="mb-2">
-															{$t('There was an issue with your previous submission.')}
-														</p>
-													{/if}
-													<p class="text-muted-foreground">
-														{$t('Please click Confirm again to retry.')}
-													</p>
-												</div>
-											{:else}
-												{$t(
-													'Are you sure you want to submit for final marking? No changes will be allowed after submission.'
-												)}
-											{/if}
-										</Dialog.Description>
-										<div class="mt-2 inline-flex items-center justify-between">
-											<Dialog.Close
-												><Button variant="outline" class="w-32" disabled={isSubmittingTest}
-													>{$t('Cancel')}</Button
-												></Dialog.Close
-											>
-											<form
-												action="?/submitTest"
-												method="POST"
-												use:enhance={handleSubmitTestEnhance}
-											>
-												<Button type="submit" class="w-32" disabled={isSubmittingTest}>
-													{#if isSubmittingTest}
-														<Spinner />
-													{/if}
-													{$t('Confirm')}
-												</Button>
-											</form>
-										</div>
-									</Dialog.Content>
-								{:else}
-									{@render mandatoryQuestionDialog(true)}
-								{/if}
-							</Dialog.Root>
+							<SubmitDialog
+								bind:open={submitDialogOpen}
+								isSubmitting={isSubmittingTest}
+								{submitError}
+								answeredAllMandatory={answeredAllMandatory(selectedQuestions, questions)}
+								formEnhance={handleSubmitTestEnhance}
+							/>
 						{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
 							<Dialog.Root>
 								<Dialog.Trigger>
