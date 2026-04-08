@@ -561,11 +561,15 @@
 	{/if}
 {/snippet}
 
-{#if saveError}
-	<div class="border-destructive bg-destructive/10 text-destructive rounded-lg border p-3 text-sm">
-		{saveError}
-	</div>
-{/if}
+{#snippet saveErrorBlock()}
+	{#if saveError}
+		<div
+			class="border-destructive bg-destructive/10 text-destructive rounded-lg border p-3 text-sm"
+		>
+			{saveError}
+		</div>
+	{/if}
+{/snippet}
 
 {#if mode !== 'omr'}
 	<Card.Root
@@ -643,6 +647,7 @@
 		</Card.Header>
 
 		<Card.Content class="p-5 pt-1">
+			{@render saveErrorBlock()}
 			{#if question.question_type === question_type_enum.SINGLE}
 				{#key radioGroupKey}
 					<RadioGroup.Root
@@ -1011,6 +1016,7 @@
 		</Card.Content>
 	</Card.Root>
 {:else}
+	{@render saveErrorBlock()}
 	<OmrCard
 		{question}
 		{serialNumber}
@@ -1029,8 +1035,8 @@
 		{matrixResponse}
 		onMatrixInput={handleMatrixInput}
 		{matrixInputValues}
-		hasUnsavedMatrixInputChanges={hasUnsavedMatrixInputChanges}
-		hasSavedMatrixInputBefore={hasSavedMatrixInputBefore}
+		{hasUnsavedMatrixInputChanges}
+		{hasSavedMatrixInputBefore}
 		onMatrixInputChange={(rowId, value) => handleMatrixInputChange(rowId, value)}
 		onMatrixInputSave={handleMatrixInputSave}
 	/>
