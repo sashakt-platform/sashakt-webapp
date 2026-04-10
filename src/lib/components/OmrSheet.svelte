@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import Check from '@lucide/svelte/icons/check';
 	import { Button } from '$lib/components/ui/button';
+	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
@@ -12,11 +12,13 @@
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
-	import { parseMatrixResponse } from '$lib/helpers/matrixHelpers';
+	import { parseJsonRecord, normalizeMatrixInputValues } from '$lib/helpers/matrixHelpers';
 	import {
 		question_type_enum,
 		type TCandidate,
+		type TMatrixInputOptions,
 		type TMatrixOptions,
+		type TOptions,
 		type TQuestion,
 		type TSelection
 	} from '$lib/types';
@@ -101,6 +103,20 @@
 		)
 	);
 
+	let matrixInputValues = $state<Record<number, Record<string, string>>>(
+		Object.fromEntries(
+			questions
+				.filter((q) => q.question_type === question_type_enum.MATRIXINPUT)
+				.map((q) => [
+					q.id,
+					parseJsonRecord<string>(selections.find((s) => s.question_revision_id === q.id)?.response)
+				])
+		)
+	);
+	let lastSavedMatrixInputValues = $state<Record<number, Record<string, string>>>(
+		JSON.parse(JSON.stringify(matrixInputValues))
+	);
+
 	const getSelectedOptionIds = (questionId: number): number[] => {
 		const sel = selections.find((s) => s.question_revision_id === questionId);
 		const resp = sel?.response;
@@ -133,7 +149,7 @@
 		return await res.json();
 	};
 
-	const updateSelections = (questionId: number, newResponse: number[]) => {
+	const updateSelections = (questionId: number, newResponse: number[] | string) => {
 		const existing = selections.find((s) => s.question_revision_id === questionId);
 		if (existing) {
 			selections = selections.map((s) =>
@@ -188,7 +204,9 @@
 	};
 
 	const getMatrixResponseForQuestion = (questionId: number): Record<string, number> =>
-		parseMatrixResponse(selections.find((s) => s.question_revision_id === questionId)?.response);
+		parseJsonRecord<number>(
+			selections.find((s) => s.question_revision_id === questionId)?.response
+		);
 
 	const getMatrixSelection = (questionId: number, rowId: number): number | undefined =>
 		getMatrixResponseForQuestion(questionId)[String(rowId)];
@@ -283,6 +301,37 @@
 		}
 	};
 
+	const handleMatrixInputChange = (questionId: number, rowId: number, value: string) => {
+		if (submittingQuestion === questionId) return;
+		matrixInputValues = {
+			...matrixInputValues,
+			[questionId]: { ...(matrixInputValues[questionId] ?? {}), [String(rowId)]: value }
+		};
+	};
+
+	const handleMatrixInputSave = async (question: TQuestion) => {
+		if (submittingQuestion === question.id) return;
+
+		const values = matrixInputValues[question.id] ?? {};
+		const normalized = normalizeMatrixInputValues(values);
+		const serialized = Object.keys(normalized).length > 0 ? JSON.stringify(normalized) : '';
+
+		const previousSelections = JSON.parse(JSON.stringify(selections));
+		submittingQuestion = question.id;
+
+		updateSelections(question.id, serialized);
+
+		try {
+			await submitAnswer(question.id, serialized);
+			lastSavedMatrixInputValues = { ...lastSavedMatrixInputValues, [question.id]: { ...values } };
+		} catch {
+			selections = previousSelections;
+			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
+		} finally {
+			submittingQuestion = null;
+		}
+	};
+
 	const handleSubjectiveSubmit = async (question: TQuestion) => {
 		if (submittingQuestion === question.id) return;
 
@@ -369,21 +418,12 @@
 							/>
 						{/if}
 						<div class="flex items-center justify-between">
-							<Button
-								size="sm"
+							<SaveAnswerButton
 								onclick={() => handleSubjectiveSubmit(question)}
-								disabled={submittingQuestion === question.id ||
-									!String(currentInput).trim() ||
-									!hasUnsavedChanges}
-							>
-								{#if !hasUnsavedChanges && hasSavedBefore}
-									<Check class="mr-1 h-4 w-4" />{$t('Saved')}
-								{:else if hasSavedBefore}
-									{$t('Update Answer')}
-								{:else}
-									{$t('Save Answer')}
-								{/if}
-							</Button>
+								disabled={submittingQuestion === question.id || !String(currentInput).trim()}
+								hasUnsaved={hasUnsavedChanges}
+								hasSaved={hasSavedBefore}
+							/>
 							{#if question.subjective_answer_limit}
 								{@const remaining = question.subjective_answer_limit - currentInput.length}
 								<span
@@ -398,8 +438,9 @@
 						</div>
 					</div>
 				{:else if question_type === question_type_enum.MULTIPLE}
+					{@const opts = question.options as TOptions[]}
 					<div class="grid grid-cols-4 gap-2 sm:gap-3">
-						{#each question.options as option (option.id)}
+						{#each opts as option (option.id)}
 							{@const uid = `omr-${question.id}-${option.key}`}
 							<Label
 								for={uid}
@@ -424,6 +465,7 @@
 						{/each}
 					</div>
 				{:else if question_type === question_type_enum.SINGLE}
+					{@const opts = question.options as TOptions[]}
 					<RadioGroup.Root
 						class="grid grid-cols-4 gap-2 sm:gap-3"
 						orientation="horizontal"
@@ -432,7 +474,7 @@
 						}}
 						value={getSelectedOptionIds(question.id)[0]?.toString()}
 					>
-						{#each question.options as option (option.id)}
+						{#each opts as option (option.id)}
 							{@const uid = `omr-${question.id}-${option.key}`}
 							<Label
 								for={uid}
@@ -524,6 +566,61 @@
 									{/each}
 								</tbody>
 							</table>
+						</div>
+					</div>
+				{:else if question_type === question_type_enum.MATRIXINPUT}
+					{@const matrixOpts = question.options as TMatrixInputOptions}
+					{@const inputType = matrixOpts.columns.input_type}
+					{@const currentValues = matrixInputValues[question.id] ?? {}}
+					{@const savedValues = lastSavedMatrixInputValues[question.id] ?? {}}
+					{@const normalizedCurrent = normalizeMatrixInputValues(currentValues)}
+					{@const normalizedSaved = normalizeMatrixInputValues(savedValues)}
+					{@const hasUnsavedChanges =
+						JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedSaved)}
+					{@const hasSavedBefore = Object.values(savedValues).some((v) => v.trim().length > 0)}
+					{@const thClass = 'border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold'}
+					{@const tdClass = 'border border-gray-300 px-3 py-2'}
+					<div class="flex w-full flex-col gap-2">
+						<div class="overflow-x-auto">
+							<table class="w-full border-collapse text-xs sm:text-sm">
+								<thead>
+									<tr>
+										<th class={thClass}>{matrixOpts.rows.label}</th>
+										<th class={thClass}>{matrixOpts.columns.label}</th>
+									</tr>
+								</thead>
+								<tbody>
+									{#each matrixOpts.rows.items as row (row.id)}
+										<tr class="hover:bg-gray-50">
+											<td class="{tdClass} font-medium">
+												<span class="font-semibold">{row.key}.</span>
+											</td>
+											<td class={tdClass}>
+												<input
+													type={inputType}
+													class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+													value={currentValues[String(row.id)] ?? ''}
+													disabled={submittingQuestion === question.id}
+													oninput={(e) =>
+														handleMatrixInputChange(
+															question.id,
+															row.id,
+															(e.target as HTMLInputElement).value
+														)}
+												/>
+											</td>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+						<div class="flex items-center justify-between">
+							<SaveAnswerButton
+								onclick={() => handleMatrixInputSave(question)}
+								disabled={submittingQuestion === question.id}
+								hasUnsaved={hasUnsavedChanges}
+								hasSaved={hasSavedBefore}
+							/>
 						</div>
 					</div>
 				{/if}

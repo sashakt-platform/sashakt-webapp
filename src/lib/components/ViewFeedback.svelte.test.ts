@@ -11,7 +11,9 @@ import {
 	mockTestQuestionsResponse,
 	mockQuestionWithMedia,
 	mockImageMedia,
-	mockYoutubeMedia
+	mockYoutubeMedia,
+	mockMatrixInputTextQuestion,
+	mockMatrixInputNumberQuestion
 } from '$lib/test-utils';
 
 const createFeedback = (
@@ -715,6 +717,85 @@ describe('ViewFeedback', () => {
 
 			expect(screen.getByText(mockSubjectiveQuestion.question_text)).toBeInTheDocument();
 			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
+		});
+	});
+
+	describe('matrix input question types (not applicable)', () => {
+		it('should show Not Applicable for matrix-string question', () => {
+			const testQuestions = {
+				question_revisions: [mockMatrixInputTextQuestion],
+				question_pagination: 5
+			};
+			const feedback = [
+				{
+					question_revision_id: mockMatrixInputTextQuestion.id,
+					submitted_answer: '{"1":"Paris"}',
+					correct_answer: []
+				}
+			];
+
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText(mockMatrixInputTextQuestion.question_text)).toBeInTheDocument();
+			expect(screen.getByText('Not Applicable')).toBeInTheDocument();
+		});
+
+		it('should show Not Applicable for matrix-number question', () => {
+			const testQuestions = {
+				question_revisions: [mockMatrixInputNumberQuestion],
+				question_pagination: 5
+			};
+			const feedback = [
+				{
+					question_revision_id: mockMatrixInputNumberQuestion.id,
+					submitted_answer: '{"1":"42"}',
+					correct_answer: []
+				}
+			];
+
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText(mockMatrixInputNumberQuestion.question_text)).toBeInTheDocument();
+			expect(screen.getByText('Not Applicable')).toBeInTheDocument();
+		});
+
+		it('should show Not Applicable for matrix-input question', () => {
+			const testQuestions = {
+				question_revisions: [mockMatrixInputTextQuestion],
+				question_pagination: 5
+			};
+			const feedback = [
+				{
+					question_revision_id: mockMatrixInputTextQuestion.id,
+					submitted_answer: '{"1":"Paris"}',
+					correct_answer: []
+				}
+			];
+
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText(mockMatrixInputTextQuestion.question_text)).toBeInTheDocument();
+			expect(screen.getByText('Not Applicable')).toBeInTheDocument();
+		});
+
+		it('should not render choice options or inputs for matrix input questions', () => {
+			const testQuestions = {
+				question_revisions: [mockMatrixInputTextQuestion],
+				question_pagination: 5
+			};
+			const feedback = [
+				{
+					question_revision_id: mockMatrixInputTextQuestion.id,
+					submitted_answer: '{"1":"Paris"}',
+					correct_answer: []
+				}
+			];
+
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+			expect(screen.queryAllByRole('textbox')).toHaveLength(0);
 		});
 	});
 });

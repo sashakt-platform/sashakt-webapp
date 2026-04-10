@@ -55,17 +55,25 @@ export enum question_type_enum {
 	NUMERICALINTEGER = 'numerical-integer',
 	NUMERICALDECIMAL = 'numerical-decimal',
 	MATRIXRATING = 'matrix-rating',
-	MATRIXMATCH = 'matrix-match'
+	MATRIXMATCH = 'matrix-match',
+	MATRIXINPUT = 'matrix-input'
 }
 
+export type TMatrixRow = {
+	label: string;
+	items: TOptions[];
+};
+
 export type TMatrixOptions = {
-	rows: {
-		label: string;
-		items: TOptions[];
-	};
+	rows: TMatrixRow;
+	columns: TMatrixRow;
+};
+
+export type TMatrixInputOptions = {
+	rows: TMatrixRow;
 	columns: {
 		label: string;
-		items: TOptions[];
+		input_type: 'text' | 'number';
 	};
 };
 
@@ -88,7 +96,7 @@ export type TQuestion = {
 	question_text: string;
 	instructions: string;
 	question_type: question_type_enum;
-	options: TOptions[] | TMatrixOptions;
+	options: TOptions[] | TMatrixOptions | TMatrixInputOptions;
 	subjective_answer_limit: number;
 	is_mandatory: boolean;
 	marking_scheme: TMarks;
