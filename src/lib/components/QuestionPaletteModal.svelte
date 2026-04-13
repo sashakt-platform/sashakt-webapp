@@ -1,13 +1,15 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog';
 	import QuestionPaletteContent from './QuestionPaletteContent.svelte';
-	import type { TQuestion, TSelection } from '$lib/types';
+	import RichText from './RichText.svelte';
+	import type { TQuestion, TQuestionSetCandidate, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { X } from '@lucide/svelte';
 
 	let {
 		open = $bindable(false),
 		questions,
+		questionSets = [],
 		selections,
 		currentQuestionIndex,
 		onNavigate,
@@ -15,6 +17,7 @@
 	}: {
 		open: boolean;
 		questions: TQuestion[];
+		questionSets?: TQuestionSetCandidate[];
 		selections: TSelection[];
 		currentQuestionIndex: number;
 		onNavigate: (questionIndex: number) => void;

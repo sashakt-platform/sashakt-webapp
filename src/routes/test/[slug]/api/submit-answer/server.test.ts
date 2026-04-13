@@ -271,7 +271,10 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 	it('should return 500 when backend API fails', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 		vi.mocked(fetch).mockResolvedValueOnce(
-			createMockResponse({}, { ok: false, status: 500 }) as unknown as Response
+			createMockResponse(
+				{ detail: 'Internal server error' },
+				{ ok: false, status: 500 }
+			) as unknown as Response
 		);
 
 		const mockCookies = createMockCookies();
@@ -285,7 +288,30 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 
 		expect(response.status).toBe(500);
 		expect(data.success).toBe(false);
-		expect(data.error).toContain('Failed to save answer');
+		expect(data.error).toBe('Internal server error');
+	});
+
+	it('should preserve backend 400 detail in the response', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch).mockResolvedValueOnce(
+			createMockResponse(
+				{ detail: "Maximum attempt limit reached for section 'Physics'." },
+				{ ok: false, status: 400 }
+			) as unknown as Response
+		);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest({
+			question_revision_id: 1,
+			response: [101],
+			candidate: mockCandidate
+		});
+		const response = await POST({ request, cookies: mockCookies } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(400);
+		expect(data.success).toBe(false);
+		expect(data.error).toBe("Maximum attempt limit reached for section 'Physics'.");
 	});
 
 	it('should return 500 when fetch throws error', async () => {
