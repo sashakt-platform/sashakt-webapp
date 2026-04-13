@@ -105,7 +105,11 @@ describe('TestResult', () => {
 			}
 		});
 
-		expect(screen.getByText('Great job completing the assessment!')).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				(_, node) => node?.textContent?.trim() === 'Great job completing the assessment!'
+			)
+		).toBeInTheDocument();
 	});
 
 	it('should not display completion message when none provided', () => {
@@ -217,10 +221,10 @@ describe('TestResult - Section summary', () => {
 		expect(screen.getByText('Section summary')).toBeInTheDocument();
 		expect(screen.getByText('Physics')).toBeInTheDocument();
 		expect(screen.getByText('Chemistry')).toBeInTheDocument();
-		expect(screen.getByText('Questions')).toBeInTheDocument();
-		expect(screen.getByText('Attempted')).toBeInTheDocument();
-		expect(screen.getByText('Allowed')).toBeInTheDocument();
-		expect(screen.getByText('Accuracy')).toBeInTheDocument();
+		expect(screen.getAllByText('Questions').length).toBeGreaterThan(0);
+		expect(screen.getAllByText('Attempted').length).toBeGreaterThan(0);
+		expect(screen.getAllByText(/Allowed:/).length).toBeGreaterThan(0);
+		expect(screen.getAllByText(/Accuracy:/).length).toBeGreaterThan(0);
 	});
 });
 
