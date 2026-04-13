@@ -896,6 +896,19 @@
 								hasUnsaved={hasUnsavedChanges}
 								hasSaved={hasSavedBefore}
 							/>
+							<Button
+								size="sm"
+								variant="outline"
+								onclick={() => clearAnswer(question)}
+								disabled={
+									submittingQuestion === question.id ||
+									!hasAttemptedResponse(
+										selections.find((selection) => selection.question_revision_id === question.id)?.response
+									)
+								}
+							>
+								{$t('Clear answer')}
+							</Button>
 						</div>
 					</div>
 				{/if}
