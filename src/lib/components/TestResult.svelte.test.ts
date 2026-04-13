@@ -105,8 +105,8 @@ describe('TestResult', () => {
 		});
 
 		expect(
-			screen.getByText((_, node) => node?.textContent?.trim() === 'Great job completing the assessment!')
-		).toBeInTheDocument();
+			screen.getAllByText((_, node) => node?.textContent?.trim() === 'Great job completing the assessment!').length
+		).toBeGreaterThan(0);
 	});
 
 	it('should display default message when no completion message', () => {
