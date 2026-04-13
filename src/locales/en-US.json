@@ -52,6 +52,11 @@
 	"Mandatory": "Mandatory",
 	"Go to question {number}": "Go to question {number}",
 	"Question Palette": "Question Palette",
+	"Sections": "Sections",
+	"Questions": "Questions",
+	"Attempted": "Attempted",
+	"Allowed": "Allowed",
+	"Accuracy": "Accuracy",
 	"Question palette tabs": "Question palette tabs",
 	"Instructions": "Instructions",
 	"No instructions available.": "No instructions available.",
@@ -90,6 +95,10 @@
 	"Saved": "Saved",
 	"Update Answer": "Update Answer",
 	"Save Answer": "Save Answer",
+	"Clear answer": "Clear answer",
+	"Clear another answered question in this section to attempt this one.": "Clear another answered question in this section to attempt this one.",
+	"You may attempt all questions in this section.": "You may attempt all questions in this section.",
+	"You may attempt up to {count} questions in this section.": "You may attempt up to {count} questions in this section.",
 	"characters remaining": "characters remaining",
 	"Character limit reached": "Character limit reached",
 	"Select an option": "Select an option",
@@ -105,4 +114,3 @@
 	"OMR Sheet": "",
 	"Failed to save your answer. Please try again.": "Failed to save your answer. Please try again."
 }
-

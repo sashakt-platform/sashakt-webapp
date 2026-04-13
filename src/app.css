@@ -56,3 +56,34 @@
 		@apply bg-background text-foreground;
 	}
 }
+
+@layer components {
+	.rich-text {
+		line-height: 1.6;
+	}
+
+	.rich-text p {
+		margin: 0;
+	}
+
+	.rich-text p + p,
+	.rich-text ul,
+	.rich-text ol {
+		margin-top: 0.75rem;
+	}
+
+	.rich-text ul,
+	.rich-text ol {
+		padding-left: 1.25rem;
+	}
+
+	.rich-text img {
+		max-width: 100%;
+		height: auto;
+	}
+
+	.rich-text .MathJax {
+		overflow-x: auto;
+		overflow-y: hidden;
+	}
+}

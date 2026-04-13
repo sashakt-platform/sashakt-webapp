@@ -6,19 +6,20 @@
 	import QuestionPaletteModal from '$lib/components/QuestionPaletteModal.svelte';
 	import QuestionPaletteSidebar from '$lib/components/QuestionPaletteSidebar.svelte';
 	import QuestionPaletteToggleButton from '$lib/components/QuestionPaletteToggleButton.svelte';
+	import RichText from '$lib/components/RichText.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
+	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { countQuestionStatuses } from '$lib/helpers/questionPaletteHelpers';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
-	import type { TQuestion } from '$lib/types';
+	import type { TQuestion, TQuestionSetCandidate } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
-	let { candidate, testQuestions, testDetails } = $props();
+	let { candidate, testQuestions, testDetails = null } = $props();
 	let isSubmittingTest = $state(false);
 
 	// for controlling confirmation dialog display
@@ -44,7 +45,10 @@
 		}
 	});
 
-	const questions: TQuestion[] = normalizeTestQuestions(testQuestions).questions;
+	const normalizedQuestionData = $derived(normalizeTestQuestions(testQuestions));
+	const questions: TQuestion[] = $derived(normalizedQuestionData.questions);
+	const questionSets: TQuestionSetCandidate[] = $derived(normalizedQuestionData.questionSets);
+	const sectionByQuestionId = $derived(normalizedQuestionData.sectionByQuestionId);
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
 
@@ -133,7 +137,7 @@
 {#if paginationReady}
 	<div class="flex min-h-screen gap-6 bg-blue-50 p-4 lg:p-6">
 		<!-- Main question content -->
-		<div class="flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
+		<div class="min-w-0 flex-1 {testDetails?.show_question_palette ? 'lg:pr-[22rem]' : ''}">
 			<Pagination.Root
 				count={totalQuestions}
 				{perPage}
@@ -144,6 +148,53 @@
 				{#snippet children({ currentPage, range })}
 					<div class="w-full">
 						{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
+							{@const absoluteIndex = (currentPage - 1) * perPage + index}
+							{@const section = sectionByQuestionId.get(question.id) ?? null}
+							{#if section && index === 0}
+								<div class="mb-4 rounded-2xl border bg-white p-4 shadow-sm">
+									<p class="text-sm font-semibold text-slate-800">{section.title}</p>
+									{#if section.description}
+										<RichText
+											content={section.description}
+											class="text-muted-foreground mt-1 text-sm"
+										/>
+									{/if}
+									<p class="text-muted-foreground mt-2 text-sm">
+										{#if canAttemptAllQuestions(section.max_questions_allowed_to_attempt, section.question_revisions.length)}
+											{$t('You may attempt all questions in this section.')}
+										{:else}
+											{$t('You may attempt up to {count} questions in this section.', {
+												values: { count: section.max_questions_allowed_to_attempt }
+											})}
+										{/if}
+									</p>
+								</div>
+							{:else if section}
+								{@const previousQuestion = questions[absoluteIndex - 1]}
+								{@const previousSection = previousQuestion
+									? (sectionByQuestionId.get(previousQuestion.id) ?? null)
+									: null}
+								{#if previousSection?.id !== section.id}
+									<div class="mb-4 rounded-2xl border bg-white p-4 shadow-sm">
+										<p class="text-sm font-semibold text-slate-800">{section.title}</p>
+										{#if section.description}
+											<RichText
+												content={section.description}
+												class="text-muted-foreground mt-1 text-sm"
+											/>
+										{/if}
+										<p class="text-muted-foreground mt-2 text-sm">
+											{#if canAttemptAllQuestions(section.max_questions_allowed_to_attempt, section.question_revisions.length)}
+												{$t('You may attempt all questions in this section.')}
+											{:else}
+												{$t('You may attempt up to {count} questions in this section.', {
+													values: { count: section.max_questions_allowed_to_attempt }
+												})}
+											{/if}
+										</p>
+									</div>
+								{/if}
+							{/if}
 							<div id="question-{(currentPage - 1) * perPage + index}">
 								<QuestionCard
 									{candidate}
@@ -255,9 +306,10 @@
 
 		<!-- Desktop sidebar - hidden on mobile -->
 		{#if testDetails?.show_question_palette}
-			<div class="fixed top-28 right-6 hidden max-h-[calc(100vh-8rem)] w-72 lg:block">
+			<div class="fixed top-28 right-6 hidden h-[calc(100vh-8rem)] w-80 lg:block">
 				<QuestionPaletteSidebar
 					{questions}
+					{questionSets}
 					selections={selectedQuestions}
 					{currentQuestionIndex}
 					onNavigate={navigateToQuestion}
@@ -284,6 +336,7 @@
 		<QuestionPaletteModal
 			bind:open={paletteOpen}
 			{questions}
+			{questionSets}
 			selections={selectedQuestions}
 			{currentQuestionIndex}
 			instructions={testDetails?.start_instructions}

@@ -5,7 +5,6 @@
 	import Question from '$lib/components/Question.svelte';
 	import OmrSheet from '$lib/components/OmrSheet.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
-	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import type { PageProps } from './$types';
 	import { locale } from 'svelte-i18n';
 	import { t } from 'svelte-i18n';
@@ -27,7 +26,6 @@
 
 	const hasDynamicForm = $derived(!!data.testData?.form);
 	const hasOmrChoice = $derived(data.testData?.omr === 'OPTIONAL');
-	const hasRenderableQuestions = $derived(normalizeTestQuestions(data.testQuestions).questions.length > 0);
 
 	$effect(() => {
 		form;
@@ -62,6 +60,7 @@
 			resultData={form.result}
 			testDetails={data.testData}
 			feedback={form.feedback}
+			testQuestions={form.testQuestions}
 			onViewFeedback={handleViewFeedback}
 		/>
 	{:else if !data.candidate && !showProfileForm}
@@ -75,7 +74,7 @@
 		/>
 	{:else if !data.candidate && hasOmrChoice}
 		<CandidateProfile testDetails={data.testData} formResponses={candidateFormResponses} />
-	{:else if hasRenderableQuestions}
+	{:else if data.testQuestions?.question_revisions}
 		{#if data.candidate.use_omr === 'true' || data.testData?.omr === 'ALWAYS'}
 			<OmrSheet
 				candidate={data.candidate}

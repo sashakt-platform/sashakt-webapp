@@ -9,8 +9,8 @@ export type TSelection = {
 	visited: boolean;
 	time_spent: number;
 	bookmarked: boolean;
-	is_reviewed: boolean;
-	correct_answer?: number[];
+	is_reviewed?: boolean;
+	correct_answer?: number[] | number | null;
 };
 
 export type TTestSession = {
@@ -99,7 +99,7 @@ export type TQuestion = {
 	options: TOptions[] | TMatrixOptions | TMatrixInputOptions;
 	subjective_answer_limit: number;
 	is_mandatory: boolean;
-	marking_scheme: TMarks;
+	marking_scheme: TMarks | null;
 	media: TMedia | null;
 };
 
@@ -196,6 +196,6 @@ export type TResultData = {
 
 export type TFeedback = {
 	question_revision_id: number;
-	submitted_answer: number[];
-	correct_answer: number[];
+	submitted_answer: number[] | string;
+	correct_answer: number[] | number;
 };

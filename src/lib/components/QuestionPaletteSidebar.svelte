@@ -1,23 +1,25 @@
 <script lang="ts">
 	import Info from '@lucide/svelte/icons/info';
 	import QuestionPaletteContent from './QuestionPaletteContent.svelte';
-	import type { TQuestion, TSelection } from '$lib/types';
+	import type { TQuestion, TQuestionSetCandidate, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
 	let {
 		questions,
+		questionSets = [],
 		selections,
 		currentQuestionIndex,
 		onNavigate
 	}: {
 		questions: TQuestion[];
+		questionSets?: TQuestionSetCandidate[];
 		selections: TSelection[];
 		currentQuestionIndex: number;
 		onNavigate: (questionIndex: number) => void;
 	} = $props();
 </script>
 
-<div class="flex max-h-full flex-col rounded-xl bg-white shadow-sm">
+<div class="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border bg-white shadow-sm">
 	<div class="flex items-center justify-center gap-2 p-4 pb-2">
 		<h2 class="text-sm font-semibold tracking-wide text-gray-700 uppercase">
 			{$t('Question Palette')}
@@ -25,7 +27,13 @@
 		<Info class="h-4 w-4 text-gray-400" />
 	</div>
 
-	<div class="overflow-y-auto p-4 pt-2">
-		<QuestionPaletteContent {questions} {selections} {currentQuestionIndex} {onNavigate} />
+	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pt-2">
+		<QuestionPaletteContent
+			{questions}
+			{questionSets}
+			{selections}
+			{currentQuestionIndex}
+			{onNavigate}
+		/>
 	</div>
 </div>
