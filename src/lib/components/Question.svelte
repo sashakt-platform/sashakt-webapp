@@ -10,6 +10,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { countQuestionStatuses } from '$lib/helpers/questionPaletteHelpers';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
@@ -43,7 +44,7 @@
 		}
 	});
 
-	const questions: TQuestion[] = testQuestions.question_revisions;
+	const questions: TQuestion[] = normalizeTestQuestions(testQuestions).questions;
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
 

@@ -1,7 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import Question from './Question.svelte';
-import { mockCandidate, mockQuestions, mockTestData, setLocaleForTests } from '$lib/test-utils';
+import {
+	mockCandidate,
+	mockQuestions,
+	mockSectionedTestQuestionsResponse,
+	mockTestData,
+	setLocaleForTests
+} from '$lib/test-utils';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -129,6 +135,21 @@ describe('Question', () => {
 
 		// Second question should not be visible on first page
 		expect(screen.queryByText(mockQuestions[1].question_text)).not.toBeInTheDocument();
+	});
+
+	it('should render sectioned payloads in the existing flat question flow', async () => {
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: { ...mockSectionedTestQuestionsResponse, question_pagination: 2 },
+				testDetails
+			}
+		});
+
+		await vi.waitFor(() => {
+			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+			expect(screen.getByText(mockQuestions[1].question_text)).toBeInTheDocument();
+		});
 	});
 
 	it('should handle questions without pagination', async () => {

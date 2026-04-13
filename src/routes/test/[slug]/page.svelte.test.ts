@@ -6,6 +6,7 @@ import {
 	mockTestData,
 	mockQuestions,
 	mockResultData,
+	mockSectionedTestQuestionsResponse,
 	mockTestQuestionsResponse
 } from '$lib/test-utils';
 
@@ -105,6 +106,23 @@ describe('Test Page', () => {
 		});
 
 		// Wait for Question component to render
+		await vi.waitFor(() => {
+			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+		});
+	});
+
+	it('should render Question component when candidate has only question sets', async () => {
+		render(Page, {
+			props: {
+				data: {
+					...baseData,
+					candidate: mockCandidate,
+					testQuestions: mockSectionedTestQuestionsResponse
+				},
+				form: null
+			}
+		});
+
 		await vi.waitFor(() => {
 			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
 		});

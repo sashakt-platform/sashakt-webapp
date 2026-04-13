@@ -103,6 +103,29 @@ export type TQuestion = {
 	media: TMedia | null;
 };
 
+export type TQuestionSetBase = {
+	id?: number | null;
+	title: string;
+	description?: string | null;
+	display_order: number;
+	max_questions_allowed_to_attempt: number;
+	marking_scheme?: TMarks | null;
+};
+
+export type TQuestionSetCandidate = TQuestionSetBase & {
+	question_revisions: TQuestion[];
+};
+
+export type TQuestionSetSummary = TQuestionSetBase & {
+	question_count: number;
+};
+
+export type TTestQuestionsResponse = {
+	question_revisions: TQuestion[];
+	question_sets?: TQuestionSetCandidate[] | null;
+	question_pagination?: number | null;
+};
+
 // Form Field Types
 export type TFormFieldType =
 	| 'full_name'
