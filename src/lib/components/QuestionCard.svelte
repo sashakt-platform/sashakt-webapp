@@ -33,7 +33,8 @@
 		totalQuestions,
 		selectedQuestions = $bindable(),
 		showFeedback = false,
-		showMarkForReview = true
+		showMarkForReview = true,
+		showMarks = true
 	}: {
 		question: TQuestion;
 		candidate: TCandidate;
@@ -42,6 +43,7 @@
 		selectedQuestions: TSelection[];
 		showFeedback?: boolean;
 		showMarkForReview?: boolean;
+		showMarks?: boolean;
 	} = $props();
 
 	const options = question.options;
@@ -556,7 +558,7 @@
 	<Card.Header class="p-5">
 		<Card.Title class="mb-5 border-b pb-3 text-sm">
 			{serialNumber} <span>{$t('OF')} {totalQuestions}</span>
-			{#if question?.marking_scheme}
+			{#if showMarks && question?.marking_scheme}
 				{@const mark = question.marking_scheme.correct}
 				{@const scheme = question.marking_scheme}
 				<span class="group relative float-end cursor-help select-none">
