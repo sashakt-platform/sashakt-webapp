@@ -8,12 +8,14 @@
 		questions,
 		selections,
 		currentQuestionIndex,
-		onNavigate
+		onNavigate,
+		showMarkForReview = true
 	}: {
 		questions: TQuestion[];
 		selections: TSelection[];
 		currentQuestionIndex: number;
 		onNavigate: (questionIndex: number) => void;
+		showMarkForReview?: boolean;
 	} = $props();
 </script>
 
@@ -26,6 +28,12 @@
 	</div>
 
 	<div class="overflow-y-auto p-4 pt-2">
-		<QuestionPaletteContent {questions} {selections} {currentQuestionIndex} {onNavigate} />
+		<QuestionPaletteContent
+			{questions}
+			{selections}
+			{currentQuestionIndex}
+			{onNavigate}
+			{showMarkForReview}
+		/>
 	</div>
 </div>

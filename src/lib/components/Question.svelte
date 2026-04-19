@@ -261,6 +261,7 @@
 					selections={selectedQuestions}
 					{currentQuestionIndex}
 					onNavigate={navigateToQuestion}
+					showMarkForReview={testDetails.bookmark}
 				/>
 			</div>
 		{/if}
@@ -288,6 +289,7 @@
 			{currentQuestionIndex}
 			instructions={testDetails?.start_instructions}
 			onNavigate={navigateToQuestion}
+			showMarkForReview={testDetails.bookmark}
 		/>
 	{/if}
 {/if}

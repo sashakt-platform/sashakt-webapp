@@ -10,7 +10,8 @@
 		selections,
 		currentQuestionIndex,
 		instructions,
-		onNavigate
+		onNavigate,
+		showMarkForReview = true
 	}: {
 		open: boolean;
 		questions: TQuestion[];
@@ -18,6 +19,7 @@
 		currentQuestionIndex: number;
 		instructions: string | undefined;
 		onNavigate: (questionIndex: number) => void;
+		showMarkForReview?: boolean;
 	} = $props();
 
 	let activeTab = $state<'palette' | 'instructions'>('palette');
@@ -68,6 +70,7 @@
 						{currentQuestionIndex}
 						onNavigate={handleQuestionClick}
 						maxRows={5}
+						{showMarkForReview}
 					/>
 				</div>
 			{:else}
