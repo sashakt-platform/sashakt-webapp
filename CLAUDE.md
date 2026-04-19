@@ -47,6 +47,7 @@ Backend fetch wrappers live in `src/lib/server/test.ts`. API proxy routes are in
 ### Main Test Flow (`/test/[slug]`)
 
 The test page is a state machine in `src/routes/test/[slug]/+page.svelte` with these views:
+
 1. **LandingPage** - Test intro and instructions
 2. **DynamicForm** - Candidate registration (if test has a form)
 3. **CandidateProfile** - OMR mode selection (if optional)
@@ -67,6 +68,7 @@ Candidate identity is stored in a `sashakt-candidate` cookie (contains `candidat
 ### Test Configuration
 
 Vitest uses two test projects configured in `vite.config.ts`:
+
 - **client**: `*.svelte.test.ts` files, jsdom environment, setup in `vitest-setup-client.ts`
 - **server**: `*.test.ts` files (excluding `.svelte.`), node environment
 
@@ -77,6 +79,7 @@ Locale files are in `src/locales/`. Use `$t('key')` for translations. For tests,
 ## Key Types
 
 Core types are in `src/lib/types.ts`:
+
 - `TQuestion` - Question with options, type, marking scheme (supports partial marks)
 - `TSelection` - Candidate's answer state per question
 - `TTestSession` - Candidate + selections + current page
@@ -101,3 +104,10 @@ Pre-existing type errors in `vite.config.ts`, `select-label.svelte`, `CandidateP
 ## Imports
 
 Always use top-level imports (not dynamic imports inside functions unless specifically needed for code splitting).
+
+## Conventions
+
+- Use top-level imports (not inline/dynamic imports unless necessary)
+- Use Svelte 5 runes (`$state`, `$derived`, `$effect`, etc.)
+- Create plan/tracking files in the `plans/` folder (gitignored), never in the project root. Never delete plan files.
+- Never hardcode colors (e.g., `text-gray-600`, `bg-blue-500`). Use theme tokens defined in `app.css` (e.g., `text-muted-foreground`, `bg-primary`, `border-border`).
