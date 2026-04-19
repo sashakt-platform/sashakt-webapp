@@ -27,7 +27,9 @@
 
 	const hasDynamicForm = $derived(!!data.testData?.form);
 	const hasOmrChoice = $derived(data.testData?.omr === 'OPTIONAL');
-	const hasRenderableQuestions = $derived(normalizeTestQuestions(data.testQuestions).questions.length > 0);
+	const hasRenderableQuestions = $derived(
+		normalizeTestQuestions(data.testQuestions).questions.length > 0
+	);
 
 	$effect(() => {
 		form;
@@ -66,7 +68,7 @@
 		/>
 	{:else if !data.candidate && !showProfileForm}
 		<LandingPage testDetails={data.testData} bind:showProfileForm />
-	{:else if !data.candidate && hasDynamicForm && !showOmrChoice}
+	{:else if !data.candidate && hasDynamicForm && !showOmrChoice && data.testData.form}
 		<DynamicForm
 			form={data.testData.form}
 			testDetails={data.testData}

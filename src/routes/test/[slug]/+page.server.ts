@@ -3,28 +3,30 @@ import { dev } from '$app/environment';
 import { getCandidate } from '$lib/helpers/getCandidate';
 import { getTestQuestions, getTimeLeft, getStates, type TState } from '$lib/server/test';
 import { validateForm } from '$lib/components/form/validation';
+import type { TTestDetails } from '$lib/types';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
  * Check if the form has any location fields (state, district, block)
  */
-function hasLocationFields(testData: {
-	form?: { fields?: Array<{ field_type: string }> };
-}): boolean {
+function hasLocationFields(testData: TTestDetails): boolean {
 	if (!testData?.form?.fields) return false;
 	const locationFieldTypes = ['state', 'district', 'block'];
 	return testData.form.fields.some((field) => locationFieldTypes.includes(field.field_type));
 }
 
 export const load: PageServerLoad = async ({ locals, cookies }) => {
+	const testData = locals.testData;
+	if (!testData) throw redirect(302, '/');
+
 	const candidate = getCandidate(cookies);
 
 	// Fetch states if form has location fields (districts/blocks are fetched on-demand via search)
 	let locations: { states: TState[] } | null = null;
-	if (hasLocationFields(locals.testData)) {
+	if (hasLocationFields(testData)) {
 		try {
-			const states = await getStates(locals.testData.id);
+			const states = await getStates(testData.id);
 			locations = { states };
 		} catch (error) {
 			console.error('Error fetching states:', error);
@@ -41,11 +43,11 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 
 			if (timerResponse.time_left == null || timerResponse.time_left > 0) {
 				const useOmr =
-				locals.testData.omr === 'ALWAYS'
-					? 'true'
-					: locals.testData.omr === 'OPTIONAL'
-						? candidate.use_omr
-						: undefined;
+					testData.omr === 'ALWAYS'
+						? 'true'
+						: testData.omr === 'OPTIONAL'
+							? candidate.use_omr
+							: undefined;
 				testQuestionsResponse = await getTestQuestions(
 					candidate.candidate_test_id,
 					candidate.candidate_uuid,
@@ -55,7 +57,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 
 			return {
 				candidate,
-				testData: locals.testData,
+				testData,
 				timeLeft: timerResponse.time_left,
 				testQuestions: testQuestionsResponse,
 				locations
@@ -63,16 +65,16 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 		} catch (error) {
 			console.error('Error fetching candidate data:', error);
 			cookies.delete('sashakt-candidate', {
-				path: '/test/' + locals.testData.link,
+				path: '/test/' + testData.link,
 				secure: !dev
 			});
-			throw redirect(303, '/test/' + locals.testData.link);
+			throw redirect(303, '/test/' + testData.link);
 		}
 	}
 	return {
 		candidate: null,
 		timeToBegin: locals.timeToBegin,
-		testData: locals.testData,
+		testData,
 		testQuestions: null,
 		locations
 	};
@@ -80,6 +82,8 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 
 export const actions = {
 	createCandidate: async ({ request, locals, fetch, cookies }) => {
+		const testData = locals.testData;
+		if (!testData) return fail(500, { error: 'Test not found' });
 		// check if a candidate session already exists, if yes return it
 		const existingCandidate = getCandidate(cookies);
 		if (
@@ -103,7 +107,7 @@ export const actions = {
 			device_info: unknown;
 			form_responses?: Record<string, unknown>;
 		} = {
-			test_id: locals.testData.id,
+			test_id: testData.id,
 			device_info: deviceInfo
 		};
 
@@ -119,7 +123,7 @@ export const actions = {
 					Object.keys(formResponses).length > 0
 				) {
 					// Run server-side validation if form fields are available
-					const formFields = locals.testData.form?.fields;
+					const formFields = testData.form?.fields;
 					if (formFields && formFields.length > 0) {
 						const errors = validateForm(formFields, formResponses);
 						if (Object.keys(errors).length > 0) {
@@ -129,7 +133,7 @@ export const actions = {
 					requestBody.form_responses = formResponses;
 				}
 			} catch {
-				if (locals.testData.form?.fields?.length) {
+				if (testData.form?.fields?.length) {
 					return fail(400, { error: 'Invalid form_responses JSON' });
 				}
 			}
@@ -142,7 +146,9 @@ export const actions = {
 				body: JSON.stringify(requestBody)
 			});
 			if (!response.ok) {
-				return fail(response.status, { error: 'Failed to start test' });
+				const errorData = await response.json().catch(() => ({}));
+				const errorMessage = errorData?.detail || errorData?.message || 'Failed to start test';
+				return fail(response.status, { error: errorMessage });
 			}
 			const candidateData = await response.json();
 
@@ -152,7 +158,7 @@ export const actions = {
 
 			cookies.set('sashakt-candidate', JSON.stringify(candidateData), {
 				expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
-				path: '/test/' + locals.testData.link,
+				path: '/test/' + testData.link,
 				httpOnly: true,
 				sameSite: 'lax',
 				secure: !dev
@@ -168,6 +174,8 @@ export const actions = {
 	},
 
 	submitTest: async ({ cookies, fetch, locals }) => {
+		const testData = locals.testData;
+		if (!testData) return fail(500, { error: 'Test not found', submitTest: false });
 		const candidate = getCandidate(cookies);
 		if (!candidate) {
 			return fail(400, { candidate, missing: true });
@@ -202,7 +210,7 @@ export const actions = {
 				let feedback = null;
 				let testQuestions = null;
 
-				if (locals.testData.show_feedback_on_completion) {
+				if (testData.show_feedback_on_completion) {
 					try {
 						const [feedbackResponse, testQuestionsData] = await Promise.all([
 							fetch(
@@ -243,7 +251,7 @@ export const actions = {
 				}
 
 				cookies.delete('sashakt-candidate', {
-					path: '/test/' + locals.testData.link,
+					path: '/test/' + testData.link,
 					secure: !dev
 				});
 
@@ -258,11 +266,13 @@ export const actions = {
 	},
 
 	reattempt: async ({ cookies, locals }) => {
+		const testData = locals.testData;
+		if (!testData) throw redirect(302, '/');
 		cookies.delete('sashakt-candidate', {
-			path: '/test/' + locals.testData.link,
+			path: '/test/' + testData.link,
 			secure: !dev
 		});
 
-		redirect(301, `/test/${locals.testData.link}`);
+		redirect(301, `/test/${testData.link}`);
 	}
 } satisfies Actions;
