@@ -16,27 +16,6 @@ function hasLocationFields(testData: TTestDetails): boolean {
 	return testData.form.fields.some((field) => locationFieldTypes.includes(field.field_type));
 }
 
-const ORG_SETTING_FLAGS = [
-	'omr',
-	'show_question_palette',
-	'bookmark',
-	'show_feedback_immediately',
-	'show_feedback_on_completion'
-] as const;
-
-function overlayOrgSettingFlags(
-	testData: TTestDetails,
-	source: Record<string, unknown>
-): TTestDetails {
-	const overrides: Partial<TTestDetails> = {};
-	for (const flag of ORG_SETTING_FLAGS) {
-		if (flag in source) {
-			(overrides as Record<string, unknown>)[flag] = source[flag];
-		}
-	}
-	return { ...testData, ...overrides };
-}
-
 export const load: PageServerLoad = async ({ locals, cookies }) => {
 	const testData = locals.testData;
 	if (!testData) throw redirect(302, '/');
@@ -76,18 +55,9 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 				);
 			}
 
-			// `/candidate/test_questions/` returns runtime-overridden org-settings flags
-			// (bookmark, palette, OMR, feedback). `/test/public/{slug}` returns the
-			// test-row values, which are stale when the admin disables a feature
-			// after the test was created. Overlay so downstream consumers see the
-			// override.
-			const mergedTestData = testQuestionsResponse
-				? overlayOrgSettingFlags(testData, testQuestionsResponse)
-				: testData;
-
 			return {
 				candidate,
-				testData: mergedTestData,
+				testData,
 				timeLeft: timerResponse.time_left,
 				testQuestions: testQuestionsResponse,
 				locations
