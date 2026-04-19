@@ -181,7 +181,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions
+				testQuestions,
+				testDetails
 			}
 		});
 
@@ -218,7 +219,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions: singlePageQuestions
+				testQuestions: singlePageQuestions,
+				testDetails
 			}
 		});
 
@@ -250,7 +252,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions: singlePageQuestions
+				testQuestions: singlePageQuestions,
+				testDetails
 			}
 		});
 
@@ -278,7 +281,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions
+				testQuestions,
+				testDetails
 			}
 		});
 
@@ -314,7 +318,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions: singlePageQuestions
+				testQuestions: singlePageQuestions,
+				testDetails
 			}
 		});
 
@@ -345,7 +350,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions: singlePageQuestions
+				testQuestions: singlePageQuestions,
+				testDetails
 			}
 		});
 

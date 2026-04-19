@@ -78,7 +78,7 @@
 	{:else if !data.candidate && hasOmrChoice}
 		<CandidateProfile testDetails={data.testData} formResponses={candidateFormResponses} />
 	{:else if hasRenderableQuestions}
-		{#if data.candidate.use_omr === 'true' || data.testData?.omr === 'ALWAYS'}
+		{#if data.testData?.omr !== 'NEVER' && (data.candidate.use_omr === 'true' || data.testData?.omr === 'ALWAYS')}
 			<OmrSheet
 				candidate={data.candidate}
 				testDetails={data.testData}
