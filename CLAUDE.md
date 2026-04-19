@@ -57,6 +57,8 @@ The test page is a state machine in `src/routes/test/[slug]/+page.svelte` with t
 
 Server-side data loading happens in `+page.server.ts`. The `hooks.server.ts` middleware fetches test details by slug and sets `event.locals.testData`.
 
+Tests may be sectioned: the backend returns `question_sets` which is flattened into a single question list via `normalizeTestQuestions` in `$lib/helpers/questionSetHelpers.ts`.
+
 ### Session Management
 
 Candidate identity is stored in a `sashakt-candidate` cookie (contains `candidate_uuid` and `candidate_test_id`). Parsed by `src/lib/helpers/getCandidate.ts`. API routes validate the cookie matches request parameters.
@@ -80,10 +82,12 @@ Locale files are in `src/locales/`. Use `$t('key')` for translations. For tests,
 
 Core types are in `src/lib/types.ts`:
 
-- `TQuestion` - Question with options, type, marking scheme (supports partial marks)
+- `TQuestion` - Question with options, type, marking scheme (supports partial marks), optional `media`
 - `TSelection` - Candidate's answer state per question
 - `TTestSession` - Candidate + selections + current page
-- `question_type_enum` - SINGLE, MULTIPLE, SUBJECTIVE, NUMERICALINTEGER, NUMERICALDECIMAL
+- `question_type_enum` - SINGLE, MULTIPLE, SUBJECTIVE, NUMERICALINTEGER, NUMERICALDECIMAL, MATRIXRATING, MATRIXMATCH, MATRIXINPUT
+- `TQuestionSetCandidate` - Section grouping with `question_revisions` and per-section marking
+- `TMedia` / `TMediaImage` / `TExternalMedia` - Image and external media (YouTube, etc.) attachments
 - `TFormField` / `TForm` - Dynamic form field definitions
 
 ## Environment Variables
@@ -100,10 +104,6 @@ Core types are in `src/lib/types.ts`:
 ## Known Issues
 
 Pre-existing type errors in `vite.config.ts`, `select-label.svelte`, `CandidateProfile.svelte` — these can be ignored.
-
-## Imports
-
-Always use top-level imports (not dynamic imports inside functions unless specifically needed for code splitting).
 
 ## Conventions
 
