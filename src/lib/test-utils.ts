@@ -15,6 +15,7 @@ import type {
 	TQuestionSetCandidate,
 	TResultData,
 	TSelection,
+	TTestDetails,
 	TTestSession
 } from './types';
 import { init, register, waitLocale, locale } from 'svelte-i18n';
@@ -406,7 +407,7 @@ export const mockTestSession: TTestSession = {
 };
 
 // Mock test data (from backend)
-export const mockTestData = {
+export const mockTestData: TTestDetails = {
 	id: 1,
 	name: 'Sample Test',
 	link: 'sample-test',
@@ -420,6 +421,8 @@ export const mockTestData = {
 	locale: DEFAULT_LANGUAGE,
 	show_question_palette: true,
 	omr: 'NEVER',
+	bookmark: true,
+	show_feedback_immediately: false,
 	show_feedback_on_completion: true
 };
 
