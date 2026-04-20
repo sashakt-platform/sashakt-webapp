@@ -153,6 +153,7 @@
 									bind:selectedQuestions
 									showFeedback={testDetails.show_feedback_immediately}
 									showMarkForReview={testDetails.bookmark}
+									showMarks={testDetails?.show_marks ?? true}
 								/>
 							</div>
 						{/each}

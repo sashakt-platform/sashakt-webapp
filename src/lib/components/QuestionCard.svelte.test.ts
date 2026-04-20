@@ -523,6 +523,68 @@ describe('QuestionCard', () => {
 		});
 	});
 
+	describe('showMarks prop', () => {
+		const defaultProps = {
+			serialNumber: 1,
+			candidate: mockCandidate,
+			totalQuestions: 10,
+			selectedQuestions: []
+		};
+
+		it('should show marks by default when showMarks prop is not provided', () => {
+			render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			});
+
+			expect(screen.getByText('1 Mark')).toBeInTheDocument();
+		});
+
+		it('should show marks when showMarks is true', () => {
+			render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps, showMarks: true }
+			});
+
+			expect(screen.getByText('1 Mark')).toBeInTheDocument();
+		});
+
+		it('should hide marks when showMarks is false', () => {
+			render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps, showMarks: false }
+			});
+
+			expect(screen.queryByText('1 Mark')).not.toBeInTheDocument();
+		});
+
+		it('should hide marking scheme tooltip when showMarks is false', () => {
+			render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps, showMarks: false }
+			});
+
+			expect(screen.queryByText('Marking Scheme')).not.toBeInTheDocument();
+		});
+
+		it('should not affect other card elements when showMarks is false', () => {
+			render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps, showMarks: false }
+			});
+
+			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
+			mockSingleChoiceQuestion.options.forEach((option) => {
+				expect(
+					screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))
+				).toBeInTheDocument();
+			});
+		});
+
+		it('should hide plural marks when showMarks is false', () => {
+			render(QuestionCard, {
+				props: { question: mockMultipleChoiceQuestion, ...defaultProps, showMarks: false }
+			});
+
+			expect(screen.queryByText('2 Marks')).not.toBeInTheDocument();
+		});
+	});
+
 	describe('Subjective question functionality', () => {
 		it('should render textarea for subjective questions', () => {
 			render(QuestionCard, {
