@@ -173,6 +173,60 @@ describe('Question', () => {
 			});
 		});
 	});
+
+	describe('show_marks in testDetails', () => {
+		it('should display marks when testDetails.show_marks is true', async () => {
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails: { ...testDetails, show_marks: true }
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+			});
+
+			expect(screen.getAllByText(/\d+ Marks?/).length).toBeGreaterThan(0);
+		});
+
+		it('should hide marks when testDetails.show_marks is false', async () => {
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails: { ...testDetails, show_marks: false }
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+			});
+
+			expect(screen.queryAllByText(/\d+ Marks?/)).toHaveLength(0);
+		});
+
+		it('should display marks by default when testDetails.show_marks is undefined', async () => {
+			const testDetailsWithoutShowMarks = testDetails as typeof testDetails & {
+				show_marks?: boolean;
+			};
+
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails: testDetailsWithoutShowMarks
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+			});
+
+			expect(screen.getAllByText(/\d+ Marks?/).length).toBeGreaterThan(0);
+		});
+	});
 });
 
 describe('Support for Localization', () => {
