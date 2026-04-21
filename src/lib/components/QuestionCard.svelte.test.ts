@@ -141,7 +141,7 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		expect(screen.getByText('1 Mark')).toBeInTheDocument();
+		expect(screen.getAllByText('+1').length).toBeGreaterThan(0);
 	});
 
 	it('should display plural marks when more than 1', () => {
@@ -155,7 +155,7 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		expect(screen.getByText('2 Marks')).toBeInTheDocument();
+		expect(screen.getAllByText('+2').length).toBeGreaterThan(0);
 	});
 
 	it('should display instructions when provided', () => {
@@ -532,27 +532,27 @@ describe('QuestionCard', () => {
 		};
 
 		it('should show marks by default when showMarks prop is not provided', () => {
-			render(QuestionCard, {
+			const { container } = render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			expect(screen.getByText('1 Mark')).toBeInTheDocument();
+			expect(container.querySelector('[data-testid="marks-pill"]')).toBeInTheDocument();
 		});
 
 		it('should show marks when showMarks is true', () => {
-			render(QuestionCard, {
+			const { container } = render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps, showMarks: true }
 			});
 
-			expect(screen.getByText('1 Mark')).toBeInTheDocument();
+			expect(container.querySelector('[data-testid="marks-pill"]')).toBeInTheDocument();
 		});
 
 		it('should hide marks when showMarks is false', () => {
-			render(QuestionCard, {
+			const { container } = render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps, showMarks: false }
 			});
 
-			expect(screen.queryByText('1 Mark')).not.toBeInTheDocument();
+			expect(container.querySelector('[data-testid="marks-pill"]')).not.toBeInTheDocument();
 		});
 
 		it('should hide marking scheme tooltip when showMarks is false', () => {
@@ -560,7 +560,7 @@ describe('QuestionCard', () => {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps, showMarks: false }
 			});
 
-			expect(screen.queryByText('Marking Scheme')).not.toBeInTheDocument();
+			expect(screen.queryByText('Unanswered')).not.toBeInTheDocument();
 		});
 
 		it('should not affect other card elements when showMarks is false', () => {
@@ -577,11 +577,11 @@ describe('QuestionCard', () => {
 		});
 
 		it('should hide plural marks when showMarks is false', () => {
-			render(QuestionCard, {
+			const { container } = render(QuestionCard, {
 				props: { question: mockMultipleChoiceQuestion, ...defaultProps, showMarks: false }
 			});
 
-			expect(screen.queryByText('2 Marks')).not.toBeInTheDocument();
+			expect(container.querySelector('[data-testid="marks-pill"]')).not.toBeInTheDocument();
 		});
 	});
 
@@ -881,7 +881,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByText('5 Marks')).toBeInTheDocument();
+			expect(screen.getAllByText('+5').length).toBeGreaterThan(0);
 		});
 	});
 
@@ -2061,22 +2061,24 @@ describe('QuestionCard', () => {
 			selectedQuestions: []
 		};
 
-		it('should render an info icon next to the marks text', () => {
+		it('should render a chevron icon in the marks trigger', () => {
 			const { container } = render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			const marksTrigger = container.querySelector('.cursor-help');
-			expect(marksTrigger).toBeInTheDocument();
-			expect(marksTrigger?.querySelector('svg')).toBeInTheDocument();
+			const marksPill = container.querySelector('[data-testid="marks-pill"]');
+			expect(marksPill).toBeInTheDocument();
+			expect(marksPill?.querySelector('svg')).toBeInTheDocument();
 		});
 
-		it('should render the tooltip with marking scheme heading', () => {
+		it('should render the dropdown with correct/incorrect/unanswered rows', () => {
 			render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			expect(screen.getByText('Marking Scheme')).toBeInTheDocument();
+			expect(screen.getByText('Correct')).toBeInTheDocument();
+			expect(screen.getByText('Incorrect')).toBeInTheDocument();
+			expect(screen.getByText('Unanswered')).toBeInTheDocument();
 		});
 
 		it('should display correct marks value with + prefix', () => {
@@ -2084,7 +2086,7 @@ describe('QuestionCard', () => {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			expect(screen.getByText('+1')).toBeInTheDocument();
+			expect(screen.getAllByText('+1').length).toBeGreaterThan(0);
 		});
 
 		it('should display wrong marks value in red when negative', () => {
@@ -2098,7 +2100,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const wrongValueSpan = container.querySelector('.text-red-600');
+			const wrongValueSpan = container.querySelector('.text-error');
 			expect(wrongValueSpan).toBeInTheDocument();
 			expect(wrongValueSpan?.textContent).toBe('-1');
 		});
@@ -2108,16 +2110,16 @@ describe('QuestionCard', () => {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			const wrongRow = screen.getByText('Wrong').closest('div');
-			expect(wrongRow?.querySelector('.text-red-600')).not.toBeInTheDocument();
+			const incorrectRow = screen.getByText('Incorrect').closest('div');
+			expect(incorrectRow?.querySelector('.text-red-600')).not.toBeInTheDocument();
 		});
 
-		it('should display skipped marks value', () => {
+		it('should display unanswered/skipped marks value', () => {
 			render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			expect(screen.getByText('Skipped')).toBeInTheDocument();
+			expect(screen.getByText('Unanswered')).toBeInTheDocument();
 		});
 
 		it('should show partial marks section for multi-choice question with partial scheme', () => {
@@ -2125,7 +2127,7 @@ describe('QuestionCard', () => {
 				props: { question: mockMultiChoiceWithPartialMarks, ...defaultProps }
 			});
 
-			expect(screen.getByText('Partial Marks')).toBeInTheDocument();
+			expect(screen.getByText(/Partial marks awarded/i)).toBeInTheDocument();
 		});
 
 		it('should not show partial marks section for single-choice question', () => {
@@ -2133,7 +2135,7 @@ describe('QuestionCard', () => {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			expect(screen.queryByText('Partial Marks')).not.toBeInTheDocument();
+			expect(screen.queryByText(/Partial marks awarded/i)).not.toBeInTheDocument();
 		});
 
 		it('should not show partial marks section for multi-choice question without partial scheme', () => {
@@ -2146,7 +2148,7 @@ describe('QuestionCard', () => {
 				props: { question: questionNoPartial, ...defaultProps }
 			});
 
-			expect(screen.queryByText('Partial Marks')).not.toBeInTheDocument();
+			expect(screen.queryByText(/Partial marks awarded/i)).not.toBeInTheDocument();
 		});
 
 		it('should display each partial mark rule with correct selected count and marks', () => {

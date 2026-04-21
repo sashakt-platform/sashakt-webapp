@@ -2,7 +2,7 @@
 	import { page } from '$app/state';
 	import Bookmark from '@lucide/svelte/icons/bookmark';
 	import Check from '@lucide/svelte/icons/check';
-	import Info from '@lucide/svelte/icons/info';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import X from '@lucide/svelte/icons/x';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button';
@@ -243,10 +243,10 @@
 	const optionFeedbackClass = (optionId: number) => {
 		if (!isFeedbackViewed || !correctAnswer) return '';
 		if (Array.isArray(correctAnswer) && correctAnswer.includes(optionId)) {
-			return 'bg-green-100 border-green-500 text-green-700';
+			return 'bg-success-subtle border-success text-success';
 		}
 		if (Array.isArray(currentSelection?.response) && currentSelection.response.includes(optionId)) {
-			return 'bg-red-100 border-red-500 text-red-700';
+			return 'bg-error-subtle border-error text-error';
 		}
 		return '';
 	};
@@ -540,14 +540,14 @@
 
 {#snippet showCorrectWrongMark(answerStatus: string)}
 	{#if answerStatus === 'correct'}
-		<span class="flex-end flex gap-1 text-xs font-medium text-green-600"
+		<span class="flex-end flex gap-1 text-xs font-medium text-success"
 			>{$t('Correct')}
-			<Check size={18} class="text-green-600" />
+			<Check size={18} class="text-success" />
 		</span>
 	{:else if answerStatus === 'wrong'}
-		<span class="flex-end flex gap-1 text-xs font-medium text-red-600"
+		<span class="flex-end flex gap-1 text-xs font-medium text-error"
 			>{$t('Wrong')}
-			<X size={18} class="text-red-600" />
+			<X size={18} class="text-error" />
 		</span>
 	{/if}
 {/snippet}
@@ -561,48 +561,53 @@
 			{#if showMarks && question?.marking_scheme}
 				{@const mark = question.marking_scheme.correct}
 				{@const scheme = question.marking_scheme}
-				<span class="group relative float-end cursor-help select-none">
-					<span class="text-muted-foreground inline-flex items-center gap-1">
-						{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}
-						<Info size={13} class="text-muted-foreground/60" />
+				<span class="group relative float-end cursor-pointer select-none">
+					<span
+						data-testid="marks-pill"
+						class="border-border text-semibold inline-flex items-center gap-1.5 rounded-full border px-3 py-1"
+					>
+						<span class="text-muted-foreground font-medium">{$t('Marks')}:</span>
+						<span class="font-semibold text-success">+{scheme.correct}</span>
+						{#if scheme.wrong !== 0}
+							<span class="font-semibold text-error">{scheme.wrong}</span>
+						{/if}
+						<ChevronDown size={13} class="text-muted-foreground" />
 					</span>
 					<div
-						class="absolute top-full right-0 z-20 mt-1 hidden min-w-48 rounded-lg border bg-white p-3 text-xs shadow-lg group-hover:block"
+						class="absolute top-full right-0 z-20 mt-1 hidden min-w-52 rounded-xl border bg-white p-4 text-sm shadow-lg group-hover:block"
 					>
-						<p class="text-foreground mb-2 font-semibold">{$t('Marking Scheme')}</p>
-						<div class="space-y-1.5">
+						<div class="space-y-3">
 							<div class="flex justify-between gap-4">
-								<span class="text-muted-foreground">{$t('Correct')}</span>
-								<span class="font-medium text-green-600">+{scheme.correct}</span>
+								<span class="text-success font-semibold">{$t('Correct')}</span>
+								<span class="text-success font-semibold">+{scheme.correct}</span>
 							</div>
 							<div class="flex justify-between gap-4">
-								<span class="text-muted-foreground">{$t('Wrong')}</span>
-								<span class="font-medium {scheme.wrong < 0 ? 'text-red-600' : 'text-foreground'}"
+								<span class="font-semibold {scheme.wrong < 0 ? 'text-error' : 'text-foreground'}">{$t('Incorrect')}</span>
+								<span class="font-semibold {scheme.wrong < 0 ? 'text-error' : 'text-foreground'}"
 									>{scheme.wrong > 0 ? `+${scheme.wrong}` : scheme.wrong}</span
 								>
 							</div>
 							<div class="flex justify-between gap-4">
-								<span class="text-muted-foreground">{$t('Skipped')}</span>
-								<span class="text-foreground font-medium">{scheme.skipped}</span>
+								<span class="text-warning font-semibold">{$t('Unanswered')}</span>
+								<span class="text-warning font-semibold">{scheme.skipped}</span>
 							</div>
 						</div>
 						{#if scheme.partial?.correct_answers?.length && question.question_type === 'multi-choice'}
-							<div class="border-muted-foreground/20 mt-2.5 border-t pt-2.5">
-								<p class="text-foreground mb-1.5 font-semibold">{$t('Partial Marks')}</p>
-								<div class="space-y-1.5">
+							<div class="border-border mt-3 border-t pt-3">
+								<p class="text-muted-foreground mb-2 text-xs leading-snug">
+									{$t('Partial marks awarded if no wrong option is selected')}:
+								</p>
+								<div class="space-y-2">
 									{#each scheme.partial.correct_answers as rule, i (i)}
 										<div class="flex justify-between gap-4">
-											<span class="text-muted-foreground"
+											<span class="text-success font-medium"
 												>{rule.num_correct_selected}
 												{$t('correct selected')}</span
 											>
-											<span class="font-medium text-green-600">+{rule.marks}</span>
+											<span class="text-success font-semibold">+{rule.marks}</span>
 										</div>
 									{/each}
 								</div>
-								<p class="text-muted-foreground/65 mt-2 text-[11px] leading-snug">
-									{$t('Partial marks awarded if no wrong option is selected')}
-								</p>
 							</div>
 						{/if}
 					</div>
@@ -731,10 +736,10 @@
 				{@const isCorrect = checkNumberAnswerCorrect()}
 				{@const feedbackClass =
 					isCorrect === null
-						? 'border-gray-300 bg-white text-gray-700'
+						? 'border-border bg-card text-foreground'
 						: isCorrect
-							? 'border-green-400 bg-green-100 text-green-700'
-							: 'border-red-400 bg-red-100 text-red-700'}
+							? 'border-success bg-success-subtle text-success'
+							: 'border-error bg-error-subtle text-error'}
 				{@const candidateResponse = currentSelection?.response}
 				{@const correctAnswer = currentSelection?.correct_answer}
 				<div
@@ -755,7 +760,7 @@
 				{#if isCorrect === false}
 					<div
 						data-testid="numerical-correct-answer"
-						class="mt-4 flex flex-row rounded-xl border border-green-400 bg-green-100 px-4 py-4 text-green-700"
+						class="mt-4 flex flex-row rounded-xl border border-success bg-success-subtle px-4 py-4 text-success"
 					>
 						<p class="w-full text-sm whitespace-pre-wrap">{correctAnswer}</p>
 						{@render showCorrectWrongMark('correct')}

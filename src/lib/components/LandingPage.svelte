@@ -3,9 +3,7 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import { Button, buttonVariants } from '$lib/components/ui/button/index.js';
-	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
-	import * as Table from '$lib/components/ui/table/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import PreTestTimer from './PreTestTimer.svelte';
@@ -13,7 +11,6 @@
 
 	let { testDetails, showProfileForm = $bindable() } = $props();
 
-	let isChecked = $state(false);
 	let isStarting = $state(false);
 	let createError = $state<string | null>(null);
 
@@ -29,54 +26,77 @@
 		setError: (error) => (createError = error)
 	});
 
-	const testOverview = $derived([
-		{
-			label: $t('Total questions'),
-			value: `${testDetails.total_questions} ${$t('questions')}`
-		},
-		{
-			label: $t('Total duration'),
-			value: `${testDetails.time_limit ? testDetails.time_limit + ' ' + $t('minutes') : $t('N/A')}`
-		},
-		{
-			label: $t('Questions per page'),
-			value: `${testDetails.question_pagination ? testDetails.question_pagination + ' ' + $t('question(s)') : $t('All questions')}`
-		}
-	]);
+	const testOverview = $derived(
+		[
+			{ label: $t('Total questions'), value: `${testDetails.total_questions}` },
+			testDetails.total_marks
+				? { label: $t('Total marks'), value: `${testDetails.total_marks}` }
+				: null,
+			{
+				label: $t('Test duration'),
+				value: testDetails.time_limit ? `${testDetails.time_limit} ${$t('minutes')}` : $t('N/A')
+			},
+			{
+				label: $t('Questions per page'),
+				value: testDetails.question_pagination
+					? `${testDetails.question_pagination}`
+					: $t('All questions')
+			}
+		].filter(Boolean)
+	);
 </script>
 
-<section class="mx-auto max-w-xl p-6">
-	<h1 class="mb-4 text-xl font-semibold">{testDetails.name}</h1>
-	<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">{$t('Test Overview')}</h2>
+<section class="bg-background min-h-screen px-4 py-6">
+	<div class="mx-auto max-w-xl">
+		<div class="mb-6 text-center">
+			<h1 class="text-foreground mb-2 text-2xl leading-tight font-semibold">{testDetails.name}</h1>
+			{#if testDetails.description}
+				<p class="text-muted-foreground text-sm">{testDetails.description}</p>
+			{/if}
+		</div>
 
-	<div class="mb-8 rounded-2xl border">
-		<Table.Root>
-			<Table.Body>
-				{#each testOverview as item (item.label)}
-					<Table.Row>
-						<Table.Head class="border-r">{item.label}</Table.Head>
-						<Table.Cell>{item.value}</Table.Cell>
-					</Table.Row>
-				{/each}
-			</Table.Body>
-		</Table.Root>
-	</div>
-	<div>
+		<div class="border-border mb-6 overflow-hidden rounded-2xl border bg-white">
+			<div class="bg-section-header border-border flex h-16 items-center gap-8 border-b px-5">
+				<span class="text-muted-foreground text-xs font-bold tracking-wider uppercase">
+					{$t('Test Overview')}
+				</span>
+			</div>
+
+			{#each testOverview as item, i (item?.label)}
+				<div
+					class="flex w-full items-center justify-between gap-6 px-5
+             py-4
+             {i < testOverview.length - 1 ? 'border-border border-b' : ''}"
+				>
+					<span class="text-foreground truncate text-sm">
+						{item?.label}
+					</span>
+
+					<span class="text-foreground text-right text-sm font-semibold">
+						{item?.value}
+					</span>
+				</div>
+			{/each}
+		</div>
 		{#if testDetails.start_instructions}
-			<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">
-				{$t('General Instructions')}
-			</h2>
-			<p
-				class="text-accent-foreground mt-3 rounded-lg px-4 py-5 text-[13px]/relaxed font-normal shadow"
-			>
-				{@html testDetails.start_instructions}
-			</p>
+			<div class="border-border mb-24 overflow-hidden rounded-2xl border bg-white">
+				<div class="bg-section-header border-border flex h-16 items-center gap-8 border-b px-5">
+					<span class="text-muted-foreground text-xs font-bold tracking-wider uppercase"
+						>{$t('Test Instructions')}</span
+					>
+				</div>
+				<div class="px-5 py-4">
+					<div class="text-foreground prose prose-sm text-[13px]/relaxed">
+						{@html testDetails.start_instructions}
+					</div>
+				</div>
+			</div>
 		{/if}
 	</div>
 </section>
 
 {#if createError}
-	<div class="fixed right-0 bottom-20 left-0 z-20 mx-auto w-3/5 px-4">
+	<div class="fixed right-0 bottom-24 left-0 z-20 mx-auto w-4/5 px-4">
 		<div
 			class="text-destructive border-destructive bg-destructive/10 rounded-lg border p-3 text-sm"
 		>
@@ -85,17 +105,18 @@
 	</div>
 {/if}
 
-<div class="fixed bottom-0 z-20 w-screen bg-white p-4">
-	<div class="mx-auto flex items-center justify-around space-x-3 sm:w-3/5">
-		<div class="flex items-center space-x-2">
-			<Checkbox id="terms" aria-labelledby="terms-label" bind:checked={isChecked} />
-			<label id="terms-label" for="terms" class="text-xs sm:text-sm">
-				{$t('I have read and understood the instructions as given')}
-			</label>
-		</div>
+<div class="fixed bottom-0 z-20 w-screen border-t bg-white px-4 py-4">
+	<p class="text-muted-foreground mb-3 text-center text-xs">
+		{$t(
+			'By clicking "Start Test," you confirm that you have read and understood all instructions.'
+		)}
+	</p>
+	<div class="mx-auto max-w-xl">
 		{#if page.data?.timeToBegin === 0}
 			{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
-				<Button onclick={handleStart} class="w-32" disabled={!isChecked}>{$t('Start')}</Button>
+				<Button onclick={handleStart} class="w-full">
+					{$t('Start Test')} →
+				</Button>
 			{:else}
 				<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
 					<input
@@ -105,21 +126,18 @@
 						}}
 						hidden
 					/>
-					<Button type="submit" class="w-32" disabled={!isChecked || isStarting}>
+					<Button type="submit" class="w-full" disabled={isStarting}>
 						{#if isStarting}
 							<Spinner />
 						{/if}
-						{$t('Start')}
+						{$t('Start Test')} →
 					</Button>
 				</form>
 			{/if}
 		{:else}
 			<Dialog.Root>
-				<Dialog.Trigger
-					disabled={!isChecked}
-					class={`w-45 ${buttonVariants({ variant: 'default' })}`}
-				>
-					{$t('Start')}
+				<Dialog.Trigger class={`w-full ${buttonVariants({ variant: 'default' })}`}>
+					{$t('Start Test')} →
 				</Dialog.Trigger>
 				{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
 					<PreTestTimer timeLeft={page.data?.timeToBegin} bind:showProfileForm />
