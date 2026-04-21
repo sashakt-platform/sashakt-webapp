@@ -12,6 +12,7 @@ import {
 	mockSingleChoiceQuestion,
 	mockOptionalQuestion
 } from '$lib/test-utils';
+import { createTestSessionStore } from '$lib/helpers/testSession';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -22,6 +23,16 @@ vi.mock('$app/state', () => ({
 	page: {
 		form: null
 	}
+}));
+
+vi.mock('$lib/helpers/testSession', () => ({
+	createTestSessionStore: vi.fn(() => ({
+		current: {
+			candidate: mockCandidate,
+			selections: [],
+			currentPage: 1
+		}
+	}))
 }));
 
 // Mock fetch for API calls
@@ -37,6 +48,13 @@ const testDetails = mockTestData;
 describe('Question', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(createTestSessionStore).mockReturnValue({
+			current: {
+				candidate: mockCandidate,
+				selections: [],
+				currentPage: 1
+			}
+		} as any);
 	});
 
 	it('should render questions', async () => {
@@ -194,6 +212,23 @@ describe('Question', () => {
 			question_pagination: 2
 		};
 
+		vi.mocked(createTestSessionStore).mockReturnValue({
+			current: {
+				candidate: mockCandidate,
+				selections: [
+					{
+						question_revision_id: mockSubjectiveQuestion.id,
+						response: 'saved answer',
+						visited: true,
+						time_spent: 7,
+						bookmarked: false,
+						is_reviewed: false
+					}
+				],
+				currentPage: 1
+			}
+		} as any);
+
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
@@ -206,22 +241,13 @@ describe('Question', () => {
 			expect(screen.getByText(multiQuestionPage.question_revisions[0].question_text)).toBeInTheDocument();
 		});
 
-		await fireEvent.input(screen.getByPlaceholderText(/type your answer here/i), {
-			target: { value: 'test answer' }
-		});
-		await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
-
-		await waitFor(() => {
-			expect(fetch).toHaveBeenCalledTimes(1);
-		});
-
 		await fireEvent.click(screen.getByRole('button', { name: /next/i }));
 
 		await waitFor(() => {
 			expect(screen.getByText(multiQuestionPage.question_revisions[2].question_text)).toBeInTheDocument();
 		});
 
-		expect(fetch).toHaveBeenCalledTimes(1);
+		expect(fetch).not.toHaveBeenCalled();
 	});
 
 	describe('show_marks in testDetails', () => {
