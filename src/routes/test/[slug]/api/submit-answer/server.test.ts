@@ -47,11 +47,35 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		expect(data.correct_answer).toBeNull();
 		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(fetch).toHaveBeenCalledWith(
-			`http://test-backend.com/candidate/submit_answer/${mockCandidate.candidate_test_id}/?candidate_uuid=${mockCandidate.candidate_uuid}`,
+			`http://test-backend.com/candidate/submit_answer/${mockCandidate.candidate_test_id}?candidate_uuid=${mockCandidate.candidate_uuid}`,
 			expect.objectContaining({
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: expect.stringContaining('"question_revision_id":1')
+			})
+		);
+	});
+
+	it('passes time_spent through to backend when provided', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch).mockResolvedValueOnce(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest({
+			question_revision_id: 1,
+			response: [101],
+			candidate: mockCandidate,
+			time_spent: 17
+		});
+		const response = await POST({ request, cookies: mockCookies } as any);
+
+		expect(response.status).toBe(200);
+		expect(fetch).toHaveBeenCalledWith(
+			expect.any(String),
+			expect.objectContaining({
+				body: expect.stringContaining('"time_spent":17')
 			})
 		);
 	});

@@ -413,6 +413,7 @@ export const mockTestData: TTestDetails = {
 	link: 'sample-test',
 	total_questions: 10,
 	time_limit: 60,
+	pause_timer_when_inactive: false,
 	question_pagination: 5,
 	start_time: new Date().toISOString(),
 	start_instructions: '<p>Read all questions carefully before answering.</p>',

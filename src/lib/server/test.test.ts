@@ -87,7 +87,7 @@ describe('Server API Functions', () => {
 			const result = await getTestQuestions(1, 'candidate-uuid');
 
 			expect(fetch).toHaveBeenCalledWith(
-				'http://test-backend.com/candidate/test_questions/1/?candidate_uuid=candidate-uuid',
+				'http://test-backend.com/candidate/test_questions/1?candidate_uuid=candidate-uuid',
 				{
 					method: 'GET',
 					headers: { accept: 'application/json' }
@@ -130,7 +130,7 @@ describe('Server API Functions', () => {
 			await getTestQuestions(1, 'candidate-uuid', 'true');
 
 			expect(fetch).toHaveBeenCalledWith(
-				'http://test-backend.com/candidate/test_questions/1/?candidate_uuid=candidate-uuid&use_omr=true',
+				'http://test-backend.com/candidate/test_questions/1?candidate_uuid=candidate-uuid&use_omr=true',
 				{
 					method: 'GET',
 					headers: { accept: 'application/json' }
@@ -150,7 +150,7 @@ describe('Server API Functions', () => {
 			await getTestQuestions(1, 'candidate-uuid', 'false');
 
 			expect(fetch).toHaveBeenCalledWith(
-				'http://test-backend.com/candidate/test_questions/1/?candidate_uuid=candidate-uuid&use_omr=false',
+				'http://test-backend.com/candidate/test_questions/1?candidate_uuid=candidate-uuid&use_omr=false',
 				{
 					method: 'GET',
 					headers: { accept: 'application/json' }
@@ -170,7 +170,7 @@ describe('Server API Functions', () => {
 			await getTestQuestions(1, 'candidate-uuid', undefined);
 
 			expect(fetch).toHaveBeenCalledWith(
-				'http://test-backend.com/candidate/test_questions/1/?candidate_uuid=candidate-uuid',
+				'http://test-backend.com/candidate/test_questions/1?candidate_uuid=candidate-uuid',
 				{
 					method: 'GET',
 					headers: { accept: 'application/json' }
@@ -189,7 +189,7 @@ describe('Server API Functions', () => {
 			const result = await getTimeLeft(1, 'candidate-uuid');
 
 			expect(fetch).toHaveBeenCalledWith(
-				'http://test-backend.com/candidate/time_left/1/?candidate_uuid=candidate-uuid',
+				'http://test-backend.com/candidate/time_left/1?candidate_uuid=candidate-uuid',
 				{
 					method: 'GET',
 					headers: { accept: 'application/json' }

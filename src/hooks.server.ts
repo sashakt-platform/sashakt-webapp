@@ -4,6 +4,10 @@ import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
 export const handleTest: Handle = async function ({ event, resolve }) {
+	if (event.route.id?.startsWith('/test/[slug]/api')) {
+		return resolve(event);
+	}
+
 	if (event.route.id?.startsWith('/test')) {
 		// we should check if slug exists
 		if (!event.params.slug) {
