@@ -59,6 +59,7 @@
 		]
 	},
 	"dependencies": {
+		"@fontsource/open-sans": "^5.2.7",
 		"@sentry/sveltekit": "^10.46.0",
 		"svelte-i18n": "^4.0.1"
 	}
