@@ -7,7 +7,10 @@ import {
 	mockSectionedTestQuestionsResponse,
 	mockTestData,
 	setLocaleForTests,
-	createMockResponse
+	createMockResponse,
+	mockSubjectiveQuestion,
+	mockSingleChoiceQuestion,
+	mockOptionalQuestion
 } from '$lib/test-utils';
 
 // Mock SvelteKit modules
@@ -183,10 +186,11 @@ describe('Question', () => {
 		vi.mocked(fetch).mockResolvedValue(createMockResponse({ success: true }) as unknown as Response);
 
 		const multiQuestionPage = {
-			question_revisions: mockQuestions.slice(0, 4).map((question) => ({
-				...question,
-				is_mandatory: false
-			})),
+			question_revisions: [
+				{ ...mockSubjectiveQuestion, is_mandatory: false },
+				{ ...mockSingleChoiceQuestion, is_mandatory: false },
+				{ ...mockOptionalQuestion, id: 99, is_mandatory: false }
+			],
 			question_pagination: 2
 		};
 
@@ -202,7 +206,10 @@ describe('Question', () => {
 			expect(screen.getByText(multiQuestionPage.question_revisions[0].question_text)).toBeInTheDocument();
 		});
 
-		await fireEvent.click(screen.getAllByRole('button', { name: /mark for review/i })[0]);
+		await fireEvent.input(screen.getByPlaceholderText(/type your answer here/i), {
+			target: { value: 'test answer' }
+		});
+		await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
 
 		await waitFor(() => {
 			expect(fetch).toHaveBeenCalledTimes(1);
