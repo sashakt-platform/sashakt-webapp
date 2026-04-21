@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import Question from './Question.svelte';
 import {
@@ -6,8 +6,13 @@ import {
 	mockQuestions,
 	mockSectionedTestQuestionsResponse,
 	mockTestData,
-	setLocaleForTests
+	setLocaleForTests,
+	createMockResponse,
+	mockSubjectiveQuestion,
+	mockSingleChoiceQuestion,
+	mockOptionalQuestion
 } from '$lib/test-utils';
+import { createTestSessionStore } from '$lib/helpers/testSession';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -18,6 +23,16 @@ vi.mock('$app/state', () => ({
 	page: {
 		form: null
 	}
+}));
+
+vi.mock('$lib/helpers/testSession', () => ({
+	createTestSessionStore: vi.fn(() => ({
+		current: {
+			candidate: mockCandidate,
+			selections: [],
+			currentPage: 1
+		}
+	}))
 }));
 
 // Mock fetch for API calls
@@ -31,6 +46,17 @@ const testQuestions = {
 const testDetails = mockTestData;
 
 describe('Question', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(createTestSessionStore).mockReturnValue({
+			current: {
+				candidate: mockCandidate,
+				selections: [],
+				currentPage: 1
+			}
+		} as any);
+	});
+
 	it('should render questions', async () => {
 		render(Question, {
 			props: {
@@ -172,6 +198,56 @@ describe('Question', () => {
 				expect(screen.getByText(q.question_text)).toBeInTheDocument();
 			});
 		});
+	});
+
+	it('does not sync question time on page change when multiple questions share a page', async () => {
+		vi.mocked(fetch).mockResolvedValue(createMockResponse({ success: true }) as unknown as Response);
+
+		const multiQuestionPage = {
+			question_revisions: [
+				{ ...mockSubjectiveQuestion, is_mandatory: false },
+				{ ...mockSingleChoiceQuestion, is_mandatory: false },
+				{ ...mockOptionalQuestion, id: 99, is_mandatory: false }
+			],
+			question_pagination: 2
+		};
+
+		vi.mocked(createTestSessionStore).mockReturnValue({
+			current: {
+				candidate: mockCandidate,
+				selections: [
+					{
+						question_revision_id: mockSubjectiveQuestion.id,
+						response: 'saved answer',
+						visited: true,
+						time_spent: 7,
+						bookmarked: false,
+						is_reviewed: false
+					}
+				],
+				currentPage: 1
+			}
+		} as any);
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: multiQuestionPage,
+				testDetails
+			}
+		});
+
+		await waitFor(() => {
+			expect(screen.getByText(multiQuestionPage.question_revisions[0].question_text)).toBeInTheDocument();
+		});
+
+		await fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+		await waitFor(() => {
+			expect(screen.getByText(multiQuestionPage.question_revisions[2].question_text)).toBeInTheDocument();
+		});
+
+		expect(fetch).not.toHaveBeenCalled();
 	});
 
 	describe('show_marks in testDetails', () => {

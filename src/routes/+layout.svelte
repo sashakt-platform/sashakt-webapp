@@ -24,7 +24,11 @@
 		Sashakt
 	</h2>
 	{#if page.data?.timeLeft !== null && page.data.candidate && !page.form?.submitTest}
-		<TestTimer timeLeft={page.data?.timeLeft} />
+		<TestTimer
+			timeLeft={page.data?.timeLeft}
+			candidate={page.data.candidate}
+			pauseTimerWhenInactive={page.data.testData.pause_timer_when_inactive}
+		/>
 	{/if}
 </nav>
 

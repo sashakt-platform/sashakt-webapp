@@ -33,7 +33,7 @@ describe('POST /api/submit-test', () => {
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
 		expect(fetch).toHaveBeenCalledWith(
-			`http://test-backend.com/candidate/submit_test/${mockCandidate.candidate_test_id}/?candidate_uuid=${mockCandidate.candidate_uuid}`,
+			`http://test-backend.com/candidate/submit_test/${mockCandidate.candidate_test_id}?candidate_uuid=${mockCandidate.candidate_uuid}`,
 			expect.objectContaining({
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' }

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
+import { createMockResponse, mockCandidate } from '$lib/test-utils';
 import TestTimer from './TestTimer.svelte';
 
 // Mock SvelteKit modules
@@ -7,13 +8,24 @@ vi.mock('$app/forms', () => ({
 	enhance: () => () => {}
 }));
 
+vi.mock('$app/state', () => ({
+	page: { params: { slug: 'sample-test' } }
+}));
+
 describe('TestTimer', () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
+		vi.stubGlobal('fetch', vi.fn());
+		Object.defineProperty(document, 'visibilityState', {
+			configurable: true,
+			value: 'visible'
+		});
 	});
 
 	afterEach(() => {
 		vi.useRealTimers();
+		vi.unstubAllGlobals();
+		vi.clearAllMocks();
 	});
 
 	it('should render time in HH:MM:SS format', () => {
@@ -103,5 +115,112 @@ describe('TestTimer', () => {
 		});
 
 		expect(screen.getByText('02:00:00')).toBeInTheDocument();
+	});
+
+	it('does not sync timer when pauseTimerWhenInactive is disabled', async () => {
+		render(TestTimer, {
+			props: {
+				timeLeft: 120,
+				candidate: mockCandidate,
+				pauseTimerWhenInactive: false
+			}
+		});
+
+		await Promise.resolve();
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('syncs timer on mount when pauseTimerWhenInactive is enabled', async () => {
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ time_left: 120 }) as unknown as Response
+		);
+
+		render(TestTimer, {
+			props: {
+				timeLeft: 120,
+				candidate: mockCandidate,
+				pauseTimerWhenInactive: true
+			}
+		});
+
+		await Promise.resolve();
+		expect(fetch).toHaveBeenCalledWith('/test/sample-test/api/timer', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ candidate: mockCandidate, event: 'resume' })
+		});
+
+		await vi.advanceTimersByTimeAsync(15000);
+		expect(fetch).toHaveBeenLastCalledWith('/test/sample-test/api/timer', expect.objectContaining({
+			body: JSON.stringify({ candidate: mockCandidate, event: 'heartbeat' })
+		}));
+	});
+
+	it('does not increase the displayed timer when server returns a higher time_left', async () => {
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ time_left: 150 }) as unknown as Response
+		);
+
+		render(TestTimer, {
+			props: {
+				timeLeft: 120,
+				candidate: mockCandidate,
+				pauseTimerWhenInactive: true
+			}
+		});
+
+		await Promise.resolve();
+		await Promise.resolve();
+
+		expect(screen.getByText('00:02:00')).toBeInTheDocument();
+	});
+
+	it('ignores stale timer sync responses that resolve after a newer sync', async () => {
+		let resolveFirstRequest: ((value: Response) => void) | undefined;
+
+		vi.mocked(fetch)
+			.mockImplementationOnce(
+				() =>
+					new Promise<Response>((resolve) => {
+						resolveFirstRequest = resolve;
+					})
+			)
+			.mockResolvedValueOnce(createMockResponse({ time_left: 90 }) as unknown as Response);
+
+		render(TestTimer, {
+			props: {
+				timeLeft: 120,
+				candidate: mockCandidate,
+				pauseTimerWhenInactive: true
+			}
+		});
+
+		await Promise.resolve();
+		await vi.advanceTimersByTimeAsync(15000);
+		await Promise.resolve();
+		await Promise.resolve();
+
+		expect(screen.getByText('00:01:30')).toBeInTheDocument();
+
+		resolveFirstRequest?.(createMockResponse({ time_left: 110 }) as unknown as Response);
+		await Promise.resolve();
+		await Promise.resolve();
+
+		expect(screen.getByText('00:01:30')).toBeInTheDocument();
+	});
+
+	it('does not sync timer when pauseTimerWhenInactive is enabled without a candidate', async () => {
+		render(TestTimer, {
+			props: {
+				timeLeft: 120,
+				candidate: null,
+				pauseTimerWhenInactive: true
+			}
+		});
+
+		await Promise.resolve();
+		await vi.advanceTimersByTimeAsync(15000);
+
+		expect(fetch).not.toHaveBeenCalled();
 	});
 });

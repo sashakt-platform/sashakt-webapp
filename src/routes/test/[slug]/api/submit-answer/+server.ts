@@ -16,12 +16,14 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		question_revision_id,
 		response,
 		candidate,
+		time_spent,
 		bookmarked,
 		is_reviewed
 	}: {
 		question_revision_id: number;
 		response: number[] | string | null;
 		candidate: TCandidate;
+		time_spent?: number;
 		bookmarked?: boolean;
 		is_reviewed?: boolean;
 	} = await request.json();
@@ -45,7 +47,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
 	try {
 		const res = await fetch(
-			`${BACKEND_URL}/candidate/submit_answer/${candidate.candidate_test_id}/?candidate_uuid=${candidate.candidate_uuid}`,
+			`${BACKEND_URL}/candidate/submit_answer/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`,
 			{
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -57,6 +59,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 							: JSON.stringify(response)
 						: null,
 					visited: true,
+					time_spent: time_spent ?? 0,
 					bookmarked: bookmarked ?? false,
 					is_reviewed: is_reviewed ?? false
 				})
