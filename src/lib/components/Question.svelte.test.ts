@@ -202,7 +202,7 @@ describe('Question', () => {
 			expect(screen.getByText(multiQuestionPage.question_revisions[0].question_text)).toBeInTheDocument();
 		});
 
-		await fireEvent.click(screen.getAllByRole('radio')[0]);
+		await fireEvent.click(screen.getAllByRole('button', { name: /mark for review/i })[0]);
 
 		await waitFor(() => {
 			expect(fetch).toHaveBeenCalledTimes(1);
