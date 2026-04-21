@@ -235,7 +235,6 @@ describe('LandingPage - OMR Mode', () => {
 		expect(button).toBeInTheDocument();
 		expect(button.getAttribute('type')).toBe('submit');
 	});
-
 });
 
 describe('Support for Localization', () => {

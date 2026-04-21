@@ -151,8 +151,8 @@
 									{question}
 									{totalQuestions}
 									bind:selectedQuestions
-									showFeedback={testDetails?.show_feedback_immediately ?? false}
-									showMarkForReview={testDetails?.bookmark ?? true}
+									showFeedback={testDetails.show_feedback_immediately}
+									showMarkForReview={testDetails.bookmark}
 									showMarks={testDetails?.show_marks ?? true}
 								/>
 							</div>
@@ -262,6 +262,7 @@
 					selections={selectedQuestions}
 					{currentQuestionIndex}
 					onNavigate={navigateToQuestion}
+					showMarkForReview={testDetails.bookmark}
 				/>
 			</div>
 		{/if}
@@ -289,6 +290,7 @@
 			{currentQuestionIndex}
 			instructions={testDetails?.start_instructions}
 			onNavigate={navigateToQuestion}
+			showMarkForReview={testDetails.bookmark}
 		/>
 	{/if}
 {/if}

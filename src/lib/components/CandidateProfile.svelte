@@ -51,7 +51,12 @@
 				{#if hasOmrChoice}
 					<div class="space-y-2">
 						<Label for="omrMode">{$t('OMR Mode')} *</Label>
-						<Select.Root type="single" name="omrMode" bind:value={selectedOmr} disabled={isSubmitting}>
+						<Select.Root
+							type="single"
+							name="omrMode"
+							bind:value={selectedOmr}
+							disabled={isSubmitting}
+						>
 							<Select.Trigger class="w-full">{omrTriggerContent}</Select.Trigger>
 							<Select.Content>
 								<Select.Group>

@@ -13,13 +13,15 @@
 		selections,
 		currentQuestionIndex,
 		onNavigate,
-		maxRows
+		maxRows,
+		showMarkForReview = true
 	}: {
 		questions: TQuestion[];
 		selections: TSelection[];
 		currentQuestionIndex: number;
 		onNavigate: (questionIndex: number) => void;
 		maxRows?: number;
+		showMarkForReview?: boolean;
 	} = $props();
 
 	// Calculate max height for grid: rows * 40px (h-10) + (rows-1) * 8px (gap-2)
@@ -39,14 +41,16 @@
 		<span class="text-sm text-gray-600">{$t('Answered')}</span>
 	</div>
 
-	<div class="flex items-center gap-2">
-		<span
-			class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-medium text-amber-700"
-		>
-			{stats.bookmarked}
-		</span>
-		<span class="text-sm text-gray-600">{$t('Marked for review')}</span>
-	</div>
+	{#if showMarkForReview}
+		<div class="flex items-center gap-2">
+			<span
+				class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-medium text-amber-700"
+			>
+				{stats.bookmarked}
+			</span>
+			<span class="text-sm text-gray-600">{$t('Marked for review')}</span>
+		</div>
+	{/if}
 
 	<div class="flex items-center gap-2">
 		<span
@@ -81,7 +85,7 @@
 			{#if question.is_mandatory}
 				<span class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500"></span>
 			{/if}
-			{#if isBookmarked}
+			{#if showMarkForReview && isBookmarked}
 				<Bookmark class="absolute -right-1 -bottom-1 h-3 w-3 fill-amber-500 text-amber-500" />
 			{/if}
 		</button>
