@@ -16,8 +16,11 @@
 	});
 </script>
 
-<nav class="bg-background sticky top-0 z-50 mb-1 flex items-center justify-between p-5">
-	<h2 class="text-primary w-full scroll-m-20 text-3xl font-extrabold tracking-tighter uppercase">
+<nav class="sticky top-0 z-50 mb-1 flex items-center justify-between bg-white p-5">
+	<h2
+		class="text-primary mx-auto h-3.5 w-22.75 scroll-m-20 text-center font-extrabold tracking-tight uppercase
+         lg:h-[15.36px] lg:w-[103.17px]"
+	>
 		Sashakt
 	</h2>
 	{#if page.data?.timeLeft !== null && page.data.candidate && !page.form?.submitTest}

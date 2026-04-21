@@ -3,13 +3,13 @@
 
 @layer base {
 	:root {
-		--background: 0 0% 100%;
+		--background: 0 0% 95%;
 		--foreground: 222.2 84% 4.9%;
 		--card: 0 0% 100%;
 		--card-foreground: 222.2 84% 4.9%;
 		--popover: 0 0% 100%;
 		--popover-foreground: 222.2 84% 4.9%;
-		--primary: 203 97% 32%;
+		--primary: 243 75% 59%;
 		/* --primary-foreground: 210 40% 98%; */
 		--primary-foreground: 204 48% 94%;
 		--secondary: 210 40% 96.1%;
@@ -24,6 +24,7 @@
 		--input: 214.3 31.8% 91.4%;
 		--ring: 221.2 83.2% 53.3%;
 		--radius: 0.5rem;
+		--section-header-bg: 0 0% 89%;
 	}
 	.dark {
 		--background: 222.2 84% 4.9%;
