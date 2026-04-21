@@ -11,7 +11,6 @@
 
 	let { testDetails, showProfileForm = $bindable() } = $props();
 
-	let isChecked = $state(false);
 	let isStarting = $state(false);
 	let createError = $state<string | null>(null);
 
@@ -30,7 +29,9 @@
 	const testOverview = $derived(
 		[
 			{ label: $t('Total questions'), value: `${testDetails.total_questions}` },
-			testDetails.total_marks ? { label: $t('Total marks'), value: `${testDetails.total_marks}` } : null,
+			testDetails.total_marks
+				? { label: $t('Total marks'), value: `${testDetails.total_marks}` }
+				: null,
 			{
 				label: $t('Test duration'),
 				value: testDetails.time_limit ? `${testDetails.time_limit} ${$t('minutes')}` : $t('N/A')
@@ -48,7 +49,7 @@
 <section class="bg-background min-h-screen px-4 py-6">
 	<div class="mx-auto max-w-xl">
 		<div class="mb-6 text-center">
-			<h1 class="text-brand-dark mb-2 text-2xl leading-tight font-semibold">{testDetails.name}</h1>
+			<h1 class="text-foreground mb-2 text-2xl leading-tight font-semibold">{testDetails.name}</h1>
 			{#if testDetails.description}
 				<p class="text-muted-foreground text-sm">{testDetails.description}</p>
 			{/if}
@@ -106,7 +107,9 @@
 
 <div class="fixed bottom-0 z-20 w-screen border-t bg-white px-4 py-4">
 	<p class="text-muted-foreground mb-3 text-center text-xs">
-		{$t('By clicking "Start Test," you confirm that you have read and understood all instructions.')}
+		{$t(
+			'By clicking "Start Test," you confirm that you have read and understood all instructions.'
+		)}
 	</p>
 	<div class="mx-auto max-w-xl">
 		{#if page.data?.timeToBegin === 0}
