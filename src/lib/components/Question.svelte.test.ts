@@ -188,7 +188,7 @@ describe('Question', () => {
 				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
 			});
 
-			expect(screen.getAllByText(/\d+ Marks?/).length).toBeGreaterThan(0);
+			expect(screen.getAllByText('Marks:').length).toBeGreaterThan(0);
 		});
 
 		it('should hide marks when testDetails.show_marks is false', async () => {
@@ -204,7 +204,7 @@ describe('Question', () => {
 				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
 			});
 
-			expect(screen.queryAllByText(/\d+ Marks?/)).toHaveLength(0);
+			expect(screen.queryAllByText('Marks:')).toHaveLength(0);
 		});
 
 		it('should display marks by default when testDetails.show_marks is undefined', async () => {
@@ -224,7 +224,7 @@ describe('Question', () => {
 				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
 			});
 
-			expect(screen.getAllByText(/\d+ Marks?/).length).toBeGreaterThan(0);
+			expect(screen.getAllByText('Marks:').length).toBeGreaterThan(0);
 		});
 	});
 });
