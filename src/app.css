@@ -1,29 +1,58 @@
+@import '@fontsource/open-sans/300.css';
+@import '@fontsource/open-sans/400.css';
+@import '@fontsource/open-sans/600.css';
+@import '@fontsource/open-sans/700.css';
 @import 'tailwindcss';
 @config '../tailwind.config.ts';
 
 @layer base {
 	:root {
-		--background: 0 0% 95%;
-		--foreground: 222.2 84% 4.9%;
+		/* Brand */
+		--brand-primary: 243 75% 59%;
+		--brand-dark: 246 49% 21%;
+		--brand-light: 242 67% 90%;
+		--brand-subtle: 240 52% 96%;
+
+		/* Neutrals */
+		--gray-800: 215 28% 17%;
+		--gray-500: 220 9% 46%;
+		--gray-400: 0 0% 82%;
+		--gray-300: 0 0% 89%;
+		--gray-200: 0 0% 94%;
+		--gray-50: 210 20% 98%;
+		--gray-0: 0 0% 100%;
+
+		/* Semantics */
+		--success-bold: 158 92% 35%;
+		--success-subtle: 155 68% 90%;
+		--error-bold: 352 100% 46%;
+		--error-subtle: 0 100% 93%;
+		--warning-bold: 33 90% 48%;
+		--warning-subtle: 30 100% 90%;
+
+		/* Mapped shadcn tokens */
+		--background: 210 20% 98%;
+		--foreground: 215 28% 17%;
 		--card: 0 0% 100%;
-		--card-foreground: 222.2 84% 4.9%;
+		--card-foreground: 215 28% 17%;
 		--popover: 0 0% 100%;
-		--popover-foreground: 222.2 84% 4.9%;
+		--popover-foreground: 215 28% 17%;
 		--primary: 243 75% 59%;
-		/* --primary-foreground: 210 40% 98%; */
-		--primary-foreground: 204 48% 94%;
-		--secondary: 210 40% 96.1%;
-		--secondary-foreground: hsla(0, 0%, 83%, 1);
-		--muted: 210 40% 96.1%;
-		--muted-foreground: 215.4 16.3% 46.9%;
-		--accent: 210 40% 96.1%;
-		--accent-foreground: 222.2 47.4% 11.2%;
-		--destructive: 0 72.22% 50.59%;
-		--destructive-foreground: 210 40% 98%;
-		--border: 214.3 31.8% 91.4%;
-		--input: 214.3 31.8% 91.4%;
-		--ring: 221.2 83.2% 53.3%;
+		--primary-foreground: 0 0% 100%;
+		--secondary: 242 67% 90%;
+		--secondary-foreground: 246 49% 21%;
+		--muted: 0 0% 94%;
+		--muted-foreground: 220 9% 46%;
+		--accent: 240 52% 96%;
+		--accent-foreground: 246 49% 21%;
+		--destructive: 352 100% 46%;
+		--destructive-foreground: 0 0% 100%;
+		--border: 0 0% 89%;
+		--input: 0 0% 82%;
+		--ring: 243 75% 59%;
 		--radius: 0.5rem;
+
+		/* Section header */
 		--section-header-bg: 0 0% 89%;
 	}
 	.dark {
@@ -33,20 +62,20 @@
 		--card-foreground: 210 40% 98%;
 		--popover: 222.2 84% 4.9%;
 		--popover-foreground: 210 40% 98%;
-		--primary: 217.2 91.2% 59.8%;
-		--primary-foreground: 222.2 47.4% 11.2%;
-		--secondary: 217.2 32.6% 17.5%;
-		--secondary-foreground: 210 40% 98%;
+		--primary: 243 75% 59%;
+		--primary-foreground: 0 0% 100%;
+		--secondary: 242 67% 90%;
+		--secondary-foreground: 246 49% 21%;
 		--muted: 217.2 32.6% 17.5%;
 		--muted-foreground: 215 20.2% 65.1%;
 		--accent: 217.2 32.6% 17.5%;
 		--accent-foreground: 210 40% 98%;
-		--destructive: 0 62.8% 30.6%;
-		--destructive-foreground: 210 40% 98%;
+		--destructive: 352 100% 46%;
+		--destructive-foreground: 0 0% 100%;
 		--border: 217.2 32.6% 17.5%;
 		--input: 217.2 32.6% 17.5%;
-		--ring: 224.3 76.3% 48%;
-		--section-header-bg: 0 0% 89%;
+		--ring: 243 75% 59%;
+		--section-header-bg: 215 28% 17%;
 	}
 }
 
@@ -56,5 +85,7 @@
 	}
 	body {
 		@apply bg-background text-foreground;
+		font-family: 'Open Sans', sans-serif;
+		line-height: 1.4;
 	}
 }

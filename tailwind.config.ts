@@ -1,4 +1,3 @@
-import { fontFamily } from 'tailwindcss/defaultTheme';
 import type { Config } from 'tailwindcss';
 import tailwindcssAnimate from 'tailwindcss-animate';
 
@@ -59,6 +58,36 @@ const config: Config = {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				/* Brand colors */
+				brand: {
+					DEFAULT: 'hsl(var(--brand-primary) / <alpha-value>)',
+					dark: 'hsl(var(--brand-dark) / <alpha-value>)',
+					light: 'hsl(var(--brand-light) / <alpha-value>)',
+					subtle: 'hsl(var(--brand-subtle) / <alpha-value>)'
+				},
+				/* Neutral grays */
+				gray: {
+					800: 'hsl(var(--gray-800) / <alpha-value>)',
+					500: 'hsl(var(--gray-500) / <alpha-value>)',
+					400: 'hsl(var(--gray-400) / <alpha-value>)',
+					300: 'hsl(var(--gray-300) / <alpha-value>)',
+					200: 'hsl(var(--gray-200) / <alpha-value>)',
+					50: 'hsl(var(--gray-50) / <alpha-value>)',
+					0: 'hsl(var(--gray-0) / <alpha-value>)'
+				},
+				/* Semantic colors */
+				success: {
+					DEFAULT: 'hsl(var(--success-bold) / <alpha-value>)',
+					subtle: 'hsl(var(--success-subtle) / <alpha-value>)'
+				},
+				error: {
+					DEFAULT: 'hsl(var(--error-bold) / <alpha-value>)',
+					subtle: 'hsl(var(--error-subtle) / <alpha-value>)'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning-bold) / <alpha-value>)',
+					subtle: 'hsl(var(--warning-subtle) / <alpha-value>)'
 				}
 			},
 			borderRadius: {
@@ -68,7 +97,19 @@ const config: Config = {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			fontFamily: {
-				sans: [...fontFamily.sans]
+				sans: ['"Open Sans"', 'sans-serif']
+			},
+			fontSize: {
+				'label-xs': ['0.75rem', { lineHeight: '1.4', fontWeight: '700' }],
+				'label-sm': ['0.875rem', { lineHeight: '1.4', fontWeight: '700' }],
+				'body-xs': ['0.75rem', { lineHeight: '1.4', fontWeight: '400' }],
+				'body-sm': ['0.875rem', { lineHeight: '1.4', fontWeight: '400' }],
+				'body-sm-light': ['0.875rem', { lineHeight: '1.4', fontWeight: '300' }],
+				'title-xs': ['0.75rem', { lineHeight: '1.4', fontWeight: '600' }],
+				'title-sm': ['0.875rem', { lineHeight: '1.4', fontWeight: '600' }],
+				'title-lg': ['1rem', { lineHeight: '1.4', fontWeight: '700' }],
+				'display-xs': ['1.25rem', { lineHeight: '1.4', fontWeight: '700' }],
+				'display-sm': ['1.5rem', { lineHeight: '1.4', fontWeight: '700' }]
 			},
 			keyframes: {
 				'accordion-down': {
