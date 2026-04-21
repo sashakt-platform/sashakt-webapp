@@ -227,6 +227,64 @@ describe('QuestionCard', () => {
 		expect(radioButtons[1]).toBeChecked();
 	});
 
+	it('uses the local per-card timer when parent timing is not provided', async () => {
+		vi.useFakeTimers();
+		vi.mocked(fetch).mockResolvedValueOnce(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		render(QuestionCard, {
+			props: {
+				question: mockSingleChoiceQuestion,
+				serialNumber: 1,
+				candidate: mockCandidate,
+				totalQuestions: 10,
+				selectedQuestions: []
+			}
+		});
+
+		await vi.advanceTimersByTimeAsync(3000);
+		await fireEvent.click(screen.getAllByRole('radio')[0]);
+
+		await waitFor(() => {
+			expect(fetch).toHaveBeenCalled();
+		});
+
+		const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+		expect(body.time_spent).toBeGreaterThanOrEqual(3);
+
+		vi.useRealTimers();
+	});
+
+	it('uses parent-supplied timing when currentQuestionTimeSpent is provided', async () => {
+		const onTimeSpentSynced = vi.fn();
+		vi.mocked(fetch).mockResolvedValueOnce(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		render(QuestionCard, {
+			props: {
+				question: mockSingleChoiceQuestion,
+				serialNumber: 1,
+				candidate: mockCandidate,
+				totalQuestions: 10,
+				selectedQuestions: [],
+				currentQuestionTimeSpent: 17,
+				onTimeSpentSynced
+			}
+		});
+
+		await fireEvent.click(screen.getAllByRole('radio')[0]);
+
+		await waitFor(() => {
+			expect(fetch).toHaveBeenCalled();
+		});
+
+		const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+		expect(body.time_spent).toBe(17);
+		expect(onTimeSpentSynced).toHaveBeenCalledWith(17);
+	});
+
 	describe('Bookmark functionality', () => {
 		it('should display "Mark for review" button by default', () => {
 			render(QuestionCard, {

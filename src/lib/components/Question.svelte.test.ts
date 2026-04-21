@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import Question from './Question.svelte';
 import {
@@ -6,7 +6,8 @@ import {
 	mockQuestions,
 	mockSectionedTestQuestionsResponse,
 	mockTestData,
-	setLocaleForTests
+	setLocaleForTests,
+	createMockResponse
 } from '$lib/test-utils';
 
 // Mock SvelteKit modules
@@ -31,6 +32,10 @@ const testQuestions = {
 const testDetails = mockTestData;
 
 describe('Question', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
 	it('should render questions', async () => {
 		render(Question, {
 			props: {
@@ -172,6 +177,44 @@ describe('Question', () => {
 				expect(screen.getByText(q.question_text)).toBeInTheDocument();
 			});
 		});
+	});
+
+	it('does not sync question time on page change when multiple questions share a page', async () => {
+		vi.mocked(fetch).mockResolvedValue(createMockResponse({ success: true }) as unknown as Response);
+
+		const multiQuestionPage = {
+			question_revisions: mockQuestions.slice(0, 4).map((question) => ({
+				...question,
+				is_mandatory: false
+			})),
+			question_pagination: 2
+		};
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: multiQuestionPage,
+				testDetails
+			}
+		});
+
+		await waitFor(() => {
+			expect(screen.getByText(multiQuestionPage.question_revisions[0].question_text)).toBeInTheDocument();
+		});
+
+		await fireEvent.click(screen.getAllByRole('radio')[0]);
+
+		await waitFor(() => {
+			expect(fetch).toHaveBeenCalledTimes(1);
+		});
+
+		await fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+		await waitFor(() => {
+			expect(screen.getByText(multiQuestionPage.question_revisions[2].question_text)).toBeInTheDocument();
+		});
+
+		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
 	describe('show_marks in testDetails', () => {

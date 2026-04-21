@@ -23,6 +23,7 @@
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
+	import { onMount } from 'svelte';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
 
@@ -32,7 +33,7 @@
 		candidate,
 		totalQuestions,
 		selectedQuestions = $bindable(),
-		currentQuestionTimeSpent = 0,
+		currentQuestionTimeSpent = undefined,
 		onTimeSpentSynced,
 		showFeedback = false,
 		showMarkForReview = true,
@@ -43,7 +44,7 @@
 		serialNumber: number;
 		totalQuestions: number;
 		selectedQuestions: TSelection[];
-		currentQuestionTimeSpent?: number;
+		currentQuestionTimeSpent?: number | undefined;
 		onTimeSpentSynced?: (nextTimeSpent: number) => void;
 		showFeedback?: boolean;
 		showMarkForReview?: boolean;
@@ -56,6 +57,8 @@
 	let radioGroupKey = $state(0);
 	let isSubmitting = $state(false);
 	let saveError = $state<string | null>(null);
+	let localQuestionTimerTick = $state(0);
+	let localQuestionStartedAt = $state(Date.now());
 
 	const sessionStore = createTestSessionStore(candidate);
 	const selectedQuestion = (questionId: number) => {
@@ -67,6 +70,38 @@
 	const hasFeedbackAvailable = $derived((currentSelection?.response?.length ?? 0) > 0);
 	const isFeedbackViewed = $derived(currentSelection?.is_reviewed === true);
 	const isLocked = $derived(isFeedbackViewed);
+
+	onMount(() => {
+		const interval = setInterval(() => {
+			localQuestionTimerTick++;
+		}, 1000);
+
+		return () => clearInterval(interval);
+	});
+
+	$effect(() => {
+		question.id;
+		localQuestionStartedAt = Date.now();
+	});
+
+	const getCurrentTimeSpent = () => {
+		if (typeof currentQuestionTimeSpent === 'number') {
+			return currentQuestionTimeSpent;
+		}
+
+		localQuestionTimerTick;
+		const savedTimeSpent = selectedQuestion(question.id)?.time_spent ?? 0;
+		return savedTimeSpent + Math.max(0, Math.floor((Date.now() - localQuestionStartedAt) / 1000));
+	};
+
+	const handleTimeSpentSynced = (nextTimeSpent: number) => {
+		if (onTimeSpentSynced) {
+			onTimeSpentSynced(nextTimeSpent);
+			return;
+		}
+
+		localQuestionStartedAt = Date.now();
+	};
 
 	const checkNumberAnswerCorrect = $derived(() => {
 		if (!currentSelection) return null;
@@ -113,7 +148,7 @@
 
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-		const currentTimeSpent = currentQuestionTimeSpent;
+		const currentTimeSpent = getCurrentTimeSpent();
 		const normalized = normalizeMatrixInputValues(matrixInputValues);
 		const serialized = Object.keys(normalized).length > 0 ? JSON.stringify(normalized) : '';
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
@@ -144,7 +179,7 @@
 
 		try {
 			await submitAnswer(question.id, serialized, currentBookmarked, false, currentTimeSpent);
-			onTimeSpentSynced?.(currentTimeSpent);
+			handleTimeSpentSynced(currentTimeSpent);
 			lastSavedMatrixInputValues = { ...matrixInputValues };
 		} catch {
 			selectedQuestions = previousState;
@@ -169,7 +204,7 @@
 
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-		const currentTimeSpent = currentQuestionTimeSpent;
+		const currentTimeSpent = getCurrentTimeSpent();
 
 		const applyUpdate = (newResponse: string) => {
 			if (answeredQuestion) {
@@ -213,7 +248,7 @@
 
 			try {
 				await submitAnswer(question.id, serialized, currentBookmarked, false, currentTimeSpent);
-				onTimeSpentSynced?.(currentTimeSpent);
+				handleTimeSpentSynced(currentTimeSpent);
 			} catch {
 				matrixSelections = prevSelections;
 				selectedQuestions = prevState;
@@ -233,7 +268,7 @@
 				await submitAnswer(question.id, newResponse, currentBookmarked, false, currentTimeSpent);
 				applyUpdate(newResponse);
 				updateStore();
-				onTimeSpentSynced?.(currentTimeSpent);
+				handleTimeSpentSynced(currentTimeSpent);
 			} catch {
 				saveError = $t('Failed to save your answer. Please try again.');
 				setTimeout(() => (saveError = null), 5000);
@@ -284,7 +319,7 @@
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentResponse = answeredQuestion?.response ?? [];
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-		const currentTimeSpent = currentQuestionTimeSpent;
+		const currentTimeSpent = getCurrentTimeSpent();
 
 		selectedQuestions = selectedQuestions.map((q) =>
 			q.question_revision_id === question.id
@@ -301,7 +336,7 @@
 				true,
 				currentTimeSpent
 			);
-			onTimeSpentSynced?.(currentTimeSpent);
+			handleTimeSpentSynced(currentTimeSpent);
 			if (result?.correct_answer != null) {
 				selectedQuestions = selectedQuestions.map((q) =>
 					q.question_revision_id === question.id
@@ -320,7 +355,7 @@
 
 		const answeredQuestion = selectedQuestion(questionId);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-		const currentTimeSpent = currentQuestionTimeSpent;
+		const currentTimeSpent = getCurrentTimeSpent();
 
 		let newResponse: number[];
 		if (isRemoving) {
@@ -366,7 +401,7 @@
 					];
 				}
 				updateStore();
-				onTimeSpentSynced?.(currentTimeSpent);
+				handleTimeSpentSynced(currentTimeSpent);
 			} catch {
 				// force complete remount of RadioGroup
 				radioGroupKey++;
@@ -419,7 +454,7 @@
 
 			try {
 				await submitAnswer(questionId, newResponse, currentBookmarked, false, currentTimeSpent);
-				onTimeSpentSynced?.(currentTimeSpent);
+				handleTimeSpentSynced(currentTimeSpent);
 			} catch {
 				// revert on error
 				selectedQuestions = previousState;
@@ -476,7 +511,7 @@
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
 		const newBookmarked = !currentBookmarked;
 		const currentResponse = answeredQuestion?.response;
-		const currentTimeSpent = currentQuestionTimeSpent;
+		const currentTimeSpent = getCurrentTimeSpent();
 
 		if (isSubmitting) return;
 		isSubmitting = true;
@@ -517,7 +552,7 @@
 				false,
 				currentTimeSpent
 			);
-			onTimeSpentSynced?.(currentTimeSpent);
+			handleTimeSpentSynced(currentTimeSpent);
 		} catch {
 			// revert on error
 			if (answeredQuestion) {
@@ -546,7 +581,7 @@
 
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-		const currentTimeSpent = currentQuestionTimeSpent;
+		const currentTimeSpent = getCurrentTimeSpent();
 
 		isSubmitting = true;
 		saveError = null;
@@ -577,7 +612,7 @@
 
 		try {
 			await submitAnswer(question.id, inputValue, currentBookmarked, false, currentTimeSpent);
-			onTimeSpentSynced?.(currentTimeSpent);
+			handleTimeSpentSynced(currentTimeSpent);
 			lastSavedInput = candidateInput;
 		} catch {
 			selectedQuestions = previousState;

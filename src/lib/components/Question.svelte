@@ -15,7 +15,7 @@
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
-	import type { TQuestion } from '$lib/types';
+	import type { TQuestion, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { onMount } from 'svelte';
 
@@ -48,6 +48,7 @@
 	const questions: TQuestion[] = normalizeTestQuestions(testQuestions).questions;
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
+	const singleQuestionPerPage = perPage === 1;
 
 	const sessionStore = createTestSessionStore(candidate);
 	let selectedQuestions = $state(sessionStore.current.selections);
@@ -64,7 +65,9 @@
 
 	// navigate to a specific question by index
 	async function navigateToQuestion(questionIndex: number) {
-		await persistCurrentQuestionTime();
+		if (singleQuestionPerPage) {
+			await persistCurrentQuestionTime();
+		}
 		const targetPage = Math.floor(questionIndex / perPage) + 1;
 		paginationPage = targetPage;
 		currentQuestionIndex = questionIndex;
@@ -107,13 +110,19 @@
 
 	// scroll to top and update current question index when page changes
 	async function handlePageChange(newPage: number) {
-		await persistCurrentQuestionTime();
+		if (singleQuestionPerPage) {
+			await persistCurrentQuestionTime();
+		}
 		currentQuestionIndex = (newPage - 1) * perPage;
 		currentQuestionStartedAt = Date.now();
 		window.scrollTo({ top: 0, behavior: 'instant' });
 	}
 
 	onMount(() => {
+		if (!singleQuestionPerPage) {
+			return;
+		}
+
 		const interval = setInterval(() => {
 			questionTimerTick++;
 		}, 1000);
@@ -124,7 +133,9 @@
 	const getSelectionForQuestion = (questionIndex: number) => {
 		const question = questions[questionIndex];
 		if (!question) return null;
-		return selectedQuestions.find((item) => item.question_revision_id === question.id) ?? null;
+		return (
+			selectedQuestions.find((item: TSelection) => item.question_revision_id === question.id) ?? null
+		);
 	};
 
 	const getCurrentQuestionTimeSpent = () => {
@@ -138,7 +149,7 @@
 		const currentSelection = getSelectionForQuestion(currentQuestionIndex);
 		if (!currentSelection) return;
 
-		selectedQuestions = selectedQuestions.map((item) =>
+		selectedQuestions = selectedQuestions.map((item: TSelection) =>
 			item.question_revision_id === currentSelection.question_revision_id
 				? { ...item, time_spent: nextTimeSpent }
 				: item
@@ -153,6 +164,10 @@
 	};
 
 	const persistCurrentQuestionTime = async () => {
+		if (!singleQuestionPerPage) {
+			return;
+		}
+
 		const currentQuestion = questions[currentQuestionIndex];
 		const currentSelection = getSelectionForQuestion(currentQuestionIndex);
 		if (!currentQuestion || !currentSelection) {
@@ -198,7 +213,7 @@
 	});
 
 	$effect(() => {
-		if (!submitDialogOpen) return;
+		if (!singleQuestionPerPage || !submitDialogOpen) return;
 		void persistCurrentQuestionTime();
 	});
 </script>
@@ -241,12 +256,19 @@
 									{totalQuestions}
 									bind:selectedQuestions
 									currentQuestionTimeSpent={
-										(currentPage - 1) * perPage + index === currentQuestionIndex
-											? getCurrentQuestionTimeSpent()
-											: selectedQuestions.find((item) => item.question_revision_id === question.id)
-													?.time_spent ?? 0
+										singleQuestionPerPage
+											? (currentPage - 1) * perPage + index === currentQuestionIndex
+												? getCurrentQuestionTimeSpent()
+												: selectedQuestions.find(
+														(item: TSelection) => item.question_revision_id === question.id
+													)?.time_spent ?? 0
+											: undefined
 									}
-									onTimeSpentSynced={(nextTimeSpent) => syncCurrentQuestionTimeSpent(nextTimeSpent)}
+									onTimeSpentSynced={
+										singleQuestionPerPage
+											? (nextTimeSpent) => syncCurrentQuestionTimeSpent(nextTimeSpent)
+											: undefined
+									}
 									showFeedback={testDetails.show_feedback_immediately}
 									showMarkForReview={testDetails.bookmark}
 									showMarks={testDetails?.show_marks ?? true}
