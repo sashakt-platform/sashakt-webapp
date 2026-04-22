@@ -17,12 +17,12 @@
 </script>
 
 <nav class="bg-card sticky top-0 z-50 mb-1 flex items-center justify-between p-5">
-	<h2
-		class="text-primary mx-auto h-3.5 w-22.75 scroll-m-20 text-center font-extrabold tracking-tight uppercase
-         lg:h-[15.36px] lg:w-[103.17px]"
+	<span
+		class="text-primary mx-auto h-3.5 w-22.75 scroll-m-20 text-center text-xl font-extrabold tracking-tight
+         uppercase lg:h-[15.36px] lg:w-[103.17px]"
 	>
 		Sashakt
-	</h2>
+	</span>
 	{#if page.data?.timeLeft !== null && page.data.candidate && !page.form?.submitTest}
 		<TestTimer timeLeft={page.data?.timeLeft} />
 	{/if}
