@@ -114,6 +114,8 @@
 	{/if}
 
 	{#if field.help_text}
-		<p class="text-muted-foreground text-[10px] font-normal leading-[140%]">{field.help_text}</p>
+		<p class="text-muted-foreground text-[12px] leading-[140%] font-normal md:text-[14px]">
+			{field.help_text}
+		</p>
 	{/if}
 </div>
