@@ -140,7 +140,7 @@
 				{$t('Continue to Test')} →
 			</Button>
 		{:else}
-			<Button type="submit" form="dynamic-form" disabled={isSubmitting}>
+			<Button type="submit" form="dynamic-form" disabled={isSubmitting} class="w-full">
 				{#if isSubmitting}
 					<Spinner />
 				{/if}
