@@ -66,6 +66,10 @@
 		navState.remainingMandatoryCount = paletteStats.remainingMandatory;
 		return () => {
 			navState.active = false;
+			navState.instructions = undefined;
+			navState.showPalette = false;
+			navState.onPaletteOpen = undefined;
+			navState.remainingMandatoryCount = 0;
 		};
 	});
 

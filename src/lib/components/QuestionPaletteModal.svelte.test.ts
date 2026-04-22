@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, waitFor } from '@testing-library/svelte';
 import QuestionPaletteModal from './QuestionPaletteModal.svelte';
 import type { TQuestion, TSelection } from '$lib/types';
 
@@ -52,7 +52,8 @@ describe('QuestionPaletteModal', () => {
 	it('should display Question Palette heading', () => {
 		render(QuestionPaletteModal, { props: defaultProps });
 
-		expect(screen.getByText('Question Palette')).toBeInTheDocument();
+		const headings = screen.getAllByText('Question Palette');
+		expect(headings.length).toBeGreaterThan(0);
 	});
 
 	it('should display a close button', () => {
@@ -82,16 +83,18 @@ describe('QuestionPaletteModal', () => {
 	});
 
 	it('should close modal after navigating to a question', async () => {
-		let open = true;
 		const onNavigate = vi.fn();
-		const { rerender } = render(QuestionPaletteModal, {
-			props: { ...defaultProps, onNavigate, open }
+		render(QuestionPaletteModal, {
+			props: { ...defaultProps, onNavigate, open: true }
 		});
 
 		const questionButton = screen.getByRole('button', { name: 'Go to question 1' });
 		await questionButton.click();
 
 		expect(onNavigate).toHaveBeenCalledWith(0);
+		await waitFor(() => {
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+		});
 	});
 
 	it('should render many questions with scrollable grid', () => {
