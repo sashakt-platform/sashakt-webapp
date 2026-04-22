@@ -541,12 +541,12 @@
 
 {#snippet showCorrectWrongMark(answerStatus: string)}
 	{#if answerStatus === 'correct'}
-		<span data-testid="correct-mark" class="text-success flex shrink-0 items-center">
-			<Check size={18} />
+		<span data-testid="correct-mark" class="text-success flex shrink-0 items-center" aria-label={$t('Correct')}>
+			<Check size={18} aria-hidden="true" />
 		</span>
 	{:else if answerStatus === 'wrong'}
-		<span data-testid="wrong-mark" class="text-error flex shrink-0 items-center">
-			<X size={18} />
+		<span data-testid="wrong-mark" class="text-error flex shrink-0 items-center" aria-label={$t('Wrong')}>
+			<X size={18} aria-hidden="true" />
 		</span>
 	{/if}
 {/snippet}
@@ -569,7 +569,11 @@
 
 				{#if showMarks && question?.marking_scheme}
 					{@const scheme = question.marking_scheme}
-					<span class="group relative cursor-pointer select-none">
+					<button
+						type="button"
+						class="group relative cursor-pointer select-none"
+						aria-label={$t('Marking scheme')}
+					>
 						<span
 							data-testid="marks-pill"
 							class="border-border inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm"
@@ -582,7 +586,7 @@
 							<ChevronDown size={13} class="text-muted-foreground" />
 						</span>
 						<div
-							class="bg-card absolute top-full right-0 z-20 mt-1 hidden min-w-52 rounded-xl border p-4 text-sm shadow-lg group-hover:block"
+							class="bg-card absolute top-full right-0 z-20 mt-1 hidden min-w-52 rounded-xl border p-4 text-sm shadow-lg group-hover:block group-focus:block"
 						>
 							<div class="space-y-3">
 								<div class="flex justify-between gap-4">
@@ -620,7 +624,7 @@
 								</div>
 							{/if}
 						</div>
-					</span>
+					</button>
 				{/if}
 
 				{#if showMarkForReview}
