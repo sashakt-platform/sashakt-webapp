@@ -1399,8 +1399,8 @@ describe('QuestionCard', () => {
 			});
 
 			const feedback = screen.getByTestId('numerical-answer-feedback');
-			expect(within(feedback).getByText('Correct')).toBeInTheDocument();
-			expect(within(feedback).queryByText('Wrong')).not.toBeInTheDocument();
+			expect(within(feedback).getByTestId('correct-mark')).toBeInTheDocument();
+			expect(within(feedback).queryByTestId('wrong-mark')).not.toBeInTheDocument();
 		});
 
 		it('should show Wrong feedback when integer answer does not match correct answer', () => {
@@ -1427,7 +1427,7 @@ describe('QuestionCard', () => {
 			});
 
 			expect(
-				within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+				within(screen.getByTestId('numerical-answer-feedback')).getByTestId('wrong-mark')
 			).toBeInTheDocument();
 		});
 
@@ -1510,8 +1510,8 @@ describe('QuestionCard', () => {
 				});
 
 				const feedback = screen.getByTestId('numerical-answer-feedback');
-				expect(within(feedback).getByText('Correct')).toBeInTheDocument();
-				expect(within(feedback).queryByText('Wrong')).not.toBeInTheDocument();
+				expect(within(feedback).getByTestId('correct-mark')).toBeInTheDocument();
+				expect(within(feedback).queryByTestId('wrong-mark')).not.toBeInTheDocument();
 			});
 
 			it('should show Wrong when submitted answer is non-zero and correct answer is 0', () => {
@@ -1538,7 +1538,7 @@ describe('QuestionCard', () => {
 				});
 
 				expect(
-					within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+					within(screen.getByTestId('numerical-answer-feedback')).getByTestId('wrong-mark')
 				).toBeInTheDocument();
 			});
 
@@ -1614,8 +1614,8 @@ describe('QuestionCard', () => {
 
 			// |3.16 - 3.14| = 0.02 <= 0.05, so correct
 			const feedback1 = screen.getByTestId('numerical-answer-feedback');
-			expect(within(feedback1).getByText('Correct')).toBeInTheDocument();
-			expect(within(feedback1).queryByText('Wrong')).not.toBeInTheDocument();
+			expect(within(feedback1).getByTestId('correct-mark')).toBeInTheDocument();
+			expect(within(feedback1).queryByTestId('wrong-mark')).not.toBeInTheDocument();
 		});
 
 		it('should show Wrong feedback when decimal answer is outside 0.05 tolerance', () => {
@@ -1643,7 +1643,7 @@ describe('QuestionCard', () => {
 
 			// |2.5 - 3.14| = 0.64 > 0.05, so wrong
 			expect(
-				within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+				within(screen.getByTestId('numerical-answer-feedback')).getByTestId('wrong-mark')
 			).toBeInTheDocument();
 		});
 
@@ -1671,7 +1671,7 @@ describe('QuestionCard', () => {
 			});
 
 			expect(
-				within(screen.getByTestId('numerical-answer-feedback')).getByText('Correct')
+				within(screen.getByTestId('numerical-answer-feedback')).getByTestId('correct-mark')
 			).toBeInTheDocument();
 		});
 
@@ -1778,8 +1778,8 @@ describe('QuestionCard', () => {
 
 				// |0 - 0| = 0 <= 0.5
 				const feedback = screen.getByTestId('numerical-answer-feedback');
-				expect(within(feedback).getByText('Correct')).toBeInTheDocument();
-				expect(within(feedback).queryByText('Wrong')).not.toBeInTheDocument();
+				expect(within(feedback).getByTestId('correct-mark')).toBeInTheDocument();
+				expect(within(feedback).queryByTestId('wrong-mark')).not.toBeInTheDocument();
 			});
 
 			it('should show Correct when decimal answer is within 0.05 tolerance of 0', () => {
@@ -1807,7 +1807,7 @@ describe('QuestionCard', () => {
 
 				// |0.03 - 0| = 0.03 <= 0.05
 				expect(
-					within(screen.getByTestId('numerical-answer-feedback')).getByText('Correct')
+					within(screen.getByTestId('numerical-answer-feedback')).getByTestId('correct-mark')
 				).toBeInTheDocument();
 			});
 
@@ -1836,7 +1836,7 @@ describe('QuestionCard', () => {
 
 				// |0.6 - 0| = 0.6 > 0.05
 				expect(
-					within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+					within(screen.getByTestId('numerical-answer-feedback')).getByTestId('wrong-mark')
 				).toBeInTheDocument();
 			});
 

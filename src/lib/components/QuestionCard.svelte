@@ -244,10 +244,10 @@
 	const optionFeedbackClass = (optionId: number) => {
 		if (!isFeedbackViewed || !correctAnswer) return '';
 		if (Array.isArray(correctAnswer) && correctAnswer.includes(optionId)) {
-			return 'bg-success-subtle border-success text-success';
+			return 'bg-success-subtle border-success';
 		}
 		if (Array.isArray(currentSelection?.response) && currentSelection.response.includes(optionId)) {
-			return 'bg-error-subtle border-error text-error';
+			return 'bg-error-subtle border-error';
 		}
 		return '';
 	};
@@ -541,14 +541,12 @@
 
 {#snippet showCorrectWrongMark(answerStatus: string)}
 	{#if answerStatus === 'correct'}
-		<span class="flex-end text-success flex gap-1 text-xs font-medium"
-			>{$t('Correct')}
-			<Check size={18} class="text-success" />
+		<span data-testid="correct-mark" class="text-success flex shrink-0 items-center">
+			<Check size={18} />
 		</span>
 	{:else if answerStatus === 'wrong'}
-		<span class="flex-end text-error flex gap-1 text-xs font-medium"
-			>{$t('Wrong')}
-			<X size={18} class="text-error" />
+		<span data-testid="wrong-mark" class="text-error flex shrink-0 items-center">
+			<X size={18} />
 		</span>
 	{/if}
 {/snippet}
@@ -681,7 +679,9 @@
 						{@const feedbackClass = optionFeedbackClass(option.id)}
 						{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
 						<div class="flex items-center gap-3">
-							<span class="text-muted-foreground w-5 shrink-0 text-sm font-medium">{option.key}</span>
+							<span class="text-muted-foreground w-5 shrink-0 text-sm font-medium"
+								>{option.key}</span
+							>
 							<Label
 								for={uid}
 								class={cn(
@@ -694,10 +694,18 @@
 									isLocked && 'cursor-not-allowed'
 								)}
 							>
-								{#if feedbackStatus === 'none'}
-									<RadioGroup.Item value={option.id.toString()} id={uid} disabled={isLocked} />
-								{/if}
-								<span class="text-foreground flex-1 text-sm">{option.value}</span>
+								<RadioGroup.Item
+									value={option.id.toString()}
+									id={uid}
+									disabled={isLocked}
+									class={cn(
+										feedbackStatus === 'correct' && 'border-success text-success',
+										feedbackStatus === 'wrong' && 'border-error text-error'
+									)}
+								/>
+								<span class={cn('text-foreground flex-1 text-sm', feedbackStatus !== 'none')}
+									>{option.value}</span
+								>
 								{#if feedbackStatus === 'correct'}
 									{@render showCorrectWrongMark('correct')}
 								{:else if feedbackStatus === 'wrong'}
@@ -981,25 +989,24 @@
 		{:else}
 			{@const typedOptions = options as TOptions[]}
 			<div class="flex flex-col gap-3">
-			{#each typedOptions as option (option.id)}
-				{@const uid = `${question.id}-${option.key}`}
-				{@const feedbackClass = optionFeedbackClass(option.id)}
-				{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
-				<div class="flex items-center gap-3">
-					<span class="text-muted-foreground w-5 shrink-0 text-sm font-medium">{option.key}</span>
-					<Label
-						for={uid}
-						class={cn(
-							'flex flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors',
-							isFeedbackViewed
-								? feedbackClass || 'border-border bg-card'
-								: isSelected(option.id)
-									? 'border-primary bg-primary/10'
-									: 'border-border bg-card',
-							isLocked && 'cursor-not-allowed'
-						)}
-					>
-						{#if feedbackStatus === 'none'}
+				{#each typedOptions as option (option.id)}
+					{@const uid = `${question.id}-${option.key}`}
+					{@const feedbackClass = optionFeedbackClass(option.id)}
+					{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
+					<div class="flex items-center gap-3">
+						<span class="text-muted-foreground w-5 shrink-0 text-sm font-medium">{option.key}</span>
+						<Label
+							for={uid}
+							class={cn(
+								'flex flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors',
+								isFeedbackViewed
+									? feedbackClass || 'border-border bg-card'
+									: isSelected(option.id)
+										? 'border-primary bg-primary/10'
+										: 'border-border bg-card',
+								isLocked && 'cursor-not-allowed'
+							)}
+						>
 							<Checkbox
 								id={uid}
 								value={option.id.toString()}
@@ -1008,20 +1015,25 @@
 								onCheckedChange={async (check) => {
 									await handleSelection(question.id, option.id, check === false);
 								}}
+								class={cn(
+									feedbackStatus === 'correct' && 'border-success data-[state=checked]:bg-success',
+									feedbackStatus === 'wrong' && 'border-error data-[state=checked]:bg-error'
+								)}
 							/>
-						{/if}
-						<span class="text-foreground flex-1 text-sm">{option.value}</span>
-						{#if feedbackStatus === 'correct'}
-							{@render showCorrectWrongMark('correct')}
-						{:else if feedbackStatus === 'wrong'}
-							{@render showCorrectWrongMark('wrong')}
-						{/if}
-					</Label>
-				</div>
-				{#if option.media}
-					<QuestionMedia media={option.media} />
-				{/if}
-			{/each}
+							<span class={cn('text-foreground flex-1 text-sm', feedbackStatus !== 'none')}
+								>{option.value}</span
+							>
+							{#if feedbackStatus === 'correct'}
+								{@render showCorrectWrongMark('correct')}
+							{:else if feedbackStatus === 'wrong'}
+								{@render showCorrectWrongMark('wrong')}
+							{/if}
+						</Label>
+					</div>
+					{#if option.media}
+						<QuestionMedia media={option.media} />
+					{/if}
+				{/each}
 			</div>
 		{/if}
 
