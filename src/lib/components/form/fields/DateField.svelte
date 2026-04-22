@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { TFormField } from '$lib/types';
 	import { cn } from '$lib/utils';
+	import { t } from 'svelte-i18n';
 	import CalendarIcon from '@lucide/svelte/icons/calendar';
 
 	interface Props {
@@ -16,12 +17,22 @@
 		const target = event.target as HTMLInputElement;
 		onchange(target.value);
 	}
+
+	function openPicker() {
+		if (!inputEl) return;
+		try {
+			inputEl.showPicker();
+		} catch {
+			inputEl.focus();
+		}
+	}
 </script>
 
 <div class="relative flex items-center">
 	<button
 		type="button"
-		onclick={() => inputEl?.showPicker()}
+		onclick={openPicker}
+		aria-label={$t('Open date picker')}
 		class="absolute left-4 flex items-center"
 	>
 		<CalendarIcon class="text-muted-foreground size-4 shrink-0" />

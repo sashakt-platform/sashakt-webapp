@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { TFormField } from '$lib/types';
 	import { Label } from '$lib/components/ui/label';
+	import { t } from 'svelte-i18n';
 	import TextField from './fields/TextField.svelte';
 	import TextareaField from './fields/TextareaField.svelte';
 	import NumberField from './fields/NumberField.svelte';
@@ -51,17 +52,21 @@
 			{/if}
 		</Label>
 		{#if field.validation?.min_length != null && field.validation?.max_length != null}
-			<span class="text-muted-foreground shrink-0 text-sm"
-				>{field.validation.min_length}-{field.validation.max_length} characters</span
-			>
+			<span class="text-muted-foreground shrink-0 text-sm">
+				{$t('{min}-{max} characters', { values: { min: field.validation.min_length, max: field.validation.max_length } })}
+			</span>
 		{:else if field.validation?.max_length != null}
-			<span class="text-muted-foreground shrink-0 text-sm"
-				>Up to {field.validation.max_length} characters</span
-			>
+			<span class="text-muted-foreground shrink-0 text-sm">
+				{field.validation.max_length === 1
+					? $t('Up to {max} character', { values: { max: field.validation.max_length } })
+					: $t('Up to {max} characters', { values: { max: field.validation.max_length } })}
+			</span>
 		{:else if field.validation?.min_length != null}
-			<span class="text-muted-foreground shrink-0 text-sm"
-				>At least {field.validation.min_length} characters</span
-			>
+			<span class="text-muted-foreground shrink-0 text-sm">
+				{field.validation.min_length === 1
+					? $t('At least {min} character', { values: { min: field.validation.min_length } })
+					: $t('At least {min} characters', { values: { min: field.validation.min_length } })}
+			</span>
 		{/if}
 	</div>
 

@@ -110,6 +110,12 @@
 	"OMR Sheet Preference": "OMR Sheet Preference",
 	"Please select your preference": "Please select your preference",
 	"OMR Sheet": "",
-	"Failed to save your answer. Please try again.": "Failed to save your answer. Please try again."
+	"Failed to save your answer. Please try again.": "Failed to save your answer. Please try again.",
+	"{min}-{max} characters": "{min}-{max} characters",
+	"Up to {max} character": "Up to {max} character",
+	"Up to {max} characters": "Up to {max} characters",
+	"At least {min} character": "At least {min} character",
+	"At least {min} characters": "At least {min} characters",
+	"Open date picker": "Open date picker"
 }
 
