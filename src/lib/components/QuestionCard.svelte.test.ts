@@ -58,8 +58,7 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		expect(screen.getByText('3')).toBeInTheDocument();
-		expect(screen.getByText('OF 10')).toBeInTheDocument();
+		expect(screen.getByText('Q3')).toBeInTheDocument();
 	});
 
 	it('should render all options for single-choice question', () => {
@@ -127,7 +126,7 @@ describe('QuestionCard', () => {
 
 		// Check that there's no asterisk for optional questions
 		const questionText = screen.getByText(optionalQuestion.question_text);
-		expect(questionText.parentElement?.querySelector('.text-red-500')).not.toBeInTheDocument();
+		expect(questionText.parentElement?.querySelector('.text-destructive')).not.toBeInTheDocument();
 	});
 
 	it('should display marks for the question', () => {
@@ -239,7 +238,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(0);
 		});
 
 		it('should display "Unmark for review" when question is bookmarked', () => {
@@ -249,7 +248,8 @@ describe('QuestionCard', () => {
 					response: [],
 					visited: true,
 					time_spent: 0,
-					bookmarked: true
+					bookmarked: true,
+					is_reviewed: false
 				}
 			];
 
@@ -263,7 +263,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByRole('button', { name: /unmark for review/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(0);
 		});
 
 		it('should apply bookmark styling when question is bookmarked', () => {
@@ -273,7 +273,8 @@ describe('QuestionCard', () => {
 					response: [],
 					visited: true,
 					time_spent: 0,
-					bookmarked: true
+					bookmarked: true,
+					is_reviewed: false
 				}
 			];
 
@@ -287,9 +288,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /unmark for review/i });
-			expect(bookmarkButton).toHaveClass('border-amber-500');
-			expect(bookmarkButton).toHaveClass('bg-amber-50');
+			const bookmarkButton = screen.getAllByRole('button', { name: /unmark for review/i })[0];
+			expect(bookmarkButton).toHaveClass('border-warning');
+			expect(bookmarkButton).toHaveClass('bg-warning-subtle');
 		});
 
 		it('should not apply bookmark styling when question is not bookmarked', () => {
@@ -303,9 +304,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
-			expect(bookmarkButton).not.toHaveClass('border-amber-500');
-			expect(bookmarkButton).not.toHaveClass('bg-amber-50');
+			const bookmarkButton = screen.getAllByRole('button', { name: /mark for review/i })[0];
+			expect(bookmarkButton).not.toHaveClass('border-warning');
+			expect(bookmarkButton).not.toHaveClass('bg-warning-subtle');
 		});
 
 		it('should toggle bookmark state when clicked', async () => {
@@ -323,11 +324,11 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			const bookmarkButton = screen.getAllByRole('button', { name: /mark for review/i })[0];
 			await bookmarkButton.click();
 
 			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /unmark for review/i })).toBeInTheDocument();
+				expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(0);
 			});
 		});
 
@@ -346,7 +347,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			const bookmarkButton = screen.getAllByRole('button', { name: /mark for review/i })[0];
 			await bookmarkButton.click();
 
 			await waitFor(() => {
@@ -367,7 +368,8 @@ describe('QuestionCard', () => {
 					response: [mockSingleChoiceQuestion.options[0].id],
 					visited: true,
 					time_spent: 10,
-					bookmarked: true
+					bookmarked: true,
+					is_reviewed: false
 				}
 			];
 
@@ -381,10 +383,8 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			// Should be bookmarked
-			expect(screen.getByRole('button', { name: /unmark for review/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(0);
 
-			// And should have the answer selected
 			const radioButtons = screen.getAllByRole('radio');
 			expect(radioButtons[0]).toBeChecked();
 		});
@@ -402,7 +402,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			const bookmarkButton = screen.getAllByRole('button', { name: /mark for review/i })[0];
 			await bookmarkButton.click();
 
 			await waitFor(() => {
@@ -423,12 +423,11 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			const bookmarkButton = screen.getAllByRole('button', { name: /mark for review/i })[0];
 			await bookmarkButton.click();
 
 			await waitFor(() => {
-				// Should revert to "Mark for review" after failure
-				expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+				expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(0);
 			});
 		});
 	});
@@ -445,7 +444,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(0);
 		});
 
 		it('should show "Mark for review" button when showMarkForReview is true', () => {
@@ -460,7 +459,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(0);
 		});
 
 		it('should hide "Mark for review" button when showMarkForReview is false', () => {
@@ -770,7 +769,7 @@ describe('QuestionCard', () => {
 			const textarea = screen.getByPlaceholderText(/type your answer here/i);
 			await fireEvent.input(textarea, { target: { value: '12345' } });
 
-			const charCountSpan = container.querySelector('.text-red-500');
+			const charCountSpan = container.querySelector('.text-error');
 			expect(charCountSpan).toBeInTheDocument();
 		});
 
@@ -993,8 +992,8 @@ describe('QuestionCard', () => {
 				expect(radio).toBeDisabled();
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
-			expect(bookmarkButton).toBeDisabled();
+			const bookmarkButtons = screen.getAllByRole('button', { name: /mark for review/i });
+			bookmarkButtons.forEach((btn) => expect(btn).toBeDisabled());
 		});
 
 		it('should not allow answer changes when question is locked', async () => {
