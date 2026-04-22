@@ -284,7 +284,6 @@
 			{questions}
 			selections={selectedQuestions}
 			{currentQuestionIndex}
-			instructions={testDetails?.start_instructions}
 			onNavigate={navigateToQuestion}
 			showMarkForReview={testDetails.bookmark}
 		/>
