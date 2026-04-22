@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { TFormField } from '$lib/types';
 	import { Label } from '$lib/components/ui/label';
+	import { t } from 'svelte-i18n';
 	import TextField from './fields/TextField.svelte';
 	import TextareaField from './fields/TextareaField.svelte';
 	import NumberField from './fields/NumberField.svelte';
@@ -43,12 +44,31 @@
 </script>
 
 <div class="space-y-2">
-	<Label for={field.name}>
-		{field.label}
-		{#if field.is_required}
-			<span class="text-destructive">*</span>
+	<div class="flex items-baseline justify-between gap-2">
+		<Label for={field.name} class="text-foreground text-sm font-semibold">
+			{field.label}
+			{#if field.is_required}
+				<span class="text-destructive">*</span>
+			{/if}
+		</Label>
+		{#if field.validation?.min_length != null && field.validation?.max_length != null}
+			<span class="text-muted-foreground shrink-0 text-sm">
+				{$t('{min}-{max} characters', { values: { min: field.validation.min_length, max: field.validation.max_length } })}
+			</span>
+		{:else if field.validation?.max_length != null}
+			<span class="text-muted-foreground shrink-0 text-sm">
+				{field.validation.max_length === 1
+					? $t('Up to {max} character', { values: { max: field.validation.max_length } })
+					: $t('Up to {max} characters', { values: { max: field.validation.max_length } })}
+			</span>
+		{:else if field.validation?.min_length != null}
+			<span class="text-muted-foreground shrink-0 text-sm">
+				{field.validation.min_length === 1
+					? $t('At least {min} character', { values: { min: field.validation.min_length } })
+					: $t('At least {min} characters', { values: { min: field.validation.min_length } })}
+			</span>
 		{/if}
-	</Label>
+	</div>
 
 	{#if field.field_type === 'text' || field.field_type === 'full_name'}
 		<TextField {field} {value} {onchange} />
@@ -94,11 +114,13 @@
 		/>
 	{/if}
 
-	{#if field.help_text}
-		<p class="text-muted-foreground text-xs">{field.help_text}</p>
-	{/if}
-
 	{#if error}
 		<p class="text-destructive text-sm">{error}</p>
+	{/if}
+
+	{#if field.help_text}
+		<p class="text-muted-foreground text-[12px] leading-[140%] font-normal md:text-[14px]">
+			{field.help_text}
+		</p>
 	{/if}
 </div>

@@ -112,6 +112,12 @@
 	"Partial marks awarded if no wrong option is selected": "यदि कोई गलत विकल्प नहीं चुना गया तो आंशिक अंक दिए जाएंगे",
 	"mark": "अंक",
 	"marks": "अंक",
-	"Failed to save your answer. Please try again.": "जवाब सेव नहीं हुआ। फिर से कोशिश करें।"
+	"Failed to save your answer. Please try again.": "जवाब सेव नहीं हुआ। फिर से कोशिश करें।",
+	"{min}-{max} characters": "{min}-{max} अक्षर",
+	"Up to {max} character": "अधिकतम {max} अक्षर",
+	"Up to {max} characters": "अधिकतम {max} अक्षर",
+	"At least {min} character": "कम से कम {min} अक्षर",
+	"At least {min} characters": "कम से कम {min} अक्षर",
+	"Open date picker": "दिनांक चुनें"
 }
 
