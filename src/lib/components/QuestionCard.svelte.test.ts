@@ -73,7 +73,8 @@ describe('QuestionCard', () => {
 		});
 
 		mockSingleChoiceQuestion.options.forEach((option) => {
-			expect(screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))).toBeInTheDocument();
+			expect(screen.getByText(option.key)).toBeInTheDocument();
+			expect(screen.getByText(option.value)).toBeInTheDocument();
 		});
 	});
 
@@ -89,7 +90,8 @@ describe('QuestionCard', () => {
 		});
 
 		mockMultipleChoiceQuestion.options.forEach((option) => {
-			expect(screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))).toBeInTheDocument();
+			expect(screen.getByText(option.key)).toBeInTheDocument();
+			expect(screen.getByText(option.value)).toBeInTheDocument();
 		});
 	});
 
@@ -516,7 +518,7 @@ describe('QuestionCard', () => {
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
 			mockSingleChoiceQuestion.options.forEach((option) => {
 				expect(
-					screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))
+					screen.getByText(option.value)
 				).toBeInTheDocument();
 			});
 		});
@@ -570,7 +572,7 @@ describe('QuestionCard', () => {
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
 			mockSingleChoiceQuestion.options.forEach((option) => {
 				expect(
-					screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))
+					screen.getByText(option.value)
 				).toBeInTheDocument();
 			});
 		});
@@ -1019,8 +1021,8 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const labels = screen.getAllByText(/[A-D]\./);
-			await labels[2].click();
+			const optionText = screen.getByText(mockSingleChoiceQuestion.options[2].value);
+			await optionText.click();
 
 			expect(fetch).not.toHaveBeenCalled();
 		});

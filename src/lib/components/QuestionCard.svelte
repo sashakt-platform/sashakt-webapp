@@ -22,6 +22,7 @@
 		type TSelection
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
+	import { cn } from '$lib/utils';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
@@ -672,38 +673,41 @@
 						return typeof resp !== 'string' ? resp?.[0]?.toString() : undefined;
 					})()}
 					disabled={isLocked}
+					class="flex flex-col gap-3"
 				>
 					{@const typedOptions = options as TOptions[]}
 					{#each typedOptions as option, index (index)}
 						{@const uid = `${question.id}-${option.key}`}
 						{@const feedbackClass = optionFeedbackClass(option.id)}
 						{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
-						<Label
-							for={uid}
-							class={`cursor-pointer rounded-xl border px-4 py-5 ${
-								isFeedbackViewed
-									? feedbackClass || ''
-									: isSelected(option.id)
-										? 'bg-primary text-muted *:border-muted *:text-muted'
-										: ''
-							} ${isLocked ? 'cursor-not-allowed' : ''}`}
-						>
-							<div class="flex w-full items-center justify-between">
-								<span>{option.key}. {option.value}</span>
-								<div class="flex items-center gap-1">
-									{#if feedbackStatus === 'correct'}
-										{@render showCorrectWrongMark('correct')}
-									{:else if feedbackStatus === 'wrong'}
-										{@render showCorrectWrongMark('wrong')}
-									{:else}
-										<RadioGroup.Item value={option.id.toString()} id={uid} disabled={isLocked} />
-									{/if}
-								</div>
-							</div>
-							{#if option.media}
-								<QuestionMedia media={option.media} />
-							{/if}
-						</Label>
+						<div class="flex items-center gap-3">
+							<span class="text-muted-foreground w-5 shrink-0 text-sm font-medium">{option.key}</span>
+							<Label
+								for={uid}
+								class={cn(
+									'flex flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors',
+									isFeedbackViewed
+										? feedbackClass || 'border-border bg-card'
+										: isSelected(option.id)
+											? 'border-primary bg-primary/10'
+											: 'border-border bg-card',
+									isLocked && 'cursor-not-allowed'
+								)}
+							>
+								{#if feedbackStatus === 'none'}
+									<RadioGroup.Item value={option.id.toString()} id={uid} disabled={isLocked} />
+								{/if}
+								<span class="text-foreground flex-1 text-sm">{option.value}</span>
+								{#if feedbackStatus === 'correct'}
+									{@render showCorrectWrongMark('correct')}
+								{:else if feedbackStatus === 'wrong'}
+									{@render showCorrectWrongMark('wrong')}
+								{/if}
+							</Label>
+						</div>
+						{#if option.media}
+							<QuestionMedia media={option.media} />
+						{/if}
 					{/each}
 				</RadioGroup.Root>
 			{/key}
@@ -976,47 +980,49 @@
 			</div>
 		{:else}
 			{@const typedOptions = options as TOptions[]}
+			<div class="flex flex-col gap-3">
 			{#each typedOptions as option (option.id)}
 				{@const uid = `${question.id}-${option.key}`}
 				{@const feedbackClass = optionFeedbackClass(option.id)}
 				{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
-				<div class="flex flex-row items-start space-x-3">
+				<div class="flex items-center gap-3">
+					<span class="text-muted-foreground w-5 shrink-0 text-sm font-medium">{option.key}</span>
 					<Label
 						for={uid}
-						class={`mb-2 w-full cursor-pointer rounded-xl border px-4 py-5 ${
+						class={cn(
+							'flex flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors',
 							isFeedbackViewed
-								? feedbackClass || ''
+								? feedbackClass || 'border-border bg-card'
 								: isSelected(option.id)
-									? 'bg-primary text-muted *:border-muted *:text-muted'
-									: ''
-						} ${isLocked ? 'cursor-not-allowed' : ''}`}
+									? 'border-primary bg-primary/10'
+									: 'border-border bg-card',
+							isLocked && 'cursor-not-allowed'
+						)}
 					>
-						<div class="flex w-full items-center justify-between">
-							<span>{option.key}. {option.value}</span>
-							<div class="flex items-center gap-1">
-								{#if feedbackStatus === 'correct'}
-									{@render showCorrectWrongMark('correct')}
-								{:else if feedbackStatus === 'wrong'}
-									{@render showCorrectWrongMark('wrong')}
-								{:else}
-									<Checkbox
-										id={uid}
-										value={option.id.toString()}
-										checked={isSelected(option.id)}
-										disabled={isLocked}
-										onCheckedChange={async (check) => {
-											await handleSelection(question.id, option.id, check === false);
-										}}
-									/>
-								{/if}
-							</div>
-						</div>
-						{#if option.media}
-							<QuestionMedia media={option.media} />
+						{#if feedbackStatus === 'none'}
+							<Checkbox
+								id={uid}
+								value={option.id.toString()}
+								checked={isSelected(option.id)}
+								disabled={isLocked}
+								onCheckedChange={async (check) => {
+									await handleSelection(question.id, option.id, check === false);
+								}}
+							/>
+						{/if}
+						<span class="text-foreground flex-1 text-sm">{option.value}</span>
+						{#if feedbackStatus === 'correct'}
+							{@render showCorrectWrongMark('correct')}
+						{:else if feedbackStatus === 'wrong'}
+							{@render showCorrectWrongMark('wrong')}
 						{/if}
 					</Label>
 				</div>
+				{#if option.media}
+					<QuestionMedia media={option.media} />
+				{/if}
 			{/each}
+			</div>
 		{/if}
 
 		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== 'matrix-match' && question.question_type !== question_type_enum.MATRIXRATING && question.question_type !== question_type_enum.MATRIXINPUT}
