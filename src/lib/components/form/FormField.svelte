@@ -43,12 +43,27 @@
 </script>
 
 <div class="space-y-2">
-	<Label for={field.name}>
-		{field.label}
-		{#if field.is_required}
-			<span class="text-destructive">*</span>
+	<div class="flex items-baseline justify-between gap-2">
+		<Label for={field.name} class="text-foreground text-sm font-semibold">
+			{field.label}
+			{#if field.is_required}
+				<span class="text-destructive">*</span>
+			{/if}
+		</Label>
+		{#if field.validation?.min_length != null && field.validation?.max_length != null}
+			<span class="text-muted-foreground shrink-0 text-sm"
+				>{field.validation.min_length}-{field.validation.max_length} characters</span
+			>
+		{:else if field.validation?.max_length != null}
+			<span class="text-muted-foreground shrink-0 text-sm"
+				>Up to {field.validation.max_length} characters</span
+			>
+		{:else if field.validation?.min_length != null}
+			<span class="text-muted-foreground shrink-0 text-sm"
+				>At least {field.validation.min_length} characters</span
+			>
 		{/if}
-	</Label>
+	</div>
 
 	{#if field.field_type === 'text' || field.field_type === 'full_name'}
 		<TextField {field} {value} {onchange} />
@@ -94,11 +109,11 @@
 		/>
 	{/if}
 
-	{#if field.help_text}
-		<p class="text-muted-foreground text-xs">{field.help_text}</p>
-	{/if}
-
 	{#if error}
 		<p class="text-destructive text-sm">{error}</p>
+	{/if}
+
+	{#if field.help_text}
+		<p class="text-muted-foreground text-[10px] font-normal leading-[140%]">{field.help_text}</p>
 	{/if}
 </div>
