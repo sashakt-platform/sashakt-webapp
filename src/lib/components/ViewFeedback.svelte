@@ -8,7 +8,7 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { t } from 'svelte-i18n';
-	import { question_type_enum } from '$lib/types';
+	import { question_type_enum, type TQuestion, type TFeedback } from '$lib/types';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
 	import QuestionMedia from './QuestionMedia.svelte';
 
@@ -51,7 +51,10 @@
 		})
 	);
 
-	const getQuestionResult = (question: any, fb: any): 'correct' | 'incorrect' | 'unattempted' => {
+	const getQuestionResult = (
+		question: TQuestion,
+		fb: TFeedback
+	): 'correct' | 'incorrect' | 'unattempted' => {
 		const submitted = fb.submitted_answer;
 		const correct = fb.correct_answer;
 
@@ -62,10 +65,6 @@
 			const result = isNumericalAnswerCorrect(question.question_type, submitted, correct);
 			if (result === null) return 'unattempted';
 			return result ? 'correct' : 'incorrect';
-		}
-
-		if (question.question_type === 'subjective') {
-			return typeof submitted === 'string' && submitted.trim() ? 'incorrect' : 'unattempted';
 		}
 
 		if (!Array.isArray(submitted) || submitted.length === 0) return 'unattempted';
