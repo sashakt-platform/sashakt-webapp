@@ -1,6 +1,5 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/index.js';
-	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
@@ -25,9 +24,9 @@
 		submittedAnswer.includes(optionId);
 
 	const optionClass = (optionId: number, submitted: number[], correct: number[]) => {
-		if (isCorrect(optionId, correct)) return 'bg-green-100 border-green-500 text-green-700';
+		if (isCorrect(optionId, correct)) return 'bg-success-subtle border-success text-success';
 		if (isSubmitted(optionId, submitted) && !isCorrect(optionId, correct))
-			return 'bg-red-100 border-red-500 text-red-700';
+			return 'bg-error-subtle border-error text-error';
 		return '';
 	};
 
@@ -51,19 +50,43 @@
 			return { fb: feedbackData, question };
 		})
 	);
+
+	const getQuestionResult = (question: any, fb: any): 'correct' | 'incorrect' | 'unattempted' => {
+		const submitted = fb.submitted_answer;
+		const correct = fb.correct_answer;
+
+		if (
+			question.question_type === question_type_enum.NUMERICALINTEGER ||
+			question.question_type === question_type_enum.NUMERICALDECIMAL
+		) {
+			const result = isNumericalAnswerCorrect(question.question_type, submitted, correct);
+			if (result === null) return 'unattempted';
+			return result ? 'correct' : 'incorrect';
+		}
+
+		if (question.question_type === 'subjective') {
+			return typeof submitted === 'string' && submitted.trim() ? 'incorrect' : 'unattempted';
+		}
+
+		if (!Array.isArray(submitted) || submitted.length === 0) return 'unattempted';
+
+		const correctSet = new Set(correct);
+		const submittedSet = new Set(submitted);
+		if (
+			submittedSet.size === correctSet.size &&
+			[...submittedSet].every((id) => correctSet.has(id))
+		) {
+			return 'correct';
+		}
+		return 'incorrect';
+	};
 </script>
 
 {#snippet showCorrectWrongMark(answerStatus: string)}
 	{#if answerStatus === 'correct'}
-		<span class="flex-end flex gap-1 text-xs font-medium text-green-600"
-			>{$t('Correct')}
-			<Check size={18} class="text-green-600" />
-		</span>
+		<Check size={16} class="text-success" />
 	{:else if answerStatus === 'wrong'}
-		<span class="flex-end flex gap-1 text-xs font-medium text-red-600"
-			>{$t('Wrong')}
-			<X size={18} class="text-red-600" />
-		</span>
+		<X size={16} class="text-error" />
 	{/if}
 {/snippet}
 
@@ -85,14 +108,41 @@
 		{#if item.question}
 			<Card.Root class="mb-6 w-full max-w-sm rounded-xl shadow-md">
 				<Card.Header class="p-5">
-					<Card.Title class="mb-5 border-b pb-3 text-sm">
-						{idx + 1} <span>{$t('OF')} {feedbackWithQuestions.length}</span>
+					<Card.Title class="mb-5 flex items-center justify-between border-b pb-3">
+						<span
+							class="bg-secondary text-primary inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold"
+						>
+							Q{idx + 1}
+						</span>
 
-						{#if item.question?.marking_scheme}
-							{@const mark = item.question.marking_scheme.correct}
-							<span class="text-muted-foreground float-end">
-								{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}
-							</span>
+						{@const gradableTypes = new Set([
+							'single-choice',
+							'multi-choice',
+							question_type_enum.NUMERICALINTEGER,
+							question_type_enum.NUMERICALDECIMAL
+						])}
+						{#if item.question?.marking_scheme && gradableTypes.has(item.question.question_type)}
+							{@const result = getQuestionResult(item.question, item.fb)}
+							{@const scheme = item.question.marking_scheme}
+							{#if result === 'correct'}
+								<span
+									class="bg-success-subtle text-success rounded-full px-3 py-1 text-xs font-medium"
+								>
+									{$t('Correct')}: +{scheme.correct}
+									{scheme.correct === 1 ? $t('mark') : $t('marks')}
+								</span>
+							{:else if result === 'incorrect'}
+								<span class="bg-error-subtle text-error rounded-full px-3 py-1 text-xs font-medium">
+									{$t('Incorrect')}: {scheme.wrong}
+									{Math.abs(scheme.wrong) === 1 ? $t('mark') : $t('marks')}
+								</span>
+							{:else}
+								<span
+									class="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-medium"
+								>
+									{$t('Not Attempted')}: 0 {$t('mark')}
+								</span>
+							{/if}
 						{/if}
 					</Card.Title>
 
@@ -126,10 +176,10 @@
 						)}
 						{@const feedbackClass =
 							isCorrect === null
-								? 'border-gray-300 bg-white text-gray-700'
+								? 'border-border bg-card text-card-foreground'
 								: isCorrect
-									? 'border-green-400 bg-green-100 text-green-700'
-									: 'border-red-400 bg-red-100 text-red-700'}
+									? 'border-success bg-success-subtle text-success'
+									: 'border-error bg-error-subtle text-error'}
 
 						<div class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}>
 							{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
@@ -145,7 +195,7 @@
 						</div>
 						{#if !isCorrect}
 							<div
-								class="mt-4 flex flex-row rounded-xl border border-green-400 bg-green-100 px-4 py-4 text-green-700"
+								class="border-success bg-success-subtle text-success mt-4 flex flex-row rounded-xl border px-4 py-4"
 							>
 								<p class="w-full text-sm whitespace-pre-wrap">{item.fb.correct_answer}</p>
 								{@render showCorrectWrongMark('correct')}
