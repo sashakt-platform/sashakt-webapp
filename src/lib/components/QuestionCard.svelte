@@ -541,11 +541,19 @@
 
 {#snippet showCorrectWrongMark(answerStatus: string)}
 	{#if answerStatus === 'correct'}
-		<span data-testid="correct-mark" class="text-success flex shrink-0 items-center" aria-label={$t('Correct')}>
+		<span
+			data-testid="correct-mark"
+			class="text-success flex shrink-0 items-center"
+			aria-label={$t('Correct')}
+		>
 			<Check size={18} aria-hidden="true" />
 		</span>
 	{:else if answerStatus === 'wrong'}
-		<span data-testid="wrong-mark" class="text-error flex shrink-0 items-center" aria-label={$t('Wrong')}>
+		<span
+			data-testid="wrong-mark"
+			class="text-error flex shrink-0 items-center"
+			aria-label={$t('Wrong')}
+		>
 			<X size={18} aria-hidden="true" />
 		</span>
 	{/if}
