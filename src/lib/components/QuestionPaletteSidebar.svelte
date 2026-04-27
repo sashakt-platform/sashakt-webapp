@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Info from '@lucide/svelte/icons/info';
 	import QuestionPaletteContent from './QuestionPaletteContent.svelte';
 	import type { TQuestion, TQuestionSetCandidate, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
@@ -9,31 +8,36 @@
 		questionSets = [],
 		selections,
 		currentQuestionIndex,
-		onNavigate
+		onNavigate,
+		showMarkForReview = true
 	}: {
 		questions: TQuestion[];
 		questionSets?: TQuestionSetCandidate[];
 		selections: TSelection[];
 		currentQuestionIndex: number;
 		onNavigate: (questionIndex: number) => void;
+		showMarkForReview?: boolean;
 	} = $props();
 </script>
 
-<div class="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border bg-white shadow-sm">
-	<div class="flex items-center justify-center gap-2 p-4 pb-2">
-		<h2 class="text-sm font-semibold tracking-wide text-gray-700 uppercase">
+<div
+	class="bg-card border-border flex max-h-full flex-col overflow-hidden rounded-xl border-r shadow-sm"
+>
+	<div class="flex h-16 items-center px-5" style="background: hsl(var(--section-header-bg));">
+		<h2 class="text-foreground text-sm font-semibold tracking-wide uppercase">
 			{$t('Question Palette')}
 		</h2>
-		<Info class="h-4 w-4 text-gray-400" />
 	</div>
 
-	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pt-2">
+	<div class="overflow-y-auto">
 		<QuestionPaletteContent
 			{questions}
-			{questionSets}
 			{selections}
 			{currentQuestionIndex}
 			{onNavigate}
+			cols={5}
+			gridPadding="p-5"
+			{showMarkForReview}
 		/>
 	</div>
 </div>

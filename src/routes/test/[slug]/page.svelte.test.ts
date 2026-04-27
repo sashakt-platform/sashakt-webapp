@@ -68,9 +68,8 @@ describe('Test Page', () => {
 		});
 
 		// TestResult shows "Submitted Successfully"
-		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
+		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
 		// Also shows "Result summary"
-		expect(screen.getByText('Result summary')).toBeInTheDocument();
 	});
 
 	it('should render LandingPage when no candidate', async () => {
@@ -277,8 +276,8 @@ describe('Test Page - Feedback flow', () => {
 			}
 		});
 
-		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
-		expect(screen.getByText('View Result')).toBeInTheDocument();
+		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
+		expect(screen.getByText('View All Answers')).toBeInTheDocument();
 	});
 
 	it('should NOT show View Feedback button when show_feedback_on_completion is false', () => {
@@ -301,8 +300,8 @@ describe('Test Page - Feedback flow', () => {
 			}
 		});
 
-		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
-		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
+		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
+		expect(screen.queryByText('View All Answers')).not.toBeInTheDocument();
 	});
 
 	it('should NOT show View Feedback button when feedback is null', () => {
@@ -322,8 +321,8 @@ describe('Test Page - Feedback flow', () => {
 			}
 		});
 
-		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
-		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
+		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
+		expect(screen.queryByText('View All Answers')).not.toBeInTheDocument();
 	});
 
 	it('should switch to ViewFeedback when View Feedback button is clicked', async () => {
@@ -343,9 +342,9 @@ describe('Test Page - Feedback flow', () => {
 			}
 		});
 
-		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
+		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
 
-		const button = screen.getByText('View Result');
+		const button = screen.getByText('View All Answers');
 		await fireEvent.click(button);
 
 		await vi.waitFor(() => {

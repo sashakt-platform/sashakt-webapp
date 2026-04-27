@@ -55,7 +55,7 @@
 </script>
 
 <div
-	class={`inline-flex items-center gap-x-1 rounded-full ${lessTime() ? 'bg-red-700' : 'bg-green-700'} px-2 py-1.5 text-sm text-white`}
+	class={`inline-flex items-center gap-x-1 rounded-full ${lessTime() ? 'bg-error-subtle text-error' : 'bg-success-subtle text-success'} px-2 py-1.5 text-sm font-medium`}
 >
 	<Clock size={18} />
 	{formatTime(timeLeft)}

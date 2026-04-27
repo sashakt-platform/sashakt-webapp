@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import Bookmark from '@lucide/svelte/icons/bookmark';
+	import Flag from '@lucide/svelte/icons/flag';
 	import Check from '@lucide/svelte/icons/check';
-	import Info from '@lucide/svelte/icons/info';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import X from '@lucide/svelte/icons/x';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button';
@@ -22,6 +22,7 @@
 		type TSelection
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
+	import { cn } from '$lib/utils';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
 	import RichText from './RichText.svelte';
 	import QuestionMedia from './QuestionMedia.svelte';
@@ -34,7 +35,8 @@
 		totalQuestions,
 		selectedQuestions = $bindable(),
 		showFeedback = false,
-		showMarkForReview = true
+		showMarkForReview = true,
+		showMarks = true
 	}: {
 		question: TQuestion;
 		candidate: TCandidate;
@@ -43,6 +45,7 @@
 		selectedQuestions: TSelection[];
 		showFeedback?: boolean;
 		showMarkForReview?: boolean;
+		showMarks?: boolean;
 	} = $props();
 
 	const options = question.options;
@@ -260,10 +263,10 @@
 	const optionFeedbackClass = (optionId: number) => {
 		if (!isFeedbackViewed || !correctAnswer) return '';
 		if (Array.isArray(correctAnswer) && correctAnswer.includes(optionId)) {
-			return 'bg-green-100 border-green-500 text-green-700';
+			return 'bg-success-subtle border-success';
 		}
 		if (Array.isArray(currentSelection?.response) && currentSelection.response.includes(optionId)) {
-			return 'bg-red-100 border-red-500 text-red-700';
+			return 'bg-error-subtle border-error';
 		}
 		return '';
 	};
@@ -617,14 +620,20 @@
 
 {#snippet showCorrectWrongMark(answerStatus: string)}
 	{#if answerStatus === 'correct'}
-		<span class="flex-end flex gap-1 text-xs font-medium text-green-600"
-			>{$t('Correct')}
-			<Check size={18} class="text-green-600" />
+		<span
+			data-testid="correct-mark"
+			class="text-success flex shrink-0 items-center"
+			aria-label={$t('Correct')}
+		>
+			<Check size={18} aria-hidden="true" />
 		</span>
 	{:else if answerStatus === 'wrong'}
-		<span class="flex-end flex gap-1 text-xs font-medium text-red-600"
-			>{$t('Wrong')}
-			<X size={18} class="text-red-600" />
+		<span
+			data-testid="wrong-mark"
+			class="text-error flex shrink-0 items-center"
+			aria-label={$t('Wrong')}
+		>
+			<X size={18} aria-hidden="true" />
 		</span>
 	{/if}
 {/snippet}
@@ -632,78 +641,109 @@
 <Card.Root
 	class="mb-4 w-full rounded-xl shadow-md {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
 >
-	<Card.Header class="p-5">
-		<Card.Title class="mb-5 border-b pb-3 text-sm">
-			{serialNumber} <span>{$t('OF')} {totalQuestions}</span>
-			{#if question?.marking_scheme}
-				{@const mark = question.marking_scheme.correct}
-				{@const scheme = question.marking_scheme}
-				<span class="group relative float-end cursor-help select-none">
-					<span class="text-muted-foreground inline-flex items-center gap-1">
-						{mark === 1 ? `1 ${$t('Mark')}` : `${mark} ${$t('Marks')}`}
-						<Info size={13} class="text-muted-foreground/60" />
-					</span>
-					<div
-						class="absolute top-full right-0 z-20 mt-1 hidden min-w-48 rounded-lg border bg-white p-3 text-xs shadow-lg group-hover:block"
+	<Card.Header class="p-4 lg:p-6">
+		<div class="mb-4 flex items-center justify-between">
+			<div
+				class="bg-brand-light text-primary flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold"
+			>
+				Q{serialNumber}
+			</div>
+
+			<div class="flex items-center gap-2">
+				{#if isSubmitting}
+					<Spinner />
+				{/if}
+
+				{#if showMarks && question?.marking_scheme}
+					{@const scheme = question.marking_scheme}
+					<button
+						type="button"
+						class="group relative cursor-pointer select-none"
+						aria-label={$t('Marking scheme')}
 					>
-						<p class="text-foreground mb-2 font-semibold">{$t('Marking Scheme')}</p>
-						<div class="space-y-1.5">
-							<div class="flex justify-between gap-4">
-								<span class="text-muted-foreground">{$t('Correct')}</span>
-								<span class="font-medium text-green-600">+{scheme.correct}</span>
-							</div>
-							<div class="flex justify-between gap-4">
-								<span class="text-muted-foreground">{$t('Wrong')}</span>
-								<span class="font-medium {scheme.wrong < 0 ? 'text-red-600' : 'text-foreground'}"
-									>{scheme.wrong > 0 ? `+${scheme.wrong}` : scheme.wrong}</span
-								>
-							</div>
-							<div class="flex justify-between gap-4">
-								<span class="text-muted-foreground">{$t('Skipped')}</span>
-								<span class="text-foreground font-medium">{scheme.skipped}</span>
-							</div>
-						</div>
-						{#if scheme.partial?.correct_answers?.length && question.question_type === 'multi-choice'}
-							<div class="border-muted-foreground/20 mt-2.5 border-t pt-2.5">
-								<p class="text-foreground mb-1.5 font-semibold">{$t('Partial Marks')}</p>
-								<div class="space-y-1.5">
-									{#each scheme.partial.correct_answers as rule, i (i)}
-										<div class="flex justify-between gap-4">
-											<span class="text-muted-foreground"
-												>{rule.num_correct_selected}
-												{$t('correct selected')}</span
-											>
-											<span class="font-medium text-green-600">+{rule.marks}</span>
-										</div>
-									{/each}
+						<span
+							data-testid="marks-pill"
+							class="border-border inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm"
+						>
+							<span class="text-muted-foreground font-medium">{$t('Marks')}:</span>
+							<span class="text-success font-semibold">+{scheme.correct}</span>
+							{#if scheme.wrong !== 0}
+								<span class="text-error font-semibold">{scheme.wrong}</span>
+							{/if}
+							<ChevronDown size={13} class="text-muted-foreground" />
+						</span>
+						<div
+							class="bg-card absolute top-full right-0 z-20 mt-1 hidden min-w-52 rounded-xl border p-4 text-sm shadow-lg group-hover:block group-focus:block"
+						>
+							<div class="space-y-3">
+								<div class="flex justify-between gap-4">
+									<span class="text-success font-semibold">{$t('Correct')}</span>
+									<span class="text-success font-semibold">+{scheme.correct}</span>
 								</div>
-								<p class="text-muted-foreground/65 mt-2 text-[11px] leading-snug">
-									{$t('Partial marks awarded if no wrong option is selected')}
-								</p>
+								<div class="flex justify-between gap-4">
+									<span class="font-semibold {scheme.wrong < 0 ? 'text-error' : 'text-foreground'}"
+										>{$t('Incorrect')}</span
+									>
+									<span class="font-semibold {scheme.wrong < 0 ? 'text-error' : 'text-foreground'}"
+										>{scheme.wrong > 0 ? `+${scheme.wrong}` : scheme.wrong}</span
+									>
+								</div>
+								<div class="flex justify-between gap-4">
+									<span class="text-warning font-semibold">{$t('Unanswered')}</span>
+									<span class="text-warning font-semibold">{scheme.skipped}</span>
+								</div>
 							</div>
-						{/if}
-					</div>
-				</span>
-			{/if}
-			{#if isSubmitting}
-				<span class="float-end mr-2"><Spinner /></span>
-			{/if}
-		</Card.Title>
-		<Card.Description class="text-base/normal font-medium">
-			<div class="flex items-start gap-1">
-				<RichText content={question.question_text} class="min-w-0 flex-1" />
-				{#if question.is_mandatory}
-					<span class="shrink-0 text-red-500">*</span>
+							{#if scheme.partial?.correct_answers?.length && question.question_type === 'multi-choice'}
+								<div class="border-border mt-3 border-t pt-3">
+									<p class="text-muted-foreground mb-2 text-xs leading-snug">
+										{$t('Partial marks awarded if no wrong option is selected')}:
+									</p>
+									<div class="space-y-2">
+										{#each scheme.partial.correct_answers as rule, i (i)}
+											<div class="flex justify-between gap-4">
+												<span class="text-success font-medium"
+													>{rule.num_correct_selected} {$t('correct selected')}</span
+												>
+												<span class="text-success font-semibold">+{rule.marks}</span>
+											</div>
+										{/each}
+									</div>
+								</div>
+							{/if}
+						</div>
+					</button>
+				{/if}
+
+				{#if showMarkForReview}
+					<button
+						type="button"
+						class="hidden items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors lg:flex
+							{isQuestionBookmarked
+							? 'border-warning bg-warning-subtle text-warning'
+							: 'border-border text-muted-foreground'}"
+						onclick={handleBookmark}
+						disabled={isLocked}
+					>
+						<Flag class="h-4 w-4 {isQuestionBookmarked ? 'fill-current' : ''}" />
+						{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
+					</button>
 				{/if}
 			</div>
-			{#if question.instructions}
-				<RichText content={question.instructions} class="text-muted-foreground mt-2 text-sm" />
+		</div>
+
+		<p class="text-card-foreground text-base leading-snug font-bold">
+			<RichText content={question.question_text} class="min-w-0 flex-1" />
+			{#if question.is_mandatory}
+				<span class="text-destructive ml-0.5">*</span>
 			{/if}
-			<QuestionMedia media={question.media} />
-		</Card.Description>
+		</p>
+		{#if question.instructions}
+			<RichText content={question.instructions} class="text-muted-foreground mt-2 text-sm" />
+		{/if}
+		<QuestionMedia media={question.media} />
 	</Card.Header>
 
-	<Card.Content class="p-5 pt-1">
+	<Card.Content class="px-4 pt-0 pb-4 lg:px-6 lg:pb-6">
 		{#if saveError}
 			<div
 				class={`mb-4 rounded-lg border p-3 text-sm ${
@@ -731,48 +771,58 @@
 						return typeof resp !== 'string' ? resp?.[0]?.toString() : undefined;
 					})()}
 					disabled={isLocked}
+					class="flex flex-col gap-3"
 				>
 					{@const typedOptions = options as TOptions[]}
 					{#each typedOptions as option, index (index)}
 						{@const uid = `${question.id}-${option.key}`}
 						{@const feedbackClass = optionFeedbackClass(option.id)}
 						{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
-						<Label
-							for={uid}
-							class={`cursor-pointer rounded-xl border px-4 py-5 ${
-								isFeedbackViewed
-									? feedbackClass || ''
-									: isSelected(option.id)
-										? 'bg-primary text-muted *:border-muted *:text-muted'
-										: ''
-							} ${isLocked ? 'cursor-not-allowed' : ''}`}
-						>
-							<div class="flex w-full items-start justify-between gap-3">
-								<div class="flex min-w-0 items-start gap-2">
-									<span class="shrink-0">{option.key}.</span>
-									<RichText content={option.value} class="min-w-0 flex-1" />
-								</div>
-								<div class="flex items-center gap-1">
-									{#if feedbackStatus === 'correct'}
-										{@render showCorrectWrongMark('correct')}
-									{:else if feedbackStatus === 'wrong'}
-										{@render showCorrectWrongMark('wrong')}
-									{:else}
-										<RadioGroup.Item value={option.id.toString()} id={uid} disabled={isLocked} />
-									{/if}
-								</div>
-							</div>
-							{#if option.media}
-								<QuestionMedia media={option.media} />
-							{/if}
-						</Label>
+						<div class="flex items-center gap-3">
+							<span class="text-muted-foreground w-5 shrink-0 text-sm font-medium"
+								>{option.key}</span
+							>
+							<Label
+								for={uid}
+								class={cn(
+									'flex flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors',
+									isFeedbackViewed
+										? feedbackClass || 'border-border bg-card'
+										: isSelected(option.id)
+											? 'border-primary bg-primary/10'
+											: 'border-border bg-card',
+									isLocked && 'cursor-not-allowed'
+								)}
+							>
+								<RadioGroup.Item
+									value={option.id.toString()}
+									id={uid}
+									disabled={isLocked}
+									class={cn(
+										feedbackStatus === 'correct' && 'border-success text-success',
+										feedbackStatus === 'wrong' && 'border-error text-error'
+									)}
+								/>
+								<span class={cn('text-foreground flex-1 text-sm', feedbackStatus !== 'none')}
+									><RichText content={option.value} class="min-w-0 flex-1" /></span
+								>
+								{#if feedbackStatus === 'correct'}
+									{@render showCorrectWrongMark('correct')}
+								{:else if feedbackStatus === 'wrong'}
+									{@render showCorrectWrongMark('wrong')}
+								{/if}
+							</Label>
+						</div>
+						{#if option.media}
+							<QuestionMedia media={option.media} />
+						{/if}
 					{/each}
 				</RadioGroup.Root>
 			{/key}
 		{:else if question.question_type === question_type_enum.SUBJECTIVE}
 			<div class="flex flex-col gap-2">
 				<textarea
-					class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full rounded-xl border px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring min-h-48 w-full rounded-xl border border-dashed px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:min-h-56"
 					placeholder={$t('Type your answer here...')}
 					bind:value={candidateInput}
 					maxlength={question.subjective_answer_limit || undefined}
@@ -798,14 +848,14 @@
 						<div class="flex flex-col">
 							<span
 								class="text-sm {remaining <= 0
-									? 'font-medium text-red-500'
+									? 'text-error font-medium'
 									: 'text-muted-foreground'}"
 							>
 								{remaining}
 								{$t('characters remaining')}
 							</span>
 							{#if remaining <= 0}
-								<span class="text-xs text-red-500">
+								<span class="text-error text-xs">
 									{$t('Character limit reached')}
 								</span>
 							{/if}
@@ -820,10 +870,10 @@
 				{@const isCorrect = checkNumberAnswerCorrect()}
 				{@const feedbackClass =
 					isCorrect === null
-						? 'border-gray-300 bg-white text-gray-700'
+						? 'border-border bg-card text-foreground'
 						: isCorrect
-							? 'border-green-400 bg-green-100 text-green-700'
-							: 'border-red-400 bg-red-100 text-red-700'}
+							? 'border-success bg-success-subtle text-success'
+							: 'border-error bg-error-subtle text-error'}
 				{@const candidateResponse = currentSelection?.response}
 				{@const correctAnswer = currentSelection?.correct_answer}
 				<div
@@ -844,7 +894,7 @@
 				{#if isCorrect === false}
 					<div
 						data-testid="numerical-correct-answer"
-						class="mt-4 flex flex-row rounded-xl border border-green-400 bg-green-100 px-4 py-4 text-green-700"
+						class="border-success bg-success-subtle text-success mt-4 flex flex-row rounded-xl border px-4 py-4"
 					>
 						<p class="w-full text-sm whitespace-pre-wrap">{correctAnswer}</p>
 						{@render showCorrectWrongMark('correct')}
@@ -855,7 +905,7 @@
 					<input
 						type="number"
 						step={question.question_type === question_type_enum.NUMERICALDECIMAL ? 'any' : '1'}
-						class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+						class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border border-dashed px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 						placeholder={$t('Type your answer here...')}
 						bind:value={candidateInput}
 					/>
@@ -883,12 +933,12 @@
 			{@const matrixRows = matrix.rows.items}
 			{@const matrixColumns = matrix.columns.items}
 
-			<div class="mb-5 grid grid-cols-2 gap-6 border-b border-gray-200 pb-5">
+			<div class="border-border mb-5 grid grid-cols-2 gap-6 border-b pb-5">
 				<div>
-					<p class="mb-2 text-sm font-semibold text-gray-700">{matrix.rows.label}</p>
+					<p class="text-foreground mb-2 text-sm font-semibold">{matrix.rows.label}</p>
 					<div class="flex flex-col gap-2">
 						{#each matrixRows as row (row.id)}
-							<div class="text-sm text-gray-800">
+							<div class="text-foreground text-sm">
 								<span class="font-semibold">{row.key}.</span>
 								<span class="ml-1">{row.value}</span>
 								{#if row.media}
@@ -899,10 +949,10 @@
 					</div>
 				</div>
 				<div>
-					<p class="mb-2 text-sm font-semibold text-gray-700">{matrix.columns.label}</p>
+					<p class="text-foreground mb-2 text-sm font-semibold">{matrix.columns.label}</p>
 					<div class="flex flex-col gap-2">
 						{#each matrixColumns as col (col.id)}
-							<div class="text-sm text-gray-800">
+							<div class="text-foreground text-sm">
 								<span class="font-semibold">{col.key}.</span>
 								<span class="ml-1">{col.value}</span>
 								{#if col.media}
@@ -920,7 +970,7 @@
 						<tr>
 							<th class="w-10 px-3 py-2"></th>
 							{#each matrixColumns as col (col.id)}
-								<th class="px-5 py-2 text-center text-sm font-semibold text-gray-700">
+								<th class="text-foreground px-5 py-2 text-center text-sm font-semibold">
 									{col.key}
 								</th>
 							{/each}
@@ -929,7 +979,7 @@
 					<tbody>
 						{#each matrixRows as row (row.id)}
 							<tr>
-								<td class="px-3 py-3 text-sm font-semibold text-gray-700">{row.key}</td>
+								<td class="text-foreground px-3 py-3 text-sm font-semibold">{row.key}</td>
 								{#each matrixColumns as col (col.id)}
 									{@const isChecked = (matrixSelections[row.id] ?? []).includes(col.id)}
 									<td class="px-5 py-3 text-center">
@@ -951,11 +1001,15 @@
 				<table class="w-full border-collapse text-sm">
 					<thead>
 						<tr>
-							<th class="border border-gray-300 bg-gray-100 px-4 py-3 text-left font-semibold">
+							<th
+								class="border-border bg-muted text-foreground border px-4 py-3 text-left font-semibold"
+							>
 								{matrixOpts.rows.label}
 							</th>
 							{#each matrixOpts.columns.items as col (col.id)}
-								<th class="border border-gray-300 bg-gray-100 px-4 py-3 text-center font-semibold">
+								<th
+									class="border-border bg-muted text-foreground border px-4 py-3 text-center font-semibold"
+								>
 									{col.key} – {col.value}
 								</th>
 							{/each}
@@ -963,10 +1017,10 @@
 					</thead>
 					<tbody>
 						{#each matrixOpts.rows.items as row (row.id)}
-							<tr class="hover:bg-gray-50">
-								<td class="border border-gray-300 px-4 py-3 font-medium">{row.value}</td>
+							<tr class="hover:bg-accent">
+								<td class="border-border border px-4 py-3 font-medium">{row.value}</td>
 								{#each matrixOpts.columns.items as col (col.id)}
-									<td class="border border-gray-300 px-4 py-3 text-center">
+									<td class="border-border border px-4 py-3 text-center">
 										<input
 											type="radio"
 											name="matrix-{question.id}-row-{row.id}"
@@ -990,22 +1044,26 @@
 				<table class="w-full border-collapse text-sm">
 					<thead>
 						<tr>
-							<th class="border border-gray-300 bg-gray-100 px-4 py-3 text-left font-semibold">
+							<th
+								class="border-border bg-muted text-foreground border px-4 py-3 text-left font-semibold"
+							>
 								{matrixOpts.rows.label}
 							</th>
-							<th class="border border-gray-300 bg-gray-100 px-4 py-3 text-left font-semibold">
+							<th
+								class="border-border bg-muted text-foreground border px-4 py-3 text-left font-semibold"
+							>
 								{matrixOpts.columns.label}
 							</th>
 						</tr>
 					</thead>
 					<tbody>
 						{#each matrixOpts.rows.items as row (row.id)}
-							<tr class="hover:bg-gray-50">
-								<td class="border border-gray-300 px-4 py-3 font-medium">
+							<tr class="hover:bg-accent">
+								<td class="border-border border px-4 py-3 font-medium">
 									<span class="font-semibold">{row.key}.</span>
 									<span class="ml-1">{row.value}</span>
 								</td>
-								<td class="border border-gray-300 px-4 py-3">
+								<td class="border-border border px-4 py-3">
 									<input
 										type={inputType}
 										class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
@@ -1030,56 +1088,59 @@
 			</div>
 		{:else}
 			{@const typedOptions = options as TOptions[]}
-			{#each typedOptions as option (option.id)}
-				{@const uid = `${question.id}-${option.key}`}
-				{@const feedbackClass = optionFeedbackClass(option.id)}
-				{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
-				<div class="flex flex-row items-start space-x-3">
-					<Label
-						for={uid}
-						class={`mb-2 w-full cursor-pointer rounded-xl border px-4 py-5 ${
-							isFeedbackViewed
-								? feedbackClass || ''
-								: isSelected(option.id)
-									? 'bg-primary text-muted *:border-muted *:text-muted'
-									: ''
-						} ${isLocked ? 'cursor-not-allowed' : ''}`}
-					>
-						<div class="flex w-full items-start justify-between gap-3">
-							<div class="flex min-w-0 items-start gap-2">
-								<span class="shrink-0">{option.key}.</span>
-								<RichText content={option.value} class="min-w-0 flex-1" />
-							</div>
-							<div class="flex items-center gap-1">
-								{#if feedbackStatus === 'correct'}
-									{@render showCorrectWrongMark('correct')}
-								{:else if feedbackStatus === 'wrong'}
-									{@render showCorrectWrongMark('wrong')}
-								{:else}
-									<Checkbox
-										id={uid}
-										value={option.id.toString()}
-										checked={isSelected(option.id)}
-										disabled={isLocked}
-										onCheckedChange={async (check) => {
-											await handleSelection(question.id, option.id, check === false);
-										}}
-									/>
-								{/if}
-							</div>
-						</div>
-						{#if option.media}
-							<QuestionMedia media={option.media} />
-						{/if}
-					</Label>
-				</div>
-			{/each}
+			<div class="flex flex-col gap-3">
+				{#each typedOptions as option (option.id)}
+					{@const uid = `${question.id}-${option.key}`}
+					{@const feedbackClass = optionFeedbackClass(option.id)}
+					{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
+					<div class="flex items-center gap-3">
+						<span class="text-muted-foreground w-5 shrink-0 text-sm font-medium">{option.key}</span>
+						<Label
+							for={uid}
+							class={cn(
+								'flex flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors',
+								isFeedbackViewed
+									? feedbackClass || 'border-border bg-card'
+									: isSelected(option.id)
+										? 'border-primary bg-primary/10'
+										: 'border-border bg-card',
+								isLocked && 'cursor-not-allowed'
+							)}
+						>
+							<Checkbox
+								id={uid}
+								value={option.id.toString()}
+								checked={isSelected(option.id)}
+								disabled={isLocked}
+								onCheckedChange={async (check) => {
+									await handleSelection(question.id, option.id, check === false);
+								}}
+								class={cn(
+									feedbackStatus === 'correct' && 'border-success data-[state=checked]:bg-success',
+									feedbackStatus === 'wrong' && 'border-error data-[state=checked]:bg-error'
+								)}
+							/>
+							<span class={cn('text-foreground flex-1 text-sm', feedbackStatus !== 'none')}
+								><RichText content={option.value} class="min-w-0 flex-1" /></span
+							>
+							{#if feedbackStatus === 'correct'}
+								{@render showCorrectWrongMark('correct')}
+							{:else if feedbackStatus === 'wrong'}
+								{@render showCorrectWrongMark('wrong')}
+							{/if}
+						</Label>
+					</div>
+					{#if option.media}
+						<QuestionMedia media={option.media} />
+					{/if}
+				{/each}
+			</div>
 		{/if}
 
 		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== 'matrix-match' && question.question_type !== question_type_enum.MATRIXRATING && question.question_type !== question_type_enum.MATRIXINPUT}
 			<Button
 				variant="outline"
-				class="mt-4 w-full border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"
+				class="border-primary bg-primary/10 text-primary hover:bg-primary/20 mt-4 w-full"
 				onclick={confirmViewFeedback}
 			>
 				{$t('View Feedback')}
@@ -1095,20 +1156,18 @@
 			>
 				{$t('Clear answer')}
 			</Button>
-
-			{#if showMarkForReview}
-				<Button
-					variant="outline"
-					class="w-full sm:flex-1 {isQuestionBookmarked
-						? 'border-amber-500 bg-amber-50 text-amber-700 hover:bg-amber-100'
-						: ''}"
-					onclick={handleBookmark}
-					disabled={isLocked}
-				>
-					<Bookmark class="mr-2 h-4 w-4 {isQuestionBookmarked ? 'fill-amber-500' : ''}" />
-					{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
-				</Button>
-			{/if}
 		</div>
+		{#if showMarkForReview}
+			<button
+				type="button"
+				class="mt-4 flex w-full items-center justify-center gap-1.5 text-sm font-medium transition-colors lg:hidden
+					{isQuestionBookmarked ? 'text-warning' : 'text-muted-foreground'}"
+				onclick={handleBookmark}
+				disabled={isLocked}
+			>
+				<Flag class="h-4 w-4 {isQuestionBookmarked ? 'fill-current' : ''}" />
+				{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
+			</button>
+		{/if}
 	</Card.Content>
 </Card.Root>

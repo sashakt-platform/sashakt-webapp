@@ -43,7 +43,7 @@ describe('TestTimer', () => {
 			}
 		});
 
-		const timerDiv = container.querySelector('.bg-green-700');
+		const timerDiv = container.querySelector('.bg-success-subtle');
 		expect(timerDiv).toBeInTheDocument();
 	});
 
@@ -54,7 +54,7 @@ describe('TestTimer', () => {
 			}
 		});
 
-		const timerDiv = container.querySelector('.bg-red-700');
+		const timerDiv = container.querySelector('.bg-error-subtle');
 		expect(timerDiv).toBeInTheDocument();
 	});
 
@@ -65,7 +65,7 @@ describe('TestTimer', () => {
 			}
 		});
 
-		const timerDiv = container.querySelector('.bg-red-700');
+		const timerDiv = container.querySelector('.bg-error-subtle');
 		expect(timerDiv).toBeInTheDocument();
 	});
 

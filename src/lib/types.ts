@@ -199,3 +199,24 @@ export type TFeedback = {
 	submitted_answer: number[] | string;
 	correct_answer: number[] | number;
 };
+
+export type TOmrMode = 'NEVER' | 'ALWAYS' | 'OPTIONAL';
+
+export type TTestDetails = {
+	id: number;
+	name: string;
+	link: string;
+	locale?: string;
+	total_questions: number;
+	time_limit?: number | null;
+	question_pagination?: number | null;
+	start_time: string;
+	start_instructions?: string;
+	completion_message?: string;
+	form?: TForm | null;
+	omr: TOmrMode;
+	show_question_palette: boolean;
+	bookmark: boolean;
+	show_feedback_immediately: boolean;
+	show_feedback_on_completion: boolean;
+};

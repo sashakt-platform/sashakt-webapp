@@ -47,6 +47,7 @@ Backend fetch wrappers live in `src/lib/server/test.ts`. API proxy routes are in
 ### Main Test Flow (`/test/[slug]`)
 
 The test page is a state machine in `src/routes/test/[slug]/+page.svelte` with these views:
+
 1. **LandingPage** - Test intro and instructions
 2. **DynamicForm** - Candidate registration (if test has a form)
 3. **CandidateProfile** - OMR mode selection (if optional)
@@ -55,6 +56,8 @@ The test page is a state machine in `src/routes/test/[slug]/+page.svelte` with t
 6. **ViewFeedback** - Answer review (if enabled)
 
 Server-side data loading happens in `+page.server.ts`. The `hooks.server.ts` middleware fetches test details by slug and sets `event.locals.testData`.
+
+Tests may be sectioned: the backend returns `question_sets` which is flattened into a single question list via `normalizeTestQuestions` in `$lib/helpers/questionSetHelpers.ts`.
 
 ### Session Management
 
@@ -67,6 +70,7 @@ Candidate identity is stored in a `sashakt-candidate` cookie (contains `candidat
 ### Test Configuration
 
 Vitest uses two test projects configured in `vite.config.ts`:
+
 - **client**: `*.svelte.test.ts` files, jsdom environment, setup in `vitest-setup-client.ts`
 - **server**: `*.test.ts` files (excluding `.svelte.`), node environment
 
@@ -77,10 +81,13 @@ Locale files are in `src/locales/`. Use `$t('key')` for translations. For tests,
 ## Key Types
 
 Core types are in `src/lib/types.ts`:
-- `TQuestion` - Question with options, type, marking scheme (supports partial marks)
+
+- `TQuestion` - Question with options, type, marking scheme (supports partial marks), optional `media`
 - `TSelection` - Candidate's answer state per question
 - `TTestSession` - Candidate + selections + current page
-- `question_type_enum` - SINGLE, MULTIPLE, SUBJECTIVE, NUMERICALINTEGER, NUMERICALDECIMAL
+- `question_type_enum` - SINGLE, MULTIPLE, SUBJECTIVE, NUMERICALINTEGER, NUMERICALDECIMAL, MATRIXRATING, MATRIXMATCH, MATRIXINPUT
+- `TQuestionSetCandidate` - Section grouping with `question_revisions` and per-section marking
+- `TMedia` / `TMediaImage` / `TExternalMedia` - Image and external media (YouTube, etc.) attachments
 - `TFormField` / `TForm` - Dynamic form field definitions
 
 ## Environment Variables
@@ -98,6 +105,9 @@ Core types are in `src/lib/types.ts`:
 
 Pre-existing type errors in `vite.config.ts`, `select-label.svelte`, `CandidateProfile.svelte` — these can be ignored.
 
-## Imports
+## Conventions
 
-Always use top-level imports (not dynamic imports inside functions unless specifically needed for code splitting).
+- Use top-level imports (not inline/dynamic imports unless necessary)
+- Use Svelte 5 runes (`$state`, `$derived`, `$effect`, etc.)
+- Create plan/tracking files in the `plans/` folder (gitignored), never in the project root. Never delete plan files.
+- Never hardcode colors (e.g., `text-gray-600`, `bg-blue-500`). Use theme tokens defined in `app.css` (e.g., `text-muted-foreground`, `bg-primary`, `border-border`).

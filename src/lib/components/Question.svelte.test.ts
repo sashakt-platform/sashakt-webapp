@@ -108,9 +108,9 @@ describe('Question', () => {
 		});
 
 		await vi.waitFor(() => {
-			// Multiple questions may show "OF X", so use getAllByText
-			const totalTexts = screen.getAllByText(`OF ${mockQuestions.length}`);
-			expect(totalTexts.length).toBeGreaterThan(0);
+			// Each question shows a Q-badge like "Q1", "Q2", etc.
+			const badge = screen.getAllByText(/^Q\d+$/);
+			expect(badge.length).toBeGreaterThan(0);
 		});
 	});
 
@@ -176,6 +176,60 @@ describe('Question', () => {
 			expect(screen.getAllByText('Section A').length).toBeGreaterThan(0);
 		});
 	});
+
+	describe('show_marks in testDetails', () => {
+		it('should display marks when testDetails.show_marks is true', async () => {
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails: { ...testDetails, show_marks: true }
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+			});
+
+			expect(screen.getAllByText('Marks:').length).toBeGreaterThan(0);
+		});
+
+		it('should hide marks when testDetails.show_marks is false', async () => {
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails: { ...testDetails, show_marks: false }
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+			});
+
+			expect(screen.queryAllByText('Marks:')).toHaveLength(0);
+		});
+
+		it('should display marks by default when testDetails.show_marks is undefined', async () => {
+			const testDetailsWithoutShowMarks = testDetails as typeof testDetails & {
+				show_marks?: boolean;
+			};
+
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails: testDetailsWithoutShowMarks
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+			});
+
+			expect(screen.getAllByText('Marks:').length).toBeGreaterThan(0);
+		});
+	});
 });
 
 describe('Support for Localization', () => {
@@ -184,7 +238,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions
+				testQuestions,
+				testDetails
 			}
 		});
 
@@ -221,7 +276,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions: singlePageQuestions
+				testQuestions: singlePageQuestions,
+				testDetails
 			}
 		});
 
@@ -253,7 +309,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions: singlePageQuestions
+				testQuestions: singlePageQuestions,
+				testDetails
 			}
 		});
 
@@ -281,7 +338,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions
+				testQuestions,
+				testDetails
 			}
 		});
 
@@ -317,7 +375,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions: singlePageQuestions
+				testQuestions: singlePageQuestions,
+				testDetails
 			}
 		});
 
@@ -348,7 +407,8 @@ describe('Support for Localization', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
-				testQuestions: singlePageQuestions
+				testQuestions: singlePageQuestions,
+				testDetails
 			}
 		});
 

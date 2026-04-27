@@ -304,6 +304,33 @@ describe('Page Server - createCandidate action', () => {
 		expect(result.error).toBe('Failed to start test');
 	});
 
+	it('should surface backend detail message on 400 (e.g. org time-window rejection)', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+
+		const detail = 'Tests can only be started between 09:00 and 17:00.';
+		const mockResponse = createMockResponse({ detail }, { ok: false, status: 400 });
+		const mockFetch = vi.fn().mockResolvedValue(mockResponse);
+		const mockCookies = createMockCookies();
+
+		const result = await actions.createCandidate({
+			request: {
+				formData: () =>
+					Promise.resolve(
+						createMockFormData({
+							deviceInfo: JSON.stringify({ browser: 'Chrome' }),
+							entity: ''
+						})
+					)
+			},
+			locals: { testData: mockTestData },
+			fetch: mockFetch,
+			cookies: mockCookies
+		} as any);
+
+		expect(result.status).toBe(400);
+		expect(result.error).toBe(detail);
+	});
+
 	it('should return 500 on network error', async () => {
 		// check no existing candidate
 		vi.mocked(getCandidate).mockReturnValue(null);

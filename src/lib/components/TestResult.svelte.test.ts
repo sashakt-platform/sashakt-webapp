@@ -10,7 +10,7 @@ import {
 } from '$lib/test-utils';
 
 describe('TestResult', () => {
-	it('should render success message', () => {
+	it('should render test name with Submitted label', () => {
 		render(TestResult, {
 			props: {
 				resultData: mockResultData,
@@ -18,10 +18,11 @@ describe('TestResult', () => {
 			}
 		});
 
-		expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
+		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
+		expect(screen.getByText(new RegExp(mockTestData.name))).toBeInTheDocument();
 	});
 
-	it('should render test name', () => {
+	it('should render score when marks are available', () => {
 		render(TestResult, {
 			props: {
 				resultData: mockResultData,
@@ -71,24 +72,66 @@ describe('TestResult', () => {
 		expect(screen.getByText('Total marks obtained').parentElement).toHaveTextContent(
 			new RegExp(`${mockResultData.marks_obtained}\\s*/\\s*${mockResultData.marks_maximum}`)
 		);
+		expect(
+			screen.getByText(`${mockResultData.marks_obtained}/${mockResultData.marks_maximum}`)
+		).toBeInTheDocument();
+		expect(screen.getByText('Your Score')).toBeInTheDocument();
 	});
 
-	it('should not render result summary when resultData is null', () => {
-		const testDetailsNoCompletion = {
-			...mockTestData,
-			completion_message: null
+	it('should render correct/incorrect/unanswered rows', () => {
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails: mockTestData
+			}
+		});
+
+		expect(screen.getByText('Correct')).toBeInTheDocument();
+		expect(screen.getByText('Incorrect')).toBeInTheDocument();
+		expect(screen.getByText('Unanswered')).toBeInTheDocument();
+	});
+
+	it('should display zero-padded answer counts', () => {
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails: mockTestData
+			}
+		});
+
+		const correct = String(mockResultData.correct_answer).padStart(2, '0');
+		const incorrect = String(mockResultData.incorrect_answer).padStart(2, '0');
+		expect(screen.getByText(correct)).toBeInTheDocument();
+		expect(screen.getByText(incorrect)).toBeInTheDocument();
+	});
+
+	it('should not show score when marks are null', () => {
+		const resultWithoutMarks = {
+			...mockResultData,
+			marks_obtained: null,
+			marks_maximum: null
 		};
 
 		render(TestResult, {
 			props: {
-				resultData: null,
-				testDetails: testDetailsNoCompletion
+				resultData: resultWithoutMarks,
+				testDetails: mockTestData
 			}
 		});
 
-		expect(screen.queryByText('Result summary')).not.toBeInTheDocument();
-		// Text is combined with "Congrats on completing the test!"
-		expect(screen.getByText(/Your test has been submitted successfully/)).toBeInTheDocument();
+		expect(screen.queryByText('Your Score')).not.toBeInTheDocument();
+	});
+
+	it('should not render stats when resultData is null', () => {
+		render(TestResult, {
+			props: {
+				resultData: null,
+				testDetails: mockTestData
+			}
+		});
+
+		expect(screen.queryByText('Correct')).not.toBeInTheDocument();
+		expect(screen.queryByText('Unanswered')).not.toBeInTheDocument();
 	});
 
 	it('should display custom completion message when provided', () => {
@@ -105,58 +148,23 @@ describe('TestResult', () => {
 		});
 
 		expect(
-			screen.getAllByText((_, node) => node?.textContent?.trim() === 'Great job completing the assessment!').length
+			screen.getAllByText(
+				(_, node) => node?.textContent?.trim() === 'Great job completing the assessment!'
+			).length
 		).toBeGreaterThan(0);
 	});
 
-	it('should display default message when no completion message', () => {
-		const testDetailsNoMessage = {
-			...mockTestData,
-			completion_message: null
-		};
-
+	it('should not display completion message when none provided', () => {
 		render(TestResult, {
 			props: {
 				resultData: mockResultData,
-				testDetails: testDetailsNoMessage
+				testDetails: { ...mockTestData, completion_message: null }
 			}
 		});
 
-		// Default message mentions attempted questions
-		expect(screen.getByText(/Congrats on completing the test!/)).toBeInTheDocument();
-	});
-
-	it('should calculate not attempted correctly', () => {
-		// Total = 5 + 3 + 0 + 2 = 10
-		// Attempted = 5 + 3 = 8
-		// Not attempted = 10 - 8 = 2
-		render(TestResult, {
-			props: {
-				resultData: mockResultData,
-				testDetails: mockTestData
-			}
-		});
-
-		// Find the "Not Attempted" row and check its value
-		const notAttemptedCell = screen.getByText('Not Attempted');
-		expect(notAttemptedCell).toBeInTheDocument();
-	});
-
-	it('should not show marks row when marks are null', () => {
-		const resultWithoutMarks = {
-			...mockResultData,
-			marks_obtained: null,
-			marks_maximum: null
-		};
-
-		render(TestResult, {
-			props: {
-				resultData: resultWithoutMarks,
-				testDetails: mockTestData
-			}
-		});
-
-		expect(screen.queryByText('Total marks obtained')).not.toBeInTheDocument();
+		expect(
+			screen.queryByText('Test completion message will be shown here.')
+		).not.toBeInTheDocument();
 	});
 });
 
@@ -165,7 +173,7 @@ describe('TestResult - View Feedback button', () => {
 		{ question_revision_id: 1, submitted_answer: [101], correct_answer: [102] }
 	];
 
-	it('should show View Feedback button when show_feedback_on_completion is true and feedback exists', () => {
+	it('should show View All Answers button when show_feedback_on_completion is true and feedback exists', () => {
 		const testDetails = { ...mockTestData, show_feedback_on_completion: true };
 
 		render(TestResult, {
@@ -176,10 +184,10 @@ describe('TestResult - View Feedback button', () => {
 			}
 		});
 
-		expect(screen.getByText('View Result')).toBeInTheDocument();
+		expect(screen.getByText('View All Answers')).toBeInTheDocument();
 	});
 
-	it('should NOT show View Feedback button when show_feedback_on_completion is false', () => {
+	it('should NOT show View All Answers button when show_feedback_on_completion is false', () => {
 		const testDetails = { ...mockTestData, show_feedback_on_completion: false };
 
 		render(TestResult, {
@@ -190,10 +198,10 @@ describe('TestResult - View Feedback button', () => {
 			}
 		});
 
-		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
+		expect(screen.queryByText('View All Answers')).not.toBeInTheDocument();
 	});
 
-	it('should NOT show View Feedback button when feedback is null', () => {
+	it('should NOT show View All Answers button when feedback is null', () => {
 		const testDetails = { ...mockTestData, show_feedback_on_completion: true };
 
 		render(TestResult, {
@@ -204,10 +212,10 @@ describe('TestResult - View Feedback button', () => {
 			}
 		});
 
-		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
+		expect(screen.queryByText('View All Answers')).not.toBeInTheDocument();
 	});
 
-	it('should NOT show View Feedback button when neither prop is provided', () => {
+	it('should NOT show View All Answers button when neither prop is provided', () => {
 		render(TestResult, {
 			props: {
 				resultData: mockResultData,
@@ -215,7 +223,7 @@ describe('TestResult - View Feedback button', () => {
 			}
 		});
 
-		expect(screen.queryByText('View Result')).not.toBeInTheDocument();
+		expect(screen.queryByText('View All Answers')).not.toBeInTheDocument();
 	});
 
 	it('should call onViewFeedback when button is clicked', async () => {
@@ -231,7 +239,7 @@ describe('TestResult - View Feedback button', () => {
 			}
 		});
 
-		const button = screen.getByText('View Result');
+		const button = screen.getByText('View All Answers');
 		await fireEvent.click(button);
 
 		expect(onViewFeedback).toHaveBeenCalledOnce();
@@ -266,57 +274,37 @@ describe('support for localization', () => {
 	it('should render result in Hindi', async () => {
 		await setLocaleForTests('hi-IN');
 
-		const resultTestData = {
-			...mockTestData,
-			completion_message: null
-		};
 		render(TestResult, {
 			props: {
 				resultData: mockResultData,
-				testDetails: resultTestData
+				testDetails: { ...mockTestData, completion_message: null }
 			}
 		});
 
 		await waitFor(() => {
-			// expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
-			expect(screen.getByText('सफलतापूर्वक जमा किया गया')).toBeInTheDocument();
-			expect(
-				screen.getByText(
-					'परीक्षा सफलतापूर्वक पूरी करने पर बधाई! आपने 8 प्रश्नों का प्रयास किया है।'
-				)
-			).toBeInTheDocument();
-			expect(screen.getByText('परिणाम सारांश')).toBeInTheDocument();
-			expect(screen.getByText('सही उत्तर')).toBeInTheDocument();
-			expect(screen.getByText('गलत उत्तर')).toBeInTheDocument();
-			expect(screen.getByText('प्रयास नहीं किया')).toBeInTheDocument();
-			expect(screen.getByText('कुल प्राप्त अंक')).toBeInTheDocument();
+			expect(screen.getByText(/जमा किया/)).toBeInTheDocument();
+			expect(screen.getByText('सही')).toBeInTheDocument();
+			expect(screen.getByText('गलत')).toBeInTheDocument();
+			expect(screen.getByText('अनुत्तरित')).toBeInTheDocument();
 		});
 	});
 
 	it('should render Test in English', async () => {
 		await setLocaleForTests('en-US');
 
-		const resultTestData = {
-			...mockTestData,
-			completion_message: null
-		};
 		render(TestResult, {
 			props: {
 				resultData: mockResultData,
-				testDetails: resultTestData
+				testDetails: { ...mockTestData, completion_message: null }
 			}
 		});
 
 		await waitFor(() => {
-			expect(screen.getByText('Submitted Successfully')).toBeInTheDocument();
-			expect(screen.getByText(/Congrats on completing the test!/i)).toBeInTheDocument();
-
-			expect(screen.getByText(/You have attempted 8 questions\./i)).toBeInTheDocument();
-			expect(screen.getByText('Result summary')).toBeInTheDocument();
-			expect(screen.getByText('Correct Answers')).toBeInTheDocument();
-			expect(screen.getByText('Incorrect Answers')).toBeInTheDocument();
-			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
-			expect(screen.getByText('Total marks obtained')).toBeInTheDocument();
+			expect(screen.getByText(/Submitted/)).toBeInTheDocument();
+			expect(screen.getByText('Correct')).toBeInTheDocument();
+			expect(screen.getByText('Incorrect')).toBeInTheDocument();
+			expect(screen.getByText('Unanswered')).toBeInTheDocument();
+			expect(screen.getByText('Your Score')).toBeInTheDocument();
 		});
 	});
 });

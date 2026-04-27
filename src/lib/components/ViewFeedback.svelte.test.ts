@@ -39,17 +39,16 @@ describe('ViewFeedback', () => {
 			expect(screen.getByText(mockMultipleChoiceQuestion.question_text)).toBeInTheDocument();
 		});
 
-		it('should display question number and total count', () => {
+		it('should display question badges', () => {
 			const feedback = [createFeedback(1, [102], [102]), createFeedback(2, [201], [201, 202])];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			const headings = screen.getAllByRole('heading').map((heading) => heading.textContent ?? '');
-			expect(headings.some((text) => text.includes('1 OF 3'))).toBe(true);
-			expect(headings.some((text) => text.includes('2 OF 3'))).toBe(true);
-			expect(headings.some((text) => text.includes('3 OF 3'))).toBe(true);
+			expect(screen.getByText('Q1')).toBeInTheDocument();
+			expect(screen.getByText('Q2')).toBeInTheDocument();
+			expect(screen.getByText('Q3')).toBeInTheDocument();
 		});
 
 		it('should display marks when marking_scheme is present', () => {
@@ -59,7 +58,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			expect(screen.getAllByText(/\d+ Marks?/)).toHaveLength(3);
+			expect(screen.getAllByText(/\d+ marks?/i)).toHaveLength(3);
 		});
 
 		it('should display question instructions when present', () => {
@@ -148,8 +147,8 @@ describe('ViewFeedback', () => {
 
 			const labels = container.querySelectorAll('label');
 			const optionBLabel = Array.from(labels).find((l) => l.textContent?.includes('B. 4'));
-			expect(optionBLabel?.className).toContain('bg-green-100');
-			expect(optionBLabel?.className).toContain('border-green-500');
+			expect(optionBLabel?.className).toContain('bg-success-subtle');
+			expect(optionBLabel?.className).toContain('border-success');
 		});
 
 		it('should highlight wrong submitted answer with red class', () => {
@@ -161,8 +160,8 @@ describe('ViewFeedback', () => {
 
 			const labels = container.querySelectorAll('label');
 			const optionALabel = Array.from(labels).find((l) => l.textContent?.includes('A. 3'));
-			expect(optionALabel?.className).toContain('bg-red-100');
-			expect(optionALabel?.className).toContain('border-red-500');
+			expect(optionALabel?.className).toContain('bg-error-subtle');
+			expect(optionALabel?.className).toContain('border-error');
 		});
 
 		it('should not highlight options that are neither correct nor submitted', () => {
@@ -174,8 +173,8 @@ describe('ViewFeedback', () => {
 
 			const labels = container.querySelectorAll('label');
 			const optionCLabel = Array.from(labels).find((l) => l.textContent?.includes('C. 5'));
-			expect(optionCLabel?.className).not.toContain('bg-green-100');
-			expect(optionCLabel?.className).not.toContain('bg-red-100');
+			expect(optionCLabel?.className).not.toContain('bg-success-subtle');
+			expect(optionCLabel?.className).not.toContain('bg-error-subtle');
 		});
 
 		it('should show green when candidate picked the correct answer', () => {
@@ -187,9 +186,9 @@ describe('ViewFeedback', () => {
 
 			const labels = container.querySelectorAll('label');
 			const optionBLabel = Array.from(labels).find((l) => l.textContent?.includes('B. 4'));
-			expect(optionBLabel?.className).toContain('bg-green-100');
+			expect(optionBLabel?.className).toContain('bg-success-subtle');
 
-			expect(optionBLabel?.className).not.toContain('bg-red-100');
+			expect(optionBLabel?.className).not.toContain('bg-error-subtle');
 		});
 	});
 
@@ -222,17 +221,17 @@ describe('ViewFeedback', () => {
 			const labels = container.querySelectorAll('label');
 
 			const optionA = Array.from(labels).find((l) => l.textContent?.includes('A. 2'));
-			expect(optionA?.className).toContain('bg-green-100');
+			expect(optionA?.className).toContain('bg-success-subtle');
 
 			const optionB = Array.from(labels).find((l) => l.textContent?.includes('B. 3'));
-			expect(optionB?.className).toContain('bg-green-100');
+			expect(optionB?.className).toContain('bg-success-subtle');
 
 			const optionC = Array.from(labels).find((l) => l.textContent?.includes('C. 4'));
-			expect(optionC?.className).toContain('bg-red-100');
+			expect(optionC?.className).toContain('bg-error-subtle');
 
 			const optionD = Array.from(labels).find((l) => l.textContent?.includes('D. 5'));
-			expect(optionD?.className).not.toContain('bg-green-100');
-			expect(optionD?.className).not.toContain('bg-red-100');
+			expect(optionD?.className).not.toContain('bg-success-subtle');
+			expect(optionD?.className).not.toContain('bg-error-subtle');
 		});
 
 		it('should display marks for multiple-choice question', () => {
@@ -242,7 +241,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			expect(screen.getByText('2 Marks')).toBeInTheDocument();
+			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
 		});
 	});
 
@@ -276,9 +275,9 @@ describe('ViewFeedback', () => {
 			const labels = container.querySelectorAll('label');
 
 			const optionB = Array.from(labels).find((l) => l.textContent?.includes('B. 4'));
-			expect(optionB?.className).toContain('bg-green-100');
+			expect(optionB?.className).toContain('bg-success-subtle');
 
-			const redLabels = Array.from(labels).filter((l) => l.className.includes('bg-red-100'));
+			const redLabels = Array.from(labels).filter((l) => l.className.includes('bg-error-subtle'));
 			expect(redLabels).toHaveLength(0);
 		});
 
@@ -291,9 +290,8 @@ describe('ViewFeedback', () => {
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
 			expect(screen.getByText(mockMultipleChoiceQuestion.question_text)).toBeInTheDocument();
-			const headings = screen.getAllByRole('heading').map((heading) => heading.textContent ?? '');
-			expect(headings.some((text) => text.includes('1 OF 3'))).toBe(true);
-			expect(headings.some((text) => text.includes('2 OF 3'))).toBe(true);
+			expect(screen.getByText('Q1')).toBeInTheDocument();
+			expect(screen.getByText('Q2')).toBeInTheDocument();
 		});
 
 		it('should handle testQuestions being null', () => {
@@ -342,20 +340,20 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
 			});
 
-			expect(screen.getByText('Correct')).toBeInTheDocument();
+			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
 			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
-			expect(container.querySelector('.bg-green-100.border-green-400')).toBeInTheDocument();
+			expect(container.querySelector('.bg-success-subtle.border-success')).toBeInTheDocument();
 		});
 
-		it('should show Wrong and apply red styling when integer answer does not match', () => {
+		it('should show Incorrect and apply red styling when integer answer does not match', () => {
 			const feedback = [{ question_revision_id: 6, submitted_answer: '5', correct_answer: 8 }];
 
 			const { container } = render(ViewFeedback, {
 				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
 			});
 
-			expect(screen.getByText('Wrong')).toBeInTheDocument();
-			expect(container.querySelector('.bg-red-100.border-red-400')).toBeInTheDocument();
+			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
+			expect(container.querySelector('.bg-error-subtle.border-error')).toBeInTheDocument();
 		});
 
 		it('should display the correct answer panel when integer answer is wrong', () => {
@@ -395,7 +393,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
 			});
 
-			expect(container.querySelector('.border-gray-300.bg-white')).toBeInTheDocument();
+			expect(container.querySelector('.border-border.bg-card')).toBeInTheDocument();
 		});
 
 		it('should not show Wrong mark in the response area when correct_answer is not provided', () => {
@@ -419,7 +417,7 @@ describe('ViewFeedback', () => {
 					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
 				});
 
-				expect(screen.getByText('Correct')).toBeInTheDocument();
+				expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
 				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
 			});
 
@@ -430,17 +428,17 @@ describe('ViewFeedback', () => {
 					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
 				});
 
-				expect(container.querySelector('.bg-green-100.border-green-400')).toBeInTheDocument();
+				expect(container.querySelector('.bg-success-subtle.border-success')).toBeInTheDocument();
 			});
 
-			it('should show Wrong when submitted answer is non-zero and correct_answer is 0', () => {
+			it('should show Incorrect when submitted answer is non-zero and correct_answer is 0', () => {
 				const feedback = [{ question_revision_id: 6, submitted_answer: '5', correct_answer: 0 }];
 
 				render(ViewFeedback, {
 					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
 				});
 
-				expect(screen.getByText('Wrong')).toBeInTheDocument();
+				expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
 			});
 
 			it('should display "0" as the correct answer when integer response is wrong and correct_answer is 0', () => {
@@ -484,7 +482,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
 			});
 
-			expect(screen.getByText('Correct')).toBeInTheDocument();
+			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
 			expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
 		});
 
@@ -498,10 +496,10 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
 			});
 
-			expect(screen.getByText('Correct')).toBeInTheDocument();
+			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
 		});
 
-		it('should show Wrong when decimal answer is outside 0.05 tolerance', () => {
+		it('should show Incorrect when decimal answer is outside 0.05 tolerance', () => {
 			// |2.5 - 3.14| = 0.64 > 0.05
 			const feedback = [{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }];
 
@@ -509,7 +507,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
 			});
 
-			expect(screen.getByText('Wrong')).toBeInTheDocument();
+			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
 		});
 
 		it('should apply green styling when decimal answer is correct', () => {
@@ -521,7 +519,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
 			});
 
-			expect(container.querySelector('.bg-green-100.border-green-400')).toBeInTheDocument();
+			expect(container.querySelector('.bg-success-subtle.border-success')).toBeInTheDocument();
 		});
 
 		it('should apply red styling when decimal answer is wrong', () => {
@@ -531,7 +529,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
 			});
 
-			expect(container.querySelector('.bg-red-100.border-red-400')).toBeInTheDocument();
+			expect(container.querySelector('.bg-error-subtle.border-error')).toBeInTheDocument();
 		});
 
 		it('should display the correct answer panel when decimal answer is wrong', () => {
@@ -572,7 +570,7 @@ describe('ViewFeedback', () => {
 				});
 
 				// |0 - 0| = 0 <= 0.5
-				expect(screen.getByText('Correct')).toBeInTheDocument();
+				expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
 				expect(screen.queryByText('Wrong')).not.toBeInTheDocument();
 			});
 
@@ -584,10 +582,10 @@ describe('ViewFeedback', () => {
 				});
 
 				// |0.03 - 0| = 0.03 <= 0.05
-				expect(screen.getByText('Correct')).toBeInTheDocument();
+				expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
 			});
 
-			it('should show Wrong when decimal answer is outside 0.05 tolerance of 0', () => {
+			it('should show Incorrect when decimal answer is outside 0.05 tolerance of 0', () => {
 				const feedback = [{ question_revision_id: 7, submitted_answer: '0.6', correct_answer: 0 }];
 
 				render(ViewFeedback, {
@@ -595,7 +593,7 @@ describe('ViewFeedback', () => {
 				});
 
 				// |0.6 - 0| = 0.6 > 0.05
-				expect(screen.getByText('Wrong')).toBeInTheDocument();
+				expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
 			});
 
 			it('should apply green styling when decimal answer is 0 and correct answer is 0', () => {
@@ -605,7 +603,7 @@ describe('ViewFeedback', () => {
 					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
 				});
 
-				expect(container.querySelector('.bg-green-100.border-green-400')).toBeInTheDocument();
+				expect(container.querySelector('.bg-success-subtle.border-success')).toBeInTheDocument();
 			});
 
 			it('should display "0" as the correct answer when decimal response is wrong and correct_answer is 0', () => {
@@ -655,11 +653,10 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: testQuestionsWithBoth }
 			});
 
-			// Integer correct: one "Correct" in its response area.
-			// Decimal wrong: "Wrong" in its response area + the correct-answer panel
-			// renders its own "Correct" label → two "Correct" elements total.
-			expect(screen.getAllByText('Correct')).toHaveLength(2);
-			expect(screen.getByText('Wrong')).toBeInTheDocument();
+			// Integer correct: header badge shows "Correct: ..."
+			// Decimal wrong: header badge shows "Incorrect: ..."
+			expect(screen.getAllByText(/^Correct:/)).toHaveLength(1);
+			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
 		});
 	});
 

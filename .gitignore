@@ -28,3 +28,6 @@ vite.config.ts.timestamp-*
 
 # coverage
 coverage
+
+# AI related plans
+plans/

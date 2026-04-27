@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
-	import InstructionsDialog from '$lib/components/InstructionsDialog.svelte';
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import QuestionPaletteModal from '$lib/components/QuestionPaletteModal.svelte';
 	import QuestionPaletteSidebar from '$lib/components/QuestionPaletteSidebar.svelte';
@@ -16,6 +15,7 @@
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
+	import { navState } from '$lib/navState.svelte';
 	import type { TQuestion, TQuestionSetCandidate } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
@@ -62,6 +62,23 @@
 	// question palette - track which question is currently selected
 	let currentQuestionIndex = $state((sessionStore.current.currentPage - 1) * perPage || 0);
 	const paletteStats = $derived(countQuestionStatuses(questions, selectedQuestions));
+
+	$effect(() => {
+		navState.active = true;
+		navState.instructions = testDetails?.start_instructions;
+		navState.showPalette = testDetails?.show_question_palette ?? false;
+		navState.onPaletteOpen = testDetails?.show_question_palette
+			? () => (paletteOpen = true)
+			: undefined;
+		navState.remainingMandatoryCount = paletteStats.remainingMandatory;
+		return () => {
+			navState.active = false;
+			navState.instructions = undefined;
+			navState.showPalette = false;
+			navState.onPaletteOpen = undefined;
+			navState.remainingMandatoryCount = 0;
+		};
+	});
 
 	// navigate to a specific question by index
 	function navigateToQuestion(questionIndex: number) {
@@ -202,8 +219,9 @@
 									{question}
 									{totalQuestions}
 									bind:selectedQuestions
-									showFeedback={testDetails?.show_feedback_immediately ?? false}
-									showMarkForReview={testDetails?.bookmark ?? true}
+									showFeedback={testDetails.show_feedback_immediately}
+									showMarkForReview={testDetails.bookmark}
+									showMarks={testDetails?.show_marks ?? true}
 								/>
 							</div>
 						{/each}
@@ -313,34 +331,21 @@
 					selections={selectedQuestions}
 					{currentQuestionIndex}
 					onNavigate={navigateToQuestion}
+					showMarkForReview={testDetails.bookmark}
 				/>
 			</div>
 		{/if}
 	</div>
 
-	<!-- Desktop Instructions button - hidden on mobile -->
-	<div class="fixed top-4 right-32 z-50 hidden lg:block">
-		<InstructionsDialog instructions={testDetails?.start_instructions} />
-	</div>
-
-	<!-- Mobile toggle button - hidden on desktop -->
 	{#if testDetails?.show_question_palette}
-		<div class="lg:hidden">
-			<QuestionPaletteToggleButton
-				remainingMandatoryCount={paletteStats.remainingMandatory}
-				onclick={() => (paletteOpen = true)}
-			/>
-		</div>
-
-		<!-- Mobile modal -->
 		<QuestionPaletteModal
 			bind:open={paletteOpen}
 			{questions}
 			{questionSets}
 			selections={selectedQuestions}
 			{currentQuestionIndex}
-			instructions={testDetails?.start_instructions}
 			onNavigate={navigateToQuestion}
+			showMarkForReview={testDetails.bookmark}
 		/>
 	{/if}
 {/if}

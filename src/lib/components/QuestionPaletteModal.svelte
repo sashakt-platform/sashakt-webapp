@@ -4,6 +4,7 @@
 	import RichText from './RichText.svelte';
 	import type { TQuestion, TQuestionSetCandidate, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
+	import { X } from '@lucide/svelte';
 
 	let {
 		open = $bindable(false),
@@ -12,54 +13,38 @@
 		selections,
 		currentQuestionIndex,
 		instructions,
-		onNavigate
+		onNavigate,
+		showMarkForReview = true
 	}: {
 		open: boolean;
 		questions: TQuestion[];
 		questionSets?: TQuestionSetCandidate[];
 		selections: TSelection[];
 		currentQuestionIndex: number;
-		instructions: string | undefined;
 		onNavigate: (questionIndex: number) => void;
+		instructions: string | undefined;
+		showMarkForReview?: boolean;
 	} = $props();
-
-	let activeTab = $state<'palette' | 'instructions'>('palette');
 
 	function handleQuestionClick(index: number) {
 		onNavigate(index);
 		open = false;
 	}
+	let activeTab = $state<'palette' | 'instructions'>('palette');
 </script>
 
 <Dialog.Root bind:open>
-	<Dialog.Content class="flex max-h-[85vh] w-[92vw] max-w-xl flex-col overflow-hidden rounded-xl p-0">
+	<Dialog.Content
+		showCloseButton={false}
+		class="data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom inset-x-0 top-auto right-0 bottom-0 left-0 flex max-h-[85vh] w-full max-w-none translate-x-0 translate-y-0 flex-col rounded-t-2xl rounded-b-none border-0 p-0 sm:max-w-none"
+	>
 		<Dialog.Title class="sr-only">{$t('Question Palette')}</Dialog.Title>
 
-		<div class="flex" role="tablist" aria-label={$t('Question palette tabs')}>
-			<button
-				type="button"
-				class="flex-1 px-4 py-3 text-center text-sm transition-colors {activeTab === 'palette'
-					? 'text-primary bg-blue-100 font-bold'
-					: 'bg-gray-100 font-medium text-gray-500 hover:text-gray-700'}"
-				role="tab"
-				aria-selected={activeTab === 'palette'}
-				aria-controls="palette-panel"
-				onclick={() => (activeTab = 'palette')}
-			>
-				{$t('Question Palette')}
-			</button>
-			<button
-				type="button"
-				class="flex-1 px-4 py-3 text-center text-sm transition-colors {activeTab === 'instructions'
-					? 'text-primary bg-blue-100 font-bold'
-					: 'bg-gray-100 font-medium text-gray-500 hover:text-gray-700'}"
-				role="tab"
-				aria-selected={activeTab === 'instructions'}
-				aria-controls="instructions-panel"
-				onclick={() => (activeTab = 'instructions')}
-			>
-				{$t('Instructions')}
-			</button>
+		<div class="bg-muted flex items-center justify-between rounded-t-2xl px-4 py-5">
+			<h2 class="text-foreground text-base font-semibold">{$t('Question Palette')}</h2>
+			<Dialog.Close class="text-muted-foreground hover:text-foreground" aria-label={$t('Close')}>
+				<X class="size-5" />
+			</Dialog.Close>
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto p-4">
@@ -67,11 +52,12 @@
 				<div id="palette-panel">
 					<QuestionPaletteContent
 						{questions}
-						{questionSets}
 						{selections}
 						{currentQuestionIndex}
 						onNavigate={handleQuestionClick}
-						maxRows={5}
+						cols={6}
+						gridPadding="py-6 px-4"
+						{showMarkForReview}
 					/>
 				</div>
 			{:else}

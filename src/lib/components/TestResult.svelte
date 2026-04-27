@@ -10,6 +10,7 @@
 	import { t } from 'svelte-i18n';
 	import type { TResultData, TFeedback, TTestQuestionsResponse } from '$lib/types';
 	import RichText from './RichText.svelte';
+	import { CircleCheck, CircleX, CircleMinus } from '@lucide/svelte';
 
 	let {
 		resultData,
@@ -30,17 +31,18 @@
 		onViewFeedback?: () => void;
 	} = $props();
 
-	const totalQuestions = resultData?.total_questions || 0;
-
+	const totalQuestions = resultData?.total_questions ?? 0;
 	const attempted = resultData
-		? (resultData.correct_answer || 0) + (resultData.incorrect_answer || 0)
+		? (resultData.correct_answer ?? 0) + (resultData.incorrect_answer ?? 0)
 		: 0;
 	const notAttempted = totalQuestions - attempted;
 	const normalizedTestQuestions = $derived(normalizeTestQuestions(testQuestions));
 	const feedbackByQuestionId = $derived(
 		new Map((feedback ?? []).map((entry) => [entry.question_revision_id, entry]))
 	);
-	const isFeedbackEntryCorrect = (question: (typeof normalizedTestQuestions.questions)[number]): boolean => {
+	const isFeedbackEntryCorrect = (
+		question: (typeof normalizedTestQuestions.questions)[number]
+	): boolean => {
 		const entry = feedbackByQuestionId.get(question.id);
 		if (!entry) return false;
 		if (typeof entry.correct_answer === 'number') {
@@ -78,7 +80,9 @@
 				}
 				return entry.submitted_answer.length > 0;
 			}).length;
-			const correctCount = group.questions.filter((question) => isFeedbackEntryCorrect(question)).length;
+			const correctCount = group.questions.filter((question) =>
+				isFeedbackEntryCorrect(question)
+			).length;
 
 			return {
 				title: group.section.title,
@@ -93,6 +97,10 @@
 
 	let isDownloading = $state(false);
 	let downloadError = $state<string | null>(null);
+
+	function pad(n: number) {
+		return String(n).padStart(2, '0');
+	}
 
 	async function handleDownloadCertificate() {
 		if (!resultData?.certificate_download_url) return;
@@ -130,121 +138,124 @@
 	}
 </script>
 
-<section class="mx-auto mt-2 max-w-3xl px-4 text-center">
-	<img src="/circle-check.svg" alt="done" class="mx-auto mb-5 w-20" />
-	<h6 class="text-accent-foreground mb-2 text-[10px] font-semibold uppercase">
-		{testDetails.name}
-	</h6>
-	<h3 class="mb-1 text-lg font-semibold">{$t('Submitted Successfully')}</h3>
-	<div class="text-sm/normal [&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-800">
-		{#if testDetails.completion_message}
-			<RichText content={testDetails.completion_message} class="text-left" />
-		{:else}
-			{$t('Congrats on completing the test!')}
-			{#if resultData}
-				{$t('You have attempted {count} questions.', {
-					values: { count: attempted }
-				})}
-			{:else}
-				{$t('Your test has been submitted successfully.')}
-			{/if}
-		{/if}
-	</div>
-	{#if resultData}
-		<p class="text-accent-foreground mt-4 border-b py-2 text-sm font-bold uppercase">
-			{$t('Result summary')}
-		</p>
-
-		<div class="mt-4 grid gap-3 text-left sm:grid-cols-2 xl:grid-cols-4">
-			<div class="rounded-2xl border bg-white p-4 shadow-sm">
-				<p class="text-muted-foreground text-xs font-semibold uppercase">{$t('Correct Answers')}</p>
-				<p class="mt-2 text-2xl font-semibold text-slate-900">{resultData.correct_answer}</p>
-			</div>
-			<div class="rounded-2xl border bg-white p-4 shadow-sm">
-				<p class="text-muted-foreground text-xs font-semibold uppercase">
-					{$t('Incorrect Answers')}
+<section class="bg-background flex min-h-screen items-center justify-center px-4 py-10">
+	<div class="w-full max-w-sm overflow-hidden rounded-2xl shadow-sm">
+		<div class="bg-secondary flex flex-col items-center px-6 py-8 text-center">
+			<h2 class="text-foreground mb-1 text-lg font-bold">
+				"{testDetails.name}" {$t('Submitted')}
+			</h2>
+			<p class="text-muted-foreground mb-4 text-sm">
+				{#if testDetails.completion_message}
+					<RichText content={testDetails.completion_message} class="text-left" />
+				{/if}
+			</p>
+			{#if resultData && resultData.marks_obtained !== null && resultData.marks_maximum !== null}
+				<p class="text-primary text-4xl font-bold">
+					{resultData.marks_obtained}/{resultData.marks_maximum}
 				</p>
-				<p class="mt-2 text-2xl font-semibold text-slate-900">{resultData.incorrect_answer}</p>
-			</div>
-			<div class="rounded-2xl border bg-white p-4 shadow-sm">
-				<p class="text-muted-foreground text-xs font-semibold uppercase">{$t('Not Attempted')}</p>
-				<p class="mt-2 text-2xl font-semibold text-slate-900">{notAttempted}</p>
-			</div>
-			{#if resultData.marks_obtained !== null && resultData.marks_maximum !== null}
-				<div class="rounded-2xl border bg-white p-4 shadow-sm">
-					<p class="text-muted-foreground text-xs font-semibold uppercase">
-						{$t('Total marks obtained')}
-					</p>
-					<p class="mt-2 text-2xl font-semibold text-slate-900">
-						{resultData.marks_obtained}
-						<span class="text-base font-medium text-slate-500">/ {resultData.marks_maximum}</span>
-					</p>
-				</div>
+				<p class="text-primary mt-1 text-sm font-medium">{$t('Your Score')}</p>
 			{/if}
 		</div>
 
-		{#if sectionSummaries.length > 0}
-			<p class="text-accent-foreground mt-6 border-b py-2 text-sm font-bold uppercase">
-				{$t('Section summary')}
-			</p>
-
-			<div class="mt-4 grid gap-4 text-left md:grid-cols-2">
-				{#each sectionSummaries as section (`${section.title}-${section.questionCount}`)}
-					<div class="rounded-2xl border bg-white p-5 shadow-sm">
-						<div class="flex flex-wrap items-start justify-between gap-3">
-							<div>
-								<p class="text-base font-semibold text-slate-900">{section.title}</p>
-								<p class="text-muted-foreground mt-1 text-sm">
-									{$t('Allowed')}: {section.allowedCount}
-								</p>
-							</div>
-							<div class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
-								{#if section.accuracy === null}
-									{$t('Accuracy')}: --
-								{:else}
-									{$t('Accuracy')}: {section.accuracy}%
-								{/if}
-							</div>
-						</div>
-
-						<div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-							<div class="rounded-xl bg-slate-50 p-3">
-								<p class="text-muted-foreground text-xs font-semibold uppercase">
-									{$t('Questions')}
-								</p>
-								<p class="mt-1 text-xl font-semibold text-slate-900">{section.questionCount}</p>
-							</div>
-							<div class="rounded-xl bg-slate-50 p-3">
-								<p class="text-muted-foreground text-xs font-semibold uppercase">
-									{$t('Attempted')}
-								</p>
-								<p class="mt-1 text-xl font-semibold text-slate-900">{section.attemptedCount}</p>
-							</div>
-							<div class="col-span-2 rounded-xl bg-slate-50 p-3 sm:col-span-1">
-								<p class="text-muted-foreground text-xs font-semibold uppercase">{$t('Correct')}</p>
-								<p class="mt-1 text-xl font-semibold text-slate-900">{section.correctCount}</p>
-							</div>
-						</div>
+		{#if resultData}
+			<div class="divide-border divide-y px-6">
+				<div class="flex items-center justify-between py-4">
+					<div class="flex items-center gap-3">
+						<CircleCheck class="text-success h-5 w-5" />
+						<span class="text-foreground text-sm">{$t('Correct')}</span>
 					</div>
-				{/each}
-			</div>
-		{/if}
+					<span class="text-foreground text-sm font-semibold">{pad(resultData.correct_answer)}</span
+					>
+				</div>
 
-		{#if resultData.certificate_download_url}
-			<div class="mt-6">
-				{#if downloadError}
-					<p class="text-destructive mb-2 text-sm">{downloadError}</p>
-				{/if}
-				<Button onclick={handleDownloadCertificate} disabled={isDownloading} class="w-full">
-					{#if isDownloading}
-						<Spinner />
-					{/if}
-					{isDownloading ? $t('Preparing...') : $t('Download Certificate')}
-				</Button>
+				<div class="flex items-center justify-between py-4">
+					<div class="flex items-center gap-3">
+						<CircleX class="text-error h-5 w-5" />
+						<span class="text-foreground text-sm">{$t('Incorrect')}</span>
+					</div>
+					<span class="text-foreground text-sm font-semibold"
+						>{pad(resultData.incorrect_answer)}</span
+					>
+				</div>
+
+				<div class="flex items-center justify-between py-4">
+					<div class="flex items-center gap-3">
+						<CircleMinus class="text-muted-foreground h-5 w-5" />
+						<span class="text-foreground text-sm">{$t('Unanswered')}</span>
+					</div>
+					<span class="text-foreground text-sm font-semibold">{pad(notAttempted)}</span>
+				</div>
 			</div>
+
+			<div class="space-y-3 px-6 pt-2 pb-6">
+				{#if downloadError}
+					<p class="text-destructive text-sm">{downloadError}</p>
+				{/if}
+
+				{#if testDetails.show_feedback_on_completion && feedback}
+					<Button variant="outline" class="w-full" onclick={onViewFeedback}>
+						{$t('View All Answers')}
+					</Button>
+				{/if}
+
+				{#if resultData.certificate_download_url}
+					<Button onclick={handleDownloadCertificate} disabled={isDownloading} class="w-full">
+						{#if isDownloading}
+							<Spinner />
+						{/if}
+						{isDownloading ? $t('Preparing...') : $t('Download Certificate')}
+					</Button>
+				{/if}
+			</div>
+
+			{#if sectionSummaries.length > 0}
+				<p class="text-accent-foreground mt-6 border-b py-2 text-sm font-bold uppercase">
+					{$t('Section summary')}
+				</p>
+
+				<div class="mt-4 grid gap-4 text-left md:grid-cols-2">
+					{#each sectionSummaries as section (`${section.title}-${section.questionCount}`)}
+						<div class="rounded-2xl border bg-white p-5 shadow-sm">
+							<div class="flex flex-wrap items-start justify-between gap-3">
+								<div>
+									<p class="text-base font-semibold text-slate-900">{section.title}</p>
+									<p class="text-muted-foreground mt-1 text-sm">
+										{$t('Allowed')}: {section.allowedCount}
+									</p>
+								</div>
+								<div class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
+									{#if section.accuracy === null}
+										{$t('Accuracy')}: --
+									{:else}
+										{$t('Accuracy')}: {section.accuracy}%
+									{/if}
+								</div>
+							</div>
+
+							<div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+								<div class="rounded-xl bg-slate-50 p-3">
+									<p class="text-muted-foreground text-xs font-semibold uppercase">
+										{$t('Questions')}
+									</p>
+									<p class="mt-1 text-xl font-semibold text-slate-900">{section.questionCount}</p>
+								</div>
+								<div class="rounded-xl bg-slate-50 p-3">
+									<p class="text-muted-foreground text-xs font-semibold uppercase">
+										{$t('Attempted')}
+									</p>
+									<p class="mt-1 text-xl font-semibold text-slate-900">{section.attemptedCount}</p>
+								</div>
+								<div class="col-span-2 rounded-xl bg-slate-50 p-3 sm:col-span-1">
+									<p class="text-muted-foreground text-xs font-semibold uppercase">
+										{$t('Correct')}
+									</p>
+									<p class="mt-1 text-xl font-semibold text-slate-900">{section.correctCount}</p>
+								</div>
+							</div>
+						</div>
+					{/each}
+				</div>
+			{/if}
 		{/if}
-	{/if}
-	{#if testDetails.show_feedback_on_completion && feedback}
-		<Button class="mt-8" onclick={onViewFeedback}>{$t('View Feedback')}</Button>
-	{/if}
+	</div>
 </section>

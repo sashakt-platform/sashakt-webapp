@@ -10,6 +10,7 @@
 	import { t } from 'svelte-i18n';
 	import { DEFAULT_LANGUAGE } from '$lib/utils';
 	import CandidateProfile from '$lib/components/CandidateProfile.svelte';
+	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 
 	let { data, form }: PageProps = $props();
 
@@ -26,6 +27,9 @@
 
 	const hasDynamicForm = $derived(!!data.testData?.form);
 	const hasOmrChoice = $derived(data.testData?.omr === 'OPTIONAL');
+	const hasRenderableQuestions = $derived(
+		normalizeTestQuestions(data.testQuestions).questions.length > 0
+	);
 
 	$effect(() => {
 		form;
@@ -65,7 +69,7 @@
 		/>
 	{:else if !data.candidate && !showProfileForm}
 		<LandingPage testDetails={data.testData} bind:showProfileForm />
-	{:else if !data.candidate && hasDynamicForm && !showOmrChoice}
+	{:else if !data.candidate && hasDynamicForm && !showOmrChoice && data.testData.form}
 		<DynamicForm
 			form={data.testData.form}
 			testDetails={data.testData}
@@ -74,8 +78,8 @@
 		/>
 	{:else if !data.candidate && hasOmrChoice}
 		<CandidateProfile testDetails={data.testData} formResponses={candidateFormResponses} />
-	{:else if data.testQuestions?.question_revisions}
-		{#if data.candidate.use_omr === 'true' || data.testData?.omr === 'ALWAYS'}
+	{:else if hasRenderableQuestions}
+		{#if data.testData?.omr !== 'NEVER' && (data.candidate.use_omr === 'true' || data.testData?.omr === 'ALWAYS')}
 			<OmrSheet
 				candidate={data.candidate}
 				testDetails={data.testData}
