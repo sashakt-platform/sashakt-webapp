@@ -5,12 +5,12 @@
 	import Question from '$lib/components/Question.svelte';
 	import OmrSheet from '$lib/components/OmrSheet.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
-	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import type { PageProps } from './$types';
 	import { locale } from 'svelte-i18n';
 	import { t } from 'svelte-i18n';
 	import { DEFAULT_LANGUAGE } from '$lib/utils';
 	import CandidateProfile from '$lib/components/CandidateProfile.svelte';
+	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 
 	let { data, form }: PageProps = $props();
 
@@ -64,6 +64,7 @@
 			resultData={form.result}
 			testDetails={data.testData}
 			feedback={form.feedback}
+			testQuestions={form.testQuestions}
 			onViewFeedback={handleViewFeedback}
 		/>
 	{:else if !data.candidate && !showProfileForm}

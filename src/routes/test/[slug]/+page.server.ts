@@ -218,6 +218,7 @@ export const actions = {
 							),
 							getTestQuestions(candidate.candidate_test_id, candidate.candidate_uuid)
 						]);
+						testQuestions = testQuestionsData;
 						if (feedbackResponse.ok) {
 							const feedbackData = await feedbackResponse.json();
 							feedback = feedbackData.map(
@@ -242,7 +243,6 @@ export const actions = {
 									};
 								}
 							);
-							testQuestions = testQuestionsData;
 						}
 					} catch (error) {
 						console.error('Error fetching feedback:', error);

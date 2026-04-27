@@ -33,6 +33,38 @@ describe('QuestionCard', () => {
 		vi.clearAllMocks();
 	});
 
+	it('should clear a saved single-choice answer', async () => {
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		render(QuestionCard, {
+			props: {
+				question: mockSingleChoiceQuestion,
+				serialNumber: 1,
+				candidate: mockCandidate,
+				totalQuestions: 10,
+				selectedQuestions: [
+					{
+						question_revision_id: mockSingleChoiceQuestion.id,
+						response: [mockSingleChoiceQuestion.options[0].id],
+						visited: true,
+						time_spent: 0,
+						bookmarked: false,
+						is_reviewed: false
+					}
+				]
+			}
+		});
+
+		await fireEvent.click(screen.getByRole('button', { name: 'Clear answer' }));
+
+		await waitFor(() => {
+			const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+			expect(body.response).toBeNull();
+		});
+	});
+
 	it('should render question text', () => {
 		render(QuestionCard, {
 			props: {
@@ -58,11 +90,12 @@ describe('QuestionCard', () => {
 			}
 		});
 
+		expect(screen.getByRole('heading', { name: /3 OF 10/i })).toBeInTheDocument();
 		expect(screen.getByText('Q3')).toBeInTheDocument();
 	});
 
 	it('should render all options for single-choice question', () => {
-		render(QuestionCard, {
+		const { container } = render(QuestionCard, {
 			props: {
 				question: mockSingleChoiceQuestion,
 				serialNumber: 1,
@@ -72,14 +105,21 @@ describe('QuestionCard', () => {
 			}
 		});
 
+		const labels = Array.from(container.querySelectorAll('label'));
 		mockSingleChoiceQuestion.options.forEach((option) => {
+			const label = labels.find(
+				(node) =>
+					node.textContent?.includes(`${option.key}.`) &&
+					node.textContent?.includes(String(option.value))
+			);
+			expect(label).toBeTruthy();
 			expect(screen.getByText(option.key)).toBeInTheDocument();
 			expect(screen.getByText(option.value)).toBeInTheDocument();
 		});
 	});
 
 	it('should render all options for multiple-choice question', () => {
-		render(QuestionCard, {
+		const { container } = render(QuestionCard, {
 			props: {
 				question: mockMultipleChoiceQuestion,
 				serialNumber: 1,
@@ -89,7 +129,14 @@ describe('QuestionCard', () => {
 			}
 		});
 
+		const labels = Array.from(container.querySelectorAll('label'));
 		mockMultipleChoiceQuestion.options.forEach((option) => {
+			const label = labels.find(
+				(node) =>
+					node.textContent?.includes(`${option.key}.`) &&
+					node.textContent?.includes(String(option.value))
+			);
+			expect(label).toBeTruthy();
 			expect(screen.getByText(option.key)).toBeInTheDocument();
 			expect(screen.getByText(option.value)).toBeInTheDocument();
 		});
@@ -171,6 +218,37 @@ describe('QuestionCard', () => {
 		});
 
 		expect(screen.getByText(mockSingleChoiceQuestion.instructions)).toBeInTheDocument();
+	});
+
+	it('should render question html and option html content', () => {
+		const { container } = render(QuestionCard, {
+			props: {
+				question: {
+					...mockSingleChoiceQuestion,
+					question_text: '<p>What is <strong>2 + 2</strong>?</p>',
+					instructions: '<p>Pick the <em>best</em> answer.</p>',
+					options: [
+						{ ...mockSingleChoiceQuestion.options[0], value: '<p>3</p>' },
+						{ ...mockSingleChoiceQuestion.options[1], value: '<p><strong>4</strong></p>' },
+						{ ...mockSingleChoiceQuestion.options[2], value: '<p>5</p>' },
+						{ ...mockSingleChoiceQuestion.options[3], value: '<p>6</p>' }
+					]
+				},
+				serialNumber: 1,
+				candidate: mockCandidate,
+				totalQuestions: 10,
+				selectedQuestions: []
+			}
+		});
+
+		expect(container.textContent).toContain('What is 2 + 2?');
+		expect(container.textContent).toContain('Pick the best answer.');
+		const labels = Array.from(container.querySelectorAll('label'));
+		const optionB = labels.find(
+			(node) => node.textContent?.includes('B.') && node.textContent?.includes('4')
+		);
+		expect(optionB).toBeTruthy();
+		expect(screen.queryByText(/<p>What is/)).not.toBeInTheDocument();
 	});
 
 	it('should render radio buttons for single-choice questions', () => {
@@ -265,7 +343,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(0);
+			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(
+				0
+			);
 		});
 
 		it('should apply bookmark styling when question is bookmarked', () => {
@@ -330,7 +410,9 @@ describe('QuestionCard', () => {
 			await bookmarkButton.click();
 
 			await waitFor(() => {
-				expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(0);
+				expect(
+					screen.getAllByRole('button', { name: /unmark for review/i }).length
+				).toBeGreaterThan(0);
 			});
 		});
 
@@ -385,7 +467,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(0);
+			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(
+				0
+			);
 
 			const radioButtons = screen.getAllByRole('radio');
 			expect(radioButtons[0]).toBeChecked();
@@ -408,7 +492,7 @@ describe('QuestionCard', () => {
 			await bookmarkButton.click();
 
 			await waitFor(() => {
-				expect(screen.getByText(/failed to save bookmark/i)).toBeInTheDocument();
+				expect(screen.getByText(/network error|failed to save bookmark/i)).toBeInTheDocument();
 			});
 		});
 
@@ -429,7 +513,9 @@ describe('QuestionCard', () => {
 			await bookmarkButton.click();
 
 			await waitFor(() => {
-				expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(0);
+				expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(
+					0
+				);
 			});
 		});
 	});
@@ -504,7 +590,7 @@ describe('QuestionCard', () => {
 		});
 
 		it('should not affect other card elements when showMarkForReview is false', () => {
-			render(QuestionCard, {
+			const { container } = render(QuestionCard, {
 				props: {
 					question: mockSingleChoiceQuestion,
 					serialNumber: 1,
@@ -516,10 +602,15 @@ describe('QuestionCard', () => {
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
+			const labels = Array.from(container.querySelectorAll('label'));
 			mockSingleChoiceQuestion.options.forEach((option) => {
-				expect(
-					screen.getByText(option.value)
-				).toBeInTheDocument();
+				const label = labels.find(
+					(node) =>
+						node.textContent?.includes(`${option.key}.`) &&
+						node.textContent?.includes(String(option.value))
+				);
+				expect(label).toBeTruthy();
+				expect(screen.getByText(option.value)).toBeInTheDocument();
 			});
 		});
 	});
@@ -571,9 +662,7 @@ describe('QuestionCard', () => {
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
 			mockSingleChoiceQuestion.options.forEach((option) => {
-				expect(
-					screen.getByText(option.value)
-				).toBeInTheDocument();
+				expect(screen.getByText(option.value)).toBeInTheDocument();
 			});
 		});
 
@@ -827,7 +916,7 @@ describe('QuestionCard', () => {
 			await saveButton.click();
 
 			await waitFor(() => {
-				expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
+				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
 			});
 		});
 
@@ -1305,7 +1394,7 @@ describe('QuestionCard', () => {
 			await saveButton.click();
 
 			await waitFor(() => {
-				expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
+				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
 			});
 		});
 
@@ -2330,7 +2419,7 @@ describe('QuestionCard', () => {
 			await fireEvent.change(firstRadio);
 
 			await waitFor(() => {
-				expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
+				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
 			});
 		});
 

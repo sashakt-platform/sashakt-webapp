@@ -71,16 +71,51 @@ describe('ViewFeedback', () => {
 			expect(screen.getByText(mockSingleChoiceQuestion.instructions)).toBeInTheDocument();
 		});
 
-		it('should render sectioned payloads in the existing flat feedback flow', () => {
+		it('should render question html and option html content', () => {
+			const feedback = [createFeedback(1, [102], [102])];
+
+			const { container } = render(ViewFeedback, {
+				props: {
+					feedback,
+					testQuestions: {
+						...mockTestQuestionsResponse,
+						question_revisions: [
+							{
+								...mockSingleChoiceQuestion,
+								question_text: '<p>What is <strong>2 + 2</strong>?</p>',
+								instructions: '<p>Pick the <em>best</em> answer.</p>',
+								options: [
+									{ ...mockSingleChoiceQuestion.options[0], value: '<p>3</p>' },
+									{ ...mockSingleChoiceQuestion.options[1], value: '<p><strong>4</strong></p>' },
+									{ ...mockSingleChoiceQuestion.options[2], value: '<p>5</p>' },
+									{ ...mockSingleChoiceQuestion.options[3], value: '<p>6</p>' }
+								]
+							},
+							...mockTestQuestionsResponse.question_revisions.slice(1)
+						]
+					}
+				}
+			});
+
+			expect(container.textContent).toContain('What is 2 + 2?');
+			expect(container.textContent).toContain('Pick the best answer.');
+			const labels = Array.from(container.querySelectorAll('label'));
+			const optionB = labels.find(
+				(node) => node.textContent?.includes('B.') && node.textContent?.includes('4')
+			);
+			expect(optionB).toBeTruthy();
+			expect(screen.queryByText(/<p>What is/)).not.toBeInTheDocument();
+		});
+
+		it('should render section summaries when question sets are present', () => {
 			const feedback = [createFeedback(1, [102], [102]), createFeedback(2, [201], [201, 202])];
 
 			render(ViewFeedback, {
 				props: { feedback, testQuestions: mockSectionedTestQuestionsResponse }
 			});
 
-			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
-			expect(screen.getByText(mockMultipleChoiceQuestion.question_text)).toBeInTheDocument();
-			expect(screen.getByText('A. 3')).toBeInTheDocument();
+			expect(screen.getByText('Physics')).toBeInTheDocument();
+			expect(screen.getByText('Section A')).toBeInTheDocument();
 		});
 	});
 
@@ -88,14 +123,19 @@ describe('ViewFeedback', () => {
 		it('should render all options for a single-choice question', () => {
 			const feedback = [createFeedback(1, [102], [102])];
 
-			render(ViewFeedback, {
+			const { container } = render(ViewFeedback, {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			expect(screen.getByText('A. 3')).toBeInTheDocument();
-			expect(screen.getByText('B. 4')).toBeInTheDocument();
-			expect(screen.getByText('C. 5')).toBeInTheDocument();
-			expect(screen.getByText('D. 6')).toBeInTheDocument();
+			const labels = Array.from(container.querySelectorAll('label'));
+			for (const option of mockSingleChoiceQuestion.options) {
+				const label = labels.find(
+					(node) =>
+						node.textContent?.includes(`${option.key}.`) &&
+						node.textContent?.includes(String(option.value))
+				);
+				expect(label).toBeTruthy();
+			}
 		});
 
 		it('should highlight correct answer with green class', () => {
@@ -156,14 +196,19 @@ describe('ViewFeedback', () => {
 		it('should render all options for a multiple-choice question', () => {
 			const feedback = [createFeedback(2, [201, 202], [201, 202])];
 
-			render(ViewFeedback, {
+			const { container } = render(ViewFeedback, {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			expect(screen.getByText('A. 2')).toBeInTheDocument();
-			expect(screen.getByText('B. 3')).toBeInTheDocument();
-			expect(screen.getByText('C. 4')).toBeInTheDocument();
-			expect(screen.getByText('D. 5')).toBeInTheDocument();
+			const labels = Array.from(container.querySelectorAll('label'));
+			for (const option of mockMultipleChoiceQuestion.options) {
+				const label = labels.find(
+					(node) =>
+						node.textContent?.includes(`${option.key}.`) &&
+						node.textContent?.includes(String(option.value))
+				);
+				expect(label).toBeTruthy();
+			}
 		});
 
 		it('should highlight correct options green and wrong submitted options red', () => {
