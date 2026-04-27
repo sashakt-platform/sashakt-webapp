@@ -30,7 +30,7 @@
 <Dialog.Root bind:open>
 	<Dialog.Content
 		showCloseButton={false}
-		class="data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom inset-x-0 top-auto right-0 bottom-0 left-0 flex max-h-[85vh] w-full max-w-none translate-x-0 translate-y-0 flex-col rounded-t-2xl rounded-b-none border-0 p-0"
+		class="data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom inset-x-0 top-auto right-0 bottom-0 left-0 flex max-h-[85vh] w-full max-w-none sm:max-w-none translate-x-0 translate-y-0 flex-col rounded-t-2xl rounded-b-none border-0 p-0"
 	>
 		<Dialog.Title class="sr-only">{$t('Question Palette')}</Dialog.Title>
 
