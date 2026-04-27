@@ -32,6 +32,7 @@
 	<div class="overflow-y-auto">
 		<QuestionPaletteContent
 			{questions}
+			{questionSets}
 			{selections}
 			{currentQuestionIndex}
 			{onNavigate}

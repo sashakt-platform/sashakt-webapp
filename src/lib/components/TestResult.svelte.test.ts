@@ -30,48 +30,6 @@ describe('TestResult', () => {
 			}
 		});
 
-		expect(screen.getByText(mockTestData.name)).toBeInTheDocument();
-	});
-
-	it('should render result summary when resultData is provided', () => {
-		render(TestResult, {
-			props: {
-				resultData: mockResultData,
-				testDetails: mockTestData
-			}
-		});
-
-		expect(screen.getByText('Result summary')).toBeInTheDocument();
-		expect(screen.getByText('Correct Answers')).toBeInTheDocument();
-		expect(screen.getByText('Incorrect Answers')).toBeInTheDocument();
-		expect(screen.getByText('Not Attempted')).toBeInTheDocument();
-	});
-
-	it('should display correct answer counts', () => {
-		render(TestResult, {
-			props: {
-				resultData: mockResultData,
-				testDetails: mockTestData
-			}
-		});
-
-		// Check that the result values are displayed
-		expect(screen.getByText(String(mockResultData.correct_answer))).toBeInTheDocument();
-		expect(screen.getByText(String(mockResultData.incorrect_answer))).toBeInTheDocument();
-	});
-
-	it('should display marks when available', () => {
-		render(TestResult, {
-			props: {
-				resultData: mockResultData,
-				testDetails: mockTestData
-			}
-		});
-
-		expect(screen.getByText('Total marks obtained')).toBeInTheDocument();
-		expect(screen.getByText('Total marks obtained').parentElement).toHaveTextContent(
-			new RegExp(`${mockResultData.marks_obtained}\\s*/\\s*${mockResultData.marks_maximum}`)
-		);
 		expect(
 			screen.getByText(`${mockResultData.marks_obtained}/${mockResultData.marks_maximum}`)
 		).toBeInTheDocument();

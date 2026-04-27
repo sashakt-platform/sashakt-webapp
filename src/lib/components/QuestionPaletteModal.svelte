@@ -52,6 +52,7 @@
 				<div id="palette-panel">
 					<QuestionPaletteContent
 						{questions}
+						{questionSets}
 						{selections}
 						{currentQuestionIndex}
 						onNavigate={handleQuestionClick}
