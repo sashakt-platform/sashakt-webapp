@@ -116,6 +116,8 @@
 	"Up to {max} characters": "Up to {max} characters",
 	"At least {min} character": "At least {min} character",
 	"At least {min} characters": "At least {min} characters",
-	"Open date picker": "Open date picker"
+	"Open date picker": "Open date picker",
+	"Pending evaluation": "Pending evaluation",
+	"Your answer will be reviewed and marked by an evaluator.": "Your answer will be reviewed and marked by an evaluator."
 }
 

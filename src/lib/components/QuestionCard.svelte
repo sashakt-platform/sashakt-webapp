@@ -1080,7 +1080,7 @@
 			</Button>
 		{/if}
 
-		{#if showMarkForReview}
+		{#if showMarkForReview && !(showFeedback && isLocked)}
 			<button
 				type="button"
 				class="mt-4 flex w-full items-center justify-center gap-1.5 text-sm font-medium transition-colors lg:hidden

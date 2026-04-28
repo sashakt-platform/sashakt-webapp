@@ -118,6 +118,8 @@
 	"Up to {max} characters": "अधिकतम {max} अक्षर",
 	"At least {min} character": "कम से कम {min} अक्षर",
 	"At least {min} characters": "कम से कम {min} अक्षर",
-	"Open date picker": "दिनांक चुनें"
+	"Open date picker": "दिनांक चुनें",
+	"Pending evaluation": "मूल्यांकन लंबित",
+	"Your answer will be reviewed and marked by an evaluator.": "आपका उत्तर एक मूल्यांकनकर्ता द्वारा समीक्षा और अंकित किया जाएगा।"
 }
 

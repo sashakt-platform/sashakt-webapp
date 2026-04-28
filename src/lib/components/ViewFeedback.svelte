@@ -92,6 +92,10 @@
 								result={getQuestionResult(item.question.question_type, item.fb.submitted_answer, item.fb.correct_answer)}
 								scheme={item.question.marking_scheme}
 							/>
+						{:else if item.question.question_type === question_type_enum.SUBJECTIVE}
+							<span class="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-medium">
+								{$t('Pending evaluation')}
+							</span>
 						{/if}
 					</Card.Title>
 
@@ -116,6 +120,16 @@
 							{:else}
 								<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
 							{/if}
+						</div>
+						{#if item.question.subjective_answer_limit}
+							<p class="text-muted-foreground mt-2 text-xs">
+								{$t('Up to {max} characters', { values: { max: item.question.subjective_answer_limit } })}
+							</p>
+						{/if}
+						<div class="bg-muted mt-4 rounded-xl px-4 py-4">
+							<p class="text-muted-foreground text-sm font-medium">
+								{$t('Your answer will be reviewed and marked by an evaluator.')}
+							</p>
 						</div>
 					{:else if item.question.question_type === question_type_enum.NUMERICALINTEGER || item.question.question_type === question_type_enum.NUMERICALDECIMAL}
 						{@const isCorrect = isNumericalAnswerCorrect(
