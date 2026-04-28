@@ -115,7 +115,9 @@ describe('TestResult', () => {
 			}
 		});
 
-		expect(screen.queryByText('Test completion message will be shown here.')).not.toBeInTheDocument();
+		expect(
+			screen.queryByText('Test completion message will be shown here.')
+		).not.toBeInTheDocument();
 	});
 });
 

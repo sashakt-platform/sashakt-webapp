@@ -46,7 +46,7 @@
 		oninput={handleInput}
 		required={field.is_required}
 		class={cn(
-			'border-input bg-card h-12 w-full rounded-xl border py-3 pl-10 pr-4 text-sm leading-[140%]',
+			'border-input bg-card h-12 w-full rounded-xl border py-3 pr-4 pl-10 text-sm leading-[140%]',
 			'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
 			'disabled:cursor-not-allowed disabled:opacity-50',
 			'[&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none',

@@ -265,7 +265,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(0);
+			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(
+				0
+			);
 		});
 
 		it('should apply bookmark styling when question is bookmarked', () => {
@@ -330,7 +332,9 @@ describe('QuestionCard', () => {
 			await bookmarkButton.click();
 
 			await waitFor(() => {
-				expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(0);
+				expect(
+					screen.getAllByRole('button', { name: /unmark for review/i }).length
+				).toBeGreaterThan(0);
 			});
 		});
 
@@ -385,7 +389,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(0);
+			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(
+				0
+			);
 
 			const radioButtons = screen.getAllByRole('radio');
 			expect(radioButtons[0]).toBeChecked();
@@ -429,7 +435,9 @@ describe('QuestionCard', () => {
 			await bookmarkButton.click();
 
 			await waitFor(() => {
-				expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(0);
+				expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(
+					0
+				);
 			});
 		});
 	});
@@ -517,9 +525,7 @@ describe('QuestionCard', () => {
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
 			mockSingleChoiceQuestion.options.forEach((option) => {
-				expect(
-					screen.getByText(option.value)
-				).toBeInTheDocument();
+				expect(screen.getByText(option.value)).toBeInTheDocument();
 			});
 		});
 	});
@@ -571,9 +577,7 @@ describe('QuestionCard', () => {
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
 			mockSingleChoiceQuestion.options.forEach((option) => {
-				expect(
-					screen.getByText(option.value)
-				).toBeInTheDocument();
+				expect(screen.getByText(option.value)).toBeInTheDocument();
 			});
 		});
 

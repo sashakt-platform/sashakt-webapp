@@ -97,6 +97,7 @@
 	"Select an option": "",
 	"Type to search...": "",
 	"No results found": "",
+	"This link is invalid or expired": "",
 	"Please select a {parent} first": "",
 	"OMR Mode": "OMR मोड",
 	"Select OMR mode": "OMR मोड चुनें",
@@ -120,4 +121,3 @@
 	"At least {min} characters": "कम से कम {min} अक्षर",
 	"Open date picker": "दिनांक चुनें"
 }
-

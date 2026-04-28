@@ -27,7 +27,7 @@ function createForm(fields: TFormField[], overrides: Partial<TForm> = {}): TForm
 	};
 }
 
-const testDetails = { id: 42, name: 'Sample Test' };
+const testDetails = { id: 42, name: 'Sample Test', link: 'sample-test-link-uuid' };
 
 describe('DynamicForm rendering', () => {
 	it('renders the form name as heading', () => {
@@ -199,7 +199,14 @@ describe('DynamicForm validation', () => {
 	it('shows errors for multiple invalid fields at once', async () => {
 		const fields = [
 			createField({ id: 1, name: 'full_name', label: 'Full Name', is_required: true, order: 1 }),
-			createField({ id: 2, name: 'email', label: 'Email', field_type: 'email', is_required: true, order: 2 })
+			createField({
+				id: 2,
+				name: 'email',
+				label: 'Email',
+				field_type: 'email',
+				is_required: true,
+				order: 2
+			})
 		];
 		const onContinue = vi.fn();
 		render(DynamicForm, {

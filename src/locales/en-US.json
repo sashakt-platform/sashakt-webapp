@@ -102,6 +102,7 @@
 	"Select an option": "Select an option",
 	"Type to search...": "Type to search...",
 	"No results found": "No results found",
+	"This link is invalid or expired": "This link is invalid or expired",
 	"Please select a {parent} first": "Please select a {parent} first",
 	"OMR Mode": "OMR Mode",
 	"Select OMR mode": "Select OMR mode",
@@ -118,4 +119,3 @@
 	"At least {min} characters": "At least {min} characters",
 	"Open date picker": "Open date picker"
 }
-

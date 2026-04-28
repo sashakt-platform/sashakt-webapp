@@ -10,7 +10,7 @@
 
 	interface Props {
 		form: TForm;
-		testDetails: { id: number; name: string };
+		testDetails: { id: number; name: string; link: string };
 		locations?: {
 			states?: Array<{ id: number; name: string }>;
 		};
@@ -116,6 +116,7 @@
 						{hasStateField}
 						{hasDistrictField}
 						testId={testDetails.id}
+						testLink={testDetails.link}
 						onchange={(value) => handleFieldChange(field.name, value)}
 					/>
 				{/each}
