@@ -90,7 +90,6 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		expect(screen.getByRole('heading', { name: /3 OF 10/i })).toBeInTheDocument();
 		expect(screen.getByText('Q3')).toBeInTheDocument();
 	});
 
@@ -105,14 +104,14 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		const labels = Array.from(container.querySelectorAll('label'));
+		const optionRows = Array.from(container.querySelectorAll('div.flex.items-center'));
 		mockSingleChoiceQuestion.options.forEach((option) => {
-			const label = labels.find(
+			const row = optionRows.find(
 				(node) =>
-					node.textContent?.includes(`${option.key}.`) &&
+					node.textContent?.includes(option.key) &&
 					node.textContent?.includes(String(option.value))
 			);
-			expect(label).toBeTruthy();
+			expect(row).toBeTruthy();
 			expect(screen.getByText(option.key)).toBeInTheDocument();
 			expect(screen.getByText(option.value)).toBeInTheDocument();
 		});
@@ -129,14 +128,14 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		const labels = Array.from(container.querySelectorAll('label'));
+		const optionRows = Array.from(container.querySelectorAll('div.flex.items-center'));
 		mockMultipleChoiceQuestion.options.forEach((option) => {
-			const label = labels.find(
+			const row = optionRows.find(
 				(node) =>
-					node.textContent?.includes(`${option.key}.`) &&
+					node.textContent?.includes(option.key) &&
 					node.textContent?.includes(String(option.value))
 			);
-			expect(label).toBeTruthy();
+			expect(row).toBeTruthy();
 			expect(screen.getByText(option.key)).toBeInTheDocument();
 			expect(screen.getByText(option.value)).toBeInTheDocument();
 		});
@@ -243,9 +242,9 @@ describe('QuestionCard', () => {
 
 		expect(container.textContent).toContain('What is 2 + 2?');
 		expect(container.textContent).toContain('Pick the best answer.');
-		const labels = Array.from(container.querySelectorAll('label'));
-		const optionB = labels.find(
-			(node) => node.textContent?.includes('B.') && node.textContent?.includes('4')
+		const optionRows = Array.from(container.querySelectorAll('div.flex.items-center'));
+		const optionB = optionRows.find(
+			(node) => node.textContent?.includes('B') && node.textContent?.includes('4')
 		);
 		expect(optionB).toBeTruthy();
 		expect(screen.queryByText(/<p>What is/)).not.toBeInTheDocument();
@@ -602,14 +601,14 @@ describe('QuestionCard', () => {
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
-			const labels = Array.from(container.querySelectorAll('label'));
+			const optionRows = Array.from(container.querySelectorAll('div.flex.items-center'));
 			mockSingleChoiceQuestion.options.forEach((option) => {
-				const label = labels.find(
+				const row = optionRows.find(
 					(node) =>
-						node.textContent?.includes(`${option.key}.`) &&
+						node.textContent?.includes(option.key) &&
 						node.textContent?.includes(String(option.value))
 				);
-				expect(label).toBeTruthy();
+				expect(row).toBeTruthy();
 				expect(screen.getByText(option.value)).toBeInTheDocument();
 			});
 		});

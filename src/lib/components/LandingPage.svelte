@@ -97,7 +97,6 @@
 				</div>
 				<div class="px-5 py-4">
 					<div class="text-foreground prose prose-sm text-[13px]/relaxed">
-						{@html testDetails.start_instructions}
 						<RichText content={testDetails.start_instructions} />
 					</div>
 				</div>
