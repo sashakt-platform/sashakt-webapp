@@ -230,7 +230,9 @@ describe('Support for Localization', () => {
 			expect(screen.getByText('प्रति पृष्ठ प्रश्न')).toBeInTheDocument();
 			expect(screen.getByText('5')).toBeInTheDocument();
 			expect(screen.getByText('परीक्षा के निर्देश')).toBeInTheDocument();
-			expect(screen.queryByText('मैंने दिए गए निर्देशों को पढ़ और समझ लिया है।')).not.toBeInTheDocument();
+			expect(
+				screen.queryByText('मैंने दिए गए निर्देशों को पढ़ और समझ लिया है।')
+			).not.toBeInTheDocument();
 		});
 	});
 

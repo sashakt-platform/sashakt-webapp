@@ -62,7 +62,9 @@
 		navState.active = true;
 		navState.instructions = testDetails?.start_instructions;
 		navState.showPalette = testDetails?.show_question_palette ?? false;
-		navState.onPaletteOpen = testDetails?.show_question_palette ? () => (paletteOpen = true) : undefined;
+		navState.onPaletteOpen = testDetails?.show_question_palette
+			? () => (paletteOpen = true)
+			: undefined;
 		navState.remainingMandatoryCount = paletteStats.remainingMandatory;
 		return () => {
 			navState.active = false;

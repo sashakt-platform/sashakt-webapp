@@ -20,6 +20,7 @@ function createField(overrides: Partial<TFormField> = {}): TFormField {
 const defaultProps = {
 	value: undefined,
 	testId: 1,
+	testLink: 'sample-test-link-uuid',
 	onchange: () => {}
 };
 

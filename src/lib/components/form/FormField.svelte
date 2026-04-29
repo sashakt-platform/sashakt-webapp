@@ -26,6 +26,7 @@
 		hasStateField?: boolean;
 		hasDistrictField?: boolean;
 		testId: number;
+		testLink?: string;
 		onchange: (value: unknown) => void;
 	}
 
@@ -39,6 +40,7 @@
 		hasStateField = false,
 		hasDistrictField = false,
 		testId,
+		testLink = '',
 		onchange
 	}: Props = $props();
 </script>
@@ -53,7 +55,9 @@
 		</Label>
 		{#if field.validation?.min_length != null && field.validation?.max_length != null}
 			<span class="text-muted-foreground shrink-0 text-sm">
-				{$t('{min}-{max} characters', { values: { min: field.validation.min_length, max: field.validation.max_length } })}
+				{$t('{min}-{max} characters', {
+					values: { min: field.validation.min_length, max: field.validation.max_length }
+				})}
 			</span>
 		{:else if field.validation?.max_length != null}
 			<span class="text-muted-foreground shrink-0 text-sm">
@@ -91,7 +95,7 @@
 	{:else if field.field_type === 'multi_select'}
 		<MultiSelectField {field} {value} {onchange} />
 	{:else if field.field_type === 'entity'}
-		<SearchableEntityField {field} {value} {onchange} {testId} />
+		<SearchableEntityField {field} {value} {onchange} {testLink} />
 	{:else if field.field_type === 'state'}
 		<LocationField {field} {value} {onchange} {locations} />
 	{:else if field.field_type === 'district'}
