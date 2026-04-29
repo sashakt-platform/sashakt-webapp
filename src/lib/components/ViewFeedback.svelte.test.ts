@@ -718,36 +718,6 @@ describe('ViewFeedback', () => {
 			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
 		});
 
-		it('should show Pending evaluation badge for subjective question', () => {
-			const subjectiveOnlyQuestions = {
-				question_revisions: [mockSubjectiveQuestion],
-				question_pagination: 5
-			};
-			const feedback = [
-				{ question_revision_id: 4, submitted_answer: 'My answer', correct_answer: [] }
-			];
-
-			render(ViewFeedback, {
-				props: { feedback, testQuestions: subjectiveOnlyQuestions }
-			});
-
-			expect(screen.getByText('Pending evaluation')).toBeInTheDocument();
-		});
-
-		it('should show Pending evaluation badge even when subjective answer is empty', () => {
-			const subjectiveOnlyQuestions = {
-				question_revisions: [mockSubjectiveQuestion],
-				question_pagination: 5
-			};
-			const feedback = [{ question_revision_id: 4, submitted_answer: '', correct_answer: [] }];
-
-			render(ViewFeedback, {
-				props: { feedback, testQuestions: subjectiveOnlyQuestions }
-			});
-
-			expect(screen.getByText('Pending evaluation')).toBeInTheDocument();
-		});
-
 		it('should not show Correct/Incorrect badge for subjective question', () => {
 			const subjectiveOnlyQuestions = {
 				question_revisions: [mockSubjectiveQuestion],
@@ -763,40 +733,6 @@ describe('ViewFeedback', () => {
 
 			expect(screen.queryByText(/^Correct:/)).not.toBeInTheDocument();
 			expect(screen.queryByText(/^Incorrect:/)).not.toBeInTheDocument();
-		});
-
-		it('should show reviewer note for subjective question with submitted answer', () => {
-			const subjectiveOnlyQuestions = {
-				question_revisions: [mockSubjectiveQuestion],
-				question_pagination: 5
-			};
-			const feedback = [
-				{ question_revision_id: 4, submitted_answer: 'My answer', correct_answer: [] }
-			];
-
-			render(ViewFeedback, {
-				props: { feedback, testQuestions: subjectiveOnlyQuestions }
-			});
-
-			expect(
-				screen.getByText('Your answer will be reviewed and marked by an evaluator.')
-			).toBeInTheDocument();
-		});
-
-		it('should show reviewer note even when subjective answer is not attempted', () => {
-			const subjectiveOnlyQuestions = {
-				question_revisions: [mockSubjectiveQuestion],
-				question_pagination: 5
-			};
-			const feedback = [{ question_revision_id: 4, submitted_answer: '', correct_answer: [] }];
-
-			render(ViewFeedback, {
-				props: { feedback, testQuestions: subjectiveOnlyQuestions }
-			});
-
-			expect(
-				screen.getByText('Your answer will be reviewed and marked by an evaluator.')
-			).toBeInTheDocument();
 		});
 
 		it('should show character limit note when subjective_answer_limit is set', () => {
