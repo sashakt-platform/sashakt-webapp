@@ -2,22 +2,28 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import Button from '$lib/components/ui/button/button.svelte';
 	import Check from '@lucide/svelte/icons/check';
 	import X from '@lucide/svelte/icons/x';
-	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { t } from 'svelte-i18n';
 	import { question_type_enum } from '$lib/types';
 	import { isNumericalAnswerCorrect, getQuestionResult } from '$lib/helpers/feedbackHelpers';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
+	import { navState } from '$lib/navState.svelte';
 
 	let {
 		feedback = [],
 		testQuestions,
 		onBack
 	}: { feedback?: any; testQuestions?: any; onBack?: () => void } = $props();
+
+	$effect(() => {
+		navState.onBack = onBack;
+		return () => {
+			navState.onBack = undefined;
+		};
+	});
 
 	const isCorrect = (optionId: number, correctAnswer: number[]) => correctAnswer.includes(optionId);
 
@@ -61,15 +67,8 @@
 	{/if}
 {/snippet}
 
-<div class="flex flex-col items-center">
-	{#if onBack}
-		<div class="mb-4 w-full max-w-sm">
-			<Button variant="ghost" size="sm" onclick={onBack}>
-				<ArrowLeft size={16} class="mr-1" />
-				{$t('Back to Results')}
-			</Button>
-		</div>
-	{/if}
+<div class="bg-muted min-h-screen">
+	<div class="flex flex-col items-center px-4 py-6">
 	{#if feedbackWithQuestions.length === 0}
 		<p class="text-muted-foreground mt-10 text-center text-sm">
 			{$t('No feedback available. You did not attempt any questions.')}
@@ -77,7 +76,7 @@
 	{/if}
 	{#each feedbackWithQuestions as item, idx (item.question.id)}
 		{#if item.question}
-			<Card.Root class="mb-6 w-full max-w-sm rounded-xl shadow-md">
+			<Card.Root class="mb-6 w-full max-w-2xl rounded-xl shadow-md">
 				<Card.Header class="p-5">
 					<Card.Title class="mb-5 flex items-center justify-between border-b pb-3">
 						<span
@@ -230,4 +229,5 @@
 			</p>
 		{/if}
 	{/each}
+	</div>
 </div>

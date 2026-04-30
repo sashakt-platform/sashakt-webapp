@@ -3,6 +3,8 @@
 	import TestTimer from '$lib/components/TestTimer.svelte';
 	import InstructionsDialog from '$lib/components/InstructionsDialog.svelte';
 	import List from '@lucide/svelte/icons/list';
+	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import { Button } from '$lib/components/ui/button';
 	import { navState } from '$lib/navState.svelte';
 	import '../app.css';
 	import { register, init, isLoading } from 'svelte-i18n';
@@ -27,7 +29,11 @@
 <nav class="bg-card sticky top-0 z-50 mb-1 px-5 py-4">
 	<div class="grid grid-cols-[1fr_auto_1fr] items-center lg:hidden">
 		<div class="flex items-center">
-			{#if showTimer}
+			{#if navState.onBack}
+				<Button variant="outline" size="icon" onclick={navState.onBack}>
+					<ArrowLeft class="h-5 w-5" />
+				</Button>
+			{:else if showTimer}
 				<TestTimer timeLeft={page.data?.timeLeft} />
 			{/if}
 		</div>
@@ -71,13 +77,20 @@
 			</div>
 		</div>
 	{:else}
-		<div class="hidden items-center justify-center lg:flex">
+		<div class="hidden grid-cols-[1fr_auto_1fr] items-center lg:grid">
+			<div class="flex items-center justify-end pr-64">
+				{#if navState.onBack}
+					<Button variant="outline" size="icon" onclick={navState.onBack}>
+						<ArrowLeft class="h-5 w-5" />
+					</Button>
+				{/if}
+			</div>
 			<h2 class="text-primary scroll-m-20 font-extrabold tracking-tight uppercase">Sashakt</h2>
-			{#if showTimer}
-				<div class="absolute right-5">
+			<div class="flex justify-end">
+				{#if showTimer}
 					<TestTimer timeLeft={page.data?.timeLeft} />
-				</div>
-			{/if}
+				{/if}
+			</div>
 		</div>
 	{/if}
 </nav>

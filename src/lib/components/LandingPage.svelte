@@ -106,45 +106,47 @@
 {/if}
 
 <div class="fixed bottom-0 z-20 w-screen border-t bg-white px-4 py-4">
-	<p class="text-muted-foreground mb-3 text-center text-xs">
-		{$t(
-			'By clicking "Start Test," you confirm that you have read and understood all instructions.'
-		)}
-	</p>
-	<div class="mx-auto max-w-xl">
-		{#if page.data?.timeToBegin === 0}
-			{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
-				<Button onclick={handleStart} class="w-full">
-					{$t('Start Test')} →
-				</Button>
-			{:else}
-				<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
-					<input
-						name="deviceInfo"
-						value={() => {
-							if (browser) return JSON.stringify(navigator.userAgent);
-						}}
-						hidden
-					/>
-					<Button type="submit" class="w-full" disabled={isStarting}>
-						{#if isStarting}
-							<Spinner />
-						{/if}
+	<div class="mx-auto max-w-xl lg:flex lg:items-center lg:gap-4">
+		<p class="text-muted-foreground mb-2 text-center text-sm leading-[1.4] lg:mb-0 lg:text-left">
+			{$t(
+				'By clicking "Start Test," you confirm that you have read and understood all instructions.'
+			)}
+		</p>
+		<div class="lg:shrink-0">
+			{#if page.data?.timeToBegin === 0}
+				{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
+					<Button onclick={handleStart} class="w-full lg:w-auto">
 						{$t('Start Test')} →
 					</Button>
-				</form>
-			{/if}
-		{:else}
-			<Dialog.Root>
-				<Dialog.Trigger class={`w-full ${buttonVariants({ variant: 'default' })}`}>
-					{$t('Start Test')} →
-				</Dialog.Trigger>
-				{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
-					<PreTestTimer timeLeft={page.data?.timeToBegin} bind:showProfileForm />
 				{:else}
-					<PreTestTimer timeLeft={page.data?.timeToBegin} />
+					<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
+						<input
+							name="deviceInfo"
+							value={() => {
+								if (browser) return JSON.stringify(navigator.userAgent);
+							}}
+							hidden
+						/>
+						<Button type="submit" class="w-full lg:w-auto" disabled={isStarting}>
+							{#if isStarting}
+								<Spinner />
+							{/if}
+							{$t('Start Test')} →
+						</Button>
+					</form>
 				{/if}
-			</Dialog.Root>
-		{/if}
+			{:else}
+				<Dialog.Root>
+					<Dialog.Trigger class={`w-full lg:w-auto ${buttonVariants({ variant: 'default' })}`}>
+						{$t('Start Test')} →
+					</Dialog.Trigger>
+					{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
+						<PreTestTimer timeLeft={page.data?.timeToBegin} bind:showProfileForm />
+					{:else}
+						<PreTestTimer timeLeft={page.data?.timeToBegin} />
+					{/if}
+				</Dialog.Root>
+			{/if}
+		</div>
 	</div>
 </div>

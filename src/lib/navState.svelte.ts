@@ -4,6 +4,7 @@ class NavState {
 	onPaletteOpen = $state<(() => void) | undefined>(undefined);
 	remainingMandatoryCount = $state(0);
 	showPalette = $state(false);
+	onBack = $state<(() => void) | undefined>(undefined);
 }
 
 export const navState = new NavState();
