@@ -76,8 +76,7 @@ describe('Question', () => {
 		});
 
 		await vi.waitFor(() => {
-			// Use getAllByRole since there might be multiple submit buttons (in dialog)
-			const submitButtons = screen.getAllByRole('button', { name: /submit/i });
+			const submitButtons = screen.getAllByRole('button', { name: /submit test/i });
 			expect(submitButtons.length).toBeGreaterThan(0);
 		});
 	});
@@ -170,6 +169,93 @@ describe('Question', () => {
 			// All questions should be visible
 			mockQuestions.forEach((q) => {
 				expect(screen.getByText(q.question_text)).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('bottom navigation bar', () => {
+		it('should show page info text', async () => {
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(/page/i)).toBeInTheDocument();
+				expect(screen.getByText(/questions/i)).toBeInTheDocument();
+			});
+		});
+
+		it('should show "Submit Test" label (not plain "Submit") on last page', async () => {
+			const singlePageQuestions = {
+				question_revisions: [mockQuestions[0]],
+				question_pagination: 10
+			};
+
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions: singlePageQuestions,
+					testDetails
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(/submit test/i)).toBeInTheDocument();
+			});
+		});
+
+		it('should show "Next" button when not on last page', async () => {
+			const paginatedQuestions = {
+				question_revisions: mockQuestions,
+				question_pagination: 1
+			};
+
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions: paginatedQuestions,
+					testDetails
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(/next/i)).toBeInTheDocument();
+				expect(screen.queryByText(/submit test/i)).not.toBeInTheDocument();
+			});
+		});
+
+		it('should render bottom bar with fixed positioning class', async () => {
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails
+				}
+			});
+
+			await vi.waitFor(() => {
+				const nav = document.querySelector('ul.fixed');
+				expect(nav).toBeInTheDocument();
+			});
+		});
+
+		it('should show page info in Hindi', async () => {
+			await setLocaleForTests('hi-IN');
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getAllByText(/पृष्ठ/i).length).toBeGreaterThan(0);
+				expect(screen.getAllByText(/प्रश्न/i).length).toBeGreaterThan(0);
 			});
 		});
 	});
@@ -279,10 +365,10 @@ describe('Support for Localization', () => {
 		});
 
 		await waitFor(() => {
-			expect(screen.getByText(/जमा करें/i)).toBeInTheDocument();
+			expect(screen.getByText(/परीक्षा जमा करें/i)).toBeInTheDocument();
 		});
 
-		const submitElement = screen.getByText(/जमा करें/i);
+		const submitElement = screen.getByText(/परीक्षा जमा करें/i);
 		await fireEvent.click(submitElement);
 
 		await waitFor(() => {

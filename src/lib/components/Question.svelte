@@ -148,7 +148,7 @@
 {/snippet}
 
 {#if paginationReady}
-	<div class="flex min-h-screen gap-6 bg-blue-50 p-4 pb-20 lg:p-6 lg:pb-20">
+	<div class="flex min-h-screen gap-6 bg-background p-4 pb-20 lg:p-6 lg:pb-20">
 		<!-- Main question content -->
 		<div class="flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
 			<Pagination.Root
@@ -176,7 +176,7 @@
 						{/each}
 					</div>
 					<Pagination.Content
-						class="fixed inset-x-0 bottom-0 z-10 grid w-full grid-cols-3 items-center border-t border-border bg-white px-8 py-6"
+						class="fixed inset-x-0 bottom-0 z-10 grid w-full grid-cols-3 items-center border-t border-border bg-card px-8 py-6"
 					>
 						<div class="flex justify-start">
 							<Pagination.PrevButton />
