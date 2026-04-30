@@ -15,7 +15,7 @@
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { navState } from '$lib/navState.svelte';
-	import type { TQuestion } from '$lib/types';
+	import type { TQuestion, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
 	let { candidate, testQuestions, testDetails } = $props();
@@ -58,6 +58,9 @@
 	// question palette - track which question is currently selected
 	let currentQuestionIndex = $state((sessionStore.current.currentPage - 1) * perPage || 0);
 	const paletteStats = $derived(countQuestionStatuses(questions, selectedQuestions));
+	const markedForReviewCount = $derived(
+		selectedQuestions.filter((s: TSelection) => s.bookmarked).length
+	);
 
 	$effect(() => {
 		navState.active = true;
@@ -148,7 +151,7 @@
 {/snippet}
 
 {#if paginationReady}
-	<div class="flex min-h-screen gap-6 bg-background p-4 pb-20 lg:p-6 lg:pb-20">
+	<div class="bg-background flex min-h-screen gap-6 p-4 pb-20 lg:p-6 lg:pb-20">
 		<!-- Main question content -->
 		<div class="flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
 			<Pagination.Root
@@ -176,17 +179,23 @@
 						{/each}
 					</div>
 					<Pagination.Content
-						class="fixed inset-x-0 bottom-0 z-10 grid w-full grid-cols-3 items-center border-t border-border bg-card px-8 py-6"
+						class="border-border bg-card fixed inset-x-0 bottom-0 z-10 grid w-full grid-cols-3 items-center border-t px-8 py-6"
 					>
 						<div class="flex justify-start">
 							<Pagination.PrevButton />
 						</div>
 
 						<div class="flex justify-center">
-							<span class="text-center text-sm font-medium text-muted-foreground">
-								{$t('Page')} {currentPage} {$t('of')} {Math.ceil(totalQuestions / perPage)}
+							<span class="text-muted-foreground text-center text-sm font-medium">
+								{$t('Page')}
+								{currentPage}
+								{$t('of')}
+								{Math.ceil(totalQuestions / perPage)}
 								&nbsp;|&nbsp;
-								{range.start}–{range.end} {$t('of')} {totalQuestions} {$t('Questions')}
+								{range.start}–{range.end}
+								{$t('of')}
+								{totalQuestions}
+								{$t('Questions')}
 							</span>
 						</div>
 
@@ -200,39 +209,56 @@
 										</Button>
 									</Dialog.Trigger>
 									{#if answeredAllMandatory(selectedQuestions, questions)}
-										<Dialog.Content class="w-80 rounded-xl">
-											<Dialog.Title>
+										<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
+											<div class="bg-card px-6 pt-6 pr-12 pb-4">
+												<Dialog.Title class="text-xl font-bold">
+													{#if submitError || page.form?.submitTest === false || page.form?.error}
+														{$t('Submission Failed')}
+													{:else}
+														{$t('Submit Test?')}
+													{/if}
+												</Dialog.Title>
+											</div>
+
+											<div class="border-border border-t"></div>
+
+											<div class="bg-card px-6 py-6">
 												{#if submitError || page.form?.submitTest === false || page.form?.error}
-													{$t('Submission Failed')}
-												{:else}
-													{$t('Submit test?')}
-												{/if}
-											</Dialog.Title>
-											<Dialog.Description>
-												{#if submitError || page.form?.submitTest === false || page.form?.error}
-													<div class="text-destructive">
-														{#if submitError}
-															<p class="mb-2">{submitError}</p>
-														{:else if page.form?.error}
-															<p class="mb-2">{page.form.error}</p>
-														{:else}
-															<p class="mb-2">
+													<Dialog.Description class="space-y-2">
+														<p class="text-destructive text-sm font-medium">
+															{#if submitError}
+																{submitError}
+															{:else if page.form?.error}
+																{page.form.error}
+															{:else}
 																{$t('There was an issue with your previous submission.')}
-															</p>
-														{/if}
-														<p class="text-muted-foreground">
+															{/if}
+														</p>
+														<p class="text-muted-foreground text-sm">
 															{$t('Please click Confirm again to retry.')}
 														</p>
-													</div>
+													</Dialog.Description>
 												{:else}
-													{$t(
-														'Are you sure you want to submit for final marking? No changes will be allowed after submission.'
-													)}
+													<Dialog.Description class="space-y-3">
+														{#if markedForReviewCount > 0}
+															<p class="text-warning font-semibold">
+																{$t('You have {count} questions marked for review.', {
+																	values: { count: markedForReviewCount }
+																})}
+															</p>
+														{/if}
+														<p class="text-muted-foreground text-sm">
+															{$t(
+																'No changes will be allowed once you submit the test. Are you sure you want to submit?'
+															)}
+														</p>
+													</Dialog.Description>
 												{/if}
-											</Dialog.Description>
-											<div class="mt-2 inline-flex items-center justify-between">
+											</div>
+
+											<div class="bg-card flex justify-end gap-3 px-6 pb-6">
 												<Dialog.Close>
-													<Button variant="outline" class="w-32" disabled={isSubmittingTest}>
+													<Button variant="outline" disabled={isSubmittingTest}>
 														{$t('Cancel')}
 													</Button>
 												</Dialog.Close>
@@ -241,11 +267,11 @@
 													method="POST"
 													use:enhance={handleSubmitTestEnhance}
 												>
-													<Button type="submit" class="w-32" disabled={isSubmittingTest}>
+													<Button type="submit" disabled={isSubmittingTest}>
 														{#if isSubmittingTest}
 															<Spinner />
 														{/if}
-														{$t('Confirm')}
+														{$t('Submit')}
 													</Button>
 												</form>
 											</div>

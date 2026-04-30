@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import Question from './Question.svelte';
 import {
@@ -19,6 +19,10 @@ vi.mock('$app/state', () => ({
 		form: null
 	}
 }));
+
+import { page } from '$app/state';
+type MockPageForm = { submitTest?: boolean; error?: string; result?: boolean } | null;
+const mockPage = page as { form: MockPageForm };
 
 // Mock fetch for API calls
 vi.stubGlobal('fetch', vi.fn());
@@ -260,6 +264,71 @@ describe('Question', () => {
 		});
 	});
 
+	describe('submit dialog error states', () => {
+		const errorTestQuestions = {
+			question_revisions: [mockQuestions[2]],
+			question_pagination: 1
+		};
+
+		afterEach(() => {
+			mockPage.form = null;
+		});
+
+		it('shows "Submission Failed" title when page.form.error is set', async () => {
+			mockPage.form = { submitTest: false, error: 'Server error occurred' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+		});
+
+		it('shows the specific error message from page.form.error', async () => {
+			mockPage.form = { submitTest: false, error: 'Payment gateway timeout' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Payment gateway timeout')).toBeInTheDocument();
+				expect(screen.getByText(/Please click Confirm again to retry/i)).toBeInTheDocument();
+			});
+		});
+
+		it('shows generic error message when submitTest is false with no specific error', async () => {
+			mockPage.form = { submitTest: false, result: false };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(
+					screen.getByText(/There was an issue with your previous submission/i)
+				).toBeInTheDocument();
+				expect(screen.getByText(/Please click Confirm again to retry/i)).toBeInTheDocument();
+			});
+		});
+
+		it('shows error dialog with Cancel button still functional', async () => {
+			mockPage.form = { submitTest: false, error: 'Some error' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+
+			expect(screen.getAllByRole('button', { name: /cancel/i }).length).toBeGreaterThan(0);
+		});
+	});
+
 	describe('show_marks in testDetails', () => {
 		it('should display marks when testDetails.show_marks is true', async () => {
 			render(Question, {
@@ -407,11 +476,9 @@ describe('Support for Localization', () => {
 		await waitFor(() => {
 			expect(screen.getByText(/परीक्षा जमा करें\?/)).toBeInTheDocument();
 			expect(
-				screen.getByText(
-					/क्या आप वाकई अंतिम मूल्यांकन के लिए अपना शोध पत्र जमा करना चाहते हैं\? जमा करने के बाद कोई बदलाव स्वीकार्य नहीं होगा।/i
-				)
-			).toBeInTheDocument();
-			expect(screen.getByText(/पुष्टि करें/i)).toBeInTheDocument();
+				screen.getAllByText(/परीक्षा जमा करने के बाद कोई बदलाव अनुमत नहीं होगा।/i).length
+			).toBeGreaterThan(0);
+			expect(screen.getAllByText(/जमा करें/i).length).toBeGreaterThan(0);
 			expect(screen.getByText(/रद्द करें/i)).toBeInTheDocument();
 		});
 	});
@@ -503,13 +570,13 @@ describe('Support for Localization', () => {
 		await fireEvent.click(submitElement);
 
 		await waitFor(() => {
-			expect(screen.getByText(/Submit test\?/)).toBeInTheDocument();
+			expect(screen.getByText(/Submit Test\?/)).toBeInTheDocument();
 			expect(
-				screen.getByText(
-					/Are you sure you want to submit for final marking\? No changes will be allowed after submission./i
-				)
-			).toBeInTheDocument();
-			expect(screen.getByText(/Confirm/i)).toBeInTheDocument();
+				screen.getAllByText(
+					/No changes will be allowed once you submit the test\. Are you sure you want to submit\?/i
+				).length
+			).toBeGreaterThan(0);
+			expect(screen.getByText(/^Submit$/i)).toBeInTheDocument();
 			expect(screen.getByText(/Cancel/i)).toBeInTheDocument();
 		});
 	});
