@@ -8,6 +8,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { countQuestionStatuses } from '$lib/helpers/questionPaletteHelpers';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
@@ -147,7 +148,7 @@
 {/snippet}
 
 {#if paginationReady}
-	<div class="flex min-h-screen gap-6 bg-blue-50 p-4 lg:p-6">
+	<div class="flex min-h-screen gap-6 bg-blue-50 p-4 pb-20 lg:p-6 lg:pb-20">
 		<!-- Main question content -->
 		<div class="flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
 			<Pagination.Root
@@ -175,96 +176,98 @@
 						{/each}
 					</div>
 					<Pagination.Content
-						class="bottom-0 z-10 flex w-full items-center justify-between bg-white p-2 shadow-md not-lg:fixed lg:rounded-xl"
+						class="fixed inset-x-0 bottom-0 z-10 grid w-full grid-cols-3 items-center border-t border-border bg-white px-8 py-6"
 					>
-						<Pagination.PrevButton />
+						<div class="flex justify-start">
+							<Pagination.PrevButton />
+						</div>
 
-						{#if currentPage === Math.ceil(totalQuestions / perPage)}
-							<Dialog.Root bind:open={submitDialogOpen}>
-								<Dialog.Trigger>
-									<Button class="w-24">{$t('Submit')}</Button>
-								</Dialog.Trigger>
-								{#if answeredAllMandatory(selectedQuestions, questions)}
-									<Dialog.Content class="w-80 rounded-xl">
-										<Dialog.Title>
-											{#if submitError || page.form?.submitTest === false || page.form?.error}
-												{$t('Submission Failed')}
-											{:else}
-												{$t('Submit test?')}
-											{/if}
-										</Dialog.Title>
-										<Dialog.Description>
-											{#if submitError || page.form?.submitTest === false || page.form?.error}
-												<div class="text-destructive">
-													{#if submitError}
-														<p class="mb-2">{submitError}</p>
-													{:else if page.form?.error}
-														<p class="mb-2">{page.form.error}</p>
-													{:else}
-														<p class="mb-2">
-															{$t('There was an issue with your previous submission.')}
+						<div class="flex justify-center">
+							<span class="text-center text-sm font-medium text-muted-foreground">
+								{$t('Page')} {currentPage} {$t('of')} {Math.ceil(totalQuestions / perPage)}
+								&nbsp;|&nbsp;
+								{range.start}–{range.end} {$t('of')} {totalQuestions} {$t('Questions')}
+							</span>
+						</div>
+
+						<div class="flex justify-end">
+							{#if currentPage === Math.ceil(totalQuestions / perPage)}
+								<Dialog.Root bind:open={submitDialogOpen}>
+									<Dialog.Trigger>
+										<Button class="gap-1 pr-2.5">
+											{$t('Submit Test')}
+											<ArrowRight class="size-4" />
+										</Button>
+									</Dialog.Trigger>
+									{#if answeredAllMandatory(selectedQuestions, questions)}
+										<Dialog.Content class="w-80 rounded-xl">
+											<Dialog.Title>
+												{#if submitError || page.form?.submitTest === false || page.form?.error}
+													{$t('Submission Failed')}
+												{:else}
+													{$t('Submit test?')}
+												{/if}
+											</Dialog.Title>
+											<Dialog.Description>
+												{#if submitError || page.form?.submitTest === false || page.form?.error}
+													<div class="text-destructive">
+														{#if submitError}
+															<p class="mb-2">{submitError}</p>
+														{:else if page.form?.error}
+															<p class="mb-2">{page.form.error}</p>
+														{:else}
+															<p class="mb-2">
+																{$t('There was an issue with your previous submission.')}
+															</p>
+														{/if}
+														<p class="text-muted-foreground">
+															{$t('Please click Confirm again to retry.')}
 														</p>
-													{/if}
-													<p class="text-muted-foreground">
-														{$t('Please click Confirm again to retry.')}
-													</p>
-												</div>
-											{:else}
-												{$t(
-													'Are you sure you want to submit for final marking? No changes will be allowed after submission.'
-												)}
-											{/if}
-										</Dialog.Description>
-										<div class="mt-2 inline-flex items-center justify-between">
-											<Dialog.Close
-												><Button variant="outline" class="w-32" disabled={isSubmittingTest}
-													>{$t('Cancel')}</Button
-												></Dialog.Close
-											>
-											<form
-												action="?/submitTest"
-												method="POST"
-												use:enhance={handleSubmitTestEnhance}
-											>
-												<Button type="submit" class="w-32" disabled={isSubmittingTest}>
-													{#if isSubmittingTest}
-														<Spinner />
-													{/if}
-													{$t('Confirm')}
-												</Button>
-											</form>
-										</div>
-									</Dialog.Content>
-								{:else}
-									{@render mandatoryQuestionDialog(true)}
-								{/if}
-							</Dialog.Root>
-						{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
-							<Dialog.Root>
-								<Dialog.Trigger>
-									<Button class="w-24 gap-1 pr-2.5">
-										{$t('Next')}
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="24"
-											height="24"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											class="size-4"
-										>
-											<path d="m9 18 6-6-6-6" />
-										</svg>
-									</Button>
-								</Dialog.Trigger>
-								{@render mandatoryQuestionDialog(false)}
-							</Dialog.Root>
-						{:else}
-							<Pagination.NextButton class="w-24" />
-						{/if}
+													</div>
+												{:else}
+													{$t(
+														'Are you sure you want to submit for final marking? No changes will be allowed after submission.'
+													)}
+												{/if}
+											</Dialog.Description>
+											<div class="mt-2 inline-flex items-center justify-between">
+												<Dialog.Close>
+													<Button variant="outline" class="w-32" disabled={isSubmittingTest}>
+														{$t('Cancel')}
+													</Button>
+												</Dialog.Close>
+												<form
+													action="?/submitTest"
+													method="POST"
+													use:enhance={handleSubmitTestEnhance}
+												>
+													<Button type="submit" class="w-32" disabled={isSubmittingTest}>
+														{#if isSubmittingTest}
+															<Spinner />
+														{/if}
+														{$t('Confirm')}
+													</Button>
+												</form>
+											</div>
+										</Dialog.Content>
+									{:else}
+										{@render mandatoryQuestionDialog(true)}
+									{/if}
+								</Dialog.Root>
+							{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
+								<Dialog.Root>
+									<Dialog.Trigger>
+										<Button class="gap-1 pr-2.5">
+											{$t('Next')}
+											<ArrowRight class="size-4" />
+										</Button>
+									</Dialog.Trigger>
+									{@render mandatoryQuestionDialog(false)}
+								</Dialog.Root>
+							{:else}
+								<Pagination.NextButton class="w-24" />
+							{/if}
+						</div>
 					</Pagination.Content>
 				{/snippet}
 			</Pagination.Root>

@@ -21,7 +21,7 @@
 	bind:ref
 	class={cn(
 		buttonVariants({
-			variant: 'ghost',
+			variant: 'outline',
 			class: 'gap-1 pl-2.5'
 		}),
 		className
