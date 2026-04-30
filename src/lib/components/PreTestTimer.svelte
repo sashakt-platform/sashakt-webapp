@@ -7,6 +7,11 @@
 
 	let formElement = $state<HTMLFormElement>();
 	const startTime = new Date(page.data.testData.start_time);
+	const formattedDate = startTime.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+	const formattedTime = startTime.toLocaleTimeString(undefined, {
+		hour: 'numeric',
+		minute: '2-digit'
+	});
 
 	let { timeLeft: initialTime, showProfileForm = $bindable() } = $props();
 	let timeLeft = $state(initialTime);
@@ -37,27 +42,26 @@
 	});
 </script>
 
-<Dialog.Content class="w-80 rounded-xl">
-	{#if timeLeft >= 10 * 60}
-		<Dialog.Header>
-			<Dialog.Title class="text-center text-base/normal font-semibold"
-				>{$t('Test has not started!')}</Dialog.Title
-			>
-			<Dialog.Description class="flex flex-col space-y-5 text-center text-sm/normal font-normal">
-				<span>{$t('Test will start on')}</span>
-				<div class="text-primary text-2xl font-semibold">
-					{startTime.toLocaleDateString()} <br />
-					{startTime.toLocaleTimeString()}
-				</div>
+{#if timeLeft >= 10 * 60}
+	<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
+		<div class="bg-card border-border border-b p-8">
+			<Dialog.Title class="text-xl font-bold">{$t('Test has not started yet')}</Dialog.Title>
+		</div>
 
-				<p>
-					{$t(
-						'The test has not commenced yet. Kindly ensure that you thoroughly review the provided instructions before beginning the test.'
-					)}
-				</p>
+		<div class="bg-card flex flex-col gap-6 p-8">
+			<Dialog.Description class="text-muted-foreground text-sm">
+				{$t('The test will begin on {date} at {time}.', {
+					values: { date: formattedDate, time: formattedTime }
+				})}
 			</Dialog.Description>
-		</Dialog.Header>
-	{:else}
+
+			<Dialog.Close>
+				<Button class="w-full">{$t('Got it')}</Button>
+			</Dialog.Close>
+		</div>
+	</Dialog.Content>
+{:else}
+	<Dialog.Content class="w-80 rounded-xl">
 		<Dialog.Header>
 			<Dialog.Title class="text-center text-base/normal font-semibold"
 				>{$t('Your test will begin shortly!')}</Dialog.Title
@@ -98,23 +102,22 @@
 				</p>
 			</Dialog.Description>
 		</Dialog.Header>
-	{/if}
 
-	<Dialog.Close>
-		<form method="POST" action="?/createCandidate" use:enhance bind:this={formElement}>
-			<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
-			{#if timeLeft <= 10}
-				<!-- prompt candidate to start the test when last 10 secs left before test starts -->
-				{#if showProfileForm !== undefined && (page.data.testData.omr === 'OPTIONAL' || page.data.testData.form)}
-					<Button type="button" class="mt-4 w-full" onclick={() => (showProfileForm = true)}>
-						{$t('Start Test')}
-					</Button>
+		<Dialog.Close>
+			<form method="POST" action="?/createCandidate" use:enhance bind:this={formElement}>
+				<input name="deviceInfo" value={JSON.stringify(navigator.userAgent)} hidden />
+				{#if timeLeft <= 10}
+					{#if showProfileForm !== undefined && (page.data.testData.omr === 'OPTIONAL' || page.data.testData.form)}
+						<Button type="button" class="mt-4 w-full" onclick={() => (showProfileForm = true)}>
+							{$t('Start Test')}
+						</Button>
+					{:else}
+						<Button type="submit" class="mt-4 w-full">{$t('Start Test')}</Button>
+					{/if}
 				{:else}
-					<Button type="submit" class="mt-4 w-full">{$t('Start Test')}</Button>
+					<Button class="mt-4 w-full">{$t('Got it')}</Button>
 				{/if}
-			{:else}
-				<Button class="mt-4 w-full">{$t('Okay, got it')}</Button>
-			{/if}
-		</form>
-	</Dialog.Close>
-</Dialog.Content>
+			</form>
+		</Dialog.Close>
+	</Dialog.Content>
+{/if}
