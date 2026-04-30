@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import Question from './Question.svelte';
 import {
@@ -20,7 +20,12 @@ vi.mock('$app/state', () => ({
 	}
 }));
 
+vi.mock('$lib/helpers/formErrorHandler', () => ({
+	createFormEnhanceHandler: vi.fn(() => vi.fn())
+}));
+
 import { page } from '$app/state';
+import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 type MockPageForm = { submitTest?: boolean; error?: string; result?: boolean } | null;
 const mockPage = page as { form: MockPageForm };
 
@@ -326,6 +331,143 @@ describe('Question', () => {
 			});
 
 			expect(screen.getAllByRole('button', { name: /cancel/i }).length).toBeGreaterThan(0);
+		});
+	});
+
+	describe('submit dialog loading state (isSubmittingTest)', () => {
+		const loadingTestQuestions = {
+			question_revisions: [mockQuestions[2]],
+			question_pagination: 1
+		};
+
+		let capturedSetLoading: ((v: boolean) => void) | undefined;
+
+		beforeEach(() => {
+			capturedSetLoading = undefined;
+			vi.mocked(createFormEnhanceHandler).mockImplementation((opts) => {
+				capturedSetLoading = opts.setLoading;
+				return vi.fn();
+			});
+		});
+
+		afterEach(() => {
+			mockPage.form = null;
+		});
+
+		it('shows Spinner in submit button when isSubmittingTest is true', async () => {
+			mockPage.form = { submitTest: false, error: 'previous error' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: loadingTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+
+			capturedSetLoading?.(true);
+
+			await waitFor(() => {
+				expect(screen.getByRole('status')).toBeInTheDocument();
+			});
+		});
+
+		it('disables Cancel button while loading', async () => {
+			mockPage.form = { submitTest: false, error: 'previous error' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: loadingTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+
+			capturedSetLoading?.(true);
+
+			await waitFor(() => {
+				const cancelButtons = screen.getAllByRole('button', { name: /cancel/i });
+				expect(cancelButtons.some((btn) => btn.hasAttribute('disabled'))).toBe(true);
+			});
+		});
+
+		it('disables Submit button while loading', async () => {
+			mockPage.form = { submitTest: false, error: 'previous error' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: loadingTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+
+			capturedSetLoading?.(true);
+
+			await waitFor(() => {
+				const submitButtons = screen.getAllByRole('button', { name: /submit/i });
+				expect(submitButtons.some((btn) => btn.hasAttribute('disabled'))).toBe(true);
+			});
+		});
+	});
+
+	describe('submit dialog client-side error (submitError)', () => {
+		const errorTestQuestions = {
+			question_revisions: [mockQuestions[2]],
+			question_pagination: 1
+		};
+
+		let capturedSetError: ((v: string | null) => void) | undefined;
+
+		beforeEach(() => {
+			capturedSetError = undefined;
+			vi.mocked(createFormEnhanceHandler).mockImplementation((opts) => {
+				capturedSetError = opts.setError;
+				return vi.fn();
+			});
+		});
+
+		afterEach(() => {
+			mockPage.form = null;
+		});
+
+		it('shows "Submission Failed" title when submitError is set', async () => {
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			capturedSetError?.('Network connection failed');
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+		});
+
+		it('shows the submitError message in the dialog body', async () => {
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			capturedSetError?.('Network connection failed');
+
+			await waitFor(() => {
+				expect(screen.getByText(/Network connection failed/i)).toBeInTheDocument();
+				expect(screen.getByText(/Please click Confirm again to retry/i)).toBeInTheDocument();
+			});
+		});
+
+		it('takes priority over page.form.error when both are set', async () => {
+			mockPage.form = { submitTest: false, error: 'Server error' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			capturedSetError?.('Client network error');
+
+			await waitFor(() => {
+				expect(screen.getByText(/Client network error/i)).toBeInTheDocument();
+			});
 		});
 	});
 
