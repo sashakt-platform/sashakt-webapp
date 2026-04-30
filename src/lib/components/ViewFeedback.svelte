@@ -8,9 +8,10 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { t } from 'svelte-i18n';
-	import { question_type_enum, type TQuestion, type TFeedback } from '$lib/types';
-	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
+	import { question_type_enum } from '$lib/types';
+	import { isNumericalAnswerCorrect, getQuestionResult } from '$lib/helpers/feedbackHelpers';
 	import QuestionMedia from './QuestionMedia.svelte';
+	import ResultBadge from './ResultBadge.svelte';
 
 	let {
 		feedback = [],
@@ -50,35 +51,6 @@
 			return { fb: feedbackData, question };
 		})
 	);
-
-	const getQuestionResult = (
-		question: TQuestion,
-		fb: TFeedback
-	): 'correct' | 'incorrect' | 'unattempted' => {
-		const submitted = fb.submitted_answer;
-		const correct = fb.correct_answer;
-
-		if (
-			question.question_type === question_type_enum.NUMERICALINTEGER ||
-			question.question_type === question_type_enum.NUMERICALDECIMAL
-		) {
-			const result = isNumericalAnswerCorrect(question.question_type, submitted, correct);
-			if (result === null) return 'unattempted';
-			return result ? 'correct' : 'incorrect';
-		}
-
-		if (!Array.isArray(submitted) || submitted.length === 0) return 'unattempted';
-
-		const correctSet = new Set(correct);
-		const submittedSet = new Set(submitted);
-		if (
-			submittedSet.size === correctSet.size &&
-			[...submittedSet].every((id) => correctSet.has(id))
-		) {
-			return 'correct';
-		}
-		return 'incorrect';
-	};
 </script>
 
 {#snippet showCorrectWrongMark(answerStatus: string)}
@@ -114,34 +86,12 @@
 							Q{idx + 1}
 						</span>
 
-						{@const gradableTypes = new Set([
-							'single-choice',
-							'multi-choice',
-							question_type_enum.NUMERICALINTEGER,
-							question_type_enum.NUMERICALDECIMAL
-						])}
+						{@const gradableTypes = new Set([question_type_enum.SINGLE, question_type_enum.MULTIPLE, question_type_enum.NUMERICALINTEGER, question_type_enum.NUMERICALDECIMAL])}
 						{#if item.question?.marking_scheme && gradableTypes.has(item.question.question_type)}
-							{@const result = getQuestionResult(item.question, item.fb)}
-							{@const scheme = item.question.marking_scheme}
-							{#if result === 'correct'}
-								<span
-									class="bg-success-subtle text-success rounded-full px-3 py-1 text-xs font-medium"
-								>
-									{$t('Correct')}: +{scheme.correct}
-									{scheme.correct === 1 ? $t('mark') : $t('marks')}
-								</span>
-							{:else if result === 'incorrect'}
-								<span class="bg-error-subtle text-error rounded-full px-3 py-1 text-xs font-medium">
-									{$t('Incorrect')}: {scheme.wrong}
-									{Math.abs(scheme.wrong) === 1 ? $t('mark') : $t('marks')}
-								</span>
-							{:else}
-								<span
-									class="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-medium"
-								>
-									{$t('Not Attempted')}: 0 {$t('mark')}
-								</span>
-							{/if}
+							<ResultBadge
+								result={getQuestionResult(item.question.question_type, item.fb.submitted_answer, item.fb.correct_answer)}
+								scheme={item.question.marking_scheme}
+							/>
 						{/if}
 					</Card.Title>
 
@@ -167,6 +117,11 @@
 								<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
 							{/if}
 						</div>
+						{#if item.question.subjective_answer_limit}
+							<p class="text-muted-foreground mt-2 text-xs">
+								{$t('Up to {max} characters', { values: { max: item.question.subjective_answer_limit } })}
+							</p>
+						{/if}
 					{:else if item.question.question_type === question_type_enum.NUMERICALINTEGER || item.question.question_type === question_type_enum.NUMERICALDECIMAL}
 						{@const isCorrect = isNumericalAnswerCorrect(
 							item.question.question_type,

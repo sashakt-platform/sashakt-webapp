@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/svelte';
 import QuestionCard from './QuestionCard.svelte';
 import { fireEvent } from '@testing-library/svelte';
-import type { TSelection } from '$lib/types';
+import type { TSelection, TOptions } from '$lib/types';
 import {
 	mockCandidate,
 	mockSingleChoiceQuestion,
@@ -2864,6 +2864,194 @@ describe('QuestionCard', () => {
 				input.dispatchEvent(event);
 				expect(event.defaultPrevented).toBe(false);
 			});
+		});
+	});
+
+	describe('result badge after feedback is viewed', () => {
+		const singleOptions = mockSingleChoiceQuestion.options as TOptions[];
+		const multiOptions = mockMultipleChoiceQuestion.options as TOptions[];
+
+		const lockedCorrect = [
+			{
+				question_revision_id: mockSingleChoiceQuestion.id,
+				response: [singleOptions[1].id],
+				visited: true,
+				time_spent: 10,
+				bookmarked: false,
+				is_reviewed: true,
+				correct_answer: [singleOptions[1].id]
+			}
+		];
+
+		const lockedIncorrect = [
+			{
+				question_revision_id: mockSingleChoiceQuestion.id,
+				response: [singleOptions[0].id],
+				visited: true,
+				time_spent: 10,
+				bookmarked: false,
+				is_reviewed: true,
+				correct_answer: [singleOptions[1].id]
+			}
+		];
+
+		it('shows Correct badge when showFeedback is true and answer is correct', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedCorrect,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
+		});
+
+		it('shows Incorrect badge when showFeedback is true and answer is wrong', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedIncorrect,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
+		});
+
+		it('does not show result badge when showFeedback is false', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedCorrect,
+					showFeedback: false
+				}
+			});
+
+			expect(screen.queryByText(/^Correct:/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/^Incorrect:/)).not.toBeInTheDocument();
+		});
+
+		it('does not show result badge when feedback has not been viewed yet', () => {
+			const notYetViewed = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [singleOptions[1].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: notYetViewed,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.queryByText(/^Correct:/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/^Incorrect:/)).not.toBeInTheDocument();
+		});
+
+		it('shows Correct badge for multi-choice when all correct options selected', () => {
+			const lockedMultiCorrect = [
+				{
+					question_revision_id: mockMultipleChoiceQuestion.id,
+					response: [multiOptions[0].id, multiOptions[1].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: true,
+					correct_answer: [multiOptions[0].id, multiOptions[1].id]
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockMultipleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedMultiCorrect,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
+		});
+
+		it('hides Mark for Review button when showFeedback is true and feedback is viewed', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedCorrect,
+					showFeedback: true,
+					showMarkForReview: true
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /mark for review/i })).not.toBeInTheDocument();
+		});
+
+		it('shows Mark for Review button when showFeedback is true but feedback not yet viewed', () => {
+			const answeredNotViewed = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [singleOptions[0].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredNotViewed,
+					showFeedback: true,
+					showMarkForReview: true
+				}
+			});
+
+			expect(screen.getAllByRole('button', { name: /mark for review/i })).toHaveLength(2);
+		});
+
+		it('shows Mark for Review button normally when showFeedback is false even if locked', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedCorrect,
+					showFeedback: false,
+					showMarkForReview: true
+				}
+			});
+
+			expect(screen.getAllByRole('button', { name: /mark for review/i })).toHaveLength(2);
 		});
 	});
 });

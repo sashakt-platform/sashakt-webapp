@@ -5,6 +5,7 @@ import {
 	mockSingleChoiceQuestion,
 	mockMultipleChoiceQuestion,
 	mockSubjectiveQuestion,
+	mockSubjectiveQuestionNoLimit,
 	mockNumericalIntegerQuestion,
 	mockNumericalDecimalQuestion,
 	mockSectionedTestQuestionsResponse,
@@ -715,6 +716,57 @@ describe('ViewFeedback', () => {
 
 			expect(screen.getByText(mockSubjectiveQuestion.question_text)).toBeInTheDocument();
 			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
+		});
+
+		it('should not show Correct/Incorrect badge for subjective question', () => {
+			const subjectiveOnlyQuestions = {
+				question_revisions: [mockSubjectiveQuestion],
+				question_pagination: 5
+			};
+			const feedback = [
+				{ question_revision_id: 4, submitted_answer: 'My answer', correct_answer: [] }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: subjectiveOnlyQuestions }
+			});
+
+			expect(screen.queryByText(/^Correct:/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/^Incorrect:/)).not.toBeInTheDocument();
+		});
+
+		it('should show character limit note when subjective_answer_limit is set', () => {
+			// mockSubjectiveQuestion has subjective_answer_limit: 500
+			const subjectiveOnlyQuestions = {
+				question_revisions: [mockSubjectiveQuestion],
+				question_pagination: 5
+			};
+			const feedback = [
+				{ question_revision_id: 4, submitted_answer: 'My answer', correct_answer: [] }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: subjectiveOnlyQuestions }
+			});
+
+			expect(screen.getByText(/500/)).toBeInTheDocument();
+		});
+
+		it('should not show character limit note when subjective_answer_limit is 0', () => {
+			// mockSubjectiveQuestionNoLimit has subjective_answer_limit: 0
+			const subjectiveNoLimitQuestions = {
+				question_revisions: [mockSubjectiveQuestionNoLimit],
+				question_pagination: 5
+			};
+			const feedback = [
+				{ question_revision_id: 5, submitted_answer: 'My answer', correct_answer: [] }
+			];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: subjectiveNoLimitQuestions }
+			});
+
+			expect(screen.queryByText(/characters/i)).not.toBeInTheDocument();
 		});
 	});
 
