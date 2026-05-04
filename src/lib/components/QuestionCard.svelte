@@ -948,18 +948,14 @@
 		{:else if question.question_type === question_type_enum.MATRIXRATING}
 			{@const matrixOpts = question.options as unknown as TMatrixOptions}
 			<div class="overflow-x-auto">
-				<table class="min-w-full border-collapse text-sm">
+				<table class="border-border min-w-full border-collapse border text-sm">
 					<thead>
-						<tr>
-							<th
-								class="border-border bg-muted text-foreground border px-4 py-3 text-left font-semibold"
-							>
+						<tr class="border-border border-b">
+							<th class="bg-muted text-foreground min-w-55 px-4 py-3 text-left font-semibold">
 								{matrixOpts.rows.label}
 							</th>
 							{#each matrixOpts.columns.items as col (col.id)}
-								<th
-									class="border-border bg-muted text-foreground border px-4 py-3 text-center font-semibold"
-								>
+								<th class="bg-muted text-foreground px-4 py-3 text-center font-semibold">
 									{col.key} – {col.value}
 								</th>
 							{/each}
@@ -967,10 +963,12 @@
 					</thead>
 					<tbody>
 						{#each matrixOpts.rows.items as row (row.id)}
-							<tr class="hover:bg-accent">
-								<td class="border-border border px-4 py-3 font-medium">{row.value}</td>
+							<tr class="border-border hover:bg-accent border-b">
+								<td class="min-w-55 px-4 py-3 font-medium wrap-break-word whitespace-normal">
+									{row.value}
+								</td>
 								{#each matrixOpts.columns.items as col (col.id)}
-									<td class="border-border border px-4 py-3 text-center">
+									<td class="px-4 py-3 text-center">
 										<input
 											type="radio"
 											name="matrix-{question.id}-row-{row.id}"
@@ -991,42 +989,41 @@
 			{@const matrixOpts = question.options as TMatrixInputOptions}
 			{@const inputType = matrixOpts.columns.input_type}
 			<div class="overflow-x-auto">
-				<table class="w-full border-collapse text-sm">
-					<thead>
-						<tr>
-							<th
-								class="border-border bg-muted text-foreground border px-4 py-3 text-left font-semibold"
-							>
-								{matrixOpts.rows.label}
-							</th>
-							<th
-								class="border-border bg-muted text-foreground border px-4 py-3 text-left font-semibold"
-							>
-								{matrixOpts.columns.label}
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each matrixOpts.rows.items as row (row.id)}
-							<tr class="hover:bg-accent">
-								<td class="border-border border px-4 py-3 font-medium">
-									<span class="font-semibold">{row.key}.</span>
-									<span class="ml-1">{row.value}</span>
-								</td>
-								<td class="border-border border px-4 py-3">
-									<input
-										type={inputType}
-										class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-										value={matrixInputValues[String(row.id)] ?? ''}
-										disabled={isLocked}
-										oninput={(e) =>
-											handleMatrixInputChange(row.id, (e.target as HTMLInputElement).value)}
-									/>
-								</td>
+				<div class="border-border overflow-hidden rounded-xl border">
+					<table class="w-full border-collapse text-sm">
+						<thead>
+							<tr class="border-border bg-muted border-b">
+								<th class="text-foreground px-4 py-3 text-left font-semibold">
+									{matrixOpts.rows.label}
+								</th>
+								<th class="text-foreground px-4 py-3 text-left font-semibold">
+									{matrixOpts.columns.label}
+								</th>
 							</tr>
-						{/each}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{#each matrixOpts.rows.items as row (row.id)}
+								<tr class="border-border hover:bg-accent border-b last:border-b-0">
+									<td class="w-1/2 px-4 py-3 font-medium">
+										<span class="font-semibold">{row.key}.</span>
+										<span class="ml-1">{row.value}</span>
+									</td>
+									<td class="w-1/2 px-4 py-3">
+										<input
+											type={inputType}
+											class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+											placeholder={$t('Enter answer')}
+											value={matrixInputValues[String(row.id)] ?? ''}
+											disabled={isLocked}
+											oninput={(e) =>
+												handleMatrixInputChange(row.id, (e.target as HTMLInputElement).value)}
+										/>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
 			</div>
 			<div class="mt-3 flex items-center">
 				<SaveAnswerButton
