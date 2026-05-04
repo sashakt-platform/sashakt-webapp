@@ -948,7 +948,7 @@
 		{:else if question.question_type === question_type_enum.MATRIXRATING}
 			{@const matrixOpts = question.options as unknown as TMatrixOptions}
 			<div class="overflow-x-auto">
-				<table class="w-full border-collapse text-sm">
+				<table class="min-w-full border-collapse text-sm">
 					<thead>
 						<tr>
 							<th
