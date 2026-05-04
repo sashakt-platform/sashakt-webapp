@@ -237,7 +237,7 @@
 															{/if}
 														</p>
 														<p class="text-muted-foreground text-sm">
-															{$t('Please click Confirm again to retry.')}
+															{$t('Please click Submit again to retry.')}
 														</p>
 													</Dialog.Description>
 												{:else}

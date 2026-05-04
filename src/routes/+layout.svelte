@@ -85,7 +85,7 @@
 					</Button>
 				{/if}
 			</div>
-			<h2 class="text-primary h-4 w-26 text-xl font-extrabold tracking-tight uppercase">Sashakt</h2>
+			<h2 class="text-primary text-xl font-extrabold tracking-tight uppercase">Sashakt</h2>
 			<div class="flex justify-end">
 				{#if showTimer}
 					<TestTimer timeLeft={page.data?.timeLeft} />
