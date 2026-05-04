@@ -22,7 +22,7 @@
 	class={cn(
 		buttonVariants({
 			variant: 'outline',
-			class: 'gap-1 pl-2.5'
+			class: 'gap-1 pl-2.5 border-primary text-primary hover:bg-primary/10 hover:text-primary'
 		}),
 		className
 	)}

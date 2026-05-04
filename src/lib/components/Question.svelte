@@ -186,12 +186,14 @@
 						</div>
 
 						<div class="flex justify-center">
-							<span class="text-muted-foreground text-center text-sm font-medium">
-								{$t('Page')}
-								{currentPage}
-								{$t('of')}
-								{Math.ceil(totalQuestions / perPage)}
-								&nbsp;|&nbsp;
+							<span class="text-muted-foreground text-center text-xs font-medium sm:text-sm">
+								<span class="hidden sm:inline">
+									{$t('Page')}
+									{currentPage}
+									{$t('of')}
+									{Math.ceil(totalQuestions / perPage)}
+									&nbsp;|&nbsp;
+								</span>
 								{range.start}–{range.end}
 								{$t('of')}
 								{totalQuestions}

@@ -26,7 +26,7 @@
 	);
 </script>
 
-<nav class="bg-card sticky top-0 z-50 mb-1 px-5 py-4">
+<nav class="bg-card border-border sticky top-0 z-50 border-b px-6 py-6">
 	<div class="grid grid-cols-[1fr_auto_1fr] items-center lg:hidden">
 		<div class="flex items-center">
 			{#if navState.onBack}
