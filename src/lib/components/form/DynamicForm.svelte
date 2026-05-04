@@ -135,13 +135,13 @@
 </section>
 
 <div class="bg-card fixed bottom-0 z-20 w-screen border-t px-4 py-4">
-	<div class="mx-auto flex max-w-xl justify-end">
+	<div class="mx-auto max-w-xl lg:flex lg:justify-end">
 		{#if onContinue}
-			<Button onclick={handleContinue}>
+			<Button onclick={handleContinue} class="w-full lg:w-auto">
 				{$t('Continue to Test')} →
 			</Button>
 		{:else}
-			<Button type="submit" form="dynamic-form" disabled={isSubmitting} class="w-full">
+			<Button type="submit" form="dynamic-form" disabled={isSubmitting} class="w-full lg:w-auto">
 				{#if isSubmitting}
 					<Spinner />
 				{/if}

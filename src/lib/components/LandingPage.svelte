@@ -46,7 +46,7 @@
 	);
 </script>
 
-<section class="bg-background min-h-screen px-4 py-6">
+<section class="bg-muted min-h-screen px-4 py-6">
 	<div class="mx-auto max-w-xl">
 		<div class="mb-6 text-center">
 			<h1 class="text-foreground mb-2 text-2xl leading-tight font-semibold">{testDetails.name}</h1>

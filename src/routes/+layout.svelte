@@ -27,7 +27,7 @@
 </script>
 
 <nav class="bg-card border-border sticky top-0 z-50 border-b px-6 py-6">
-	<div class="grid grid-cols-[1fr_auto_1fr] items-center lg:hidden">
+	<div class="grid grid-cols-[auto_1fr_auto] items-center lg:hidden">
 		<div class="flex items-center">
 			{#if navState.onBack}
 				<Button variant="outline" size="icon" onclick={navState.onBack}>
@@ -68,7 +68,7 @@
 
 	{#if navState.active}
 		<div class="hidden items-center justify-between lg:flex">
-			<h2 class="text-primary scroll-m-20 font-extrabold tracking-tight uppercase">Sashakt</h2>
+			<h2 class="text-primary text-xl font-extrabold tracking-tight uppercase">Sashakt</h2>
 			<div class="flex items-center gap-3">
 				{#if showTimer}
 					<TestTimer timeLeft={page.data?.timeLeft} />
@@ -85,7 +85,7 @@
 					</Button>
 				{/if}
 			</div>
-			<h2 class="text-primary scroll-m-20 font-extrabold tracking-tight uppercase">Sashakt</h2>
+			<h2 class="text-primary h-4 w-26 text-xl font-extrabold tracking-tight uppercase">Sashakt</h2>
 			<div class="flex justify-end">
 				{#if showTimer}
 					<TestTimer timeLeft={page.data?.timeLeft} />
