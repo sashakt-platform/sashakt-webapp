@@ -300,7 +300,7 @@ describe('Question', () => {
 
 			await waitFor(() => {
 				expect(screen.getByText('Payment gateway timeout')).toBeInTheDocument();
-				expect(screen.getByText(/Please click Confirm again to retry/i)).toBeInTheDocument();
+				expect(screen.getByText(/Please click Submit again to retry/i)).toBeInTheDocument();
 			});
 		});
 
@@ -315,7 +315,7 @@ describe('Question', () => {
 				expect(
 					screen.getByText(/There was an issue with your previous submission/i)
 				).toBeInTheDocument();
-				expect(screen.getByText(/Please click Confirm again to retry/i)).toBeInTheDocument();
+				expect(screen.getByText(/Please click Submit again to retry/i)).toBeInTheDocument();
 			});
 		});
 
@@ -452,7 +452,7 @@ describe('Question', () => {
 
 			await waitFor(() => {
 				expect(screen.getByText(/Network connection failed/i)).toBeInTheDocument();
-				expect(screen.getByText(/Please click Confirm again to retry/i)).toBeInTheDocument();
+				expect(screen.getByText(/Please click Submit again to retry/i)).toBeInTheDocument();
 			});
 		});
 
