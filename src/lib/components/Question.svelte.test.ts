@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import Question from './Question.svelte';
 import {
@@ -19,6 +19,15 @@ vi.mock('$app/state', () => ({
 		form: null
 	}
 }));
+
+vi.mock('$lib/helpers/formErrorHandler', () => ({
+	createFormEnhanceHandler: vi.fn(() => vi.fn())
+}));
+
+import { page } from '$app/state';
+import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
+type MockPageForm = { submitTest?: boolean; error?: string; result?: boolean } | null;
+const mockPage = page as { form: MockPageForm };
 
 // Mock fetch for API calls
 vi.stubGlobal('fetch', vi.fn());
@@ -76,8 +85,7 @@ describe('Question', () => {
 		});
 
 		await vi.waitFor(() => {
-			// Use getAllByRole since there might be multiple submit buttons (in dialog)
-			const submitButtons = screen.getAllByRole('button', { name: /submit/i });
+			const submitButtons = screen.getAllByRole('button', { name: /submit test/i });
 			expect(submitButtons.length).toBeGreaterThan(0);
 		});
 	});
@@ -170,6 +178,295 @@ describe('Question', () => {
 			// All questions should be visible
 			mockQuestions.forEach((q) => {
 				expect(screen.getByText(q.question_text)).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('bottom navigation bar', () => {
+		it('should show page info text', async () => {
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(/page/i)).toBeInTheDocument();
+				expect(screen.getByText(/questions/i)).toBeInTheDocument();
+			});
+		});
+
+		it('should show "Submit Test" label (not plain "Submit") on last page', async () => {
+			const singlePageQuestions = {
+				question_revisions: [mockQuestions[0]],
+				question_pagination: 10
+			};
+
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions: singlePageQuestions,
+					testDetails
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(/submit test/i)).toBeInTheDocument();
+			});
+		});
+
+		it('should show "Next" button when not on last page', async () => {
+			const paginatedQuestions = {
+				question_revisions: mockQuestions,
+				question_pagination: 1
+			};
+
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions: paginatedQuestions,
+					testDetails
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getByText(/next/i)).toBeInTheDocument();
+				expect(screen.queryByText(/submit test/i)).not.toBeInTheDocument();
+			});
+		});
+
+		it('should render bottom bar with fixed positioning class', async () => {
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails
+				}
+			});
+
+			await vi.waitFor(() => {
+				const nav = document.querySelector('ul.fixed');
+				expect(nav).toBeInTheDocument();
+			});
+		});
+
+		it('should show page info in Hindi', async () => {
+			await setLocaleForTests('hi-IN');
+			render(Question, {
+				props: {
+					candidate: mockCandidate,
+					testQuestions,
+					testDetails
+				}
+			});
+
+			await vi.waitFor(() => {
+				expect(screen.getAllByText(/पृष्ठ/i).length).toBeGreaterThan(0);
+				expect(screen.getAllByText(/प्रश्न/i).length).toBeGreaterThan(0);
+			});
+		});
+	});
+
+	describe('submit dialog error states', () => {
+		const errorTestQuestions = {
+			question_revisions: [mockQuestions[2]],
+			question_pagination: 1
+		};
+
+		afterEach(() => {
+			mockPage.form = null;
+		});
+
+		it('shows "Submission Failed" title when page.form.error is set', async () => {
+			mockPage.form = { submitTest: false, error: 'Server error occurred' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+		});
+
+		it('shows the specific error message from page.form.error', async () => {
+			mockPage.form = { submitTest: false, error: 'Payment gateway timeout' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Payment gateway timeout')).toBeInTheDocument();
+				expect(screen.getByText(/Please click Submit again to retry/i)).toBeInTheDocument();
+			});
+		});
+
+		it('shows generic error message when submitTest is false with no specific error', async () => {
+			mockPage.form = { submitTest: false, result: false };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(
+					screen.getByText(/There was an issue with your previous submission/i)
+				).toBeInTheDocument();
+				expect(screen.getByText(/Please click Submit again to retry/i)).toBeInTheDocument();
+			});
+		});
+
+		it('shows error dialog with Cancel button still functional', async () => {
+			mockPage.form = { submitTest: false, error: 'Some error' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+
+			expect(screen.getAllByRole('button', { name: /cancel/i }).length).toBeGreaterThan(0);
+		});
+	});
+
+	describe('submit dialog loading state (isSubmittingTest)', () => {
+		const loadingTestQuestions = {
+			question_revisions: [mockQuestions[2]],
+			question_pagination: 1
+		};
+
+		let capturedSetLoading: ((v: boolean) => void) | undefined;
+
+		beforeEach(() => {
+			capturedSetLoading = undefined;
+			vi.mocked(createFormEnhanceHandler).mockImplementation((opts) => {
+				capturedSetLoading = opts.setLoading;
+				return vi.fn();
+			});
+		});
+
+		afterEach(() => {
+			mockPage.form = null;
+		});
+
+		it('shows Spinner in submit button when isSubmittingTest is true', async () => {
+			mockPage.form = { submitTest: false, error: 'previous error' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: loadingTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+
+			capturedSetLoading?.(true);
+
+			await waitFor(() => {
+				expect(screen.getByRole('status')).toBeInTheDocument();
+			});
+		});
+
+		it('disables Cancel button while loading', async () => {
+			mockPage.form = { submitTest: false, error: 'previous error' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: loadingTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+
+			capturedSetLoading?.(true);
+
+			await waitFor(() => {
+				const cancelButtons = screen.getAllByRole('button', { name: /cancel/i });
+				expect(cancelButtons.some((btn) => btn.hasAttribute('disabled'))).toBe(true);
+			});
+		});
+
+		it('disables Submit button while loading', async () => {
+			mockPage.form = { submitTest: false, error: 'previous error' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: loadingTestQuestions, testDetails }
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+
+			capturedSetLoading?.(true);
+
+			await waitFor(() => {
+				const submitButtons = screen.getAllByRole('button', { name: /submit/i });
+				expect(submitButtons.some((btn) => btn.hasAttribute('disabled'))).toBe(true);
+			});
+		});
+	});
+
+	describe('submit dialog client-side error (submitError)', () => {
+		const errorTestQuestions = {
+			question_revisions: [mockQuestions[2]],
+			question_pagination: 1
+		};
+
+		let capturedSetError: ((v: string | null) => void) | undefined;
+
+		beforeEach(() => {
+			capturedSetError = undefined;
+			vi.mocked(createFormEnhanceHandler).mockImplementation((opts) => {
+				capturedSetError = opts.setError;
+				return vi.fn();
+			});
+		});
+
+		afterEach(() => {
+			mockPage.form = null;
+		});
+
+		it('shows "Submission Failed" title when submitError is set', async () => {
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			capturedSetError?.('Network connection failed');
+
+			await waitFor(() => {
+				expect(screen.getByText(/Submission Failed/i)).toBeInTheDocument();
+			});
+		});
+
+		it('shows the submitError message in the dialog body', async () => {
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			capturedSetError?.('Network connection failed');
+
+			await waitFor(() => {
+				expect(screen.getByText(/Network connection failed/i)).toBeInTheDocument();
+				expect(screen.getByText(/Please click Submit again to retry/i)).toBeInTheDocument();
+			});
+		});
+
+		it('takes priority over page.form.error when both are set', async () => {
+			mockPage.form = { submitTest: false, error: 'Server error' };
+
+			render(Question, {
+				props: { candidate: mockCandidate, testQuestions: errorTestQuestions, testDetails }
+			});
+
+			capturedSetError?.('Client network error');
+
+			await waitFor(() => {
+				expect(screen.getByText(/Client network error/i)).toBeInTheDocument();
 			});
 		});
 	});
@@ -279,10 +576,10 @@ describe('Support for Localization', () => {
 		});
 
 		await waitFor(() => {
-			expect(screen.getByText(/जमा करें/i)).toBeInTheDocument();
+			expect(screen.getByText(/परीक्षा जमा करें/i)).toBeInTheDocument();
 		});
 
-		const submitElement = screen.getByText(/जमा करें/i);
+		const submitElement = screen.getByText(/परीक्षा जमा करें/i);
 		await fireEvent.click(submitElement);
 
 		await waitFor(() => {
@@ -321,11 +618,9 @@ describe('Support for Localization', () => {
 		await waitFor(() => {
 			expect(screen.getByText(/परीक्षा जमा करें\?/)).toBeInTheDocument();
 			expect(
-				screen.getByText(
-					/क्या आप वाकई अंतिम मूल्यांकन के लिए अपना शोध पत्र जमा करना चाहते हैं\? जमा करने के बाद कोई बदलाव स्वीकार्य नहीं होगा।/i
-				)
-			).toBeInTheDocument();
-			expect(screen.getByText(/पुष्टि करें/i)).toBeInTheDocument();
+				screen.getAllByText(/परीक्षा जमा करने के बाद कोई बदलाव अनुमत नहीं होगा।/i).length
+			).toBeGreaterThan(0);
+			expect(screen.getAllByText(/जमा करें/i).length).toBeGreaterThan(0);
 			expect(screen.getByText(/रद्द करें/i)).toBeInTheDocument();
 		});
 	});
@@ -417,13 +712,13 @@ describe('Support for Localization', () => {
 		await fireEvent.click(submitElement);
 
 		await waitFor(() => {
-			expect(screen.getByText(/Submit test\?/)).toBeInTheDocument();
+			expect(screen.getByText(/Submit Test\?/)).toBeInTheDocument();
 			expect(
-				screen.getByText(
-					/Are you sure you want to submit for final marking\? No changes will be allowed after submission./i
-				)
-			).toBeInTheDocument();
-			expect(screen.getByText(/Confirm/i)).toBeInTheDocument();
+				screen.getAllByText(
+					/No changes will be allowed once you submit the test\. Are you sure you want to submit\?/i
+				).length
+			).toBeGreaterThan(0);
+			expect(screen.getByText(/^Submit$/i)).toBeInTheDocument();
 			expect(screen.getByText(/Cancel/i)).toBeInTheDocument();
 		});
 	});

@@ -32,7 +32,7 @@
 	let downloadError = $state<string | null>(null);
 
 	function pad(n: number) {
-		return String(n).padStart(2, '0');
+		return n === 0 ? '0' : String(n).padStart(2, '0');
 	}
 
 	async function handleDownloadCertificate() {
@@ -71,8 +71,8 @@
 	}
 </script>
 
-<section class="bg-background flex min-h-screen items-center justify-center px-4 py-10">
-	<div class="w-full max-w-sm overflow-hidden rounded-2xl shadow-sm">
+<section class="bg-muted flex min-h-screen items-center justify-center px-4 py-10">
+	<div class="bg-card w-full max-w-sm overflow-hidden rounded-2xl shadow-sm">
 		<div class="bg-secondary flex flex-col items-center px-6 py-8 text-center">
 			<h2 class="text-foreground mb-1 text-lg font-bold">
 				"{testDetails.name}" {$t('Submitted')}
@@ -126,7 +126,7 @@
 				{/if}
 
 				{#if testDetails.show_feedback_on_completion && feedback}
-					<Button variant="outline" class="w-full" onclick={onViewFeedback}>
+					<Button variant="outline" class="w-full border-primary text-primary hover:bg-primary/10 hover:text-primary" onclick={onViewFeedback}>
 						{$t('View All Answers')}
 					</Button>
 				{/if}
