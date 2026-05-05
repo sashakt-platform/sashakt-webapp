@@ -75,13 +75,13 @@ describe('ViewFeedback', () => {
 		it('should render sectioned payloads in the existing flat feedback flow', () => {
 			const feedback = [createFeedback(1, [102], [102]), createFeedback(2, [201], [201, 202])];
 
-			render(ViewFeedback, {
+			const { container } = render(ViewFeedback, {
 				props: { feedback, testQuestions: mockSectionedTestQuestionsResponse }
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
 			expect(screen.getByText(mockMultipleChoiceQuestion.question_text)).toBeInTheDocument();
-			expect(screen.getByText('A. 3')).toBeInTheDocument();
+			expect(container.querySelector('label[for="1-A"]')).toBeInTheDocument();
 		});
 	});
 
@@ -89,14 +89,14 @@ describe('ViewFeedback', () => {
 		it('should render all options for a single-choice question', () => {
 			const feedback = [createFeedback(1, [102], [102])];
 
-			render(ViewFeedback, {
+			const { container } = render(ViewFeedback, {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			expect(screen.getByText('A. 3')).toBeInTheDocument();
-			expect(screen.getByText('B. 4')).toBeInTheDocument();
-			expect(screen.getByText('C. 5')).toBeInTheDocument();
-			expect(screen.getByText('D. 6')).toBeInTheDocument();
+			expect(container.querySelector('label[for="1-A"]')).toBeInTheDocument();
+			expect(container.querySelector('label[for="1-B"]')).toBeInTheDocument();
+			expect(container.querySelector('label[for="1-C"]')).toBeInTheDocument();
+			expect(container.querySelector('label[for="1-D"]')).toBeInTheDocument();
 		});
 
 		it('should highlight correct answer with green class', () => {
@@ -106,8 +106,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			const labels = container.querySelectorAll('label');
-			const optionBLabel = Array.from(labels).find((l) => l.textContent?.includes('B. 4'));
+			const optionBLabel = container.querySelector('label[for="1-B"]');
 			expect(optionBLabel?.className).toContain('bg-success-subtle');
 			expect(optionBLabel?.className).toContain('border-success');
 		});
@@ -119,8 +118,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			const labels = container.querySelectorAll('label');
-			const optionALabel = Array.from(labels).find((l) => l.textContent?.includes('A. 3'));
+			const optionALabel = container.querySelector('label[for="1-A"]');
 			expect(optionALabel?.className).toContain('bg-error-subtle');
 			expect(optionALabel?.className).toContain('border-error');
 		});
@@ -132,8 +130,7 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			const labels = container.querySelectorAll('label');
-			const optionCLabel = Array.from(labels).find((l) => l.textContent?.includes('C. 5'));
+			const optionCLabel = container.querySelector('label[for="1-C"]');
 			expect(optionCLabel?.className).not.toContain('bg-success-subtle');
 			expect(optionCLabel?.className).not.toContain('bg-error-subtle');
 		});
@@ -145,10 +142,8 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			const labels = container.querySelectorAll('label');
-			const optionBLabel = Array.from(labels).find((l) => l.textContent?.includes('B. 4'));
+			const optionBLabel = container.querySelector('label[for="1-B"]');
 			expect(optionBLabel?.className).toContain('bg-success-subtle');
-
 			expect(optionBLabel?.className).not.toContain('bg-error-subtle');
 		});
 	});
@@ -157,14 +152,14 @@ describe('ViewFeedback', () => {
 		it('should render all options for a multiple-choice question', () => {
 			const feedback = [createFeedback(2, [201, 202], [201, 202])];
 
-			render(ViewFeedback, {
+			const { container } = render(ViewFeedback, {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			expect(screen.getByText('A. 2')).toBeInTheDocument();
-			expect(screen.getByText('B. 3')).toBeInTheDocument();
-			expect(screen.getByText('C. 4')).toBeInTheDocument();
-			expect(screen.getByText('D. 5')).toBeInTheDocument();
+			expect(container.querySelector('label[for="2-A"]')).toBeInTheDocument();
+			expect(container.querySelector('label[for="2-B"]')).toBeInTheDocument();
+			expect(container.querySelector('label[for="2-C"]')).toBeInTheDocument();
+			expect(container.querySelector('label[for="2-D"]')).toBeInTheDocument();
 		});
 
 		it('should highlight correct options green and wrong submitted options red', () => {
@@ -174,18 +169,16 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			const labels = container.querySelectorAll('label');
-
-			const optionA = Array.from(labels).find((l) => l.textContent?.includes('A. 2'));
+			const optionA = container.querySelector('label[for="2-A"]');
 			expect(optionA?.className).toContain('bg-success-subtle');
 
-			const optionB = Array.from(labels).find((l) => l.textContent?.includes('B. 3'));
+			const optionB = container.querySelector('label[for="2-B"]');
 			expect(optionB?.className).toContain('bg-success-subtle');
 
-			const optionC = Array.from(labels).find((l) => l.textContent?.includes('C. 4'));
+			const optionC = container.querySelector('label[for="2-C"]');
 			expect(optionC?.className).toContain('bg-error-subtle');
 
-			const optionD = Array.from(labels).find((l) => l.textContent?.includes('D. 5'));
+			const optionD = container.querySelector('label[for="2-D"]');
 			expect(optionD?.className).not.toContain('bg-success-subtle');
 			expect(optionD?.className).not.toContain('bg-error-subtle');
 		});
@@ -230,7 +223,7 @@ describe('ViewFeedback', () => {
 
 			const labels = container.querySelectorAll('label');
 
-			const optionB = Array.from(labels).find((l) => l.textContent?.includes('B. 4'));
+			const optionB = Array.from(labels).find((l) => l.textContent?.includes('4'));
 			expect(optionB?.className).toContain('bg-success-subtle');
 
 			const redLabels = Array.from(labels).filter((l) => l.className.includes('bg-error-subtle'));

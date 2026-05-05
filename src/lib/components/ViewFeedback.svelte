@@ -1,7 +1,5 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
-	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Check from '@lucide/svelte/icons/check';
 	import X from '@lucide/svelte/icons/x';
@@ -9,9 +7,14 @@
 	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { t } from 'svelte-i18n';
 	import { question_type_enum } from '$lib/types';
+	import type { TOptions } from '$lib/types';
 	import { isNumericalAnswerCorrect, getQuestionResult } from '$lib/helpers/feedbackHelpers';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
+	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { cn } from '$lib/utils';
 
 	let {
 		feedback = [],
@@ -23,13 +26,6 @@
 
 	const isSubmitted = (optionId: number, submittedAnswer: number[]) =>
 		submittedAnswer.includes(optionId);
-
-	const optionClass = (optionId: number, submitted: number[], correct: number[]) => {
-		if (isCorrect(optionId, correct)) return 'bg-success-subtle border-success text-success';
-		if (isSubmitted(optionId, submitted) && !isCorrect(optionId, correct))
-			return 'bg-error-subtle border-error text-error';
-		return '';
-	};
 
 	const getOptionStatus = (optionId: number, submitted: number[], correct: number[]) => {
 		if (isCorrect(optionId, correct)) return 'correct';
@@ -61,9 +57,9 @@
 	{/if}
 {/snippet}
 
-<div class="flex flex-col items-center">
+<div class="flex flex-col items-center md:min-h-screen md:gap-8 md:p-6">
 	{#if onBack}
-		<div class="mb-4 w-full max-w-sm">
+		<div class="mb-4 w-full max-w-sm md:mb-0 md:max-w-250">
 			<Button variant="ghost" size="sm" onclick={onBack}>
 				<ArrowLeft size={16} class="mr-1" />
 				{$t('Back to Results')}
@@ -77,19 +73,28 @@
 	{/if}
 	{#each feedbackWithQuestions as item, idx (item.question.id)}
 		{#if item.question}
-			<Card.Root class="mb-6 w-full max-w-sm rounded-xl shadow-md">
-				<Card.Header class="p-5">
-					<Card.Title class="mb-5 flex items-center justify-between border-b pb-3">
+			<Card.Root class="mb-6 w-full max-w-sm rounded-[14px] shadow-md md:mb-0 md:max-w-250">
+				<Card.Header class="p-4 lg:p-6">
+					<Card.Title class="mb-5 flex items-center justify-between">
 						<span
 							class="bg-secondary text-primary inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold"
 						>
 							Q{idx + 1}
 						</span>
 
-						{@const gradableTypes = new Set([question_type_enum.SINGLE, question_type_enum.MULTIPLE, question_type_enum.NUMERICALINTEGER, question_type_enum.NUMERICALDECIMAL])}
+						{@const gradableTypes = new Set([
+							question_type_enum.SINGLE,
+							question_type_enum.MULTIPLE,
+							question_type_enum.NUMERICALINTEGER,
+							question_type_enum.NUMERICALDECIMAL
+						])}
 						{#if item.question?.marking_scheme && gradableTypes.has(item.question.question_type)}
 							<ResultBadge
-								result={getQuestionResult(item.question.question_type, item.fb.submitted_answer, item.fb.correct_answer)}
+								result={getQuestionResult(
+									item.question.question_type,
+									item.fb.submitted_answer,
+									item.fb.correct_answer
+								)}
 								scheme={item.question.marking_scheme}
 							/>
 						{/if}
@@ -106,7 +111,7 @@
 					</Card.Description>
 				</Card.Header>
 
-				<Card.Content class="p-5 pt-1">
+				<Card.Content class="p-4 pt-1 lg:p-6 lg:pt-1">
 					{#if item.question.question_type === question_type_enum.MATRIXMATCH || item.question.question_type === question_type_enum.MATRIXRATING || item.question.question_type === question_type_enum.MATRIXINPUT}
 						<p class="text-muted-foreground text-sm italic">{$t('Not Applicable')}</p>
 					{:else if item.question.question_type === 'subjective'}
@@ -119,7 +124,9 @@
 						</div>
 						{#if item.question.subjective_answer_limit}
 							<p class="text-muted-foreground mt-2 text-xs">
-								{$t('Up to {max} characters', { values: { max: item.question.subjective_answer_limit } })}
+								{$t('Up to {max} characters', {
+									values: { max: item.question.subjective_answer_limit }
+								})}
 							</p>
 						{/if}
 					{:else if item.question.question_type === question_type_enum.NUMERICALINTEGER || item.question.question_type === question_type_enum.NUMERICALDECIMAL}
@@ -155,72 +162,111 @@
 								{@render showCorrectWrongMark('correct')}
 							</div>
 						{/if}
-					{:else if item.question.question_type === 'single-choice'}
-						<RadioGroup.Root value={item.fb.submitted_answer[0]?.toString()} disabled>
-							{#each item.question.options as option (option.id)}
+					{:else if item.question.question_type === question_type_enum.SINGLE}
+						<RadioGroup.Root
+							value={item.fb.submitted_answer[0]?.toString()}
+							disabled
+							class="flex flex-col gap-3"
+						>
+							{#each item.question.options as TOptions[] as option (option.id)}
 								{@const uid = `${item.question.id}-${option.key}`}
+								{@const correct = isCorrect(option.id, item.fb.correct_answer)}
+								{@const submitted = isSubmitted(option.id, item.fb.submitted_answer)}
 								{@const status = getOptionStatus(
 									option.id,
 									item.fb.submitted_answer,
 									item.fb.correct_answer
 								)}
-
-								<Label
-									for={uid}
-									class={`mb-2 flex cursor-not-allowed flex-col rounded-xl border px-4 py-5 ${optionClass(
-										option.id,
-										item.fb.submitted_answer,
-										item.fb.correct_answer
-									)}`}
-								>
-									<div class="flex w-full items-center justify-between">
-										<span>{option.key}. {option.value}</span>
-										<div class="flex items-center gap-1">
+								{@const labelClass = correct
+									? 'bg-success-subtle border-success '
+									: submitted
+										? 'bg-error-subtle border-error'
+										: 'border-border bg-card'}
+								{@const itemClass = correct
+									? 'border-success text-success'
+									: submitted
+										? 'border-error text-error'
+										: ''}
+								<div class="flex items-start gap-3">
+									<span class=" mt-3 w-5 shrink-0 text-sm font-medium">{option.key}</span>
+									<Label
+										for={uid}
+										class={cn(
+											'flex flex-1 cursor-not-allowed flex-col rounded-xl border transition-colors',
+											labelClass
+										)}
+									>
+										<div class="flex items-center gap-3 px-4 py-3">
+											<RadioGroup.Item
+												value={option.id.toString()}
+												id={uid}
+												disabled
+												class={itemClass}
+											/>
+											<span class="text-foreground flex-1 text-sm">{option.value}</span>
 											{#if status === 'correct'}
 												{@render showCorrectWrongMark('correct')}
 											{:else if status === 'wrong'}
 												{@render showCorrectWrongMark('wrong')}
 											{/if}
 										</div>
-									</div>
-									{#if option.media}
-										<QuestionMedia media={option.media} />
-									{/if}
-								</Label>
+										{#if option.media}
+											<div class="px-4 pb-4"><QuestionMedia media={option.media} /></div>
+										{/if}
+									</Label>
+								</div>
 							{/each}
 						</RadioGroup.Root>
 					{:else}
-						{#each item.question.options as option (option.id)}
-							{@const uid = `${item.question.id}-${option.key}`}
-							{@const status = getOptionStatus(
-								option.id,
-								item.fb.submitted_answer,
-								item.fb.correct_answer
-							)}
-
-							<Label
-								for={uid}
-								class={`mb-2 flex w-full cursor-not-allowed flex-col rounded-xl border px-4 py-5 ${optionClass(
+						<div class="flex flex-col gap-3">
+							{#each item.question.options as TOptions[] as option (option.id)}
+								{@const uid = `${item.question.id}-${option.key}`}
+								{@const correct = isCorrect(option.id, item.fb.correct_answer)}
+								{@const submitted = isSubmitted(option.id, item.fb.submitted_answer)}
+								{@const status = getOptionStatus(
 									option.id,
 									item.fb.submitted_answer,
 									item.fb.correct_answer
-								)}`}
-							>
-								<div class="flex w-full items-center justify-between">
-									<span>{option.key}. {option.value}</span>
-									<div class="flex items-center gap-1">
-										{#if status === 'correct'}
-											{@render showCorrectWrongMark('correct')}
-										{:else if status === 'wrong'}
-											{@render showCorrectWrongMark('wrong')}
+								)}
+								{@const labelClass = correct
+									? 'bg-success-subtle border-success'
+									: submitted
+										? 'bg-error-subtle border-error'
+										: 'border-border bg-card'}
+								<div class="flex items-start gap-3">
+									<span class="text-muted-foreground mt-3 w-5 shrink-0 text-sm font-medium"
+										>{option.key}</span
+									>
+									<Label
+										for={uid}
+										class={cn(
+											'flex flex-1 cursor-not-allowed flex-col rounded-xl border transition-colors',
+											labelClass
+										)}
+									>
+										<div class="flex items-center gap-3 px-4 py-3">
+											<Checkbox
+												id={uid}
+												checked={submitted}
+												disabled
+												class={cn(
+													correct && submitted && 'border-success data-[state=checked]:bg-success',
+													!correct && submitted && 'border-error data-[state=checked]:bg-error',
+													correct && !submitted && 'border-success'
+												)}
+											/>
+											<span class="text-foreground flex-1 text-sm">{option.value}</span>
+											{#if status === 'wrong'}
+												{@render showCorrectWrongMark('wrong')}
+											{/if}
+										</div>
+										{#if option.media}
+											<div class="px-4 pb-4"><QuestionMedia media={option.media} /></div>
 										{/if}
-									</div>
+									</Label>
 								</div>
-								{#if option.media}
-									<QuestionMedia media={option.media} />
-								{/if}
-							</Label>
-						{/each}
+							{/each}
+						</div>
 					{/if}
 				</Card.Content>
 			</Card.Root>
