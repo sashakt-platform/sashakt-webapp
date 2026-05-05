@@ -51,7 +51,7 @@ describe('QuestionPaletteContent', () => {
 		expect(screen.getByRole('button', { name: 'Go to question 3' })).toBeInTheDocument();
 	});
 
-	it('should display correct answered count in stats', () => {
+	it('should display answered label in legend', () => {
 		const questions = [
 			createQuestion(1, false),
 			createQuestion(2, false),
@@ -68,12 +68,10 @@ describe('QuestionPaletteContent', () => {
 			}
 		});
 
-		// Find the stats section - answered count should be 2
-		const answeredStat = screen.getByText('Answered').previousElementSibling;
-		expect(answeredStat).toHaveTextContent('2');
+		expect(screen.getByText('Answered')).toBeInTheDocument();
 	});
 
-	it('should display correct bookmarked count in stats', () => {
+	it('should display marked for review label in legend', () => {
 		const questions = [
 			createQuestion(1, false),
 			createQuestion(2, false),
@@ -94,9 +92,7 @@ describe('QuestionPaletteContent', () => {
 			}
 		});
 
-		// Find the stats section - bookmarked count should be 2
-		const bookmarkedStat = screen.getByText('Marked for review').previousElementSibling;
-		expect(bookmarkedStat).toHaveTextContent('2');
+		expect(screen.getByText('Marked for Review')).toBeInTheDocument();
 	});
 
 	it('should call onNavigate when question button is clicked', async () => {
@@ -131,7 +127,7 @@ describe('QuestionPaletteContent', () => {
 		});
 
 		const currentButton = screen.getByRole('button', { name: 'Go to question 2' });
-		expect(currentButton).toHaveClass('border-blue-500');
+		expect(currentButton).toHaveClass('ring-primary');
 	});
 
 	it('should apply answered question styling', () => {
@@ -148,8 +144,8 @@ describe('QuestionPaletteContent', () => {
 		});
 
 		const answeredButton = screen.getByRole('button', { name: 'Go to question 1' });
-		expect(answeredButton).toHaveClass('bg-blue-100');
-		expect(answeredButton).toHaveClass('text-blue-700');
+		expect(answeredButton).toHaveClass('bg-success-subtle');
+		expect(answeredButton).toHaveClass('text-success');
 	});
 
 	it('should show mandatory indicator for mandatory questions', () => {
@@ -164,16 +160,20 @@ describe('QuestionPaletteContent', () => {
 			}
 		});
 
+		// Mandatory asterisk is outside the button in a wrapper div
 		const mandatoryButton = screen.getByRole('button', { name: 'Go to question 1' });
-		const mandatoryIndicator = mandatoryButton.querySelector('.bg-red-500');
-		expect(mandatoryIndicator).toBeInTheDocument();
+		const wrapper = mandatoryButton.parentElement;
+		const asterisk = wrapper?.querySelector('.text-destructive');
+		expect(asterisk).toBeInTheDocument();
 
+		// Optional question wrapper should have no asterisk
 		const optionalButton = screen.getByRole('button', { name: 'Go to question 2' });
-		const noIndicator = optionalButton.querySelector('.bg-red-500');
-		expect(noIndicator).toBeNull();
+		const optionalWrapper = optionalButton.parentElement;
+		const noAsterisk = optionalWrapper?.querySelector('.text-destructive');
+		expect(noAsterisk).toBeNull();
 	});
 
-	it('should show bookmark icon for bookmarked questions', () => {
+	it('should apply bookmark border styling for bookmarked questions', () => {
 		const questions = [createQuestion(1, false), createQuestion(2, false)];
 		const selections = [createSelection(1, [101], true)];
 
@@ -187,8 +187,7 @@ describe('QuestionPaletteContent', () => {
 		});
 
 		const bookmarkedButton = screen.getByRole('button', { name: 'Go to question 1' });
-		const bookmarkIcon = bookmarkedButton.querySelector('.fill-amber-500');
-		expect(bookmarkIcon).toBeInTheDocument();
+		expect(bookmarkedButton).toHaveClass('border-warning');
 	});
 
 	it('should handle empty questions array', () => {
@@ -201,32 +200,14 @@ describe('QuestionPaletteContent', () => {
 			}
 		});
 
-		// Stats should show 0
-		const answeredStat = screen.getByText('Answered').previousElementSibling;
-		expect(answeredStat).toHaveTextContent('0');
+		// No question buttons should be present
+		expect(screen.queryByRole('button', { name: /Go to question/ })).toBeNull();
+		// Legend labels should still be visible
+		expect(screen.getByText('Answered')).toBeInTheDocument();
 	});
 
-	it('should apply maxRows height limit when provided', () => {
-		const questions = Array.from({ length: 30 }, (_, i) => createQuestion(i + 1, false));
-
-		const { container } = render(QuestionPaletteContent, {
-			props: {
-				questions,
-				selections: [],
-				currentQuestionIndex: 0,
-				onNavigate: vi.fn(),
-				maxRows: 5
-			}
-		});
-
-		// Grid should have max-height style applied
-		// 5 rows * 40px + 4 gaps * 8px = 200 + 32 = 232px
-		const grid = container.querySelector('.grid-cols-5');
-		expect(grid).toHaveStyle({ maxHeight: '232px' });
-	});
-
-	it('should not apply maxRows height limit when not provided', () => {
-		const questions = [createQuestion(1, false), createQuestion(2, false)];
+	it('should use default 5-column grid', () => {
+		const questions = [createQuestion(1, false)];
 
 		const { container } = render(QuestionPaletteContent, {
 			props: {
@@ -237,8 +218,24 @@ describe('QuestionPaletteContent', () => {
 			}
 		});
 
-		const grid = container.querySelector('.grid-cols-5');
-		// When maxRows is not provided, no inline max-height style should be applied
-		expect(grid?.getAttribute('style')).toBeNull();
+		const grid = container.querySelector('.grid');
+		expect(grid).toHaveStyle({ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' });
+	});
+
+	it('should use custom cols when provided', () => {
+		const questions = [createQuestion(1, false)];
+
+		const { container } = render(QuestionPaletteContent, {
+			props: {
+				questions,
+				selections: [],
+				currentQuestionIndex: 0,
+				onNavigate: vi.fn(),
+				cols: 6
+			}
+		});
+
+		const grid = container.querySelector('.grid');
+		expect(grid).toHaveStyle({ gridTemplateColumns: 'repeat(6, minmax(0, 1fr))' });
 	});
 });

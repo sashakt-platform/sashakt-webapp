@@ -135,9 +135,9 @@ describe('Question', () => {
 		});
 
 		await vi.waitFor(() => {
-			// Multiple questions may show "OF X", so use getAllByText
-			const totalTexts = screen.getAllByText(`OF ${mockQuestions.length}`);
-			expect(totalTexts.length).toBeGreaterThan(0);
+			// Each question shows a Q-badge like "Q1", "Q2", etc.
+			const badge = screen.getAllByText(/^Q\d+$/);
+			expect(badge.length).toBeGreaterThan(0);
 		});
 	});
 
@@ -334,7 +334,7 @@ describe('Question', () => {
 				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
 			});
 
-			expect(screen.getAllByText(/\d+ Marks?/).length).toBeGreaterThan(0);
+			expect(screen.getAllByText('Marks:').length).toBeGreaterThan(0);
 		});
 
 		it('should hide marks when testDetails.show_marks is false', async () => {
@@ -350,7 +350,7 @@ describe('Question', () => {
 				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
 			});
 
-			expect(screen.queryAllByText(/\d+ Marks?/)).toHaveLength(0);
+			expect(screen.queryAllByText('Marks:')).toHaveLength(0);
 		});
 
 		it('should display marks by default when testDetails.show_marks is undefined', async () => {
@@ -370,7 +370,7 @@ describe('Question', () => {
 				expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
 			});
 
-			expect(screen.getAllByText(/\d+ Marks?/).length).toBeGreaterThan(0);
+			expect(screen.getAllByText('Marks:').length).toBeGreaterThan(0);
 		});
 	});
 });

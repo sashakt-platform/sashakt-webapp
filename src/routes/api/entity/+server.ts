@@ -5,13 +5,13 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ url }) => {
 	const name = url.searchParams.get('name') || '';
 	const entityTypeId = url.searchParams.get('entity_type_id') || '';
-	const testId = url.searchParams.get('test_id') || '';
+	const testLink = url.searchParams.get('test_link') || '';
 
 	try {
 		const params = new URLSearchParams({ page: '1', size: '50', sort_order: 'asc' });
 		if (name) params.set('name', name);
 		if (entityTypeId) params.set('entity_type_id', entityTypeId);
-		if (testId) params.set('test_id', testId);
+		if (testLink) params.set('test_link', testLink);
 
 		const response = await fetch(`${BACKEND_URL}/entity/?${params.toString()}`, {
 			method: 'GET',
@@ -19,7 +19,9 @@ export const GET: RequestHandler = async ({ url }) => {
 		});
 
 		if (!response.ok) {
-			return json({ items: [] }, { status: response.status });
+			const body: { items: never[]; error?: string } = { items: [] };
+			if (response.status === 404) body.error = 'test_link_not_found';
+			return json(body, { status: response.status });
 		}
 
 		const data = await response.json();

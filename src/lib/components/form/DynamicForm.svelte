@@ -2,7 +2,6 @@
 	import { enhance } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
 	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { t } from 'svelte-i18n';
 	import type { TForm, TFormResponses } from '$lib/types';
@@ -11,7 +10,7 @@
 
 	interface Props {
 		form: TForm;
-		testDetails: { id: number; name: string };
+		testDetails: { id: number; name: string; link: string };
 		locations?: {
 			states?: Array<{ id: number; name: string }>;
 		};
@@ -85,20 +84,23 @@
 	}
 </script>
 
-<section class="mx-auto max-w-xl p-6">
-	<h1 class="mb-4 text-xl font-semibold">{testDetails.name}</h1>
-	<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">
-		{form.name}
-	</h2>
-
-	<Card.Root class="mb-8">
-		<Card.Header>
+<section class="bg-background min-h-screen px-4 py-10">
+	<div class="mx-auto max-w-xl">
+		<div class="mb-8 text-center">
+			<h1 class="text-foreground mb-2 text-2xl font-bold">{form.name}</h1>
 			{#if form.description}
-				<Card.Description>{form.description}</Card.Description>
+				<p class="text-muted-foreground text-sm">{form.description}</p>
 			{/if}
-		</Card.Header>
-		<Card.Content>
-			<form method="POST" action="?/createCandidate" use:enhance={formEnhance} class="space-y-6">
+		</div>
+
+		<div class="border-border bg-card mb-24 overflow-hidden rounded-2xl border p-6 shadow-sm">
+			<form
+				id="dynamic-form"
+				method="POST"
+				action="?/createCandidate"
+				use:enhance={formEnhance}
+				class="space-y-6"
+			>
 				{#each sortedFields as field (field.id)}
 					<FormField
 						{field}
@@ -114,6 +116,7 @@
 						{hasStateField}
 						{hasDistrictField}
 						testId={testDetails.id}
+						testLink={testDetails.link}
 						onchange={(value) => handleFieldChange(field.name, value)}
 					/>
 				{/each}
@@ -126,22 +129,24 @@
 					<input name="deviceInfo" value={JSON.stringify(navigator?.userAgent || '')} hidden />
 					<input name="formResponses" value={JSON.stringify(formResponses)} hidden />
 				{/if}
-
-				<div class="pt-4">
-					{#if onContinue}
-						<Button type="button" class="w-full" onclick={handleContinue}>
-							{$t('Continue to Test')}
-						</Button>
-					{:else}
-						<Button type="submit" class="w-full" disabled={isSubmitting}>
-							{#if isSubmitting}
-								<Spinner />
-							{/if}
-							{$t('Continue to Test')}
-						</Button>
-					{/if}
-				</div>
 			</form>
-		</Card.Content>
-	</Card.Root>
+		</div>
+	</div>
 </section>
+
+<div class="bg-card fixed bottom-0 z-20 w-screen border-t px-4 py-4">
+	<div class="mx-auto flex max-w-xl justify-end">
+		{#if onContinue}
+			<Button onclick={handleContinue}>
+				{$t('Continue to Test')} →
+			</Button>
+		{:else}
+			<Button type="submit" form="dynamic-form" disabled={isSubmitting} class="w-full">
+				{#if isSubmitting}
+					<Spinner />
+				{/if}
+				{$t('Continue to Test')} →
+			</Button>
+		{/if}
+	</div>
+</div>

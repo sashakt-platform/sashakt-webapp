@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/svelte';
 import QuestionCard from './QuestionCard.svelte';
 import { fireEvent } from '@testing-library/svelte';
-import type { TSelection } from '$lib/types';
+import type { TSelection, TOptions } from '$lib/types';
 import {
 	mockCandidate,
 	mockSingleChoiceQuestion,
@@ -58,8 +58,7 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		expect(screen.getByText('3')).toBeInTheDocument();
-		expect(screen.getByText('OF 10')).toBeInTheDocument();
+		expect(screen.getByText('Q3')).toBeInTheDocument();
 	});
 
 	it('should render all options for single-choice question', () => {
@@ -74,7 +73,8 @@ describe('QuestionCard', () => {
 		});
 
 		mockSingleChoiceQuestion.options.forEach((option) => {
-			expect(screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))).toBeInTheDocument();
+			expect(screen.getByText(option.key)).toBeInTheDocument();
+			expect(screen.getByText(option.value)).toBeInTheDocument();
 		});
 	});
 
@@ -90,7 +90,8 @@ describe('QuestionCard', () => {
 		});
 
 		mockMultipleChoiceQuestion.options.forEach((option) => {
-			expect(screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))).toBeInTheDocument();
+			expect(screen.getByText(option.key)).toBeInTheDocument();
+			expect(screen.getByText(option.value)).toBeInTheDocument();
 		});
 	});
 
@@ -127,7 +128,7 @@ describe('QuestionCard', () => {
 
 		// Check that there's no asterisk for optional questions
 		const questionText = screen.getByText(optionalQuestion.question_text);
-		expect(questionText.parentElement?.querySelector('.text-red-500')).not.toBeInTheDocument();
+		expect(questionText.parentElement?.querySelector('.text-destructive')).not.toBeInTheDocument();
 	});
 
 	it('should display marks for the question', () => {
@@ -141,7 +142,7 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		expect(screen.getByText('1 Mark')).toBeInTheDocument();
+		expect(screen.getAllByText('+1').length).toBeGreaterThan(0);
 	});
 
 	it('should display plural marks when more than 1', () => {
@@ -155,7 +156,7 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		expect(screen.getByText('2 Marks')).toBeInTheDocument();
+		expect(screen.getAllByText('+2').length).toBeGreaterThan(0);
 	});
 
 	it('should display instructions when provided', () => {
@@ -297,7 +298,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(0);
 		});
 
 		it('should display "Unmark for review" when question is bookmarked', () => {
@@ -307,7 +308,8 @@ describe('QuestionCard', () => {
 					response: [],
 					visited: true,
 					time_spent: 0,
-					bookmarked: true
+					bookmarked: true,
+					is_reviewed: false
 				}
 			];
 
@@ -321,7 +323,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByRole('button', { name: /unmark for review/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(
+				0
+			);
 		});
 
 		it('should apply bookmark styling when question is bookmarked', () => {
@@ -331,7 +335,8 @@ describe('QuestionCard', () => {
 					response: [],
 					visited: true,
 					time_spent: 0,
-					bookmarked: true
+					bookmarked: true,
+					is_reviewed: false
 				}
 			];
 
@@ -345,9 +350,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /unmark for review/i });
-			expect(bookmarkButton).toHaveClass('border-amber-500');
-			expect(bookmarkButton).toHaveClass('bg-amber-50');
+			const bookmarkButton = screen.getAllByRole('button', { name: /unmark for review/i })[0];
+			expect(bookmarkButton).toHaveClass('border-warning');
+			expect(bookmarkButton).toHaveClass('bg-warning-subtle');
 		});
 
 		it('should not apply bookmark styling when question is not bookmarked', () => {
@@ -361,9 +366,9 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
-			expect(bookmarkButton).not.toHaveClass('border-amber-500');
-			expect(bookmarkButton).not.toHaveClass('bg-amber-50');
+			const bookmarkButton = screen.getAllByRole('button', { name: /mark for review/i })[0];
+			expect(bookmarkButton).not.toHaveClass('border-warning');
+			expect(bookmarkButton).not.toHaveClass('bg-warning-subtle');
 		});
 
 		it('should toggle bookmark state when clicked', async () => {
@@ -381,11 +386,13 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			const bookmarkButton = screen.getAllByRole('button', { name: /mark for review/i })[0];
 			await bookmarkButton.click();
 
 			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /unmark for review/i })).toBeInTheDocument();
+				expect(
+					screen.getAllByRole('button', { name: /unmark for review/i }).length
+				).toBeGreaterThan(0);
 			});
 		});
 
@@ -404,7 +411,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			const bookmarkButton = screen.getAllByRole('button', { name: /mark for review/i })[0];
 			await bookmarkButton.click();
 
 			await waitFor(() => {
@@ -425,7 +432,8 @@ describe('QuestionCard', () => {
 					response: [mockSingleChoiceQuestion.options[0].id],
 					visited: true,
 					time_spent: 10,
-					bookmarked: true
+					bookmarked: true,
+					is_reviewed: false
 				}
 			];
 
@@ -439,10 +447,10 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			// Should be bookmarked
-			expect(screen.getByRole('button', { name: /unmark for review/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /unmark for review/i }).length).toBeGreaterThan(
+				0
+			);
 
-			// And should have the answer selected
 			const radioButtons = screen.getAllByRole('radio');
 			expect(radioButtons[0]).toBeChecked();
 		});
@@ -460,7 +468,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			const bookmarkButton = screen.getAllByRole('button', { name: /mark for review/i })[0];
 			await bookmarkButton.click();
 
 			await waitFor(() => {
@@ -481,12 +489,13 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
+			const bookmarkButton = screen.getAllByRole('button', { name: /mark for review/i })[0];
 			await bookmarkButton.click();
 
 			await waitFor(() => {
-				// Should revert to "Mark for review" after failure
-				expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+				expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(
+					0
+				);
 			});
 		});
 	});
@@ -503,7 +512,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(0);
 		});
 
 		it('should show "Mark for review" button when showMarkForReview is true', () => {
@@ -518,7 +527,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByRole('button', { name: /mark for review/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /mark for review/i }).length).toBeGreaterThan(0);
 		});
 
 		it('should hide "Mark for review" button when showMarkForReview is false', () => {
@@ -574,9 +583,7 @@ describe('QuestionCard', () => {
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
 			mockSingleChoiceQuestion.options.forEach((option) => {
-				expect(
-					screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))
-				).toBeInTheDocument();
+				expect(screen.getByText(option.value)).toBeInTheDocument();
 			});
 		});
 	});
@@ -590,27 +597,27 @@ describe('QuestionCard', () => {
 		};
 
 		it('should show marks by default when showMarks prop is not provided', () => {
-			render(QuestionCard, {
+			const { container } = render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			expect(screen.getByText('1 Mark')).toBeInTheDocument();
+			expect(container.querySelector('[data-testid="marks-pill"]')).toBeInTheDocument();
 		});
 
 		it('should show marks when showMarks is true', () => {
-			render(QuestionCard, {
+			const { container } = render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps, showMarks: true }
 			});
 
-			expect(screen.getByText('1 Mark')).toBeInTheDocument();
+			expect(container.querySelector('[data-testid="marks-pill"]')).toBeInTheDocument();
 		});
 
 		it('should hide marks when showMarks is false', () => {
-			render(QuestionCard, {
+			const { container } = render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps, showMarks: false }
 			});
 
-			expect(screen.queryByText('1 Mark')).not.toBeInTheDocument();
+			expect(container.querySelector('[data-testid="marks-pill"]')).not.toBeInTheDocument();
 		});
 
 		it('should hide marking scheme tooltip when showMarks is false', () => {
@@ -618,7 +625,7 @@ describe('QuestionCard', () => {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps, showMarks: false }
 			});
 
-			expect(screen.queryByText('Marking Scheme')).not.toBeInTheDocument();
+			expect(screen.queryByText('Unanswered')).not.toBeInTheDocument();
 		});
 
 		it('should not affect other card elements when showMarks is false', () => {
@@ -628,18 +635,16 @@ describe('QuestionCard', () => {
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
 			mockSingleChoiceQuestion.options.forEach((option) => {
-				expect(
-					screen.getByText(new RegExp(`${option.key}\\. ${option.value}`))
-				).toBeInTheDocument();
+				expect(screen.getByText(option.value)).toBeInTheDocument();
 			});
 		});
 
 		it('should hide plural marks when showMarks is false', () => {
-			render(QuestionCard, {
+			const { container } = render(QuestionCard, {
 				props: { question: mockMultipleChoiceQuestion, ...defaultProps, showMarks: false }
 			});
 
-			expect(screen.queryByText('2 Marks')).not.toBeInTheDocument();
+			expect(container.querySelector('[data-testid="marks-pill"]')).not.toBeInTheDocument();
 		});
 	});
 
@@ -828,7 +833,7 @@ describe('QuestionCard', () => {
 			const textarea = screen.getByPlaceholderText(/type your answer here/i);
 			await fireEvent.input(textarea, { target: { value: '12345' } });
 
-			const charCountSpan = container.querySelector('.text-red-500');
+			const charCountSpan = container.querySelector('.text-error');
 			expect(charCountSpan).toBeInTheDocument();
 		});
 
@@ -939,7 +944,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByText('5 Marks')).toBeInTheDocument();
+			expect(screen.getAllByText('+5').length).toBeGreaterThan(0);
 		});
 	});
 
@@ -1051,8 +1056,8 @@ describe('QuestionCard', () => {
 				expect(radio).toBeDisabled();
 			});
 
-			const bookmarkButton = screen.getByRole('button', { name: /mark for review/i });
-			expect(bookmarkButton).toBeDisabled();
+			const bookmarkButtons = screen.getAllByRole('button', { name: /mark for review/i });
+			bookmarkButtons.forEach((btn) => expect(btn).toBeDisabled());
 		});
 
 		it('should not allow answer changes when question is locked', async () => {
@@ -1078,8 +1083,8 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const labels = screen.getAllByText(/[A-D]\./);
-			await labels[2].click();
+			const optionText = screen.getByText(mockSingleChoiceQuestion.options[2].value);
+			await optionText.click();
 
 			expect(fetch).not.toHaveBeenCalled();
 		});
@@ -1456,8 +1461,8 @@ describe('QuestionCard', () => {
 			});
 
 			const feedback = screen.getByTestId('numerical-answer-feedback');
-			expect(within(feedback).getByText('Correct')).toBeInTheDocument();
-			expect(within(feedback).queryByText('Wrong')).not.toBeInTheDocument();
+			expect(within(feedback).getByTestId('correct-mark')).toBeInTheDocument();
+			expect(within(feedback).queryByTestId('wrong-mark')).not.toBeInTheDocument();
 		});
 
 		it('should show Wrong feedback when integer answer does not match correct answer', () => {
@@ -1484,7 +1489,7 @@ describe('QuestionCard', () => {
 			});
 
 			expect(
-				within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+				within(screen.getByTestId('numerical-answer-feedback')).getByTestId('wrong-mark')
 			).toBeInTheDocument();
 		});
 
@@ -1567,8 +1572,8 @@ describe('QuestionCard', () => {
 				});
 
 				const feedback = screen.getByTestId('numerical-answer-feedback');
-				expect(within(feedback).getByText('Correct')).toBeInTheDocument();
-				expect(within(feedback).queryByText('Wrong')).not.toBeInTheDocument();
+				expect(within(feedback).getByTestId('correct-mark')).toBeInTheDocument();
+				expect(within(feedback).queryByTestId('wrong-mark')).not.toBeInTheDocument();
 			});
 
 			it('should show Wrong when submitted answer is non-zero and correct answer is 0', () => {
@@ -1595,7 +1600,7 @@ describe('QuestionCard', () => {
 				});
 
 				expect(
-					within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+					within(screen.getByTestId('numerical-answer-feedback')).getByTestId('wrong-mark')
 				).toBeInTheDocument();
 			});
 
@@ -1671,8 +1676,8 @@ describe('QuestionCard', () => {
 
 			// |3.16 - 3.14| = 0.02 <= 0.05, so correct
 			const feedback1 = screen.getByTestId('numerical-answer-feedback');
-			expect(within(feedback1).getByText('Correct')).toBeInTheDocument();
-			expect(within(feedback1).queryByText('Wrong')).not.toBeInTheDocument();
+			expect(within(feedback1).getByTestId('correct-mark')).toBeInTheDocument();
+			expect(within(feedback1).queryByTestId('wrong-mark')).not.toBeInTheDocument();
 		});
 
 		it('should show Wrong feedback when decimal answer is outside 0.05 tolerance', () => {
@@ -1700,7 +1705,7 @@ describe('QuestionCard', () => {
 
 			// |2.5 - 3.14| = 0.64 > 0.05, so wrong
 			expect(
-				within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+				within(screen.getByTestId('numerical-answer-feedback')).getByTestId('wrong-mark')
 			).toBeInTheDocument();
 		});
 
@@ -1728,7 +1733,7 @@ describe('QuestionCard', () => {
 			});
 
 			expect(
-				within(screen.getByTestId('numerical-answer-feedback')).getByText('Correct')
+				within(screen.getByTestId('numerical-answer-feedback')).getByTestId('correct-mark')
 			).toBeInTheDocument();
 		});
 
@@ -1835,8 +1840,8 @@ describe('QuestionCard', () => {
 
 				// |0 - 0| = 0 <= 0.5
 				const feedback = screen.getByTestId('numerical-answer-feedback');
-				expect(within(feedback).getByText('Correct')).toBeInTheDocument();
-				expect(within(feedback).queryByText('Wrong')).not.toBeInTheDocument();
+				expect(within(feedback).getByTestId('correct-mark')).toBeInTheDocument();
+				expect(within(feedback).queryByTestId('wrong-mark')).not.toBeInTheDocument();
 			});
 
 			it('should show Correct when decimal answer is within 0.05 tolerance of 0', () => {
@@ -1864,7 +1869,7 @@ describe('QuestionCard', () => {
 
 				// |0.03 - 0| = 0.03 <= 0.05
 				expect(
-					within(screen.getByTestId('numerical-answer-feedback')).getByText('Correct')
+					within(screen.getByTestId('numerical-answer-feedback')).getByTestId('correct-mark')
 				).toBeInTheDocument();
 			});
 
@@ -1893,7 +1898,7 @@ describe('QuestionCard', () => {
 
 				// |0.6 - 0| = 0.6 > 0.05
 				expect(
-					within(screen.getByTestId('numerical-answer-feedback')).getByText('Wrong')
+					within(screen.getByTestId('numerical-answer-feedback')).getByTestId('wrong-mark')
 				).toBeInTheDocument();
 			});
 
@@ -2119,22 +2124,24 @@ describe('QuestionCard', () => {
 			selectedQuestions: []
 		};
 
-		it('should render an info icon next to the marks text', () => {
+		it('should render a chevron icon in the marks trigger', () => {
 			const { container } = render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			const marksTrigger = container.querySelector('.cursor-help');
-			expect(marksTrigger).toBeInTheDocument();
-			expect(marksTrigger?.querySelector('svg')).toBeInTheDocument();
+			const marksPill = container.querySelector('[data-testid="marks-pill"]');
+			expect(marksPill).toBeInTheDocument();
+			expect(marksPill?.querySelector('svg')).toBeInTheDocument();
 		});
 
-		it('should render the tooltip with marking scheme heading', () => {
+		it('should render the dropdown with correct/incorrect/unanswered rows', () => {
 			render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			expect(screen.getByText('Marking Scheme')).toBeInTheDocument();
+			expect(screen.getByText('Correct')).toBeInTheDocument();
+			expect(screen.getByText('Incorrect')).toBeInTheDocument();
+			expect(screen.getByText('Unanswered')).toBeInTheDocument();
 		});
 
 		it('should display correct marks value with + prefix', () => {
@@ -2142,7 +2149,7 @@ describe('QuestionCard', () => {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			expect(screen.getByText('+1')).toBeInTheDocument();
+			expect(screen.getAllByText('+1').length).toBeGreaterThan(0);
 		});
 
 		it('should display wrong marks value in red when negative', () => {
@@ -2156,7 +2163,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			const wrongValueSpan = container.querySelector('.text-red-600');
+			const wrongValueSpan = container.querySelector('.text-error');
 			expect(wrongValueSpan).toBeInTheDocument();
 			expect(wrongValueSpan?.textContent).toBe('-1');
 		});
@@ -2166,16 +2173,16 @@ describe('QuestionCard', () => {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			const wrongRow = screen.getByText('Wrong').closest('div');
-			expect(wrongRow?.querySelector('.text-red-600')).not.toBeInTheDocument();
+			const incorrectRow = screen.getByText('Incorrect').closest('div');
+			expect(incorrectRow?.querySelector('.text-red-600')).not.toBeInTheDocument();
 		});
 
-		it('should display skipped marks value', () => {
+		it('should display unanswered/skipped marks value', () => {
 			render(QuestionCard, {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			expect(screen.getByText('Skipped')).toBeInTheDocument();
+			expect(screen.getByText('Unanswered')).toBeInTheDocument();
 		});
 
 		it('should show partial marks section for multi-choice question with partial scheme', () => {
@@ -2183,7 +2190,7 @@ describe('QuestionCard', () => {
 				props: { question: mockMultiChoiceWithPartialMarks, ...defaultProps }
 			});
 
-			expect(screen.getByText('Partial Marks')).toBeInTheDocument();
+			expect(screen.getByText(/Partial marks awarded/i)).toBeInTheDocument();
 		});
 
 		it('should not show partial marks section for single-choice question', () => {
@@ -2191,7 +2198,7 @@ describe('QuestionCard', () => {
 				props: { question: mockSingleChoiceQuestion, ...defaultProps }
 			});
 
-			expect(screen.queryByText('Partial Marks')).not.toBeInTheDocument();
+			expect(screen.queryByText(/Partial marks awarded/i)).not.toBeInTheDocument();
 		});
 
 		it('should not show partial marks section for multi-choice question without partial scheme', () => {
@@ -2204,7 +2211,7 @@ describe('QuestionCard', () => {
 				props: { question: questionNoPartial, ...defaultProps }
 			});
 
-			expect(screen.queryByText('Partial Marks')).not.toBeInTheDocument();
+			expect(screen.queryByText(/Partial marks awarded/i)).not.toBeInTheDocument();
 		});
 
 		it('should display each partial mark rule with correct selected count and marks', () => {
@@ -2915,6 +2922,194 @@ describe('QuestionCard', () => {
 				input.dispatchEvent(event);
 				expect(event.defaultPrevented).toBe(false);
 			});
+		});
+	});
+
+	describe('result badge after feedback is viewed', () => {
+		const singleOptions = mockSingleChoiceQuestion.options as TOptions[];
+		const multiOptions = mockMultipleChoiceQuestion.options as TOptions[];
+
+		const lockedCorrect = [
+			{
+				question_revision_id: mockSingleChoiceQuestion.id,
+				response: [singleOptions[1].id],
+				visited: true,
+				time_spent: 10,
+				bookmarked: false,
+				is_reviewed: true,
+				correct_answer: [singleOptions[1].id]
+			}
+		];
+
+		const lockedIncorrect = [
+			{
+				question_revision_id: mockSingleChoiceQuestion.id,
+				response: [singleOptions[0].id],
+				visited: true,
+				time_spent: 10,
+				bookmarked: false,
+				is_reviewed: true,
+				correct_answer: [singleOptions[1].id]
+			}
+		];
+
+		it('shows Correct badge when showFeedback is true and answer is correct', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedCorrect,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
+		});
+
+		it('shows Incorrect badge when showFeedback is true and answer is wrong', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedIncorrect,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
+		});
+
+		it('does not show result badge when showFeedback is false', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedCorrect,
+					showFeedback: false
+				}
+			});
+
+			expect(screen.queryByText(/^Correct:/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/^Incorrect:/)).not.toBeInTheDocument();
+		});
+
+		it('does not show result badge when feedback has not been viewed yet', () => {
+			const notYetViewed = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [singleOptions[1].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: notYetViewed,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.queryByText(/^Correct:/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/^Incorrect:/)).not.toBeInTheDocument();
+		});
+
+		it('shows Correct badge for multi-choice when all correct options selected', () => {
+			const lockedMultiCorrect = [
+				{
+					question_revision_id: mockMultipleChoiceQuestion.id,
+					response: [multiOptions[0].id, multiOptions[1].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: true,
+					correct_answer: [multiOptions[0].id, multiOptions[1].id]
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockMultipleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedMultiCorrect,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
+		});
+
+		it('hides Mark for Review button when showFeedback is true and feedback is viewed', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedCorrect,
+					showFeedback: true,
+					showMarkForReview: true
+				}
+			});
+
+			expect(screen.queryByRole('button', { name: /mark for review/i })).not.toBeInTheDocument();
+		});
+
+		it('shows Mark for Review button when showFeedback is true but feedback not yet viewed', () => {
+			const answeredNotViewed = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [singleOptions[0].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredNotViewed,
+					showFeedback: true,
+					showMarkForReview: true
+				}
+			});
+
+			expect(screen.getAllByRole('button', { name: /mark for review/i })).toHaveLength(2);
+		});
+
+		it('shows Mark for Review button normally when showFeedback is false even if locked', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedCorrect,
+					showFeedback: false,
+					showMarkForReview: true
+				}
+			});
+
+			expect(screen.getAllByRole('button', { name: /mark for review/i })).toHaveLength(2);
 		});
 	});
 });

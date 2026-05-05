@@ -6,7 +6,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { t } from 'svelte-i18n';
 	import CheckIcon from '@lucide/svelte/icons/check';
-	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import { cn } from '$lib/utils.js';
 
 	interface Props {
@@ -153,18 +153,18 @@
 			<Button
 				{...props}
 				variant="outline"
-				class="w-full justify-between font-normal"
+				class="border-input bg-card text-foreground h-12 w-full justify-between rounded-full border px-4 font-normal"
 				role="combobox"
 				aria-expanded={open}
 				disabled={!canSearch}
 			>
-				<span class="truncate">
+				<span class={cn('truncate', !selectedLabel && 'text-muted-foreground')}>
 					{selectedLabel || field.placeholder || $t('Type to search...')}
 				</span>
 				{#if isLoading}
 					<Spinner class="ml-2 size-4 shrink-0" />
 				{:else}
-					<ChevronsUpDownIcon class="ml-2 size-4 shrink-0 opacity-50" />
+					<ChevronDownIcon class="text-muted-foreground ml-2 size-4 shrink-0" />
 				{/if}
 			</Button>
 		{/snippet}

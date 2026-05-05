@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, waitFor } from '@testing-library/svelte';
 import QuestionPaletteModal from './QuestionPaletteModal.svelte';
 import type { TQuestion, TSelection } from '$lib/types';
 
@@ -49,59 +49,25 @@ describe('QuestionPaletteModal', () => {
 		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 	});
 
-	it('should display Question palette tab', () => {
+	it('should display Question Palette heading', () => {
 		render(QuestionPaletteModal, { props: defaultProps });
 
-		expect(screen.getByRole('tab', { name: /question palette/i })).toBeInTheDocument();
+		const headings = screen.getAllByText('Question Palette');
+		expect(headings.length).toBeGreaterThan(0);
 	});
 
-	it('should display Instructions tab', () => {
+	it('should display a close button', () => {
 		render(QuestionPaletteModal, { props: defaultProps });
 
-		expect(screen.getByRole('tab', { name: /instructions/i })).toBeInTheDocument();
+		const closeButtons = screen.getAllByRole('button', { name: /close/i });
+		expect(closeButtons.length).toBeGreaterThan(0);
 	});
 
-	it('should show palette tab as active by default', () => {
-		render(QuestionPaletteModal, { props: defaultProps });
-
-		const paletteTab = screen.getByRole('tab', { name: /question palette/i });
-		expect(paletteTab).toHaveAttribute('aria-selected', 'true');
-	});
-
-	it('should show question buttons when palette tab is active', () => {
+	it('should show question buttons', () => {
 		render(QuestionPaletteModal, { props: defaultProps });
 
 		expect(screen.getByRole('button', { name: 'Go to question 1' })).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: 'Go to question 2' })).toBeInTheDocument();
-	});
-
-	it('should switch to instructions tab when clicked', async () => {
-		render(QuestionPaletteModal, { props: defaultProps });
-
-		const instructionsTab = screen.getByRole('tab', { name: /instructions/i });
-		await instructionsTab.click();
-
-		expect(instructionsTab).toHaveAttribute('aria-selected', 'true');
-	});
-
-	it('should display instructions content when instructions tab is active', async () => {
-		render(QuestionPaletteModal, { props: defaultProps });
-
-		const instructionsTab = screen.getByRole('tab', { name: /instructions/i });
-		await instructionsTab.click();
-
-		expect(screen.getByText('Test instructions')).toBeInTheDocument();
-	});
-
-	it('should display no instructions message when instructions are undefined', async () => {
-		render(QuestionPaletteModal, {
-			props: { ...defaultProps, instructions: undefined }
-		});
-
-		const instructionsTab = screen.getByRole('tab', { name: /instructions/i });
-		await instructionsTab.click();
-
-		expect(screen.getByText('No instructions available.')).toBeInTheDocument();
 	});
 
 	it('should call onNavigate when question is clicked', async () => {
@@ -116,33 +82,19 @@ describe('QuestionPaletteModal', () => {
 		expect(onNavigate).toHaveBeenCalledWith(1);
 	});
 
-	it('should have proper tab accessibility attributes', () => {
-		render(QuestionPaletteModal, { props: defaultProps });
+	it('should close modal after navigating to a question', async () => {
+		const onNavigate = vi.fn();
+		render(QuestionPaletteModal, {
+			props: { ...defaultProps, onNavigate, open: true }
+		});
 
-		const tablist = screen.getByRole('tablist');
-		expect(tablist).toHaveAttribute('aria-label', 'Question palette tabs');
+		const questionButton = screen.getByRole('button', { name: 'Go to question 1' });
+		await questionButton.click();
 
-		const paletteTab = screen.getByRole('tab', { name: /question palette/i });
-		expect(paletteTab).toHaveAttribute('aria-controls', 'palette-panel');
-
-		const instructionsTab = screen.getByRole('tab', { name: /instructions/i });
-		expect(instructionsTab).toHaveAttribute('aria-controls', 'instructions-panel');
-	});
-
-	it('should apply active tab styling', () => {
-		render(QuestionPaletteModal, { props: defaultProps });
-
-		const paletteTab = screen.getByRole('tab', { name: /question palette/i });
-		expect(paletteTab).toHaveClass('bg-blue-100');
-		expect(paletteTab).toHaveClass('font-bold');
-	});
-
-	it('should apply inactive tab styling', () => {
-		render(QuestionPaletteModal, { props: defaultProps });
-
-		const instructionsTab = screen.getByRole('tab', { name: /instructions/i });
-		expect(instructionsTab).toHaveClass('bg-gray-100');
-		expect(instructionsTab).toHaveClass('font-medium');
+		expect(onNavigate).toHaveBeenCalledWith(0);
+		await waitFor(() => {
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+		});
 	});
 
 	it('should render many questions with scrollable grid', () => {
@@ -152,8 +104,15 @@ describe('QuestionPaletteModal', () => {
 			props: { ...defaultProps, questions }
 		});
 
-		// All 30 questions should be rendered
 		expect(screen.getByRole('button', { name: 'Go to question 1' })).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: 'Go to question 30' })).toBeInTheDocument();
+	});
+
+	it('should show legend labels', () => {
+		render(QuestionPaletteModal, { props: defaultProps });
+
+		expect(screen.getByText('Unanswered')).toBeInTheDocument();
+		expect(screen.getByText('Answered')).toBeInTheDocument();
+		expect(screen.getByText('Mandatory')).toBeInTheDocument();
 	});
 });

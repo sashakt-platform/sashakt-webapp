@@ -32,7 +32,13 @@ describe('GET /api/entity', () => {
 		);
 
 		const response = await GET(
-			createRequestEvent(createMockUrl({ name: 'ent', entity_type_id: '7', test_id: '42' }))
+			createRequestEvent(
+				createMockUrl({
+					name: 'ent',
+					entity_type_id: '7',
+					test_link: 'abc-123-uuid'
+				})
+			)
 		);
 		const data = await response.json();
 
@@ -45,7 +51,8 @@ describe('GET /api/entity', () => {
 		const fetchUrl = vi.mocked(fetch).mock.calls[0][0] as string;
 		expect(fetchUrl).toContain('name=ent');
 		expect(fetchUrl).toContain('entity_type_id=7');
-		expect(fetchUrl).toContain('test_id=42');
+		expect(fetchUrl).toContain('test_link=abc-123-uuid');
+		expect(fetchUrl).not.toContain('test_id=');
 		expect(fetchUrl).toContain('page=1');
 		expect(fetchUrl).toContain('size=50');
 	});
@@ -73,7 +80,7 @@ describe('GET /api/entity', () => {
 		const fetchUrl = vi.mocked(fetch).mock.calls[0][0] as string;
 		expect(fetchUrl).toContain('name=test');
 		expect(fetchUrl).not.toContain('entity_type_id');
-		expect(fetchUrl).not.toContain('test_id');
+		expect(fetchUrl).not.toContain('test_link');
 	});
 
 	it('should handle backend response with missing items key', async () => {
@@ -87,14 +94,27 @@ describe('GET /api/entity', () => {
 
 	it('should return empty items with backend status on non-ok response', async () => {
 		vi.mocked(fetch).mockResolvedValueOnce(
-			createMockResponse({}, { ok: false, status: 404 }) as unknown as Response
+			createMockResponse({}, { ok: false, status: 500 }) as unknown as Response
 		);
 
 		const response = await GET(createRequestEvent(createMockUrl({ name: 'test' })));
 		const data = await response.json();
 
+		expect(response.status).toBe(500);
+		expect(data.items).toEqual([]);
+	});
+
+	it('should mark 404 as test_link_not_found so the client can show a link-invalid message', async () => {
+		vi.mocked(fetch).mockResolvedValueOnce(
+			createMockResponse({}, { ok: false, status: 404 }) as unknown as Response
+		);
+
+		const response = await GET(createRequestEvent(createMockUrl({ test_link: 'bad-uuid' })));
+		const data = await response.json();
+
 		expect(response.status).toBe(404);
 		expect(data.items).toEqual([]);
+		expect(data.error).toBe('test_link_not_found');
 	});
 
 	it('should return 500 on fetch exception', async () => {

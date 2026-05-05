@@ -6,17 +6,17 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { t } from 'svelte-i18n';
 	import CheckIcon from '@lucide/svelte/icons/check';
-	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import { cn } from '$lib/utils.js';
 
 	interface Props {
 		field: TFormField;
 		value: unknown;
 		onchange: (value: number) => void;
-		testId: number;
+		testLink: string;
 	}
 
-	let { field, value, onchange, testId }: Props = $props();
+	let { field, value, onchange, testLink }: Props = $props();
 
 	type EntityResult = {
 		id: number;
@@ -27,6 +27,7 @@
 	};
 
 	let searchResults = $state<Array<EntityResult>>([]);
+	let linkInvalid = $state(false);
 
 	function displayLabel(result: EntityResult): string {
 		const location = result.block?.name ?? result.district?.name ?? result.state?.name;
@@ -54,7 +55,7 @@
 
 		isLoading = true;
 		try {
-			let url = `/api/entity?test_id=${testId}`;
+			let url = `/api/entity?test_link=${encodeURIComponent(testLink)}`;
 			if (query) url += `&name=${encodeURIComponent(query)}`;
 			if (field.entity_type_id) url += `&entity_type_id=${field.entity_type_id}`;
 
@@ -62,9 +63,11 @@
 				signal: abortController.signal
 			});
 			if (response.ok) {
+				linkInvalid = false;
 				const data = await response.json();
 				searchResults = data.items || [];
 			} else {
+				if (response.status === 404) linkInvalid = true;
 				searchResults = [];
 			}
 		} catch (err) {
@@ -134,17 +137,17 @@
 			<Button
 				{...props}
 				variant="outline"
-				class="w-full justify-between font-normal"
+				class="border-input bg-card text-foreground h-12 w-full justify-between rounded-full border px-4 font-normal"
 				role="combobox"
 				aria-expanded={open}
 			>
-				<span class="truncate">
+				<span class={cn('truncate', !selectedLabel && 'text-muted-foreground')}>
 					{selectedLabel || field.placeholder || $t('Type to search...')}
 				</span>
 				{#if isLoading}
 					<Spinner class="ml-2 size-4 shrink-0" />
 				{:else}
-					<ChevronsUpDownIcon class="ml-2 size-4 shrink-0 opacity-50" />
+					<ChevronDownIcon class="text-muted-foreground ml-2 size-4 shrink-0" />
 				{/if}
 			</Button>
 		{/snippet}
@@ -161,6 +164,8 @@
 					<div class="flex items-center justify-center p-4">
 						<Spinner class="size-4" />
 					</div>
+				{:else if linkInvalid}
+					<Command.Empty>{$t('This link is invalid or expired')}</Command.Empty>
 				{:else if searchResults.length === 0}
 					<Command.Empty>{$t('No results found')}</Command.Empty>
 				{:else}

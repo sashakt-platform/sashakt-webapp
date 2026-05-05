@@ -1,11 +1,13 @@
 <script lang="ts">
-	import CircleHelp from '@lucide/svelte/icons/circle-help';
+	import Info from '@lucide/svelte/icons/info';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { t } from 'svelte-i18n';
 	let {
-		instructions
+		instructions,
+		iconOnly = false
 	}: {
 		instructions: string | undefined;
+		iconOnly?: boolean;
 	} = $props();
 
 	let open = $state(false);
@@ -13,13 +15,23 @@
 
 <Dialog.Root bind:open>
 	<Dialog.Trigger>
-		<button
-			type="button"
-			class="flex items-center gap-2 rounded-full border border-gray-400 bg-blue-50 px-4 py-2 text-sm font-medium text-gray-700 transition-colors"
-		>
-			<CircleHelp class="h-5 w-5 text-teal-600" />
-			{$t('Instructions')}
-		</button>
+		{#if iconOnly}
+			<button
+				type="button"
+				class="border-border flex h-9 w-9 items-center justify-center rounded-lg border"
+				aria-label={$t('Instructions')}
+			>
+				<Info class="text-muted-foreground h-5 w-5" />
+			</button>
+		{:else}
+			<button
+				type="button"
+				class="border-border bg-card text-card-foreground flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+			>
+				<Info class="text-muted-foreground h-5 w-5" />
+				{$t('Instructions')}
+			</button>
+		{/if}
 	</Dialog.Trigger>
 	<Dialog.Content class="max-h-[80vh] w-[90vw] max-w-lg overflow-hidden rounded-xl">
 		<Dialog.Header>

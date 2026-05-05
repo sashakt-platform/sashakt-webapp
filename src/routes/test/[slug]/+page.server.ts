@@ -101,13 +101,12 @@ export const actions = {
 		const deviceInfo = formData.get('deviceInfo') as string;
 		const formResponsesStr = formData.get('formResponses') as string;
 		const omrMode = formData.get('omrMode') as string;
-
 		const requestBody: {
-			test_id: number;
+			test_link_uuid: string;
 			device_info: unknown;
 			form_responses?: Record<string, unknown>;
 		} = {
-			test_id: testData.id,
+			test_link_uuid: testData.link,
 			device_info: deviceInfo
 		};
 
