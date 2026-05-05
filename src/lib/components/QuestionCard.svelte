@@ -608,10 +608,8 @@
 									<span class="text-success font-semibold">+{scheme.correct}</span>
 								</div>
 								<div class="flex justify-between gap-4">
-									<span class="font-semibold {scheme.wrong < 0 ? 'text-error' : 'text-foreground'}"
-										>{$t('Incorrect')}</span
-									>
-									<span class="font-semibold {scheme.wrong < 0 ? 'text-error' : 'text-foreground'}"
+									<span class="text-error font-semibold">{$t('Incorrect')}</span>
+									<span class="text-error font-semibold"
 										>{scheme.wrong > 0 ? `+${scheme.wrong}` : scheme.wrong}</span
 									>
 								</div>

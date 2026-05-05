@@ -38,7 +38,7 @@
 			{/if}
 		</div>
 
-		<h2 class="text-primary scroll-m-20 font-extrabold tracking-tight uppercase">Sashakt</h2>
+		<h2 class="text-primary scroll-m-20 text-center font-extrabold tracking-tight uppercase">Sashakt</h2>
 
 		<div class="flex items-center justify-end gap-2">
 			{#if navState.active}

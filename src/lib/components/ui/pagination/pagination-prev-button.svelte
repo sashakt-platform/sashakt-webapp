@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Pagination as PaginationPrimitive } from 'bits-ui';
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import { buttonVariants } from '$lib/components/ui/button/index.js';
 	import { cn } from '$lib/utils.js';
 	import { t } from 'svelte-i18n';
@@ -13,7 +13,7 @@
 </script>
 
 {#snippet Fallback()}
-	<ChevronLeft class="size-4" />
+	<ArrowLeft class="size-4" />
 	<span>{$t('Previous')}</span>
 {/snippet}
 

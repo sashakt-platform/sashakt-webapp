@@ -179,7 +179,7 @@
 						{/each}
 					</div>
 					<Pagination.Content
-						class="border-border bg-card fixed inset-x-0 bottom-0 z-10 grid w-full grid-cols-3 items-center border-t px-8 py-6"
+						class="border-border bg-card fixed inset-x-0 bottom-0 z-10 grid w-full grid-cols-[auto_1fr_auto] items-center border-t px-8 py-6"
 					>
 						<div class="flex justify-start">
 							<Pagination.PrevButton />
