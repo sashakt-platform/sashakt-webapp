@@ -99,7 +99,10 @@ describe('POST /test/[slug]/api/timer', () => {
 	it('returns backend error details when sync fails', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 		vi.mocked(fetch).mockResolvedValueOnce(
-			createMockResponse({ detail: 'Test already submitted' }, { ok: false, status: 400 }) as unknown as Response
+			createMockResponse(
+				{ detail: 'Test already submitted' },
+				{ ok: false, status: 400 }
+			) as unknown as Response
 		);
 
 		const response = await POST({
@@ -111,6 +114,22 @@ describe('POST /test/[slug]/api/timer', () => {
 		expect(await response.json()).toEqual({
 			success: false,
 			error: 'Test already submitted'
+		});
+	});
+
+	it('returns 500 when backend timer sync throws', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch).mockRejectedValueOnce(new Error('Network unavailable'));
+
+		const response = await POST({
+			request: createMockRequest({ candidate: mockCandidate, event: 'heartbeat' }),
+			cookies: createMockCookies()
+		} as any);
+
+		expect(response.status).toBe(500);
+		expect(await response.json()).toEqual({
+			success: false,
+			error: 'Network unavailable'
 		});
 	});
 });

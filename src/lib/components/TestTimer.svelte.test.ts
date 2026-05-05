@@ -151,9 +151,12 @@ describe('TestTimer', () => {
 		});
 
 		await vi.advanceTimersByTimeAsync(15000);
-		expect(fetch).toHaveBeenLastCalledWith('/test/sample-test/api/timer', expect.objectContaining({
-			body: JSON.stringify({ candidate: mockCandidate, event: 'heartbeat' })
-		}));
+		expect(fetch).toHaveBeenLastCalledWith(
+			'/test/sample-test/api/timer',
+			expect.objectContaining({
+				body: JSON.stringify({ candidate: mockCandidate, event: 'heartbeat' })
+			})
+		);
 	});
 
 	it('does not increase the displayed timer when server returns a higher time_left', async () => {
@@ -173,6 +176,47 @@ describe('TestTimer', () => {
 		await Promise.resolve();
 
 		expect(screen.getByText('00:02:00')).toBeInTheDocument();
+	});
+
+	it('keeps local countdown when timer sync fails', async () => {
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse(
+				{ error: 'Failed to sync timer' },
+				{ ok: false, status: 500 }
+			) as unknown as Response
+		);
+
+		render(TestTimer, {
+			props: {
+				timeLeft: 120,
+				candidate: mockCandidate,
+				pauseTimerWhenInactive: true
+			}
+		});
+
+		await Promise.resolve();
+		await vi.advanceTimersByTimeAsync(1000);
+
+		expect(screen.getByText('00:01:59')).toBeInTheDocument();
+	});
+
+	it('ignores timer sync responses without numeric time_left', async () => {
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ time_left: null }) as unknown as Response
+		);
+
+		render(TestTimer, {
+			props: {
+				timeLeft: 120,
+				candidate: mockCandidate,
+				pauseTimerWhenInactive: true
+			}
+		});
+
+		await Promise.resolve();
+		await vi.advanceTimersByTimeAsync(1000);
+
+		expect(screen.getByText('00:01:59')).toBeInTheDocument();
 	});
 
 	it('ignores stale timer sync responses that resolve after a newer sync', async () => {
