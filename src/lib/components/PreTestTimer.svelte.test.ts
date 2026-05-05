@@ -30,34 +30,63 @@ describe('PreTestTimer formatTime logic', () => {
 		expect(formatTime(600)).toBe('10:00');
 	});
 
-	it('should handle times over an hour (modulo 3600)', () => {
-		expect(formatTime(3665)).toBe('01:05'); // 1 hour, 1 min, 5 sec -> shows 01:05
+	it('wraps hours via modulo 3600', () => {
+		expect(formatTime(3665)).toBe('01:05');
 	});
 });
 
-describe('PreTestTimer time threshold logic', () => {
-	// Test the logic for determining which UI to show
-	const isTestNotStarted = (timeLeft: number) => timeLeft >= 10 * 60;
-	const shouldShowStartButton = (timeLeft: number) => timeLeft <= 10;
+describe('PreTestTimer notStarted threshold (timeLeft >= 10 * 60)', () => {
+	const notStarted = (timeLeft: number) => timeLeft >= 10 * 60;
 
-	it('should show "not started" when time is >= 10 minutes', () => {
-		expect(isTestNotStarted(600)).toBe(true);
-		expect(isTestNotStarted(700)).toBe(true);
+	it('is true at exactly 600 seconds (10 min)', () => {
+		expect(notStarted(600)).toBe(true);
 	});
 
-	it('should show countdown when time is < 10 minutes', () => {
-		expect(isTestNotStarted(599)).toBe(false);
-		expect(isTestNotStarted(300)).toBe(false);
+	it('is true above 600 seconds', () => {
+		expect(notStarted(601)).toBe(true);
+		expect(notStarted(3600)).toBe(true);
 	});
 
-	it('should show start button when <= 10 seconds', () => {
-		expect(shouldShowStartButton(10)).toBe(true);
-		expect(shouldShowStartButton(5)).toBe(true);
-		expect(shouldShowStartButton(0)).toBe(true);
+	it('is false at 599 seconds', () => {
+		expect(notStarted(599)).toBe(false);
 	});
 
-	it('should show "okay got it" button when > 10 seconds', () => {
-		expect(shouldShowStartButton(11)).toBe(false);
-		expect(shouldShowStartButton(300)).toBe(false);
+	it('is false below 10 minutes', () => {
+		expect(notStarted(300)).toBe(false);
+		expect(notStarted(0)).toBe(false);
+	});
+});
+
+describe('PreTestTimer countdown UI state', () => {
+	const showStartButton = (timeLeft: number) => timeLeft <= 10;
+
+	it('shows Start Test at exactly 10 seconds', () => {
+		expect(showStartButton(10)).toBe(true);
+	});
+
+	it('shows Start Test below 10 seconds', () => {
+		expect(showStartButton(5)).toBe(true);
+		expect(showStartButton(0)).toBe(true);
+	});
+
+	it('shows Got it above 10 seconds', () => {
+		expect(showStartButton(11)).toBe(false);
+		expect(showStartButton(300)).toBe(false);
+	});
+});
+
+describe('PreTestTimer SVG stroke dash offset', () => {
+	const strokeDashOffset = (timeLeft: number) => (timeLeft / (10 * 60)) * 402 - 402;
+
+	it('is 0 when countdown is full (10 min left)', () => {
+		expect(strokeDashOffset(600)).toBeCloseTo(0);
+	});
+
+	it('is -402 when countdown is empty (0 seconds left)', () => {
+		expect(strokeDashOffset(0)).toBeCloseTo(-402);
+	});
+
+	it('is -201 at halfway (5 min left)', () => {
+		expect(strokeDashOffset(300)).toBeCloseTo(-201);
 	});
 });
