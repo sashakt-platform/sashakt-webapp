@@ -2215,9 +2215,11 @@ describe('QuestionCard', () => {
 			render(QuestionCard, {
 				props: { question: mockMatrixRatingQuestion, ...defaultProps }
 			});
+			screen.logTestingPlaygroundURL();
 
 			mockMatrixRatingOptions.columns.items.forEach((col) => {
-				expect(screen.getByText(`${col.key} – ${col.value}`)).toBeInTheDocument();
+				expect(screen.getByText(`(${col.key})`)).toBeInTheDocument();
+				expect(screen.getByText(`${col.value}`)).toBeInTheDocument();
 			});
 		});
 

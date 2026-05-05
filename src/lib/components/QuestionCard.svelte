@@ -947,16 +947,17 @@
 			</div>
 		{:else if question.question_type === question_type_enum.MATRIXRATING}
 			{@const matrixOpts = question.options as unknown as TMatrixOptions}
-			<div class="overflow-x-auto">
+			<div class="overflow-x-auto rounded-lg">
 				<table class="border-border min-w-full border-collapse border text-sm">
 					<thead>
-						<tr class="border-border border-b">
-							<th class="bg-muted text-foreground min-w-55 px-4 py-3 text-left font-semibold">
+						<tr class="border-border h-16 border-b">
+							<th class="bg-muted text-muted-foreground min-w-55 px-5 text-left font-bold">
 								{matrixOpts.rows.label}
 							</th>
 							{#each matrixOpts.columns.items as col (col.id)}
-								<th class="bg-muted text-foreground px-4 py-3 text-center font-semibold">
-									{col.key} – {col.value}
+								<th class="bg-muted text-muted-foreground px-5 text-center font-bold">
+									<span class="block">{col.value}</span>
+									<span class="block">({col.key})</span>
 								</th>
 							{/each}
 						</tr>
