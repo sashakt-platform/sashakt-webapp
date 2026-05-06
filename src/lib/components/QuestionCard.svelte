@@ -82,7 +82,7 @@
 	});
 
 	const feedbackResult = $derived(
-		isLocked
+		isLocked && currentSelection?.correct_answer != null
 			? getQuestionResult(question.question_type, currentSelection?.response, currentSelection?.correct_answer)
 			: null
 	);
