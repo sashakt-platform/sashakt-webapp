@@ -221,12 +221,10 @@ describe('ViewFeedback', () => {
 				props: { feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
-			const labels = container.querySelectorAll('label');
-
-			const optionB = Array.from(labels).find((l) => l.textContent?.includes('4'));
+			const optionB = container.querySelector('label[for="1-B"]');
 			expect(optionB?.className).toContain('bg-success-subtle');
 
-			const redLabels = Array.from(labels).filter((l) => l.className.includes('bg-error-subtle'));
+			const redLabels = container.querySelectorAll('[class*="bg-error-subtle"]');
 			expect(redLabels).toHaveLength(0);
 		});
 
