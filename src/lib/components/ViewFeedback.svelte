@@ -57,9 +57,9 @@
 
 {#snippet showCorrectWrongMark(answerStatus: string)}
 	{#if answerStatus === 'correct'}
-		<Check size={16} class="text-success" />
+		<Check size={18} class="text-success" />
 	{:else if answerStatus === 'wrong'}
-		<X size={16} class="text-error" />
+		<X size={18} class="text-error" />
 	{/if}
 {/snippet}
 
@@ -153,7 +153,7 @@
 									<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
 								{/if}
 							</div>
-							{#if !isCorrect}
+							{#if isCorrect === false}
 								<div
 									class="border-success bg-success-subtle text-success mt-4 flex flex-row rounded-xl border px-4 py-4"
 								>
@@ -177,17 +177,17 @@
 										item.fb.correct_answer
 									)}
 									{@const labelClass = correct
-										? 'bg-success-subtle border-success '
+										? 'bg-success-subtle border-success'
 										: submitted
-											? 'bg-error-subtle border-error'
+											? 'bg-error-subtle border-error border-t-error-bold'
 											: 'border-border bg-card'}
 									{@const itemClass = correct
-										? 'border-success text-success'
+										? 'border-success text-success disabled:opacity-100'
 										: submitted
-											? 'border-error text-error'
+											? 'border-error text-error disabled:opacity-100'
 											: ''}
 									<div class="flex items-start gap-3">
-										<span class=" mt-3 w-5 shrink-0 text-sm font-medium">{option.key}</span>
+										<span class="mt-3 w-5 shrink-0 text-sm font-medium">{option.key}</span>
 										<Label
 											for={uid}
 											class={cn(
@@ -202,7 +202,12 @@
 													disabled
 													class={itemClass}
 												/>
-												<span class="text-foreground flex-1 text-sm">{option.value}</span>
+												<span
+													class={cn(
+														'text-foreground flex-1 text-sm',
+														(correct || submitted) && 'font-semibold'
+													)}>{option.value}</span
+												>
 												{#if status === 'correct'}
 													{@render showCorrectWrongMark('correct')}
 												{:else if status === 'wrong'}
@@ -230,7 +235,7 @@
 									{@const labelClass = correct
 										? 'bg-success-subtle border-success'
 										: submitted
-											? 'bg-error-subtle border-error'
+											? 'bg-error-subtle border-error border-t-error-bold'
 											: 'border-border bg-card'}
 									<div class="flex items-start gap-3">
 										<span class="text-muted-foreground mt-3 w-5 shrink-0 text-sm font-medium"
@@ -249,6 +254,7 @@
 													checked={submitted}
 													disabled
 													class={cn(
+														' disabled:opacity-100 ',
 														correct &&
 															submitted &&
 															'border-success data-[state=checked]:bg-success',
@@ -256,7 +262,12 @@
 														correct && !submitted && 'border-success'
 													)}
 												/>
-												<span class="text-foreground flex-1 text-sm">{option.value}</span>
+												<span
+													class={cn(
+														'text-foreground flex-1 text-sm',
+														(correct || submitted) && 'font-semibold'
+													)}>{option.value}</span
+												>
 												{#if status === 'wrong'}
 													{@render showCorrectWrongMark('wrong')}
 												{/if}
@@ -272,7 +283,7 @@
 					</Card.Content>
 				</Card.Root>
 			{:else}
-				<p class="text-center text-sm text-red-500">
+				<p class="text-error text-center text-sm">
 					{$t('Question not found for feedback #{number}', { values: { number: idx + 1 } })}
 				</p>
 			{/if}
