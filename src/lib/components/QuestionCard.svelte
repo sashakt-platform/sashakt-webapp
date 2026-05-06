@@ -23,7 +23,7 @@
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { cn } from '$lib/utils';
-	import { isNumericalAnswerCorrect, getQuestionResult } from '$lib/helpers/feedbackHelpers';
+	import { isNumericalAnswerCorrect, getQuestionResult, GRADABLE_QUESTION_TYPES } from '$lib/helpers/feedbackHelpers';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
 	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
@@ -81,14 +81,13 @@
 		);
 	});
 
-	const getFeedbackResult = $derived(() => {
-		if (!isLocked) return null;
-		return getQuestionResult(
-			question.question_type,
-			currentSelection?.response,
-			currentSelection?.correct_answer
-		);
-	});
+	const feedbackResult = $derived(
+		isLocked
+			? getQuestionResult(question.question_type, currentSelection?.response, currentSelection?.correct_answer)
+			: null
+	);
+
+	const showMarkForReviewButton = $derived(showMarkForReview && !(showFeedback && isLocked));
 
 	const getExistingInputResponse = () => {
 		const selected = selectedQuestion(question.id);
@@ -643,19 +642,11 @@
 					</button>
 				{/if}
 
-				{#if showFeedback && isLocked && question?.marking_scheme}
-					{@const gradableTypes = new Set([
-						question_type_enum.SINGLE,
-						question_type_enum.MULTIPLE,
-						question_type_enum.NUMERICALINTEGER,
-						question_type_enum.NUMERICALDECIMAL
-					])}
-					{#if gradableTypes.has(question.question_type)}
-						<ResultBadge result={getFeedbackResult()} scheme={question.marking_scheme} />
-					{/if}
+				{#if showFeedback && isLocked && question?.marking_scheme && GRADABLE_QUESTION_TYPES.has(question.question_type)}
+					<ResultBadge result={feedbackResult} scheme={question.marking_scheme} />
 				{/if}
 
-				{#if showMarkForReview && !(showFeedback && isLocked)}
+				{#if showMarkForReviewButton}
 					<button
 						type="button"
 						class="hidden items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors lg:flex
@@ -1100,7 +1091,7 @@
 			</Button>
 		{/if}
 
-		{#if showMarkForReview && !(showFeedback && isLocked)}
+		{#if showMarkForReviewButton}
 			<button
 				type="button"
 				class="mt-4 flex w-full items-center justify-center gap-1.5 text-sm font-medium transition-colors lg:hidden

@@ -8,7 +8,7 @@
 	import { t } from 'svelte-i18n';
 	import { question_type_enum } from '$lib/types';
 	import type { TOptions } from '$lib/types';
-	import { isNumericalAnswerCorrect, getQuestionResult } from '$lib/helpers/feedbackHelpers';
+	import { isNumericalAnswerCorrect, getQuestionResult, GRADABLE_QUESTION_TYPES } from '$lib/helpers/feedbackHelpers';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -38,6 +38,13 @@
 		if (isSubmitted(optionId, submitted)) return 'wrong';
 		return 'none';
 	};
+
+	const getOptionLabelClass = (correct: boolean, submitted: boolean) =>
+		correct
+			? 'bg-success-subtle border-success'
+			: submitted
+				? 'bg-error-subtle border-error border-t-error-bold'
+				: 'border-border bg-card';
 
 	const questions = $derived(normalizeTestQuestions(testQuestions).questions);
 
@@ -81,13 +88,7 @@
 								Q{idx + 1}
 							</span>
 
-							{@const gradableTypes = new Set([
-								question_type_enum.SINGLE,
-								question_type_enum.MULTIPLE,
-								question_type_enum.NUMERICALINTEGER,
-								question_type_enum.NUMERICALDECIMAL
-							])}
-							{#if item.question?.marking_scheme && gradableTypes.has(item.question.question_type)}
+							{#if item.question?.marking_scheme && GRADABLE_QUESTION_TYPES.has(item.question.question_type)}
 								<ResultBadge
 									result={getQuestionResult(
 										item.question.question_type,
@@ -176,11 +177,6 @@
 										item.fb.submitted_answer,
 										item.fb.correct_answer
 									)}
-									{@const labelClass = correct
-										? 'bg-success-subtle border-success'
-										: submitted
-											? 'bg-error-subtle border-error border-t-error-bold'
-											: 'border-border bg-card'}
 									{@const itemClass = correct
 										? 'border-success text-success disabled:opacity-100'
 										: submitted
@@ -192,7 +188,7 @@
 											for={uid}
 											class={cn(
 												'flex flex-1 cursor-not-allowed flex-col rounded-xl border transition-colors',
-												labelClass
+												getOptionLabelClass(correct, submitted)
 											)}
 										>
 											<div class="flex items-center gap-3 px-4 py-3">
@@ -232,11 +228,6 @@
 										item.fb.submitted_answer,
 										item.fb.correct_answer
 									)}
-									{@const labelClass = correct
-										? 'bg-success-subtle border-success'
-										: submitted
-											? 'bg-error-subtle border-error border-t-error-bold'
-											: 'border-border bg-card'}
 									<div class="flex items-start gap-3">
 										<span class="text-muted-foreground mt-3 w-5 shrink-0 text-sm font-medium"
 											>{option.key}</span
@@ -245,7 +236,7 @@
 											for={uid}
 											class={cn(
 												'flex flex-1 cursor-not-allowed flex-col rounded-xl border transition-colors',
-												labelClass
+												getOptionLabelClass(correct, submitted)
 											)}
 										>
 											<div class="flex items-center gap-3 px-4 py-3">
