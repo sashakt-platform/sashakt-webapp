@@ -153,7 +153,7 @@
 {#if paginationReady}
 	<div class="bg-muted flex min-h-screen gap-6 p-4 pb-20 lg:p-6 lg:pb-20">
 		<!-- Main question content -->
-		<div class="flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
+		<div class="min-w-0 flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
 			<Pagination.Root
 				count={totalQuestions}
 				{perPage}
