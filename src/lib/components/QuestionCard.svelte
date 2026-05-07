@@ -757,10 +757,10 @@
 				<span class="text-destructive ml-0.5">*</span>
 			{/if}
 		</div>
+		<QuestionMedia media={question.media} />
 		{#if question.instructions}
 			<RichText content={question.instructions} class="text-muted-foreground mt-2 text-sm" />
 		{/if}
-		<QuestionMedia media={question.media} />
 	</Card.Header>
 
 	<Card.Content class="px-4 pt-0 pb-4 lg:px-6 lg:pb-6">
@@ -774,7 +774,7 @@
 			>
 				{saveError}
 				{#if isSectionLimitWarning}
-					<p class="mt-2 text-xs text-warning">
+					<p class="text-warning mt-2 text-xs">
 						{$t('Clear another answered question in this section to attempt this one.')}
 					</p>
 				{/if}
