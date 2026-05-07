@@ -7,7 +7,9 @@ import {
 	mockVimeoMedia,
 	mockSpotifyMedia,
 	mockGenericExternalMedia,
-	mockImageAndExternalMedia
+	mockImageAndExternalMedia,
+	mockAudioMedia,
+	mockAudioMediaByExtension
 } from '$lib/test-utils';
 
 describe('QuestionMedia', () => {
@@ -165,6 +167,80 @@ describe('QuestionMedia', () => {
 			const iframe = container.querySelector('iframe');
 			expect(iframe).toBeInTheDocument();
 			expect(iframe).toHaveAttribute('src', mockImageAndExternalMedia.external_media!.embed_url);
+		});
+	});
+
+	describe('audio player', () => {
+		it('should render the audio player for type:audio with no embed_url', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should render the audio player when URL has an audio file extension', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMediaByExtension } });
+
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should render a play button', () => {
+			render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+		});
+
+		it('should render the seek range input', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			const range = container.querySelector('input[type="range"]');
+			expect(range).toBeInTheDocument();
+			expect(range).toHaveAttribute('min', '0');
+			expect(range).toHaveAttribute('max', '100');
+		});
+
+		it('should render the time display', () => {
+			render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			expect(screen.getByText('00:00')).toBeInTheDocument();
+		});
+
+		it('should set the audio src from the media url', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			const audio = container.querySelector('audio');
+			expect(audio).toHaveAttribute('src', mockAudioMedia.external_media!.url);
+		});
+
+		it('should have the correct gradient style on the seek bar', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			const range = container.querySelector('input[type="range"]');
+			expect(range?.getAttribute('style')).toContain('linear-gradient');
+		});
+
+		it('should detect mp3 extension as audio', () => {
+			const media = {
+				image: null,
+				external_media: { type: 'link', provider: 'generic', url: 'https://cdn.example.com/clip.mp3', embed_url: null, thumbnail_url: null }
+			};
+			const { container } = render(QuestionMedia, { props: { media } });
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should detect ogg extension as audio', () => {
+			const media = {
+				image: null,
+				external_media: { type: 'link', provider: 'generic', url: 'https://cdn.example.com/clip.ogg', embed_url: null, thumbnail_url: null }
+			};
+			const { container } = render(QuestionMedia, { props: { media } });
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should not render audio player for Spotify — iframe takes priority', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockSpotifyMedia } });
+
+			expect(container.querySelector('audio')).not.toBeInTheDocument();
+			expect(container.querySelector('iframe')).toBeInTheDocument();
 		});
 	});
 });
