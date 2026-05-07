@@ -28,6 +28,26 @@ const createFeedback = (
 });
 
 describe('ViewFeedback', () => {
+	describe('Answer Review heading', () => {
+		it('should display the Answer Review heading', () => {
+			render(ViewFeedback, {
+				props: { feedback: [], testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.getByRole('heading', { name: 'Answer Review' })).toBeInTheDocument();
+		});
+
+		it('should display the Answer Review heading even when there are questions', () => {
+			const feedback = [createFeedback(1, [102], [102])];
+
+			render(ViewFeedback, {
+				props: { feedback, testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.getByRole('heading', { name: 'Answer Review' })).toBeInTheDocument();
+		});
+	});
+
 	describe('rendering feedback cards', () => {
 		it('should render a card for each feedback entry', () => {
 			const feedback = [createFeedback(1, [102], [102]), createFeedback(2, [201, 203], [201, 202])];

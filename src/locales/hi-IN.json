@@ -96,6 +96,7 @@
 	"Failed to download certificate. Please try again.": "प्रमाणपत्र डाउनलोड करने में विफल। कृपया पुनः प्रयास करें।",
 	"View Feedback": "परिणाम देखें",
 	"Back to Results": "परिणामों पर वापस जाएं",
+	"Answer Review": "उत्तर समीक्षा",
 	"No feedback available. You did not attempt any questions.": "कोई प्रतिक्रिया उपलब्ध नहीं है। आपने किसी भी प्रश्न का प्रयास नहीं किया।",
 	"Question not found for feedback #{number}": "प्रतिक्रिया #{number} के लिए प्रश्न नहीं मिला",
 	"Type your answer here...": "",
