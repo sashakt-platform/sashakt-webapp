@@ -231,7 +231,7 @@ describe('ViewFeedback', () => {
 				props: { feedback: [], testQuestions: mockTestQuestionsResponse }
 			});
 
-			expect(container.querySelectorAll('[class*="shadow-md"]')).toHaveLength(3);
+			expect(container.querySelectorAll('[class*="shadow-none"]')).toHaveLength(3);
 		});
 
 		it('should handle empty submitted_answer (unanswered question)', () => {

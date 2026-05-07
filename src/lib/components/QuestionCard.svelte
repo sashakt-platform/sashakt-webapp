@@ -23,7 +23,11 @@
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { cn } from '$lib/utils';
-	import { isNumericalAnswerCorrect, getQuestionResult, GRADABLE_QUESTION_TYPES } from '$lib/helpers/feedbackHelpers';
+	import {
+		isNumericalAnswerCorrect,
+		getQuestionResult,
+		GRADABLE_QUESTION_TYPES
+	} from '$lib/helpers/feedbackHelpers';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
 	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
@@ -83,7 +87,11 @@
 
 	const feedbackResult = $derived(
 		isLocked && currentSelection?.correct_answer != null
-			? getQuestionResult(question.question_type, currentSelection?.response, currentSelection?.correct_answer)
+			? getQuestionResult(
+					question.question_type,
+					currentSelection?.response,
+					currentSelection?.correct_answer
+				)
 			: null
 	);
 
@@ -569,7 +577,7 @@
 {/snippet}
 
 <Card.Root
-	class="mb-4 w-full rounded-xl shadow-md {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
+	class="mb-4 w-full rounded-xl shadow-none {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
 >
 	<Card.Header class="p-4 lg:p-6">
 		<div class="mb-4 flex items-center justify-between">
