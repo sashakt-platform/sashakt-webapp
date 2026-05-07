@@ -23,7 +23,11 @@
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { cn } from '$lib/utils';
-	import { isNumericalAnswerCorrect, getQuestionResult } from '$lib/helpers/feedbackHelpers';
+	import {
+		isNumericalAnswerCorrect,
+		getQuestionResult,
+		GRADABLE_QUESTION_TYPES
+	} from '$lib/helpers/feedbackHelpers';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
 	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
@@ -81,14 +85,17 @@
 		);
 	});
 
-	const getFeedbackResult = $derived(() => {
-		if (!isLocked) return null;
-		return getQuestionResult(
-			question.question_type,
-			currentSelection?.response,
-			currentSelection?.correct_answer
-		);
-	});
+	const feedbackResult = $derived(
+		isLocked && currentSelection?.correct_answer != null
+			? getQuestionResult(
+					question.question_type,
+					currentSelection?.response,
+					currentSelection?.correct_answer
+				)
+			: null
+	);
+
+	const showMarkForReviewButton = $derived(showMarkForReview && !(showFeedback && isLocked));
 
 	const getExistingInputResponse = () => {
 		const selected = selectedQuestion(question.id);
@@ -570,7 +577,7 @@
 {/snippet}
 
 <Card.Root
-	class="mb-4 w-full rounded-xl shadow-md {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
+	class="mb-4 w-full rounded-xl shadow-none {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
 >
 	<Card.Header class="p-4 lg:p-6">
 		<div class="mb-4 flex items-center justify-between">
@@ -643,19 +650,11 @@
 					</button>
 				{/if}
 
-				{#if showFeedback && isLocked && question?.marking_scheme}
-					{@const gradableTypes = new Set([
-						question_type_enum.SINGLE,
-						question_type_enum.MULTIPLE,
-						question_type_enum.NUMERICALINTEGER,
-						question_type_enum.NUMERICALDECIMAL
-					])}
-					{#if gradableTypes.has(question.question_type)}
-						<ResultBadge result={getFeedbackResult()} scheme={question.marking_scheme} />
-					{/if}
+				{#if showFeedback && isLocked && question?.marking_scheme && GRADABLE_QUESTION_TYPES.has(question.question_type)}
+					<ResultBadge result={feedbackResult} scheme={question.marking_scheme} />
 				{/if}
 
-				{#if showMarkForReview && !(showFeedback && isLocked)}
+				{#if showMarkForReviewButton}
 					<button
 						type="button"
 						class="hidden items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors lg:flex
@@ -758,7 +757,7 @@
 		{:else if question.question_type === question_type_enum.SUBJECTIVE}
 			<div class="flex flex-col gap-2">
 				<textarea
-					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring min-h-48 w-full rounded-xl border border-dashed px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:min-h-56"
+					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring h-22 w-full rounded-[10px] border px-[14px] py-[10px] text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 					placeholder={$t('Type your answer here...')}
 					bind:value={candidateInput}
 					maxlength={question.subjective_answer_limit || undefined}
@@ -1100,7 +1099,7 @@
 			</Button>
 		{/if}
 
-		{#if showMarkForReview && !(showFeedback && isLocked)}
+		{#if showMarkForReviewButton}
 			<button
 				type="button"
 				class="mt-4 flex w-full items-center justify-center gap-1.5 text-sm font-medium transition-colors lg:hidden

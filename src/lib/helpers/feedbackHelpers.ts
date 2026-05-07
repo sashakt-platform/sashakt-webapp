@@ -1,4 +1,11 @@
 import { question_type_enum } from '$lib/types';
+
+export const GRADABLE_QUESTION_TYPES = new Set([
+	question_type_enum.SINGLE,
+	question_type_enum.MULTIPLE,
+	question_type_enum.NUMERICALINTEGER,
+	question_type_enum.NUMERICALDECIMAL
+]);
 import { TOLERANCE } from '$lib/utils';
 
 export const isNumericalAnswerCorrect = (
