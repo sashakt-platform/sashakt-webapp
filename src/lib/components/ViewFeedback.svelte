@@ -85,7 +85,7 @@
 		<div class="flex w-full flex-col items-center gap-6">
 			{#each feedbackWithQuestions as item, idx (item.question.id)}
 				{#if item.question}
-					<Card.Root class="w-full max-w-2xl rounded-[14px] shadow-md md:max-w-250">
+					<Card.Root class="w-full max-w-2xl rounded-[14px] shadow-none md:max-w-250">
 						<Card.Header class="p-4 lg:p-6">
 							<Card.Title class="mb-5 flex items-center justify-between">
 								<span
