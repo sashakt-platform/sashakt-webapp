@@ -27,13 +27,18 @@
 			: result === 'incorrect'
 				? `${$t('Incorrect')}: ${scheme.wrong} ${Math.abs(scheme.wrong) === 1 ? $t('mark') : $t('marks')}`
 				: result === 'unattempted'
-					? `${$t('Not Attempted')}: 0 ${$t('mark')}`
+					? `${$t('Not Attempted')}: ${scheme.skipped} ${scheme.skipped === 1 ? $t('mark') : $t('marks')}`
 					: null
 	);
 </script>
 
 {#if variantClass && label}
-	<span class={cn('inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium', variantClass)}>
+	<span
+		class={cn(
+			'inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium',
+			variantClass
+		)}
+	>
 		{label}
 	</span>
 {/if}
