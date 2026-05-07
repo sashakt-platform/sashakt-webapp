@@ -38,7 +38,9 @@
 			{/if}
 		</div>
 
-		<h2 class="text-primary scroll-m-20 text-center font-extrabold tracking-tight uppercase">Sashakt</h2>
+		<h2 class="text-primary scroll-m-20 text-center font-extrabold tracking-tight uppercase">
+			Sashakt
+		</h2>
 
 		<div class="flex items-center justify-end gap-2">
 			{#if navState.active}
@@ -77,15 +79,17 @@
 			</div>
 		</div>
 	{:else}
-		<div class="hidden grid-cols-[1fr_auto_1fr] items-center lg:grid">
-			<div class="flex items-center justify-end pr-64">
+		<div class="hidden grid-cols-3 items-center lg:grid">
+			<div class="flex items-center justify-center">
 				{#if navState.onBack}
 					<Button variant="outline" size="icon" onclick={navState.onBack}>
 						<ArrowLeft class="h-5 w-5" />
 					</Button>
 				{/if}
 			</div>
-			<h2 class="text-primary text-xl font-extrabold tracking-tight uppercase">Sashakt</h2>
+			<h2 class="text-primary text-center text-xl font-extrabold tracking-tight uppercase">
+				Sashakt
+			</h2>
 			<div class="flex justify-end">
 				{#if showTimer}
 					<TestTimer timeLeft={page.data?.timeLeft} />
