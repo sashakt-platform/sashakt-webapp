@@ -513,15 +513,15 @@
 	};
 </script>
 
-<div class="min-h-screen bg-blue-50 p-4 pb-20 lg:p-6 lg:pb-20">
-	<h1 class="mb-6 text-center text-xl font-semibold text-slate-800">{$t('OMR Sheet')}</h1>
+<div class="min-h-screen bg-muted p-4 pb-20 lg:p-6 lg:pb-20">
+	<h1 class="mb-6 text-center text-xl font-semibold text-foreground">{$t('OMR Sheet')}</h1>
 
-	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-card p-4 shadow-sm sm:p-6">
 		{#each questions as question, i (question.id)}
 			{@const section = sectionByQuestionId.get(question.id) ?? null}
 			{#if section && i === 0}
-				<div class="rounded-2xl border bg-slate-50 p-4">
-					<p class="text-sm font-semibold text-slate-800">{section.title}</p>
+				<div class="bg-section-header rounded-2xl border p-4">
+					<p class="text-card-foreground text-sm font-semibold">{section.title}</p>
 					{#if section.description}
 						<RichText content={section.description} class="text-muted-foreground mt-1 text-sm" />
 					{/if}
@@ -541,8 +541,8 @@
 					? (sectionByQuestionId.get(previousQuestion.id) ?? null)
 					: null}
 				{#if previousSection?.id !== section.id}
-					<div class="rounded-2xl border bg-slate-50 p-4">
-						<p class="text-sm font-semibold text-slate-800">{section.title}</p>
+					<div class="bg-section-header rounded-2xl border p-4">
+						<p class="text-card-foreground text-sm font-semibold">{section.title}</p>
 						{#if section.description}
 							<RichText content={section.description} class="text-muted-foreground mt-1 text-sm" />
 						{/if}
@@ -567,9 +567,9 @@
 				<div class="flex items-center gap-1.5">
 					<Spinner class={submittingQuestion === question.id ? '' : 'invisible'} />
 					<div class="flex min-w-12 items-center justify-end gap-0.5 sm:min-w-16">
-						<span class="text-sm font-medium text-slate-700 sm:text-lg">Q.{i + 1}:</span>
+						<span class="text-foreground text-sm font-medium sm:text-lg">Q.{i + 1}:</span>
 						<span
-							class="text-sm leading-none font-bold text-red-500 sm:text-lg {question.is_mandatory
+							class="text-destructive text-sm leading-none font-bold sm:text-lg {question.is_mandatory
 								? ''
 								: 'invisible'}">*</span
 						>
@@ -586,13 +586,13 @@
 							<div
 								class={`rounded-lg border p-3 text-sm ${
 									isSectionLimitMessage(questionErrors[question.id])
-										? 'border-amber-300 bg-amber-50 text-amber-900'
+										? 'border-warning bg-warning-subtle text-warning'
 										: 'border-destructive bg-destructive/10 text-destructive'
 								}`}
 							>
 								{questionErrors[question.id]}
 								{#if isSectionLimitMessage(questionErrors[question.id])}
-									<p class="mt-2 text-xs text-amber-800">
+									<p class="mt-2 text-xs text-warning">
 										{$t('Clear another answered question in this section to attempt this one.')}
 									</p>
 								{/if}
@@ -639,7 +639,7 @@
 								{@const remaining = question.subjective_answer_limit - currentInput.length}
 								<span
 									class="text-sm {remaining <= 0
-										? 'font-medium text-red-500'
+										? 'text-destructive font-medium'
 										: 'text-muted-foreground'}"
 								>
 									{remaining}
@@ -741,13 +741,13 @@
 								<thead>
 									<tr>
 										<th
-											class="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold"
+											class="border border-border bg-muted px-3 py-2 text-left font-semibold"
 										>
 											{matrixOpts.rows.label}
 										</th>
 										{#each matrixOpts.columns.items as col (col.id)}
 											<th
-												class="border border-gray-300 bg-gray-100 px-3 py-2 text-center font-semibold"
+												class="border border-border bg-muted px-3 py-2 text-center font-semibold"
 											>
 												{col.key}
 											</th>
@@ -756,10 +756,10 @@
 								</thead>
 								<tbody>
 									{#each matrixOpts.rows.items as row (row.id)}
-										<tr class="hover:bg-gray-50">
-											<td class="border border-gray-300 px-3 py-2 font-medium">{row.value}</td>
+										<tr class="hover:bg-muted/50">
+											<td class="border border-border px-3 py-2 font-medium">{row.value}</td>
 											{#each matrixOpts.columns.items as col (col.id)}
-												<td class="border border-gray-300 px-3 py-2 text-center">
+												<td class="border border-border px-3 py-2 text-center">
 													<input
 														type="radio"
 														name="omr-matrix-{question.id}-row-{row.id}"
@@ -802,14 +802,14 @@
 									<tr>
 										<th class="w-10 px-3 py-2"></th>
 										{#each matrixColumns as col (col.id)}
-											<th class="px-5 py-2 text-center font-semibold text-gray-700">{col.key}</th>
+											<th class="px-5 py-2 text-center font-semibold text-foreground">{col.key}</th>
 										{/each}
 									</tr>
 								</thead>
 								<tbody>
 									{#each matrixRows as row (row.id)}
 										<tr>
-											<td class="px-3 py-3 font-semibold text-gray-700">{row.key}</td>
+											<td class="px-3 py-3 font-semibold text-foreground">{row.key}</td>
 											{#each matrixColumns as col (col.id)}
 												{@const isChecked = (
 													matrixSelections[question.id]?.[String(row.id)] ?? []
@@ -853,8 +853,8 @@
 					{@const hasUnsavedChanges =
 						JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedSaved)}
 					{@const hasSavedBefore = Object.values(savedValues).some((v) => v.trim().length > 0)}
-					{@const thClass = 'border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold'}
-					{@const tdClass = 'border border-gray-300 px-3 py-2'}
+					{@const thClass = 'border border-border bg-muted px-3 py-2 text-left font-semibold'}
+					{@const tdClass = 'border border-border px-3 py-2'}
 					<div class="flex w-full flex-col gap-2">
 						<div class="overflow-x-auto">
 							<table class="w-full border-collapse text-xs sm:text-sm">
@@ -866,7 +866,7 @@
 								</thead>
 								<tbody>
 									{#each matrixOpts.rows.items as row (row.id)}
-										<tr class="hover:bg-gray-50">
+										<tr class="hover:bg-muted/50">
 											<td class="{tdClass} font-medium">
 												<span class="font-semibold">{row.key}.</span>
 											</td>
@@ -917,7 +917,7 @@
 	</div>
 
 	<div
-		class="fixed inset-x-0 bottom-0 z-10 flex w-full items-center justify-between bg-white p-2 shadow-md lg:rounded-xl"
+		class="border-border bg-card fixed inset-x-0 bottom-0 z-10 flex w-full items-center justify-between border-t p-2 shadow-md lg:rounded-xl"
 	>
 		<div></div>
 		<Dialog.Root bind:open={submitDialogOpen}>

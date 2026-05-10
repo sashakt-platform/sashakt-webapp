@@ -768,13 +768,13 @@
 			<div
 				class={`mb-4 rounded-lg border p-3 text-sm ${
 					isSectionLimitWarning
-						? 'border-amber-300 bg-amber-50 text-amber-900'
+						? 'border-warning bg-warning-subtle text-warning'
 						: 'border-destructive bg-destructive/10 text-destructive'
 				}`}
 			>
 				{saveError}
 				{#if isSectionLimitWarning}
-					<p class="mt-2 text-xs text-amber-800">
+					<p class="mt-2 text-xs text-warning">
 						{$t('Clear another answered question in this section to attempt this one.')}
 					</p>
 				{/if}
