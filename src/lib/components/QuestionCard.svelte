@@ -28,6 +28,8 @@
 		getQuestionResult,
 		GRADABLE_QUESTION_TYPES
 	} from '$lib/helpers/feedbackHelpers';
+	import RichText from './RichText.svelte';
+
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
 	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
@@ -58,6 +60,7 @@
 	let radioGroupKey = $state(0);
 	let isSubmitting = $state(false);
 	let saveError = $state<string | null>(null);
+	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 
 	const sessionStore = createTestSessionStore(candidate);
 	const selectedQuestion = (questionId: number) => {
@@ -252,6 +255,23 @@
 		String(candidateInput ?? '').trim() !== String(lastSavedInput ?? '').trim()
 	);
 	const hasSavedBefore = $derived(String(lastSavedInput ?? '').trim().length > 0);
+	const hasAttemptedResponse = (response: number[] | string | undefined): boolean => {
+		if (typeof response === 'string') {
+			return response.trim().length > 0;
+		}
+
+		return (response?.length ?? 0) > 0;
+	};
+	const hasClearableAnswer = $derived(hasAttemptedResponse(currentSelection?.response));
+	const isSectionLimitWarning = $derived(saveError?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false);
+
+	const getErrorMessage = (error: unknown, fallback: string) =>
+		error instanceof Error && error.message ? error.message : fallback;
+
+	const setTransientSaveError = (error: unknown, fallback: string) => {
+		saveError = getErrorMessage(error, fallback);
+		setTimeout(() => (saveError = null), 5000);
+	};
 
 	const isSelected = (optionId: number) => {
 		const selected = selectedQuestion(question.id);
@@ -359,11 +379,10 @@
 					];
 				}
 				updateStore();
-			} catch {
+			} catch (error) {
 				// force complete remount of RadioGroup
 				radioGroupKey++;
-				saveError = $t('Failed to save your answer. Please try again.');
-				setTimeout(() => (saveError = null), 5000);
+				setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 			} finally {
 				isSubmitting = false;
 			}
@@ -405,12 +424,11 @@
 
 			try {
 				await submitAnswer(questionId, newResponse);
-			} catch {
+			} catch (error) {
 				// revert on error
 				selectedQuestions = previousState;
 				updateStore();
-				saveError = $t('Failed to save your answer. Please try again.');
-				setTimeout(() => (saveError = null), 5000);
+				setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 			} finally {
 				isSubmitting = false;
 			}
@@ -419,13 +437,13 @@
 
 	const submitAnswer = async (
 		questionId: number,
-		response: number[] | string,
+		response: number[] | string | null,
 		bookmarked?: boolean,
 		is_reviewed?: boolean
 	) => {
 		const data = {
 			question_revision_id: questionId,
-			response: response.length > 0 ? response : null,
+			response: response == null ? null : response.length > 0 ? response : null,
 			candidate,
 			bookmarked,
 			is_reviewed
@@ -488,7 +506,7 @@
 
 		try {
 			await submitAnswer(question.id, currentResponse ?? [], newBookmarked);
-		} catch {
+		} catch (error) {
 			// revert on error
 			if (answeredQuestion) {
 				selectedQuestions = selectedQuestions.map((q) =>
@@ -498,14 +516,77 @@
 				selectedQuestions = selectedQuestions.filter((q) => q.question_revision_id !== question.id);
 			}
 			updateStore();
-			saveError = 'Failed to save bookmark. Please try again.';
-			setTimeout(() => (saveError = null), 5000);
+			setTransientSaveError(error, 'Failed to save bookmark. Please try again.');
 		} finally {
 			isSubmitting = false;
 		}
 	};
 
 	const isQuestionBookmarked = $derived(selectedQuestion(question.id)?.bookmarked ?? false);
+	const handleClearAnswer = async () => {
+		if (isLocked || isSubmitting || !hasClearableAnswer) return;
+
+		const answeredQuestion = selectedQuestion(question.id);
+		if (!answeredQuestion) return;
+
+		const currentBookmarked = answeredQuestion.bookmarked ?? false;
+		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+		const previousMatrixSelections = { ...matrixSelections };
+		const clearedResponse =
+			question.question_type === question_type_enum.SUBJECTIVE ||
+			question.question_type === question_type_enum.NUMERICALINTEGER ||
+			question.question_type === question_type_enum.NUMERICALDECIMAL
+				? ''
+				: [];
+
+		isSubmitting = true;
+		saveError = null;
+
+		selectedQuestions = selectedQuestions.map((selection) =>
+			selection.question_revision_id === question.id
+				? {
+						...selection,
+						response: clearedResponse,
+						visited: true,
+						bookmarked: currentBookmarked,
+						is_reviewed: false,
+						correct_answer: undefined
+					}
+				: selection
+		);
+		updateStore();
+
+		if (typeof clearedResponse === 'string') {
+			candidateInput = '';
+			lastSavedInput = '';
+		} else if (question.question_type === question_type_enum.MATRIXMATCH) {
+			matrixSelections = {};
+		}
+
+		try {
+			await submitAnswer(question.id, clearedResponse, currentBookmarked);
+			if (question.question_type === question_type_enum.SINGLE) {
+				radioGroupKey++;
+			}
+		} catch (error) {
+			selectedQuestions = previousState;
+			updateStore();
+
+			if (typeof clearedResponse === 'string') {
+				const previousResponse = previousState.find(
+					(selection: TSelection) => selection.question_revision_id === question.id
+				)?.response;
+				candidateInput = typeof previousResponse === 'string' ? previousResponse : '';
+				lastSavedInput = candidateInput;
+			} else if (question.question_type === question_type_enum.MATRIXMATCH) {
+				matrixSelections = previousMatrixSelections;
+			}
+
+			setTransientSaveError(error, 'Failed to clear your answer. Please try again.');
+		} finally {
+			isSubmitting = false;
+		}
+	};
 
 	const matrixResponse = $derived(parseJsonRecord<number>(selectedQuestion(question.id)?.response));
 
@@ -545,11 +626,10 @@
 		try {
 			await submitAnswer(question.id, inputValue, currentBookmarked);
 			lastSavedInput = candidateInput;
-		} catch {
+		} catch (error) {
 			selectedQuestions = previousState;
 			updateStore();
-			saveError = $t('Failed to save your answer. Please try again.');
-			setTimeout(() => (saveError = null), 5000);
+			setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 		} finally {
 			isSubmitting = false;
 		}
@@ -671,14 +751,14 @@
 			</div>
 		</div>
 
-		<p class="text-card-foreground text-base leading-snug font-bold">
-			{question.question_text}
+		<div class="text-card-foreground text-base leading-snug font-bold">
+			<RichText content={question.question_text} as="span" />
 			{#if question.is_mandatory}
 				<span class="text-destructive ml-0.5">*</span>
 			{/if}
-		</p>
+		</div>
 		{#if question.instructions}
-			<p class="text-muted-foreground mt-2 text-sm">{question.instructions}</p>
+			<RichText content={question.instructions} class="text-muted-foreground mt-2 text-sm" />
 		{/if}
 		<QuestionMedia media={question.media} />
 	</Card.Header>
@@ -686,9 +766,18 @@
 	<Card.Content class="px-4 pt-0 pb-4 lg:px-6 lg:pb-6">
 		{#if saveError}
 			<div
-				class="border-destructive bg-destructive/10 text-destructive mb-4 rounded-lg border p-3 text-sm"
+				class={`mb-4 rounded-lg border p-3 text-sm ${
+					isSectionLimitWarning
+						? 'border-warning bg-warning-subtle text-warning'
+						: 'border-destructive bg-destructive/10 text-destructive'
+				}`}
 			>
 				{saveError}
+				{#if isSectionLimitWarning}
+					<p class="mt-2 text-xs text-warning">
+						{$t('Clear another answered question in this section to attempt this one.')}
+					</p>
+				{/if}
 			</div>
 		{/if}
 		{#if question.question_type === question_type_enum.SINGLE}
@@ -736,7 +825,7 @@
 										)}
 									/>
 									<span class={cn('text-foreground flex-1 text-sm', feedbackStatus !== 'none')}
-										>{option.value}</span
+										><RichText content={option.value} class="min-w-0 flex-1" /></span
 									>
 									{#if feedbackStatus === 'correct'}
 										{@render showCorrectWrongMark('correct')}
@@ -1070,7 +1159,7 @@
 									)}
 								/>
 								<span class={cn('text-foreground flex-1 text-sm', feedbackStatus !== 'none')}
-									>{option.value}</span
+									><RichText content={option.value} class="min-w-0 flex-1" /></span
 								>
 								{#if feedbackStatus === 'correct'}
 									{@render showCorrectWrongMark('correct')}
@@ -1099,17 +1188,28 @@
 			</Button>
 		{/if}
 
-		{#if showMarkForReviewButton}
-			<button
-				type="button"
-				class="mt-4 flex w-full items-center justify-center gap-1.5 text-sm font-medium transition-colors lg:hidden
-					{isQuestionBookmarked ? 'text-warning' : 'text-muted-foreground'}"
-				onclick={handleBookmark}
-				disabled={isLocked}
+		<div class="mt-4 flex flex-col gap-3 sm:flex-row">
+			<Button
+				variant="outline"
+				class="w-full sm:flex-1"
+				onclick={handleClearAnswer}
+				disabled={isLocked || !hasClearableAnswer}
 			>
-				<Flag class="h-4 w-4 {isQuestionBookmarked ? 'fill-current' : ''}" />
-				{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
-			</button>
-		{/if}
+				{$t('Clear answer')}
+			</Button>
+
+			{#if showMarkForReviewButton}
+				<button
+					type="button"
+					class="mt-4 flex w-full items-center justify-center gap-1.5 text-sm font-medium transition-colors lg:hidden
+					{isQuestionBookmarked ? 'text-warning' : 'text-muted-foreground'}"
+					onclick={handleBookmark}
+					disabled={isLocked}
+				>
+					<Flag class="h-4 w-4 {isQuestionBookmarked ? 'fill-current' : ''}" />
+					{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
+				</button>
+			{/if}
+		</div>
 	</Card.Content>
 </Card.Root>

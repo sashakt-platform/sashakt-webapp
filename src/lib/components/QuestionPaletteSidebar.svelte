@@ -1,16 +1,18 @@
 <script lang="ts">
 	import QuestionPaletteContent from './QuestionPaletteContent.svelte';
-	import type { TQuestion, TSelection } from '$lib/types';
+	import type { TQuestion, TQuestionSetCandidate, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
 	let {
 		questions,
+		questionSets = [],
 		selections,
 		currentQuestionIndex,
 		onNavigate,
 		showMarkForReview = true
 	}: {
 		questions: TQuestion[];
+		questionSets?: TQuestionSetCandidate[];
 		selections: TSelection[];
 		currentQuestionIndex: number;
 		onNavigate: (questionIndex: number) => void;
@@ -30,6 +32,7 @@
 	<div class="overflow-y-auto">
 		<QuestionPaletteContent
 			{questions}
+			{questionSets}
 			{selections}
 			{currentQuestionIndex}
 			{onNavigate}

@@ -21,7 +21,8 @@ const createSelection = (questionId: number): TSelection => ({
 	response: [1],
 	visited: true,
 	time_spent: 10,
-	bookmarked: false
+	bookmarked: false,
+	is_reviewed: false
 });
 
 describe('answeredAllMandatory', () => {
@@ -82,8 +83,22 @@ describe('answeredAllMandatory', () => {
 	it('should correctly identify answered mandatory questions by question_revision_id', () => {
 		const questions = [createQuestion(100, true), createQuestion(200, true)];
 		const selections = [
-			{ question_revision_id: 100, response: [1], visited: true, time_spent: 5 },
-			{ question_revision_id: 200, response: [2], visited: true, time_spent: 10 }
+			{
+				question_revision_id: 100,
+				response: [1],
+				visited: true,
+				time_spent: 5,
+				bookmarked: false,
+				is_reviewed: false
+			},
+			{
+				question_revision_id: 200,
+				response: [2],
+				visited: true,
+				time_spent: 10,
+				bookmarked: false,
+				is_reviewed: false
+			}
 		];
 
 		const result = answeredAllMandatory(selections, questions);
@@ -94,8 +109,22 @@ describe('answeredAllMandatory', () => {
 	it('should return false when mandatory question is only bookmarked without answer', () => {
 		const questions = [createQuestion(1, true), createQuestion(2, true)];
 		const selections = [
-			{ question_revision_id: 1, response: [1], visited: true, time_spent: 5 },
-			{ question_revision_id: 2, response: [], visited: true, time_spent: 10, bookmarked: true } // Bookmarked but no answer
+			{
+				question_revision_id: 1,
+				response: [1],
+				visited: true,
+				time_spent: 5,
+				bookmarked: false,
+				is_reviewed: false
+			},
+			{
+				question_revision_id: 2,
+				response: [],
+				visited: true,
+				time_spent: 10,
+				bookmarked: true,
+				is_reviewed: false
+			} // Bookmarked but no answer
 		];
 
 		const result = answeredAllMandatory(selections, questions);
@@ -106,8 +135,22 @@ describe('answeredAllMandatory', () => {
 	it('should return true when mandatory question is both answered and bookmarked', () => {
 		const questions = [createQuestion(1, true), createQuestion(2, true)];
 		const selections = [
-			{ question_revision_id: 1, response: [1], visited: true, time_spent: 5 },
-			{ question_revision_id: 2, response: [2], visited: true, time_spent: 10, bookmarked: true } // Bookmarked with answer
+			{
+				question_revision_id: 1,
+				response: [1],
+				visited: true,
+				time_spent: 5,
+				bookmarked: false,
+				is_reviewed: false
+			},
+			{
+				question_revision_id: 2,
+				response: [2],
+				visited: true,
+				time_spent: 10,
+				bookmarked: true,
+				is_reviewed: false
+			} // Bookmarked with answer
 		];
 
 		const result = answeredAllMandatory(selections, questions);
@@ -118,7 +161,14 @@ describe('answeredAllMandatory', () => {
 	it('should return false when selection has null response', () => {
 		const questions = [createQuestion(1, true)];
 		const selections = [
-			{ question_revision_id: 1, response: null as any, visited: true, time_spent: 5 }
+			{
+				question_revision_id: 1,
+				response: null as any,
+				visited: true,
+				time_spent: 5,
+				bookmarked: false,
+				is_reviewed: false
+			}
 		];
 
 		const result = answeredAllMandatory(selections, questions);

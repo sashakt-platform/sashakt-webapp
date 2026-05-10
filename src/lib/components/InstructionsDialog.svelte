@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Info from '@lucide/svelte/icons/info';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import RichText from '$lib/components/RichText.svelte';
 	import { t } from 'svelte-i18n';
 	let {
 		instructions,
@@ -41,9 +42,7 @@
 		</Dialog.Header>
 		<div class="max-h-[60vh] overflow-y-auto">
 			{#if instructions}
-				<div class="prose prose-sm max-w-none">
-					{@html instructions}
-				</div>
+				<RichText content={instructions} class="prose prose-sm max-w-none" />
 			{:else}
 				<p class="text-muted-foreground text-center">{$t('No instructions available.')}</p>
 			{/if}

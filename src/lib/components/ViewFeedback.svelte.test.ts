@@ -103,6 +103,51 @@ describe('ViewFeedback', () => {
 			expect(screen.getByText(mockMultipleChoiceQuestion.question_text)).toBeInTheDocument();
 			expect(container.querySelector('label[for="1-A"]')).toBeInTheDocument();
 		});
+
+		it('should render question html and option html content', () => {
+			const feedback = [createFeedback(1, [102], [102])];
+
+			const { container } = render(ViewFeedback, {
+				props: {
+					feedback,
+					testQuestions: {
+						...mockTestQuestionsResponse,
+						question_revisions: [
+							{
+								...mockSingleChoiceQuestion,
+								question_text: '<p>What is <strong>2 + 2</strong>?</p>',
+								instructions: '<p>Pick the <em>best</em> answer.</p>',
+								options: [
+									{ ...mockSingleChoiceQuestion.options[0], value: '<p>3</p>' },
+									{ ...mockSingleChoiceQuestion.options[1], value: '<p><strong>4</strong></p>' },
+									{ ...mockSingleChoiceQuestion.options[2], value: '<p>5</p>' },
+									{ ...mockSingleChoiceQuestion.options[3], value: '<p>6</p>' }
+								]
+							},
+							...mockTestQuestionsResponse.question_revisions.slice(1)
+						]
+					}
+				}
+			});
+
+			expect(container.textContent).toContain('What is 2 + 2?');
+			expect(container.textContent).toContain('Pick the best answer.');
+			const optionBLabel = container.querySelector('label[for="1-B"]');
+			expect(optionBLabel).toBeTruthy();
+			expect(optionBLabel?.textContent).toContain('4');
+			expect(screen.queryByText(/<p>What is/)).not.toBeInTheDocument();
+		});
+
+		it('should render section summaries when question sets are present', () => {
+			const feedback = [createFeedback(1, [102], [102]), createFeedback(2, [201], [201, 202])];
+
+			const { container } = render(ViewFeedback, {
+				props: { feedback, testQuestions: mockSectionedTestQuestionsResponse }
+			});
+
+			expect(screen.getByText('Physics')).toBeInTheDocument();
+			expect(screen.getByText('Section A')).toBeInTheDocument();
+		});
 	});
 
 	describe('single-choice questions', () => {
