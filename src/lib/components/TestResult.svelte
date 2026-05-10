@@ -138,7 +138,7 @@
 	}
 </script>
 
-<section class="bg-muted flex min-h-screen items-center justify-center px-4 py-10">
+<section class="bg-muted flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-10">
 	<div class="bg-card w-full max-w-sm overflow-hidden rounded-2xl shadow-sm">
 		<div class="bg-secondary flex flex-col items-center px-6 py-8 text-center">
 			<h2 class="text-foreground mb-1 text-lg font-bold">
@@ -211,55 +211,58 @@
 					</Button>
 				{/if}
 			</div>
-
-			{#if sectionSummaries.length > 0}
-				<p class="text-accent-foreground mt-6 border-b py-2 text-sm font-bold uppercase">
-					{$t('Section summary')}
-				</p>
-
-				<div class="mt-4 grid gap-4 text-left md:grid-cols-2">
-					{#each sectionSummaries as section (`${section.title}-${section.questionCount}`)}
-						<div class="rounded-2xl border bg-white p-5 shadow-sm">
-							<div class="flex flex-wrap items-start justify-between gap-3">
-								<div>
-									<p class="text-base font-semibold text-slate-900">{section.title}</p>
-									<p class="text-muted-foreground mt-1 text-sm">
-										{$t('Allowed')}: {section.allowedCount}
-									</p>
-								</div>
-								<div class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
-									{#if section.accuracy === null}
-										{$t('Accuracy')}: --
-									{:else}
-										{$t('Accuracy')}: {section.accuracy}%
-									{/if}
-								</div>
-							</div>
-
-							<div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-								<div class="rounded-xl bg-slate-50 p-3">
-									<p class="text-muted-foreground text-xs font-semibold uppercase">
-										{$t('Questions')}
-									</p>
-									<p class="mt-1 text-xl font-semibold text-slate-900">{section.questionCount}</p>
-								</div>
-								<div class="rounded-xl bg-slate-50 p-3">
-									<p class="text-muted-foreground text-xs font-semibold uppercase">
-										{$t('Attempted')}
-									</p>
-									<p class="mt-1 text-xl font-semibold text-slate-900">{section.attemptedCount}</p>
-								</div>
-								<div class="col-span-2 rounded-xl bg-slate-50 p-3 sm:col-span-1">
-									<p class="text-muted-foreground text-xs font-semibold uppercase">
-										{$t('Correct')}
-									</p>
-									<p class="mt-1 text-xl font-semibold text-slate-900">{section.correctCount}</p>
-								</div>
-							</div>
-						</div>
-					{/each}
-				</div>
-			{/if}
 		{/if}
 	</div>
+
+	{#if sectionSummaries.length > 0}
+		<div class="w-2/3">
+			<h3 class="text-muted-foreground mb-4 text-xs font-bold tracking-wider uppercase">
+				{$t('Section summary')}
+			</h3>
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+				{#each sectionSummaries as section (`${section.title}-${section.questionCount}`)}
+					<div class="bg-card w-full rounded-2xl border p-5 shadow-sm">
+						<div class="flex flex-wrap items-start justify-between gap-3">
+							<div>
+								<p class="text-card-foreground text-base font-semibold">{section.title}</p>
+								<p class="text-muted-foreground mt-1 text-sm">
+									{$t('Allowed')}: {section.allowedCount}
+								</p>
+							</div>
+							<div
+								class="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm font-medium"
+							>
+								{#if section.accuracy === null}
+									{$t('Accuracy')}: --
+								{:else}
+									{$t('Accuracy')}: {section.accuracy}%
+								{/if}
+							</div>
+						</div>
+
+						<div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+							<div class="bg-muted rounded-xl p-3">
+								<p class="text-muted-foreground text-xs font-semibold uppercase">
+									{$t('Questions')}
+								</p>
+								<p class="text-foreground mt-1 text-xl font-semibold">{section.questionCount}</p>
+							</div>
+							<div class="bg-muted rounded-xl p-3">
+								<p class="text-muted-foreground text-xs font-semibold uppercase">
+									{$t('Attempted')}
+								</p>
+								<p class="text-foreground mt-1 text-xl font-semibold">{section.attemptedCount}</p>
+							</div>
+							<div class="bg-muted col-span-2 rounded-xl p-3 sm:col-span-1">
+								<p class="text-muted-foreground text-xs font-semibold uppercase">
+									{$t('Correct')}
+								</p>
+								<p class="text-foreground mt-1 text-xl font-semibold">{section.correctCount}</p>
+							</div>
+						</div>
+					</div>
+				{/each}
+			</div>
+		</div>
+	{/if}
 </section>
