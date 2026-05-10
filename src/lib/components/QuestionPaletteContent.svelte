@@ -67,26 +67,24 @@
 	<div class={gridPadding}>
 		<div class="space-y-4">
 			{#each groupedQuestionSets as group (`${group.section.id ?? group.section.title}-${group.startIndex}`)}
-				<div class="space-y-3">
-					<div class="rounded-xl border bg-slate-50 p-3">
-						<p class="text-sm font-semibold text-slate-800">{group.section.title}</p>
-						{#if group.section.description}
-							<RichText
-								content={group.section.description}
-								class="text-muted-foreground mt-1 text-xs leading-relaxed"
-							/>
+				<div class="bg-muted rounded-xl border p-3">
+					<p class="text-foreground text-sm font-semibold">{group.section.title}</p>
+					{#if group.section.description}
+						<RichText
+							content={group.section.description}
+							class="text-muted-foreground mt-1 text-xs leading-relaxed"
+						/>
+					{/if}
+					<p class="text-muted-foreground mt-2 text-xs leading-relaxed">
+						{#if canAttemptAllQuestions(group.section.max_questions_allowed_to_attempt, group.questions.length)}
+							{$t('You may attempt all questions in this section.')}
+						{:else}
+							{$t('You may attempt up to {count} questions in this section.', {
+								values: { count: group.section.max_questions_allowed_to_attempt }
+							})}
 						{/if}
-						<p class="text-muted-foreground mt-2 text-xs leading-relaxed">
-							{#if canAttemptAllQuestions(group.section.max_questions_allowed_to_attempt, group.questions.length)}
-								{$t('You may attempt all questions in this section.')}
-							{:else}
-								{$t('You may attempt up to {count} questions in this section.', {
-									values: { count: group.section.max_questions_allowed_to_attempt }
-								})}
-							{/if}
-						</p>
-					</div>
-					<div class="grid gap-2" style:grid-template-columns="repeat({cols}, minmax(0, 1fr))">
+					</p>
+					<div class="mt-3 grid gap-2" style:grid-template-columns="repeat({cols}, minmax(0, 1fr))">
 						{#each group.questions as question (question.id)}
 							{@const index = questionIndexById.get(question.id) ?? 0}
 							{@render questionButton(question, index)}
