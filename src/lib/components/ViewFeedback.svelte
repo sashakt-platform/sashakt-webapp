@@ -113,10 +113,10 @@
 				</Card.Title>
 
 				<Card.Description class="text-base font-medium">
-					{item.question.question_text}
+					<RichText content={item.question.question_text} />
 					{#if item.question.instructions}
 						<span class="text-muted-foreground mt-2 block text-sm">
-							{item.question.instructions}
+							<RichText content={item.question.instructions} />
 						</span>
 					{/if}
 					<QuestionMedia media={item.question.media} />
@@ -214,8 +214,9 @@
 											class={cn(
 												'text-foreground flex-1 text-sm',
 												(correct || submitted) && 'font-semibold'
-											)}>{option.value}</span
-										>
+											)}
+											><RichText content={option.value} />
+										</span>
 										{#if status === 'correct'}
 											{@render showCorrectWrongMark('correct')}
 										{:else if status === 'wrong'}
@@ -267,7 +268,7 @@
 											class={cn(
 												'text-foreground flex-1 text-sm',
 												(correct || submitted) && 'font-semibold'
-											)}>{option.value}</span
+											)}><RichText content={option.value} /></span
 										>
 										{#if status === 'wrong'}
 											{@render showCorrectWrongMark('wrong')}
