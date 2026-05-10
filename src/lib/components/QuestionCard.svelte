@@ -751,12 +751,12 @@
 			</div>
 		</div>
 
-		<p class="text-card-foreground text-base leading-snug font-bold">
-			<RichText content={question.question_text} class="min-w-0 flex-1" />
+		<div class="text-card-foreground text-base leading-snug font-bold">
+			<RichText content={question.question_text} as="span" />
 			{#if question.is_mandatory}
 				<span class="text-destructive ml-0.5">*</span>
 			{/if}
-		</p>
+		</div>
 		{#if question.instructions}
 			<RichText content={question.instructions} class="text-muted-foreground mt-2 text-sm" />
 		{/if}
