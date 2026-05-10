@@ -106,11 +106,13 @@
 		{/if}
 	</div>
 	{#if questionSets.length > 0}
-		<div class="mt-8">
-			<h2 class="text-muted-foreground mb-4 text-xs font-bold uppercase">{$t('Sections')}</h2>
-			<div class="space-y-3">
+		<div class="align-center mt-8 border-t pt-4">
+			<h2 class="text-foreground mb-4 text-center text-sm font-bold uppercase">
+				{$t('Sections')}
+			</h2>
+			<div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
 				{#each questionSets as questionSet (`${questionSet.id ?? questionSet.title}-${questionSet.display_order}`)}
-					<div class="rounded-2xl border p-4">
+					<div class="bg-card mx-auto w-full rounded-2xl border p-4 lg:w-2/3">
 						<div class="flex items-start justify-between gap-4">
 							<div>
 								<h3 class="text-sm font-semibold">{questionSet.title}</h3>
