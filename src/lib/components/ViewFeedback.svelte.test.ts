@@ -132,11 +132,9 @@ describe('ViewFeedback', () => {
 
 			expect(container.textContent).toContain('What is 2 + 2?');
 			expect(container.textContent).toContain('Pick the best answer.');
-			const labels = Array.from(container.querySelectorAll('label'));
-			const optionB = labels.find(
-				(node) => node.textContent?.includes('B.') && node.textContent?.includes('4')
-			);
-			expect(optionB).toBeTruthy();
+			const optionBLabel = container.querySelector('label[for="1-B"]');
+			expect(optionBLabel).toBeTruthy();
+			expect(optionBLabel?.textContent).toContain('4');
 			expect(screen.queryByText(/<p>What is/)).not.toBeInTheDocument();
 		});
 
