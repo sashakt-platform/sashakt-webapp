@@ -355,7 +355,7 @@
 
 		<!-- Desktop sidebar - hidden on mobile -->
 		{#if testDetails?.show_question_palette}
-			<div class="fixed top-28 right-6 hidden h-[calc(100vh-8rem)] w-80 lg:block">
+			<div class="fixed top-28 right-6 hidden max-h-[calc(100vh-8rem)] w-72 lg:block">
 				<QuestionPaletteSidebar
 					{questions}
 					{questionSets}
