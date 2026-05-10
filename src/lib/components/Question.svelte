@@ -172,8 +172,8 @@
 							{@const absoluteIndex = (currentPage - 1) * perPage + index}
 							{@const section = sectionByQuestionId.get(question.id) ?? null}
 							{#if section && index === 0}
-								<div class="mb-4 rounded-2xl border bg-white p-4 shadow-sm">
-									<p class="text-sm font-semibold text-slate-800">{section.title}</p>
+								<div class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm">
+									<p class="text-sm font-semibold text-card-foreground">{section.title}</p>
 									{#if section.description}
 										<RichText
 											content={section.description}
@@ -196,8 +196,8 @@
 									? (sectionByQuestionId.get(previousQuestion.id) ?? null)
 									: null}
 								{#if previousSection?.id !== section.id}
-									<div class="mb-4 rounded-2xl border bg-white p-4 shadow-sm">
-										<p class="text-sm font-semibold text-slate-800">{section.title}</p>
+									<div class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm">
+										<p class="text-card-foreground text-sm font-semibold">{section.title}</p>
 										{#if section.description}
 											<RichText
 												content={section.description}
