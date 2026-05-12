@@ -55,11 +55,11 @@
 {#if media && (hasImage || hasExternal)}
 	<div class="mt-1 flex flex-col gap-2 lg:gap-2.5">
 		{#if hasImage}
-			<div class="max-w-sm lg:h-57.75 lg:w-122 lg:rounded-xl">
+			<div class="w-full max-w-sm overflow-hidden rounded-lg lg:h-57.75 lg:w-122 lg:rounded-xl">
 				<img
 					src={media.image?.url}
 					alt={media.image?.alt_text || 'Question image'}
-					class="h-auto w-full rounded-lg object-contain lg:h-full"
+					class="h-auto max-h-48 w-full object-contain sm:max-h-64 lg:h-full lg:max-h-none"
 					loading="lazy"
 				/>
 			</div>
