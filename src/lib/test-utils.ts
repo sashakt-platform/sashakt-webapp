@@ -316,6 +316,28 @@ export const mockGenericExternalMedia: TMedia = {
 	}
 };
 
+export const mockAudioMedia: TMedia = {
+	image: null,
+	external_media: {
+		type: 'audio',
+		provider: 'generic',
+		url: 'https://example.com/audio.mp3',
+		embed_url: null,
+		thumbnail_url: null
+	}
+};
+
+export const mockAudioMediaByExtension: TMedia = {
+	image: null,
+	external_media: {
+		type: 'link',
+		provider: 'generic',
+		url: 'https://example.com/track.wav',
+		embed_url: null,
+		thumbnail_url: null
+	}
+};
+
 export const mockImageAndExternalMedia: TMedia = {
 	image: {
 		gcs_path: 'tests/images/photo.jpg',
