@@ -589,7 +589,7 @@
 				currentTimeSpent
 			);
 			handleTimeSpentSynced(currentTimeSpent);
-		} catch {
+		} catch (error) {
 			// revert on error
 			if (answeredQuestion) {
 				selectedQuestions = selectedQuestions.map((q) =>
