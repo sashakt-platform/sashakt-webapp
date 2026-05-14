@@ -4,21 +4,24 @@
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import QuestionPaletteModal from '$lib/components/QuestionPaletteModal.svelte';
 	import QuestionPaletteSidebar from '$lib/components/QuestionPaletteSidebar.svelte';
+	import QuestionPaletteToggleButton from '$lib/components/QuestionPaletteToggleButton.svelte';
+	import RichText from '$lib/components/RichText.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
+	import ArrowRight from '@lucide/svelte/icons/arrow-right';
+	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { countQuestionStatuses } from '$lib/helpers/questionPaletteHelpers';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { navState } from '$lib/navState.svelte';
-	import type { TQuestion, TSelection } from '$lib/types';
+	import type { TQuestion, TSelection, TQuestionSetCandidate } from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { onMount } from 'svelte';
 
-	let { candidate, testQuestions, testDetails } = $props();
+	let { candidate, testQuestions, testDetails = null } = $props();
 	let isSubmittingTest = $state(false);
 
 	// for controlling confirmation dialog display
@@ -44,7 +47,10 @@
 		}
 	});
 
-	const questions: TQuestion[] = normalizeTestQuestions(testQuestions).questions;
+	const normalizedQuestionData = $derived(normalizeTestQuestions(testQuestions));
+	const questions: TQuestion[] = $derived(normalizedQuestionData.questions);
+	const questionSets: TQuestionSetCandidate[] = $derived(normalizedQuestionData.questionSets);
+	const sectionByQuestionId = $derived(normalizedQuestionData.sectionByQuestionId);
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
 	const singleQuestionPerPage = perPage === 1;
@@ -61,6 +67,9 @@
 	// question palette - track which question is currently selected
 	let currentQuestionIndex = $state((sessionStore.current.currentPage - 1) * perPage || 0);
 	const paletteStats = $derived(countQuestionStatuses(questions, selectedQuestions));
+	const markedForReviewCount = $derived(
+		selectedQuestions.filter((s: TSelection) => s.bookmarked).length
+	);
 
 	$effect(() => {
 		navState.active = true;
@@ -252,9 +261,9 @@
 {/snippet}
 
 {#if paginationReady}
-	<div class="flex min-h-screen gap-6 bg-blue-50 p-4 lg:p-6">
+	<div class="bg-muted flex min-h-screen gap-6 p-4 pb-20 lg:p-6 lg:pb-20">
 		<!-- Main question content -->
-		<div class="flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
+		<div class="min-w-0 flex-1 {testDetails?.show_question_palette ? 'lg:pr-80' : ''}">
 			<Pagination.Root
 				count={totalQuestions}
 				{perPage}
@@ -265,6 +274,53 @@
 				{#snippet children({ currentPage, range })}
 					<div class="w-full">
 						{#each questions.slice(range.start - 1, range.end) as question, index (question.id)}
+							{@const absoluteIndex = (currentPage - 1) * perPage + index}
+							{@const section = sectionByQuestionId.get(question.id) ?? null}
+							{#if section && index === 0}
+								<div class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm">
+									<p class="text-card-foreground text-sm font-semibold">{section.title}</p>
+									{#if section.description}
+										<RichText
+											content={section.description}
+											class="text-muted-foreground mt-1 text-sm"
+										/>
+									{/if}
+									<p class="text-muted-foreground mt-2 text-sm">
+										{#if canAttemptAllQuestions(section.max_questions_allowed_to_attempt, section.question_revisions.length)}
+											{$t('You may attempt all questions in this section.')}
+										{:else}
+											{$t('You may attempt up to {count} questions in this section.', {
+												values: { count: section.max_questions_allowed_to_attempt }
+											})}
+										{/if}
+									</p>
+								</div>
+							{:else if section}
+								{@const previousQuestion = questions[absoluteIndex - 1]}
+								{@const previousSection = previousQuestion
+									? (sectionByQuestionId.get(previousQuestion.id) ?? null)
+									: null}
+								{#if previousSection?.id !== section.id}
+									<div class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm">
+										<p class="text-card-foreground text-sm font-semibold">{section.title}</p>
+										{#if section.description}
+											<RichText
+												content={section.description}
+												class="text-muted-foreground mt-1 text-sm"
+											/>
+										{/if}
+										<p class="text-muted-foreground mt-2 text-sm">
+											{#if canAttemptAllQuestions(section.max_questions_allowed_to_attempt, section.question_revisions.length)}
+												{$t('You may attempt all questions in this section.')}
+											{:else}
+												{$t('You may attempt up to {count} questions in this section.', {
+													values: { count: section.max_questions_allowed_to_attempt }
+												})}
+											{/if}
+										</p>
+									</div>
+								{/if}
+							{/if}
 							<div id="question-{(currentPage - 1) * perPage + index}">
 								<QuestionCard
 									{candidate}
@@ -290,96 +346,123 @@
 						{/each}
 					</div>
 					<Pagination.Content
-						class="bottom-0 z-10 flex w-full items-center justify-between bg-white p-2 shadow-md not-lg:fixed lg:rounded-xl"
+						class="border-border bg-card fixed inset-x-0 bottom-0 z-10 grid w-full grid-cols-[auto_1fr_auto] items-center border-t px-8 py-6"
 					>
-						<Pagination.PrevButton />
+						<div class="flex justify-start">
+							<Pagination.PrevButton />
+						</div>
 
-						{#if currentPage === Math.ceil(totalQuestions / perPage)}
-							<Dialog.Root bind:open={submitDialogOpen}>
-								<Dialog.Trigger>
-									<Button class="w-24">{$t('Submit')}</Button>
-								</Dialog.Trigger>
-								{#if answeredAllMandatory(selectedQuestions, questions)}
-									<Dialog.Content class="w-80 rounded-xl">
-										<Dialog.Title>
-											{#if submitError || page.form?.submitTest === false || page.form?.error}
-												{$t('Submission Failed')}
-											{:else}
-												{$t('Submit test?')}
-											{/if}
-										</Dialog.Title>
-										<Dialog.Description>
-											{#if submitError || page.form?.submitTest === false || page.form?.error}
-												<div class="text-destructive">
-													{#if submitError}
-														<p class="mb-2">{submitError}</p>
-													{:else if page.form?.error}
-														<p class="mb-2">{page.form.error}</p>
+						<div class="flex justify-center">
+							<span class="text-muted-foreground text-center text-xs font-medium sm:text-sm">
+								<span class="hidden sm:inline">
+									{$t('Page')}
+									{currentPage}
+									{$t('of')}
+									{Math.ceil(totalQuestions / perPage)}
+									&nbsp;|&nbsp;
+								</span>
+								{range.start}–{range.end}
+								{$t('of')}
+								{totalQuestions}
+								{$t('Questions')}
+							</span>
+						</div>
+
+						<div class="flex justify-end">
+							{#if currentPage === Math.ceil(totalQuestions / perPage)}
+								<Dialog.Root bind:open={submitDialogOpen}>
+									<Dialog.Trigger>
+										<Button class="gap-1 pr-2.5">
+											{$t('Submit Test')}
+											<ArrowRight class="size-4" />
+										</Button>
+									</Dialog.Trigger>
+									{#if answeredAllMandatory(selectedQuestions, questions)}
+										<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
+											<div class="bg-card px-6 pt-6 pr-12 pb-4">
+												<Dialog.Title class="text-xl font-bold">
+													{#if submitError || page.form?.submitTest === false || page.form?.error}
+														{$t('Submission Failed')}
 													{:else}
-														<p class="mb-2">
-															{$t('There was an issue with your previous submission.')}
+														{$t('Submit Test?')}
+													{/if}
+												</Dialog.Title>
+											</div>
+
+											<div class="border-border border-t"></div>
+
+											<div class="bg-card px-6 py-6">
+												{#if submitError || page.form?.submitTest === false || page.form?.error}
+													<Dialog.Description class="space-y-2">
+														<p class="text-destructive text-sm font-medium">
+															{#if submitError}
+																{submitError}
+															{:else if page.form?.error}
+																{page.form.error}
+															{:else}
+																{$t('There was an issue with your previous submission.')}
+															{/if}
 														</p>
-													{/if}
-													<p class="text-muted-foreground">
-														{$t('Please click Confirm again to retry.')}
-													</p>
-												</div>
-											{:else}
-												{$t(
-													'Are you sure you want to submit for final marking? No changes will be allowed after submission.'
-												)}
-											{/if}
-										</Dialog.Description>
-										<div class="mt-2 inline-flex items-center justify-between">
-											<Dialog.Close
-												><Button variant="outline" class="w-32" disabled={isSubmittingTest}
-													>{$t('Cancel')}</Button
-												></Dialog.Close
-											>
-											<form
-												action="?/submitTest"
-												method="POST"
-												use:enhance={handleSubmitTestEnhance}
-											>
-												<Button type="submit" class="w-32" disabled={isSubmittingTest}>
-													{#if isSubmittingTest}
-														<Spinner />
-													{/if}
-													{$t('Confirm')}
-												</Button>
-											</form>
-										</div>
-									</Dialog.Content>
-								{:else}
-									{@render mandatoryQuestionDialog(true)}
-								{/if}
-							</Dialog.Root>
-						{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
-							<Dialog.Root>
-								<Dialog.Trigger>
-									<Button class="w-24 gap-1 pr-2.5">
-										{$t('Next')}
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="24"
-											height="24"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											class="size-4"
-										>
-											<path d="m9 18 6-6-6-6" />
-										</svg>
-									</Button>
-								</Dialog.Trigger>
-								{@render mandatoryQuestionDialog(false)}
-							</Dialog.Root>
-						{:else}
-							<Pagination.NextButton class="w-24" />
-						{/if}
+														<p class="text-muted-foreground text-sm">
+															{$t('Please click Submit again to retry.')}
+														</p>
+													</Dialog.Description>
+												{:else}
+													<Dialog.Description class="space-y-3">
+														{#if markedForReviewCount > 0}
+															<p class="text-warning font-semibold">
+																{$t('You have {count} questions marked for review.', {
+																	values: { count: markedForReviewCount }
+																})}
+															</p>
+														{/if}
+														<p class="text-muted-foreground text-sm">
+															{$t(
+																'No changes will be allowed once you submit the test. Are you sure you want to submit?'
+															)}
+														</p>
+													</Dialog.Description>
+												{/if}
+											</div>
+
+											<div class="bg-card flex justify-end gap-3 px-6 pb-6">
+												<Dialog.Close>
+													<Button variant="outline" disabled={isSubmittingTest}>
+														{$t('Cancel')}
+													</Button>
+												</Dialog.Close>
+												<form
+													action="?/submitTest"
+													method="POST"
+													use:enhance={handleSubmitTestEnhance}
+												>
+													<Button type="submit" disabled={isSubmittingTest}>
+														{#if isSubmittingTest}
+															<Spinner />
+														{/if}
+														{$t('Submit')}
+													</Button>
+												</form>
+											</div>
+										</Dialog.Content>
+									{:else}
+										{@render mandatoryQuestionDialog(true)}
+									{/if}
+								</Dialog.Root>
+							{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
+								<Dialog.Root>
+									<Dialog.Trigger>
+										<Button class="gap-1 pr-2.5">
+											{$t('Next')}
+											<ArrowRight class="size-4" />
+										</Button>
+									</Dialog.Trigger>
+									{@render mandatoryQuestionDialog(false)}
+								</Dialog.Root>
+							{:else}
+								<Pagination.NextButton class="w-24" />
+							{/if}
+						</div>
 					</Pagination.Content>
 				{/snippet}
 			</Pagination.Root>
@@ -390,6 +473,7 @@
 			<div class="fixed top-28 right-6 hidden max-h-[calc(100vh-8rem)] w-72 lg:block">
 				<QuestionPaletteSidebar
 					{questions}
+					{questionSets}
 					selections={selectedQuestions}
 					{currentQuestionIndex}
 					onNavigate={navigateToQuestion}
@@ -403,6 +487,7 @@
 		<QuestionPaletteModal
 			bind:open={paletteOpen}
 			{questions}
+			{questionSets}
 			selections={selectedQuestions}
 			{currentQuestionIndex}
 			onNavigate={navigateToQuestion}

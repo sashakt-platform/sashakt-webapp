@@ -1,24 +1,33 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
+	import {
+		buildQuestionSetGroups,
+		getQuestionSetQuestionCount,
+		normalizeTestQuestions
+	} from '$lib/helpers/questionSetHelpers';
+	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
 	import { t } from 'svelte-i18n';
-	import type { TResultData, TFeedback } from '$lib/types';
+	import type { TResultData, TFeedback, TTestQuestionsResponse } from '$lib/types';
 	import { CircleCheck, CircleX, CircleMinus } from '@lucide/svelte';
+	import RichText from './RichText.svelte';
 
 	let {
 		resultData,
 		testDetails,
 		feedback = null,
+		testQuestions = null,
 		onViewFeedback = () => {}
 	}: {
 		resultData: TResultData | null;
 		testDetails: {
 			name: string;
 			link: string;
-			completion_message?: string;
+			completion_message?: string | null;
 			show_feedback_on_completion?: boolean;
 		};
 		feedback?: TFeedback[] | null;
+		testQuestions?: TTestQuestionsResponse | null;
 		onViewFeedback?: () => void;
 	} = $props();
 
@@ -27,12 +36,70 @@
 		? (resultData.correct_answer ?? 0) + (resultData.incorrect_answer ?? 0)
 		: 0;
 	const notAttempted = totalQuestions - attempted;
+	const normalizedTestQuestions = $derived(normalizeTestQuestions(testQuestions));
+	const feedbackByQuestionId = $derived(
+		new Map((feedback ?? []).map((entry) => [entry.question_revision_id, entry]))
+	);
+	const isFeedbackEntryCorrect = (
+		question: (typeof normalizedTestQuestions.questions)[number]
+	): boolean => {
+		const entry = feedbackByQuestionId.get(question.id);
+		if (!entry) return false;
+		if (typeof entry.correct_answer === 'number') {
+			if (typeof entry.submitted_answer !== 'string') {
+				return false;
+			}
+			return (
+				isNumericalAnswerCorrect(
+					question.question_type,
+					entry.submitted_answer,
+					entry.correct_answer
+				) === true
+			);
+		}
+		if (!Array.isArray(entry.submitted_answer) || !Array.isArray(entry.correct_answer)) {
+			return false;
+		}
+		const submittedAnswer = entry.submitted_answer;
+		const correctAnswer = entry.correct_answer;
+		return (
+			submittedAnswer.length === correctAnswer.length &&
+			submittedAnswer.every((answer) => correctAnswer.includes(answer))
+		);
+	};
+	const sectionSummaries = $derived(
+		buildQuestionSetGroups(
+			normalizedTestQuestions.questions,
+			normalizedTestQuestions.questionSets
+		).map((group) => {
+			const attemptedCount = group.questions.filter((question) => {
+				const entry = feedbackByQuestionId.get(question.id);
+				if (!entry) return false;
+				if (typeof entry.submitted_answer === 'string') {
+					return entry.submitted_answer.trim().length > 0;
+				}
+				return entry.submitted_answer.length > 0;
+			}).length;
+			const correctCount = group.questions.filter((question) =>
+				isFeedbackEntryCorrect(question)
+			).length;
+
+			return {
+				title: group.section.title,
+				questionCount: getQuestionSetQuestionCount(group.section),
+				attemptedCount,
+				correctCount,
+				allowedCount: group.section.max_questions_allowed_to_attempt,
+				accuracy: attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : null
+			};
+		})
+	);
 
 	let isDownloading = $state(false);
 	let downloadError = $state<string | null>(null);
 
 	function pad(n: number) {
-		return String(n).padStart(2, '0');
+		return n === 0 ? '0' : String(n).padStart(2, '0');
 	}
 
 	async function handleDownloadCertificate() {
@@ -71,15 +138,15 @@
 	}
 </script>
 
-<section class="bg-background flex min-h-screen items-center justify-center px-4 py-10">
-	<div class="w-full max-w-sm overflow-hidden rounded-2xl shadow-sm">
+<section class="bg-muted flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-10">
+	<div class="bg-card w-full max-w-sm overflow-hidden rounded-2xl shadow-sm">
 		<div class="bg-secondary flex flex-col items-center px-6 py-8 text-center">
 			<h2 class="text-foreground mb-1 text-lg font-bold">
 				"{testDetails.name}" {$t('Submitted')}
 			</h2>
 			<p class="text-muted-foreground mb-4 text-sm">
 				{#if testDetails.completion_message}
-					{@html testDetails.completion_message}
+					<RichText content={testDetails.completion_message} class="text-left" />
 				{/if}
 			</p>
 			{#if resultData && resultData.marks_obtained !== null && resultData.marks_maximum !== null}
@@ -126,7 +193,11 @@
 				{/if}
 
 				{#if testDetails.show_feedback_on_completion && feedback}
-					<Button variant="outline" class="w-full" onclick={onViewFeedback}>
+					<Button
+						variant="outline"
+						class="border-primary text-primary hover:bg-primary/10 hover:text-primary w-full"
+						onclick={onViewFeedback}
+					>
 						{$t('View All Answers')}
 					</Button>
 				{/if}
@@ -142,4 +213,56 @@
 			</div>
 		{/if}
 	</div>
+
+	{#if sectionSummaries.length > 0}
+		<div class="w-2/3">
+			<h3 class="text-muted-foreground mb-4 text-xs font-bold tracking-wider uppercase">
+				{$t('Section summary')}
+			</h3>
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+				{#each sectionSummaries as section (`${section.title}-${section.questionCount}`)}
+					<div class="bg-card w-full rounded-2xl border p-5 shadow-sm">
+						<div class="flex flex-wrap items-start justify-between gap-3">
+							<div>
+								<p class="text-card-foreground text-base font-semibold">{section.title}</p>
+								<p class="text-muted-foreground mt-1 text-sm">
+									{$t('Allowed')}: {section.allowedCount}
+								</p>
+							</div>
+							<div
+								class="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm font-medium"
+							>
+								{#if section.accuracy === null}
+									{$t('Accuracy')}: --
+								{:else}
+									{$t('Accuracy')}: {section.accuracy}%
+								{/if}
+							</div>
+						</div>
+
+						<div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+							<div class="bg-muted rounded-xl p-3">
+								<p class="text-muted-foreground text-xs font-semibold uppercase">
+									{$t('Questions')}
+								</p>
+								<p class="text-foreground mt-1 text-xl font-semibold">{section.questionCount}</p>
+							</div>
+							<div class="bg-muted rounded-xl p-3">
+								<p class="text-muted-foreground text-xs font-semibold uppercase">
+									{$t('Attempted')}
+								</p>
+								<p class="text-foreground mt-1 text-xl font-semibold">{section.attemptedCount}</p>
+							</div>
+							<div class="bg-muted col-span-2 rounded-xl p-3 sm:col-span-1">
+								<p class="text-muted-foreground text-xs font-semibold uppercase">
+									{$t('Correct')}
+								</p>
+								<p class="text-foreground mt-1 text-xl font-semibold">{section.correctCount}</p>
+							</div>
+						</div>
+					</div>
+				{/each}
+			</div>
+		</div>
+	{/if}
 </section>

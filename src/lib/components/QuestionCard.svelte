@@ -24,7 +24,13 @@
 	import { t } from 'svelte-i18n';
 	import { onMount } from 'svelte';
 	import { cn } from '$lib/utils';
-	import { isNumericalAnswerCorrect, getQuestionResult } from '$lib/helpers/feedbackHelpers';
+	import {
+		isNumericalAnswerCorrect,
+		getQuestionResult,
+		GRADABLE_QUESTION_TYPES
+	} from '$lib/helpers/feedbackHelpers';
+	import RichText from './RichText.svelte';
+
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
 	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
@@ -61,6 +67,7 @@
 	let saveError = $state<string | null>(null);
 	let localQuestionTimerTick = $state(0);
 	let localQuestionStartedAt = $state(Date.now());
+	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 
 	const sessionStore = createTestSessionStore(candidate);
 	const selectedQuestion = (questionId: number) => {
@@ -120,14 +127,17 @@
 		);
 	});
 
-	const getFeedbackResult = $derived(() => {
-		if (!isLocked) return null;
-		return getQuestionResult(
-			question.question_type,
-			currentSelection?.response,
-			currentSelection?.correct_answer
-		);
-	});
+	const feedbackResult = $derived(
+		isLocked && currentSelection?.correct_answer != null
+			? getQuestionResult(
+					question.question_type,
+					currentSelection?.response,
+					currentSelection?.correct_answer
+				)
+			: null
+	);
+
+	const showMarkForReviewButton = $derived(showMarkForReview && !(showFeedback && isLocked));
 
 	const getExistingInputResponse = () => {
 		const selected = selectedQuestion(question.id);
@@ -293,6 +303,23 @@
 		String(candidateInput ?? '').trim() !== String(lastSavedInput ?? '').trim()
 	);
 	const hasSavedBefore = $derived(String(lastSavedInput ?? '').trim().length > 0);
+	const hasAttemptedResponse = (response: number[] | string | undefined): boolean => {
+		if (typeof response === 'string') {
+			return response.trim().length > 0;
+		}
+
+		return (response?.length ?? 0) > 0;
+	};
+	const hasClearableAnswer = $derived(hasAttemptedResponse(currentSelection?.response));
+	const isSectionLimitWarning = $derived(saveError?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false);
+
+	const getErrorMessage = (error: unknown, fallback: string) =>
+		error instanceof Error && error.message ? error.message : fallback;
+
+	const setTransientSaveError = (error: unknown, fallback: string) => {
+		saveError = getErrorMessage(error, fallback);
+		setTimeout(() => (saveError = null), 5000);
+	};
 
 	const isSelected = (optionId: number) => {
 		const selected = selectedQuestion(question.id);
@@ -413,11 +440,10 @@
 				}
 				updateStore();
 				handleTimeSpentSynced(currentTimeSpent);
-			} catch {
+			} catch (error) {
 				// force complete remount of RadioGroup
 				radioGroupKey++;
-				saveError = $t('Failed to save your answer. Please try again.');
-				setTimeout(() => (saveError = null), 5000);
+				setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 			} finally {
 				isSubmitting = false;
 			}
@@ -466,12 +492,11 @@
 			try {
 				await submitAnswer(questionId, newResponse, currentBookmarked, false, currentTimeSpent);
 				handleTimeSpentSynced(currentTimeSpent);
-			} catch {
+			} catch (error) {
 				// revert on error
 				selectedQuestions = previousState;
 				updateStore();
-				saveError = $t('Failed to save your answer. Please try again.');
-				setTimeout(() => (saveError = null), 5000);
+				setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 			} finally {
 				isSubmitting = false;
 			}
@@ -480,14 +505,14 @@
 
 	const submitAnswer = async (
 		questionId: number,
-		response: number[] | string,
+		response: number[] | string | null,
 		bookmarked?: boolean,
 		is_reviewed?: boolean,
 		time_spent?: number
 	) => {
 		const data = {
 			question_revision_id: questionId,
-			response: response.length > 0 ? response : null,
+			response: response == null ? null : response.length > 0 ? response : null,
 			candidate,
 			time_spent,
 			bookmarked,
@@ -574,14 +599,77 @@
 				selectedQuestions = selectedQuestions.filter((q) => q.question_revision_id !== question.id);
 			}
 			updateStore();
-			saveError = 'Failed to save bookmark. Please try again.';
-			setTimeout(() => (saveError = null), 5000);
+			setTransientSaveError(error, 'Failed to save bookmark. Please try again.');
 		} finally {
 			isSubmitting = false;
 		}
 	};
 
 	const isQuestionBookmarked = $derived(selectedQuestion(question.id)?.bookmarked ?? false);
+	const handleClearAnswer = async () => {
+		if (isLocked || isSubmitting || !hasClearableAnswer) return;
+
+		const answeredQuestion = selectedQuestion(question.id);
+		if (!answeredQuestion) return;
+
+		const currentBookmarked = answeredQuestion.bookmarked ?? false;
+		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+		const previousMatrixSelections = { ...matrixSelections };
+		const clearedResponse =
+			question.question_type === question_type_enum.SUBJECTIVE ||
+			question.question_type === question_type_enum.NUMERICALINTEGER ||
+			question.question_type === question_type_enum.NUMERICALDECIMAL
+				? ''
+				: [];
+
+		isSubmitting = true;
+		saveError = null;
+
+		selectedQuestions = selectedQuestions.map((selection) =>
+			selection.question_revision_id === question.id
+				? {
+						...selection,
+						response: clearedResponse,
+						visited: true,
+						bookmarked: currentBookmarked,
+						is_reviewed: false,
+						correct_answer: undefined
+					}
+				: selection
+		);
+		updateStore();
+
+		if (typeof clearedResponse === 'string') {
+			candidateInput = '';
+			lastSavedInput = '';
+		} else if (question.question_type === question_type_enum.MATRIXMATCH) {
+			matrixSelections = {};
+		}
+
+		try {
+			await submitAnswer(question.id, clearedResponse, currentBookmarked);
+			if (question.question_type === question_type_enum.SINGLE) {
+				radioGroupKey++;
+			}
+		} catch (error) {
+			selectedQuestions = previousState;
+			updateStore();
+
+			if (typeof clearedResponse === 'string') {
+				const previousResponse = previousState.find(
+					(selection: TSelection) => selection.question_revision_id === question.id
+				)?.response;
+				candidateInput = typeof previousResponse === 'string' ? previousResponse : '';
+				lastSavedInput = candidateInput;
+			} else if (question.question_type === question_type_enum.MATRIXMATCH) {
+				matrixSelections = previousMatrixSelections;
+			}
+
+			setTransientSaveError(error, 'Failed to clear your answer. Please try again.');
+		} finally {
+			isSubmitting = false;
+		}
+	};
 
 	const matrixResponse = $derived(parseJsonRecord<number>(selectedQuestion(question.id)?.response));
 
@@ -625,11 +713,10 @@
 			await submitAnswer(question.id, inputValue, currentBookmarked, false, currentTimeSpent);
 			handleTimeSpentSynced(currentTimeSpent);
 			lastSavedInput = candidateInput;
-		} catch {
+		} catch (error) {
 			selectedQuestions = previousState;
 			updateStore();
-			saveError = $t('Failed to save your answer. Please try again.');
-			setTimeout(() => (saveError = null), 5000);
+			setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 		} finally {
 			isSubmitting = false;
 		}
@@ -657,7 +744,7 @@
 {/snippet}
 
 <Card.Root
-	class="mb-4 w-full rounded-xl shadow-md {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
+	class="mb-4 w-full rounded-xl shadow-none {isSubmitting ? 'pointer-events-none opacity-60' : ''}"
 >
 	<Card.Header class="p-4 lg:p-6">
 		<div class="mb-4 flex items-center justify-between">
@@ -699,10 +786,8 @@
 									<span class="text-success font-semibold">+{scheme.correct}</span>
 								</div>
 								<div class="flex justify-between gap-4">
-									<span class="font-semibold {scheme.wrong < 0 ? 'text-error' : 'text-foreground'}"
-										>{$t('Incorrect')}</span
-									>
-									<span class="font-semibold {scheme.wrong < 0 ? 'text-error' : 'text-foreground'}"
+									<span class="text-error font-semibold">{$t('Incorrect')}</span>
+									<span class="text-error font-semibold"
 										>{scheme.wrong > 0 ? `+${scheme.wrong}` : scheme.wrong}</span
 									>
 								</div>
@@ -732,19 +817,11 @@
 					</button>
 				{/if}
 
-				{#if showFeedback && isLocked && question?.marking_scheme}
-					{@const gradableTypes = new Set([
-						question_type_enum.SINGLE,
-						question_type_enum.MULTIPLE,
-						question_type_enum.NUMERICALINTEGER,
-						question_type_enum.NUMERICALDECIMAL
-					])}
-					{#if gradableTypes.has(question.question_type)}
-						<ResultBadge result={getFeedbackResult()} scheme={question.marking_scheme} />
-					{/if}
+				{#if showFeedback && isLocked && question?.marking_scheme && GRADABLE_QUESTION_TYPES.has(question.question_type)}
+					<ResultBadge result={feedbackResult} scheme={question.marking_scheme} />
 				{/if}
 
-				{#if showMarkForReview && !(showFeedback && isLocked)}
+				{#if showMarkForReviewButton}
 					<button
 						type="button"
 						class="hidden items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors lg:flex
@@ -761,24 +838,33 @@
 			</div>
 		</div>
 
-		<p class="text-card-foreground text-base leading-snug font-bold">
-			{question.question_text}
+		<div class="text-card-foreground text-base leading-snug font-bold">
+			<RichText content={question.question_text} as="span" />
 			{#if question.is_mandatory}
 				<span class="text-destructive ml-0.5">*</span>
 			{/if}
-		</p>
-		{#if question.instructions}
-			<p class="text-muted-foreground mt-2 text-sm">{question.instructions}</p>
-		{/if}
+		</div>
 		<QuestionMedia media={question.media} />
+		{#if question.instructions}
+			<RichText content={question.instructions} class="text-muted-foreground mt-2 text-sm" />
+		{/if}
 	</Card.Header>
 
 	<Card.Content class="px-4 pt-0 pb-4 lg:px-6 lg:pb-6">
 		{#if saveError}
 			<div
-				class="border-destructive bg-destructive/10 text-destructive mb-4 rounded-lg border p-3 text-sm"
+				class={`mb-4 rounded-lg border p-3 text-sm ${
+					isSectionLimitWarning
+						? 'border-warning bg-warning-subtle text-warning'
+						: 'border-destructive bg-destructive/10 text-destructive'
+				}`}
 			>
 				{saveError}
+				{#if isSectionLimitWarning}
+					<p class="text-warning mt-2 text-xs">
+						{$t('Clear another answered question in this section to attempt this one.')}
+					</p>
+				{/if}
 			</div>
 		{/if}
 		{#if question.question_type === question_type_enum.SINGLE}
@@ -826,7 +912,7 @@
 										)}
 									/>
 									<span class={cn('text-foreground flex-1 text-sm', feedbackStatus !== 'none')}
-										>{option.value}</span
+										><RichText content={option.value} class="min-w-0 flex-1" /></span
 									>
 									{#if feedbackStatus === 'correct'}
 										{@render showCorrectWrongMark('correct')}
@@ -847,7 +933,7 @@
 		{:else if question.question_type === question_type_enum.SUBJECTIVE}
 			<div class="flex flex-col gap-2">
 				<textarea
-					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring min-h-48 w-full rounded-xl border border-dashed px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:min-h-56"
+					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring h-22 w-full rounded-[10px] border px-[14px] py-[10px] text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 					placeholder={$t('Type your answer here...')}
 					bind:value={candidateInput}
 					maxlength={question.subjective_answer_limit || undefined}
@@ -958,94 +1044,105 @@
 			{@const matrixRows = matrix.rows.items}
 			{@const matrixColumns = matrix.columns.items}
 
-			<div class="border-border mb-5 grid grid-cols-2 gap-6 border-b pb-5">
-				<div>
-					<p class="text-foreground mb-2 text-sm font-semibold">{matrix.rows.label}</p>
-					<div class="flex flex-col gap-2">
-						{#each matrixRows as row (row.id)}
+			<div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+				<div class="border-border overflow-hidden rounded-xl border">
+					<div
+						class="bg-muted text-foreground py-4 text-center text-xs font-bold tracking-widest uppercase"
+					>
+						{matrix.rows.label}
+					</div>
+					{#each matrixRows as row (row.id)}
+						<div class="border-border flex items-start gap-3 border-t px-4 py-3">
+							<span class="text-foreground min-w-4 shrink-0 text-sm font-bold">{row.key}</span>
 							<div class="text-foreground text-sm">
-								<span class="font-semibold">{row.key}.</span>
-								<span class="ml-1">{row.value}</span>
+								{row.value}
 								{#if row.media}
 									<QuestionMedia media={row.media} />
 								{/if}
 							</div>
-						{/each}
-					</div>
+						</div>
+					{/each}
 				</div>
-				<div>
-					<p class="text-foreground mb-2 text-sm font-semibold">{matrix.columns.label}</p>
-					<div class="flex flex-col gap-2">
-						{#each matrixColumns as col (col.id)}
+
+				<div class="border-border overflow-hidden rounded-xl border">
+					<div
+						class="bg-muted text-foreground py-4 text-center text-xs font-bold tracking-widest uppercase"
+					>
+						{matrix.columns.label}
+					</div>
+					{#each matrixColumns as col (col.id)}
+						<div class="border-border flex items-start gap-3 border-t px-4 py-3">
+							<span class="text-foreground min-w-4 shrink-0 text-sm font-bold">{col.key}</span>
 							<div class="text-foreground text-sm">
-								<span class="font-semibold">{col.key}.</span>
-								<span class="ml-1">{col.value}</span>
+								{col.value}
 								{#if col.media}
 									<QuestionMedia media={col.media} />
 								{/if}
 							</div>
-						{/each}
-					</div>
+						</div>
+					{/each}
 				</div>
 			</div>
 
-			<div class="overflow-x-auto">
-				<table class="border-collapse text-sm">
-					<thead>
-						<tr>
-							<th class="w-10 px-3 py-2"></th>
-							{#each matrixColumns as col (col.id)}
-								<th class="text-foreground px-5 py-2 text-center text-sm font-semibold">
-									{col.key}
-								</th>
-							{/each}
-						</tr>
-					</thead>
-					<tbody>
-						{#each matrixRows as row (row.id)}
-							<tr>
-								<td class="text-foreground px-3 py-3 text-sm font-semibold">{row.key}</td>
+			<div class="overflow-x-auto md:flex md:justify-center">
+				<div class="border-border overflow-hidden rounded-xl border">
+					<table class="w-full border-collapse text-sm md:w-auto">
+						<thead>
+							<tr class="bg-muted">
+								<th class="w-14 px-4 py-5"></th>
 								{#each matrixColumns as col (col.id)}
-									{@const isChecked = (matrixSelections[row.id] ?? []).includes(col.id)}
-									<td class="px-5 py-3 text-center">
-										<Checkbox
-											checked={isChecked}
-											disabled={isLocked}
-											onCheckedChange={() => handleMatrixInput(row.id, col.id)}
-										/>
-									</td>
+									<th class="text-foreground min-w-36 px-4 py-5 text-center text-sm font-semibold">
+										{col.key}
+									</th>
 								{/each}
 							</tr>
-						{/each}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{#each matrixRows as row (row.id)}
+								<tr class="border-border border-t">
+									<td class="text-foreground w-14 px-4 py-5 text-sm font-semibold">{row.key}</td>
+									{#each matrixColumns as col (col.id)}
+										{@const isChecked = (matrixSelections[row.id] ?? []).includes(col.id)}
+										<td class="px-4 py-5 text-center">
+											<Checkbox
+												checked={isChecked}
+												disabled={isLocked}
+												onCheckedChange={() => handleMatrixInput(row.id, col.id)}
+												class="border-input data-[state=checked]:border-primary"
+											/>
+										</td>
+									{/each}
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
 			</div>
 		{:else if question.question_type === question_type_enum.MATRIXRATING}
 			{@const matrixOpts = question.options as unknown as TMatrixOptions}
-			<div class="overflow-x-auto">
-				<table class="w-full border-collapse text-sm">
+			<div class="overflow-x-auto rounded-lg">
+				<table class="border-border min-w-full border-collapse border text-sm">
 					<thead>
-						<tr>
-							<th
-								class="border-border bg-muted text-foreground border px-4 py-3 text-left font-semibold"
-							>
+						<tr class="border-border h-16 border-b">
+							<th class="bg-muted text-muted-foreground min-w-55 px-5 text-left font-bold">
 								{matrixOpts.rows.label}
 							</th>
 							{#each matrixOpts.columns.items as col (col.id)}
-								<th
-									class="border-border bg-muted text-foreground border px-4 py-3 text-center font-semibold"
-								>
-									{col.key} – {col.value}
+								<th class="bg-muted text-muted-foreground px-5 text-center font-bold">
+									<span class="block">{col.value}</span>
+									<span class="block">({col.key})</span>
 								</th>
 							{/each}
 						</tr>
 					</thead>
 					<tbody>
 						{#each matrixOpts.rows.items as row (row.id)}
-							<tr class="hover:bg-accent">
-								<td class="border-border border px-4 py-3 font-medium">{row.value}</td>
+							<tr class="border-border hover:bg-accent border-b">
+								<td class="min-w-55 px-4 py-3 font-medium wrap-break-word whitespace-normal">
+									{row.value}
+								</td>
 								{#each matrixOpts.columns.items as col (col.id)}
-									<td class="border-border border px-4 py-3 text-center">
+									<td class="px-4 py-3 text-center">
 										<input
 											type="radio"
 											name="matrix-{question.id}-row-{row.id}"
@@ -1066,42 +1163,41 @@
 			{@const matrixOpts = question.options as TMatrixInputOptions}
 			{@const inputType = matrixOpts.columns.input_type}
 			<div class="overflow-x-auto">
-				<table class="w-full border-collapse text-sm">
-					<thead>
-						<tr>
-							<th
-								class="border-border bg-muted text-foreground border px-4 py-3 text-left font-semibold"
-							>
-								{matrixOpts.rows.label}
-							</th>
-							<th
-								class="border-border bg-muted text-foreground border px-4 py-3 text-left font-semibold"
-							>
-								{matrixOpts.columns.label}
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each matrixOpts.rows.items as row (row.id)}
-							<tr class="hover:bg-accent">
-								<td class="border-border border px-4 py-3 font-medium">
-									<span class="font-semibold">{row.key}.</span>
-									<span class="ml-1">{row.value}</span>
-								</td>
-								<td class="border-border border px-4 py-3">
-									<input
-										type={inputType}
-										class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-										value={matrixInputValues[String(row.id)] ?? ''}
-										disabled={isLocked}
-										oninput={(e) =>
-											handleMatrixInputChange(row.id, (e.target as HTMLInputElement).value)}
-									/>
-								</td>
+				<div class="border-border overflow-hidden rounded-xl border">
+					<table class="w-full border-collapse text-sm">
+						<thead>
+							<tr class="border-border bg-muted border-b">
+								<th class="text-foreground px-4 py-3 text-left font-semibold">
+									{matrixOpts.rows.label}
+								</th>
+								<th class="text-foreground px-4 py-3 text-left font-semibold">
+									{matrixOpts.columns.label}
+								</th>
 							</tr>
-						{/each}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{#each matrixOpts.rows.items as row (row.id)}
+								<tr class="border-border hover:bg-accent border-b last:border-b-0">
+									<td class="w-1/2 px-4 py-3 font-medium">
+										<span class="font-semibold">{row.key}.</span>
+										<span class="ml-1">{row.value}</span>
+									</td>
+									<td class="w-1/2 px-4 py-3">
+										<input
+											type={inputType}
+											class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+											placeholder={$t('Enter answer')}
+											value={matrixInputValues[String(row.id)] ?? ''}
+											disabled={isLocked}
+											oninput={(e) =>
+												handleMatrixInputChange(row.id, (e.target as HTMLInputElement).value)}
+										/>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
 			</div>
 			<div class="mt-3 flex items-center">
 				<SaveAnswerButton
@@ -1150,7 +1246,7 @@
 									)}
 								/>
 								<span class={cn('text-foreground flex-1 text-sm', feedbackStatus !== 'none')}
-									>{option.value}</span
+									><RichText content={option.value} class="min-w-0 flex-1" /></span
 								>
 								{#if feedbackStatus === 'correct'}
 									{@render showCorrectWrongMark('correct')}
@@ -1179,17 +1275,28 @@
 			</Button>
 		{/if}
 
-		{#if showMarkForReview && !(showFeedback && isLocked)}
-			<button
-				type="button"
-				class="mt-4 flex w-full items-center justify-center gap-1.5 text-sm font-medium transition-colors lg:hidden
-					{isQuestionBookmarked ? 'text-warning' : 'text-muted-foreground'}"
-				onclick={handleBookmark}
-				disabled={isLocked}
+		<div class="mt-4 flex flex-col gap-3 sm:flex-row">
+			<Button
+				variant="outline"
+				class="w-full sm:flex-1"
+				onclick={handleClearAnswer}
+				disabled={isLocked || !hasClearableAnswer}
 			>
-				<Flag class="h-4 w-4 {isQuestionBookmarked ? 'fill-current' : ''}" />
-				{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
-			</button>
-		{/if}
+				{$t('Clear answer')}
+			</Button>
+
+			{#if showMarkForReviewButton}
+				<button
+					type="button"
+					class="mt-4 flex w-full items-center justify-center gap-1.5 text-sm font-medium transition-colors lg:hidden
+					{isQuestionBookmarked ? 'text-warning' : 'text-muted-foreground'}"
+					onclick={handleBookmark}
+					disabled={isLocked}
+				>
+					<Flag class="h-4 w-4 {isQuestionBookmarked ? 'fill-current' : ''}" />
+					{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
+				</button>
+			{/if}
+		</div>
 	</Card.Content>
 </Card.Root>

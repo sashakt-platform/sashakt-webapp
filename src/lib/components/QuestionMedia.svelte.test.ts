@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/svelte';
 import QuestionMedia from './QuestionMedia.svelte';
 import {
 	mockImageMedia,
@@ -7,8 +7,20 @@ import {
 	mockVimeoMedia,
 	mockSpotifyMedia,
 	mockGenericExternalMedia,
-	mockImageAndExternalMedia
+	mockImageAndExternalMedia,
+	mockAudioMedia,
+	mockAudioMediaByExtension,
+	initializeI18nForTests,
+	setLocaleForTests
 } from '$lib/test-utils';
+
+beforeAll(() => {
+	initializeI18nForTests();
+});
+
+beforeEach(async () => {
+	await setLocaleForTests('en-US');
+});
 
 describe('QuestionMedia', () => {
 	describe('when media is absent', () => {
@@ -31,6 +43,13 @@ describe('QuestionMedia', () => {
 	});
 
 	describe('image media', () => {
+		it('should not render image when image object exists but url is falsy', () => {
+			const { container } = render(QuestionMedia, {
+				props: { media: { image: { ...mockImageMedia.image!, url: '' }, external_media: null } }
+			});
+			expect(container.querySelector('img')).not.toBeInTheDocument();
+		});
+
 		it('should render an image when media.image.url is present', () => {
 			render(QuestionMedia, { props: { media: mockImageMedia } });
 
@@ -165,6 +184,224 @@ describe('QuestionMedia', () => {
 			const iframe = container.querySelector('iframe');
 			expect(iframe).toBeInTheDocument();
 			expect(iframe).toHaveAttribute('src', mockImageAndExternalMedia.external_media!.embed_url);
+		});
+	});
+
+	describe('audio player', () => {
+		it('should render the audio player for type:audio with no embed_url', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should render the audio player when URL has an audio file extension', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMediaByExtension } });
+
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should render a play button', () => {
+			render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+		});
+
+		it('should render the seek range input', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			const range = container.querySelector('input[type="range"]');
+			expect(range).toBeInTheDocument();
+			expect(range).toHaveAttribute('min', '0');
+			expect(range).toHaveAttribute('max', '100');
+		});
+
+		it('should render the time display', () => {
+			render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			expect(screen.getByText('00:00')).toBeInTheDocument();
+		});
+
+		it('should set the audio src from the media url', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			const audio = container.querySelector('audio');
+			expect(audio).toHaveAttribute('src', mockAudioMedia.external_media!.url);
+		});
+
+		it('should have the correct gradient style on the seek bar', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+
+			const range = container.querySelector('input[type="range"]');
+			expect(range?.getAttribute('style')).toContain('linear-gradient');
+		});
+
+		it('should detect mp3 extension as audio', () => {
+			const media = {
+				image: null,
+				external_media: {
+					type: 'link',
+					provider: 'generic',
+					url: 'https://cdn.example.com/clip.mp3',
+					embed_url: null,
+					thumbnail_url: null
+				}
+			};
+			const { container } = render(QuestionMedia, { props: { media } });
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should detect ogg extension as audio', () => {
+			const media = {
+				image: null,
+				external_media: {
+					type: 'link',
+					provider: 'generic',
+					url: 'https://cdn.example.com/clip.ogg',
+					embed_url: null,
+					thumbnail_url: null
+				}
+			};
+			const { container } = render(QuestionMedia, { props: { media } });
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should not render audio player for Spotify — iframe takes priority', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockSpotifyMedia } });
+
+			expect(container.querySelector('audio')).not.toBeInTheDocument();
+			expect(container.querySelector('iframe')).toBeInTheDocument();
+		});
+
+		it('should detect m4a extension as audio', () => {
+			const media = {
+				image: null,
+				external_media: {
+					type: 'link',
+					provider: 'generic',
+					url: 'https://cdn.example.com/clip.m4a',
+					embed_url: null,
+					thumbnail_url: null
+				}
+			};
+			const { container } = render(QuestionMedia, { props: { media } });
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should detect aac extension as audio', () => {
+			const media = {
+				image: null,
+				external_media: {
+					type: 'link',
+					provider: 'generic',
+					url: 'https://cdn.example.com/clip.aac',
+					embed_url: null,
+					thumbnail_url: null
+				}
+			};
+			const { container } = render(QuestionMedia, { props: { media } });
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should detect flac extension as audio', () => {
+			const media = {
+				image: null,
+				external_media: {
+					type: 'link',
+					provider: 'generic',
+					url: 'https://cdn.example.com/clip.flac',
+					embed_url: null,
+					thumbnail_url: null
+				}
+			};
+			const { container } = render(QuestionMedia, { props: { media } });
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should detect audio extension even when url has query params', () => {
+			const media = {
+				image: null,
+				external_media: {
+					type: 'link',
+					provider: 'generic',
+					url: 'https://cdn.example.com/clip.mp3?token=abc&v=2',
+					embed_url: null,
+					thumbnail_url: null
+				}
+			};
+			const { container } = render(QuestionMedia, { props: { media } });
+			expect(container.querySelector('audio')).toBeInTheDocument();
+		});
+
+		it('should have aria-label on the seek bar', () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+			const range = container.querySelector('input[type="range"]');
+			expect(range).toHaveAttribute('aria-label', 'Seek audio');
+		});
+
+		it('should switch button label to Pause when audio plays', async () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+			const audio = container.querySelector('audio')!;
+
+			await fireEvent(audio, new Event('play'));
+
+			expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
+		});
+
+		it('should switch button label back to Play when audio pauses', async () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+			const audio = container.querySelector('audio')!;
+
+			await fireEvent(audio, new Event('play'));
+			await fireEvent(audio, new Event('pause'));
+
+			expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+		});
+
+		it('should show duration in time display after metadata loads', async () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+			const audio = container.querySelector('audio')!;
+
+			Object.defineProperty(audio, 'duration', { value: 75, configurable: true });
+			await fireEvent(audio, new Event('loadedmetadata'));
+
+			expect(screen.getByText('01:15')).toBeInTheDocument();
+		});
+
+		it('should update time display as audio plays', async () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+			const audio = container.querySelector('audio')!;
+
+			Object.defineProperty(audio, 'duration', { value: 90, configurable: true });
+			await fireEvent(audio, new Event('loadedmetadata'));
+
+			Object.defineProperty(audio, 'currentTime', { value: 65, configurable: true });
+			await fireEvent(audio, new Event('timeupdate'));
+
+			expect(screen.getByText('01:05')).toBeInTheDocument();
+		});
+
+		it('should reset time display to duration after audio ends', async () => {
+			const { container } = render(QuestionMedia, { props: { media: mockAudioMedia } });
+			const audio = container.querySelector('audio')!;
+
+			Object.defineProperty(audio, 'duration', { value: 66, configurable: true });
+			await fireEvent(audio, new Event('loadedmetadata'));
+			await fireEvent(audio, new Event('play'));
+			await fireEvent(audio, new Event('ended'));
+
+			expect(screen.getByText('01:06')).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+		});
+
+		it('should render audio player alongside image when both are present', () => {
+			const mediaWithAudio = {
+				image: mockImageMedia.image,
+				external_media: mockAudioMedia.external_media
+			};
+			const { container } = render(QuestionMedia, { props: { media: mediaWithAudio } });
+
+			expect(screen.getByRole('img')).toBeInTheDocument();
+			expect(container.querySelector('audio')).toBeInTheDocument();
 		});
 	});
 });

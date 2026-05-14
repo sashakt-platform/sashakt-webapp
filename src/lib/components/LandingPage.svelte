@@ -6,7 +6,14 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
+	import {
+		canAttemptAllQuestions,
+		getQuestionSetQuestionCount,
+		sortQuestionSets
+	} from '$lib/helpers/questionSetHelpers';
+	import type { TQuestionSetSummary } from '$lib/types';
 	import PreTestTimer from './PreTestTimer.svelte';
+	import RichText from './RichText.svelte';
 	import { t } from 'svelte-i18n';
 
 	let { testDetails, showProfileForm = $bindable() } = $props();
@@ -44,9 +51,13 @@
 			}
 		].filter(Boolean)
 	);
+
+	const questionSets = $derived(
+		sortQuestionSets((testDetails.question_sets ?? []) as TQuestionSetSummary[])
+	);
 </script>
 
-<section class="bg-background min-h-screen px-4 py-6">
+<section class="bg-muted min-h-screen px-4 py-6">
 	<div class="mx-auto max-w-xl">
 		<div class="mb-6 text-center">
 			<h1 class="text-foreground mb-2 text-2xl leading-tight font-semibold">{testDetails.name}</h1>
@@ -86,13 +97,51 @@
 					>
 				</div>
 				<div class="px-5 py-4">
-					<div class="text-foreground prose prose-sm text-[13px]/relaxed">
-						{@html testDetails.start_instructions}
-					</div>
+					<RichText
+						content={testDetails.start_instructions}
+						class="text-foreground prose prose-sm text-[13px]/relaxed"
+					/>
 				</div>
 			</div>
 		{/if}
 	</div>
+	{#if questionSets.length > 0}
+		<div class="align-center mt-8 border-t pt-4">
+			<h2 class="text-foreground mb-4 text-center text-sm font-bold uppercase">
+				{$t('Sections')}
+			</h2>
+			<div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+				{#each questionSets as questionSet (`${questionSet.id ?? questionSet.title}-${questionSet.display_order}`)}
+					<div class="bg-card mx-auto w-full rounded-2xl border p-4 lg:w-2/3">
+						<div class="flex items-start justify-between gap-4">
+							<div>
+								<h3 class="text-sm font-semibold">{questionSet.title}</h3>
+								{#if questionSet.description}
+									<RichText
+										content={questionSet.description}
+										class="text-muted-foreground mt-1 text-sm"
+									/>
+								{/if}
+							</div>
+							<p class="text-muted-foreground shrink-0 text-xs">
+								{getQuestionSetQuestionCount(questionSet)}
+								{$t('questions')}
+							</p>
+						</div>
+						<p class="text-muted-foreground mt-3 text-sm">
+							{#if canAttemptAllQuestions(questionSet.max_questions_allowed_to_attempt, getQuestionSetQuestionCount(questionSet))}
+								{$t('You may attempt all questions in this section.')}
+							{:else}
+								{$t('You may attempt up to {count} questions in this section.', {
+									values: { count: questionSet.max_questions_allowed_to_attempt }
+								})}
+							{/if}
+						</p>
+					</div>
+				{/each}
+			</div>
+		</div>
+	{/if}
 </section>
 
 {#if createError}
@@ -106,45 +155,47 @@
 {/if}
 
 <div class="fixed bottom-0 z-20 w-screen border-t bg-white px-4 py-4">
-	<p class="text-muted-foreground mb-3 text-center text-xs">
-		{$t(
-			'By clicking "Start Test," you confirm that you have read and understood all instructions.'
-		)}
-	</p>
-	<div class="mx-auto max-w-xl">
-		{#if page.data?.timeToBegin === 0}
-			{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
-				<Button onclick={handleStart} class="w-full">
-					{$t('Start Test')} →
-				</Button>
-			{:else}
-				<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
-					<input
-						name="deviceInfo"
-						value={() => {
-							if (browser) return JSON.stringify(navigator.userAgent);
-						}}
-						hidden
-					/>
-					<Button type="submit" class="w-full" disabled={isStarting}>
-						{#if isStarting}
-							<Spinner />
-						{/if}
+	<div class="mx-auto max-w-xl lg:flex lg:items-center lg:gap-4">
+		<p class="text-muted-foreground mb-2 text-center text-sm leading-[1.4] lg:mb-0 lg:text-left">
+			{$t(
+				'By clicking "Start Test," you confirm that you have read and understood all instructions.'
+			)}
+		</p>
+		<div class="lg:shrink-0">
+			{#if page.data?.timeToBegin === 0}
+				{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
+					<Button onclick={handleStart} class="w-full lg:w-auto">
 						{$t('Start Test')} →
 					</Button>
-				</form>
-			{/if}
-		{:else}
-			<Dialog.Root>
-				<Dialog.Trigger class={`w-full ${buttonVariants({ variant: 'default' })}`}>
-					{$t('Start Test')} →
-				</Dialog.Trigger>
-				{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
-					<PreTestTimer timeLeft={page.data?.timeToBegin} bind:showProfileForm />
 				{:else}
-					<PreTestTimer timeLeft={page.data?.timeToBegin} />
+					<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
+						<input
+							name="deviceInfo"
+							value={() => {
+								if (browser) return JSON.stringify(navigator.userAgent);
+							}}
+							hidden
+						/>
+						<Button type="submit" class="w-full lg:w-auto" disabled={isStarting}>
+							{#if isStarting}
+								<Spinner />
+							{/if}
+							{$t('Start Test')} →
+						</Button>
+					</form>
 				{/if}
-			</Dialog.Root>
-		{/if}
+			{:else}
+				<Dialog.Root>
+					<Dialog.Trigger class={`w-full lg:w-auto ${buttonVariants({ variant: 'default' })}`}>
+						{$t('Start Test')} →
+					</Dialog.Trigger>
+					{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
+						<PreTestTimer timeLeft={page.data?.timeToBegin} bind:showProfileForm />
+					{:else}
+						<PreTestTimer timeLeft={page.data?.timeToBegin} />
+					{/if}
+				</Dialog.Root>
+			{/if}
+		</div>
 	</div>
 </div>

@@ -209,7 +209,7 @@ export const actions = {
 				let feedback = null;
 				let testQuestions = null;
 
-				if (testData.show_feedback_on_completion) {
+				if (testData.show_feedback_on_completion || testData.question_sets?.length) {
 					try {
 						const [feedbackResponse, testQuestionsData] = await Promise.all([
 							fetch(
@@ -218,6 +218,7 @@ export const actions = {
 							),
 							getTestQuestions(candidate.candidate_test_id, candidate.candidate_uuid)
 						]);
+						testQuestions = testQuestionsData;
 						if (feedbackResponse.ok) {
 							const feedbackData = await feedbackResponse.json();
 							feedback = feedbackData.map(
@@ -242,7 +243,6 @@ export const actions = {
 									};
 								}
 							);
-							testQuestions = testQuestionsData;
 						}
 					} catch (error) {
 						console.error('Error fetching feedback:', error);
