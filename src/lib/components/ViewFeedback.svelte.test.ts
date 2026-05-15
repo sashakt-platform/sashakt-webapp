@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, within } from '@testing-library/svelte';
 import ViewFeedback from './ViewFeedback.svelte';
 import {
 	mockSingleChoiceQuestion,
@@ -14,7 +14,8 @@ import {
 	mockImageMedia,
 	mockYoutubeMedia,
 	mockMatrixInputTextQuestion,
-	mockMatrixInputNumberQuestion
+	mockMatrixInputNumberQuestion,
+	mockMatrixMatchQuestion
 } from '$lib/test-utils';
 
 const createFeedback = (
@@ -902,6 +903,182 @@ describe('ViewFeedback', () => {
 			expect(screen.queryAllByRole('radio')).toHaveLength(0);
 			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
 			expect(screen.queryAllByRole('textbox')).toHaveLength(0);
+		});
+	});
+
+	describe('matrix-match question feedback', () => {
+		const correctAnswer = JSON.stringify({ 801: [901], 802: [902] });
+		const submittedAnswer = JSON.stringify({ 801: [901, 902], 802: [] });
+
+		const testQuestions = {
+			question_revisions: [mockMatrixMatchQuestion],
+			question_pagination: 5
+		};
+
+		const feedback = [
+			{
+				question_revision_id: mockMatrixMatchQuestion.id,
+				submitted_answer: submittedAnswer,
+				correct_answer: correctAnswer
+			}
+		];
+
+		it('should render question text', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText(mockMatrixMatchQuestion.question_text)).toBeInTheDocument();
+		});
+
+		it('should render row label and column label', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('Column A')).toBeInTheDocument();
+			expect(screen.getByText('Column B')).toBeInTheDocument();
+		});
+
+		it('should render row values', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('Apple')).toBeInTheDocument();
+			expect(screen.getByText('Banana')).toBeInTheDocument();
+		});
+
+		it('should render column values', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('Red fruit')).toBeInTheDocument();
+			expect(screen.getByText('Yellow fruit')).toBeInTheDocument();
+		});
+
+		it('should render column keys as table headers', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const headers = screen.getAllByRole('columnheader');
+			const headerTexts = headers.map((h) => h.textContent?.trim()).filter(Boolean);
+			expect(headerTexts).toContain('P');
+			expect(headerTexts).toContain('Q');
+		});
+
+		it('should render row keys in the table body', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = screen.getByRole('table');
+			expect(within(table).getByText('A')).toBeInTheDocument();
+			expect(within(table).getByText('B')).toBeInTheDocument();
+		});
+
+		it('should show correct styling for a cell that is submitted and correct', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			expect(table?.querySelector('.bg-success.border-success')).toBeInTheDocument();
+		});
+
+		it('should show wrong styling for a cell that is submitted but not correct', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			expect(table?.querySelector('.bg-error.border-error')).toBeInTheDocument();
+		});
+
+		it('should show missed styling for a cell that is correct but not submitted', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			expect(table?.querySelector('.border-success:not(.bg-success)')).toBeInTheDocument();
+		});
+
+		it('should show none styling for a cell that is neither submitted nor correct', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			expect(table?.querySelector('.bg-card.border-border')).toBeInTheDocument();
+		});
+
+		it('should render a check icon inside correct cells', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			const correctBox = table?.querySelector('.bg-success.border-success');
+			expect(correctBox?.querySelector('svg')).toBeInTheDocument();
+		});
+
+		it('should render a check icon inside wrong cells', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			const wrongBox = table?.querySelector('.bg-error.border-error');
+			expect(wrongBox?.querySelector('svg')).toBeInTheDocument();
+		});
+
+		it('should not render a check icon inside missed cells', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			const missedBox = table?.querySelector('.border-success:not(.bg-success)');
+			expect(missedBox?.querySelector('svg')).not.toBeInTheDocument();
+		});
+
+		it('should not render a check icon inside none cells', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			const noneBox = table?.querySelector('.bg-card.border-border');
+			expect(noneBox?.querySelector('svg')).not.toBeInTheDocument();
+		});
+
+		it('should render 4 status indicator boxes for 2×2 matrix', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			expect(table?.querySelectorAll('.h-5.w-5')).toHaveLength(4);
+		});
+
+		it('should show Correct result badge when all rows match', () => {
+			const allCorrectFeedback = [
+				{
+					question_revision_id: mockMatrixMatchQuestion.id,
+					submitted_answer: correctAnswer,
+					correct_answer: correctAnswer
+				}
+			];
+
+			render(ViewFeedback, { props: { feedback: allCorrectFeedback, testQuestions } });
+
+			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
+		});
+
+		it('should show Incorrect result badge when rows do not fully match', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
+		});
+
+		it('should not show Not Applicable text', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.queryByText('Not Applicable')).not.toBeInTheDocument();
+		});
+
+		it('should not render checkboxes or radio buttons', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+		});
+
+		it('should show Unattempted result badge when submitted answer is empty', () => {
+			const unattemptedFeedback = [
+				{
+					question_revision_id: mockMatrixMatchQuestion.id,
+					submitted_answer: '{}',
+					correct_answer: correctAnswer
+				}
+			];
+
+			render(ViewFeedback, { props: { feedback: unattemptedFeedback, testQuestions } });
+
+			expect(screen.getByText(/^Not Attempted:/)).toBeInTheDocument();
 		});
 	});
 });
