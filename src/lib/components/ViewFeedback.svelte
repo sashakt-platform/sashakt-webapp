@@ -16,9 +16,12 @@
 	import {
 		isNumericalAnswerCorrect,
 		getQuestionResult,
-		GRADABLE_QUESTION_TYPES
+		GRADABLE_QUESTION_TYPES,
+		parseMatrixAnswer,
+		getMatrixCellStatus
 	} from '$lib/helpers/feedbackHelpers';
 	import RichText from './RichText.svelte';
+	import type { TMatrixOptions } from '$lib/types';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -124,8 +127,94 @@
 			</Card.Header>
 
 			<Card.Content class="p-4 pt-1 lg:p-6 lg:pt-1">
-				{#if item.question.question_type === question_type_enum.MATRIXMATCH || item.question.question_type === question_type_enum.MATRIXRATING || item.question.question_type === question_type_enum.MATRIXINPUT}
+				{#if item.question.question_type === question_type_enum.MATRIXRATING || item.question.question_type === question_type_enum.MATRIXINPUT}
 					<p class="text-muted-foreground text-sm italic">{$t('Not Applicable')}</p>
+				{:else if item.question.question_type === question_type_enum.MATRIXMATCH}
+					{@const matrix = item.question.options as TMatrixOptions}
+					{@const matrixRows = matrix.rows.items}
+					{@const matrixColumns = matrix.columns.items}
+					{@const submittedMatrix = parseMatrixAnswer(item.fb.submitted_answer)}
+					{@const correctMatrix = parseMatrixAnswer(item.fb.correct_answer)}
+
+					<div class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+						<div class="border-border overflow-hidden rounded-xl border">
+							<div
+								class="bg-muted text-foreground py-3 text-center text-xs font-bold tracking-widest uppercase"
+							>
+								{matrix.rows.label}
+							</div>
+							{#each matrixRows as row (row.id)}
+								<div class="border-border flex items-start gap-3 border-t px-4 py-3">
+									<span class="text-foreground min-w-4 shrink-0 text-sm font-bold">{row.key}</span>
+									<span class="text-foreground text-sm">{row.value}</span>
+								</div>
+							{/each}
+						</div>
+						<div class="border-border overflow-hidden rounded-xl border">
+							<div
+								class="bg-muted text-foreground py-3 text-center text-xs font-bold tracking-widest uppercase"
+							>
+								{matrix.columns.label}
+							</div>
+							{#each matrixColumns as col (col.id)}
+								<div class="border-border flex items-start gap-3 border-t px-4 py-3">
+									<span class="text-foreground min-w-4 shrink-0 text-sm font-bold">{col.key}</span>
+									<span class="text-foreground text-sm">{col.value}</span>
+								</div>
+							{/each}
+						</div>
+					</div>
+
+					<div class="overflow-x-auto">
+						<table class="w-full border-collapse text-sm">
+							<thead>
+								<tr class="bg-muted">
+									<th class="border-border w-14 border px-4 py-3"></th>
+									{#each matrixColumns as col (col.id)}
+										<th
+											class="border-border text-foreground min-w-16 border px-4 py-3 text-center font-semibold"
+										>
+											{col.key}
+										</th>
+									{/each}
+								</tr>
+							</thead>
+							<tbody>
+								{#each matrixRows as row (row.id)}
+									<tr class="border-border border-t">
+										<td
+											class="border-border text-foreground border px-4 py-3 text-center text-sm font-semibold"
+										>
+											{row.key}
+										</td>
+										{#each matrixColumns as col (col.id)}
+											{@const status = getMatrixCellStatus(
+												row.id,
+												col.id,
+												submittedMatrix,
+												correctMatrix
+											)}
+											<td class="border-border border px-4 py-3 text-center">
+												<div
+													class={cn(
+														'mx-auto flex h-5 w-5 items-center justify-center rounded border-2',
+														status === 'correct' && 'bg-success border-success',
+														status === 'missed' && 'bg-card border-success',
+														status === 'wrong' && 'bg-error border-error',
+														status === 'none' && 'bg-card border-border'
+													)}
+												>
+													{#if status === 'correct' || status === 'wrong'}
+														<Check size={14} class="text-primary-foreground" />
+													{/if}
+												</div>
+											</td>
+										{/each}
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
 				{:else if item.question.question_type === 'subjective'}
 					<div class="rounded-xl border px-4 py-4">
 						{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
