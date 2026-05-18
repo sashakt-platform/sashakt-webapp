@@ -22,7 +22,7 @@
 	} from '$lib/helpers/feedbackHelpers';
 	import { parseJsonRecord } from '$lib/helpers/matrixHelpers';
 	import RichText from './RichText.svelte';
-	import type { TMatrixOptions } from '$lib/types';
+	import type { TMatrixOptions, TMatrixInputOptions } from '$lib/types';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -171,7 +171,40 @@
 						</table>
 					</div>
 				{:else if item.question.question_type === question_type_enum.MATRIXINPUT}
-					<p class="text-muted-foreground text-sm italic">{$t('Not Applicable')}</p>
+					{@const matrixOpts = item.question.options as unknown as TMatrixInputOptions}
+					{@const inputType = matrixOpts.columns.input_type}
+					{@const matrixInputAnswer = parseJsonRecord<string>(item.fb.submitted_answer)}
+					<div class="overflow-x-auto">
+						<div class="border-border overflow-hidden rounded-xl border">
+							<table class="w-full border-collapse text-sm">
+								<thead>
+									<tr class="border-border bg-muted border-b">
+										<th class="text-foreground px-4 py-3 text-left font-semibold">
+											{matrixOpts.rows.label}
+										</th>
+										<th class="text-foreground px-4 py-3 text-left font-semibold">
+											{matrixOpts.columns.label}
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									{#each matrixOpts.rows.items as row (row.id)}
+										<tr class="border-border border-b last:border-b-0">
+											<td class="w-1/2 px-4 py-3 font-medium">{row.value}</td>
+											<td class="w-1/2 px-4 py-3">
+												<input
+													type={inputType}
+													readonly
+													class="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
+													value={matrixInputAnswer[String(row.id)] ?? ''}
+												/>
+											</td>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					</div>
 				{:else if item.question.question_type === question_type_enum.MATRIXMATCH}
 					{@const matrix = item.question.options as TMatrixOptions}
 					{@const matrixRows = matrix.rows.items}

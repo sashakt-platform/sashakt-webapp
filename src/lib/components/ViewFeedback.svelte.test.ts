@@ -828,8 +828,8 @@ describe('ViewFeedback', () => {
 		});
 	});
 
-	describe('matrix input question types (not applicable)', () => {
-		it('should show Not Applicable for matrix-string question', () => {
+	describe('matrix-input question feedback', () => {
+		describe('text input type', () => {
 			const testQuestions = {
 				question_revisions: [mockMatrixInputTextQuestion],
 				question_pagination: 5
@@ -837,73 +837,129 @@ describe('ViewFeedback', () => {
 			const feedback = [
 				{
 					question_revision_id: mockMatrixInputTextQuestion.id,
-					submitted_answer: '{"1":"Paris"}',
+					submitted_answer: '{"1":"Paris","2":"Tokyo"}',
 					correct_answer: []
 				}
 			];
 
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			it('should render question text', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
 
-			expect(screen.getByText(mockMatrixInputTextQuestion.question_text)).toBeInTheDocument();
-			expect(screen.getByText('Not Applicable')).toBeInTheDocument();
+				expect(screen.getByText(mockMatrixInputTextQuestion.question_text)).toBeInTheDocument();
+			});
+
+			it('should render the rows label as a column header', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.getByText('Country')).toBeInTheDocument();
+			});
+
+			it('should render the columns label as a column header', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.getByText('Capital City')).toBeInTheDocument();
+			});
+
+			it('should render row values', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.getByText('France')).toBeInTheDocument();
+				expect(screen.getByText('Japan')).toBeInTheDocument();
+			});
+
+			it('should render one text input per row (2 rows = 2 inputs)', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.getAllByRole('textbox')).toHaveLength(2);
+			});
+
+			it('should display submitted values inside the inputs', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+				const values = inputs.map((i) => i.value);
+				expect(values).toContain('Paris');
+				expect(values).toContain('Tokyo');
+			});
+
+			it('should render inputs as readonly', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+				expect(inputs.every((i) => i.readOnly)).toBe(true);
+			});
+
+			it('should show empty inputs when no answer was submitted', () => {
+				const unattemptedFeedback = [
+					{
+						question_revision_id: mockMatrixInputTextQuestion.id,
+						submitted_answer: '{}',
+						correct_answer: []
+					}
+				];
+				render(ViewFeedback, { props: { feedback: unattemptedFeedback, testQuestions } });
+
+				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+				expect(inputs.every((i) => i.value === '')).toBe(true);
+			});
+
+			it('should not show Not Applicable text', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.queryByText('Not Applicable')).not.toBeInTheDocument();
+			});
+
+			it('should not render radio buttons or checkboxes', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.queryAllByRole('radio')).toHaveLength(0);
+				expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+			});
 		});
 
-		it('should show Not Applicable for matrix-number question', () => {
+		describe('number input type', () => {
 			const testQuestions = {
 				question_revisions: [mockMatrixInputNumberQuestion],
 				question_pagination: 5
 			};
+
 			const feedback = [
 				{
 					question_revision_id: mockMatrixInputNumberQuestion.id,
-					submitted_answer: '{"1":"42"}',
+					submitted_answer: '{"1":"42","2":"15"}',
 					correct_answer: []
 				}
 			];
 
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			it('should render the rows and columns labels', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
 
-			expect(screen.getByText(mockMatrixInputNumberQuestion.question_text)).toBeInTheDocument();
-			expect(screen.getByText('Not Applicable')).toBeInTheDocument();
-		});
+				expect(screen.getByText('Item')).toBeInTheDocument();
+				expect(screen.getByText('Quantity')).toBeInTheDocument();
+			});
 
-		it('should show Not Applicable for matrix-input question', () => {
-			const testQuestions = {
-				question_revisions: [mockMatrixInputTextQuestion],
-				question_pagination: 5
-			};
-			const feedback = [
-				{
-					question_revision_id: mockMatrixInputTextQuestion.id,
-					submitted_answer: '{"1":"Paris"}',
-					correct_answer: []
-				}
-			];
+			it('should render row values', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
 
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+				expect(screen.getByText('Apples')).toBeInTheDocument();
+				expect(screen.getByText('Oranges')).toBeInTheDocument();
+			});
 
-			expect(screen.getByText(mockMatrixInputTextQuestion.question_text)).toBeInTheDocument();
-			expect(screen.getByText('Not Applicable')).toBeInTheDocument();
-		});
+			it('should render number inputs with submitted values', () => {
+				const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
 
-		it('should not render choice options or inputs for matrix input questions', () => {
-			const testQuestions = {
-				question_revisions: [mockMatrixInputTextQuestion],
-				question_pagination: 5
-			};
-			const feedback = [
-				{
-					question_revision_id: mockMatrixInputTextQuestion.id,
-					submitted_answer: '{"1":"Paris"}',
-					correct_answer: []
-				}
-			];
+				const inputs = container.querySelectorAll<HTMLInputElement>('input[type="number"]');
+				const values = Array.from(inputs).map((i) => i.value);
+				expect(values).toContain('42');
+				expect(values).toContain('15');
+			});
 
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			it('should render number inputs as readonly', () => {
+				const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
 
-			expect(screen.queryAllByRole('radio')).toHaveLength(0);
-			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
-			expect(screen.queryAllByRole('textbox')).toHaveLength(0);
+				const inputs = container.querySelectorAll<HTMLInputElement>('input[type="number"]');
+				expect(Array.from(inputs).every((i) => i.readOnly)).toBe(true);
+			});
 		});
 	});
 
