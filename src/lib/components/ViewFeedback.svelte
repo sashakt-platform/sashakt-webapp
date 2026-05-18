@@ -155,13 +155,14 @@
 											{row.value}
 										</td>
 										{#each matrixColumns as col (col.id)}
-											<td class="cursor-not-allowed px-4 py-3 text-center">
+											<td class="px-4 py-3 text-center">
 												<input
 													type="radio"
 													name="feedback-matrix-{item.question.id}-row-{row.id}"
 													value={col.id}
 													checked={matrixRatingAnswer[String(row.id)] === col.id}
-													class="accent-primary h-4 w-4 pointer-events-none"
+													disabled
+													class="accent-primary h-4 w-4 disabled:opacity-100"
 												/>
 											</td>
 										{/each}

@@ -1247,11 +1247,11 @@ describe('ViewFeedback', () => {
 			expect(radios.every((r) => !r.checked)).toBe(true);
 		});
 
-		it('should not have disabled attribute on radio buttons', () => {
+		it('should have disabled attribute on all radio buttons', () => {
 			render(ViewFeedback, { props: { feedback, testQuestions } });
 
 			const radios = screen.getAllByRole('radio') as HTMLInputElement[];
-			expect(radios.every((r) => !r.disabled)).toBe(true);
+			expect(radios.every((r) => r.disabled)).toBe(true);
 		});
 
 		it('should not show Not Applicable text', () => {
