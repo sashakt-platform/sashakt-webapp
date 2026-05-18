@@ -30,9 +30,9 @@ export function validateField(field: TFormField, value: unknown): string | null 
 	}
 
 	if (field.field_type === 'phone') {
-		const phoneRegex = /^[0-9+\-\s()]{7,20}$/;
+		const phoneRegex = /^\d{10}$/;
 		if (!phoneRegex.test(stringValue)) {
-			return field.validation?.custom_error_message || 'Please enter a valid phone number';
+			return field.validation?.custom_error_message || 'Please enter a valid 10-digit phone number';
 		}
 	}
 

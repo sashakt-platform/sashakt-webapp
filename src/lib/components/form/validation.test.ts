@@ -109,29 +109,33 @@ describe('validateField', () => {
 	});
 
 	describe('phone validation', () => {
-		it('should pass for valid phone with special characters', () => {
-			const field = createField({ field_type: 'phone' });
-			expect(validateField(field, '+1-234-567-8901')).toBeNull();
-		});
-
-		it('should pass for simple numeric phone', () => {
+		it('should pass for exactly 10 digits', () => {
 			const field = createField({ field_type: 'phone' });
 			expect(validateField(field, '1234567890')).toBeNull();
 		});
 
+		it('should fail for phone with formatting characters', () => {
+			const field = createField({ field_type: 'phone' });
+			expect(validateField(field, '+1-234-567-8901')).toBe(
+				'Please enter a valid 10-digit phone number'
+			);
+		});
+
 		it('should fail for phone with letters', () => {
 			const field = createField({ field_type: 'phone' });
-			expect(validateField(field, '123-abc-7890')).toBe('Please enter a valid phone number');
+			expect(validateField(field, '123abc7890')).toBe('Please enter a valid 10-digit phone number');
 		});
 
-		it('should fail for phone too short', () => {
+		it('should fail for phone shorter than 10 digits', () => {
 			const field = createField({ field_type: 'phone' });
-			expect(validateField(field, '12345')).toBe('Please enter a valid phone number');
+			expect(validateField(field, '123456789')).toBe('Please enter a valid 10-digit phone number');
 		});
 
-		it('should fail for phone too long', () => {
+		it('should fail for phone longer than 10 digits', () => {
 			const field = createField({ field_type: 'phone' });
-			expect(validateField(field, '1'.repeat(21))).toBe('Please enter a valid phone number');
+			expect(validateField(field, '12345678901')).toBe(
+				'Please enter a valid 10-digit phone number'
+			);
 		});
 
 		it('should return custom error for invalid phone', () => {
@@ -144,7 +148,9 @@ describe('validateField', () => {
 
 		it('should validate phone even without validation object', () => {
 			const field = createField({ field_type: 'phone' });
-			expect(validateField(field, 'not-a-phone!!')).toBe('Please enter a valid phone number');
+			expect(validateField(field, 'not-a-phone!!')).toBe(
+				'Please enter a valid 10-digit phone number'
+			);
 		});
 	});
 
