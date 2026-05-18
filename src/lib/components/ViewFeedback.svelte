@@ -20,6 +20,7 @@
 		parseMatrixAnswer,
 		getMatrixCellStatus
 	} from '$lib/helpers/feedbackHelpers';
+	import { parseJsonRecord } from '$lib/helpers/matrixHelpers';
 	import RichText from './RichText.svelte';
 	import type { TMatrixOptions } from '$lib/types';
 	import QuestionMedia from './QuestionMedia.svelte';
@@ -127,7 +128,49 @@
 			</Card.Header>
 
 			<Card.Content class="p-4 pt-1 lg:p-6 lg:pt-1">
-				{#if item.question.question_type === question_type_enum.MATRIXRATING || item.question.question_type === question_type_enum.MATRIXINPUT}
+				{#if item.question.question_type === question_type_enum.MATRIXRATING}
+					{@const matrixOpts = item.question.options as TMatrixOptions}
+					{@const matrixRows = matrixOpts.rows.items}
+					{@const matrixColumns = matrixOpts.columns.items}
+					{@const matrixRatingAnswer = parseJsonRecord<number>(item.fb.submitted_answer)}
+					<div class="overflow-x-auto rounded-lg">
+						<table class="border-border min-w-full border-collapse border text-sm">
+							<thead>
+								<tr class="border-border h-16 border-b">
+									<th class="bg-muted text-muted-foreground min-w-55 px-5 text-left font-bold">
+										{matrixOpts.rows.label}
+									</th>
+									{#each matrixColumns as col (col.id)}
+										<th class="bg-muted text-muted-foreground px-5 text-center font-bold">
+											<span class="block">{col.value}</span>
+											<span class="block">({col.key})</span>
+										</th>
+									{/each}
+								</tr>
+							</thead>
+							<tbody>
+								{#each matrixRows as row (row.id)}
+									<tr class="border-border border-b">
+										<td class="min-w-55 px-4 py-3 font-medium wrap-break-word whitespace-normal">
+											{row.value}
+										</td>
+										{#each matrixColumns as col (col.id)}
+											<td class="cursor-not-allowed px-4 py-3 text-center">
+												<input
+													type="radio"
+													name="feedback-matrix-{item.question.id}-row-{row.id}"
+													value={col.id}
+													checked={matrixRatingAnswer[String(row.id)] === col.id}
+													class="accent-primary h-4 w-4 pointer-events-none"
+												/>
+											</td>
+										{/each}
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{:else if item.question.question_type === question_type_enum.MATRIXINPUT}
 					<p class="text-muted-foreground text-sm italic">{$t('Not Applicable')}</p>
 				{:else if item.question.question_type === question_type_enum.MATRIXMATCH}
 					{@const matrix = item.question.options as TMatrixOptions}

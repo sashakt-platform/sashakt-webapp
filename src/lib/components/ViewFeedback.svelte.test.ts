@@ -15,7 +15,8 @@ import {
 	mockYoutubeMedia,
 	mockMatrixInputTextQuestion,
 	mockMatrixInputNumberQuestion,
-	mockMatrixMatchQuestion
+	mockMatrixMatchQuestion,
+	mockMatrixRatingQuestion
 } from '$lib/test-utils';
 
 const createFeedback = (
@@ -1079,6 +1080,135 @@ describe('ViewFeedback', () => {
 			render(ViewFeedback, { props: { feedback: unattemptedFeedback, testQuestions } });
 
 			expect(screen.getByText(/^Not Attempted:/)).toBeInTheDocument();
+		});
+	});
+
+	describe('matrix-rating question feedback', () => {
+		const testQuestions = {
+			question_revisions: [mockMatrixRatingQuestion],
+			question_pagination: 5
+		};
+
+		const submittedAnswer = JSON.stringify({ '1': 2, '2': 3 });
+
+		const feedback = [
+			{
+				question_revision_id: mockMatrixRatingQuestion.id,
+				submitted_answer: submittedAnswer,
+				correct_answer: []
+			}
+		];
+
+		it('should render question text', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText(mockMatrixRatingQuestion.question_text)).toBeInTheDocument();
+		});
+
+		it('should render the rows label', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('Subjects')).toBeInTheDocument();
+		});
+
+		it('should render all column values as headers', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('Very difficult')).toBeInTheDocument();
+			expect(screen.getByText('A little difficult')).toBeInTheDocument();
+			expect(screen.getByText('Okay / manageable')).toBeInTheDocument();
+		});
+
+		it('should render column keys in parentheses', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('(1)')).toBeInTheDocument();
+			expect(screen.getByText('(2)')).toBeInTheDocument();
+			expect(screen.getByText('(3)')).toBeInTheDocument();
+		});
+
+		it('should render all row values', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('Math')).toBeInTheDocument();
+			expect(screen.getByText('Physics')).toBeInTheDocument();
+			expect(screen.getByText('Chemistry')).toBeInTheDocument();
+		});
+
+		it('should render one radio button per row-column combination (3 rows × 3 cols = 9)', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getAllByRole('radio')).toHaveLength(9);
+		});
+
+		it('should check the submitted radio for row 1 (Math → A little difficult)', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const row1Radios = container.querySelectorAll<HTMLInputElement>(
+				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-1"]`
+			);
+			const checked = Array.from(row1Radios).find((r) => r.checked);
+			expect(checked?.value).toBe('2');
+		});
+
+		it('should check the submitted radio for row 2 (Physics → Okay / manageable)', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const row2Radios = container.querySelectorAll<HTMLInputElement>(
+				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-2"]`
+			);
+			const checked = Array.from(row2Radios).find((r) => r.checked);
+			expect(checked?.value).toBe('3');
+		});
+
+		it('should leave all radios unchecked for an unanswered row', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const row3Radios = container.querySelectorAll<HTMLInputElement>(
+				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-3"]`
+			);
+			expect(Array.from(row3Radios).every((r) => !r.checked)).toBe(true);
+		});
+
+		it('should render all radios unchecked when submitted answer is empty', () => {
+			const unattemptedFeedback = [
+				{
+					question_revision_id: mockMatrixRatingQuestion.id,
+					submitted_answer: '{}',
+					correct_answer: []
+				}
+			];
+			render(ViewFeedback, { props: { feedback: unattemptedFeedback, testQuestions } });
+
+			const radios = screen.getAllByRole('radio') as HTMLInputElement[];
+			expect(radios.every((r) => !r.checked)).toBe(true);
+		});
+
+		it('should render all radios unchecked when no feedback entry exists', () => {
+			render(ViewFeedback, { props: { feedback: [], testQuestions } });
+
+			const radios = screen.getAllByRole('radio') as HTMLInputElement[];
+			expect(radios.every((r) => !r.checked)).toBe(true);
+		});
+
+		it('should not have disabled attribute on radio buttons', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const radios = screen.getAllByRole('radio') as HTMLInputElement[];
+			expect(radios.every((r) => !r.disabled)).toBe(true);
+		});
+
+		it('should not show Not Applicable text', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.queryByText('Not Applicable')).not.toBeInTheDocument();
+		});
+
+		it('should not show a result badge for matrix-rating questions', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.queryByText(/^Correct:/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/^Incorrect:/)).not.toBeInTheDocument();
 		});
 	});
 });
