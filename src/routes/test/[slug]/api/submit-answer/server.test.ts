@@ -56,30 +56,6 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		);
 	});
 
-	it('passes time_spent through to backend when provided', async () => {
-		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
-		vi.mocked(fetch).mockResolvedValueOnce(
-			createMockResponse({ success: true }) as unknown as Response
-		);
-
-		const mockCookies = createMockCookies();
-		const request = createMockRequest({
-			question_revision_id: 1,
-			response: [101],
-			candidate: mockCandidate,
-			time_spent: 17
-		});
-		const response = await POST({ request, cookies: mockCookies } as any);
-
-		expect(response.status).toBe(200);
-		expect(fetch).toHaveBeenCalledWith(
-			expect.any(String),
-			expect.objectContaining({
-				body: expect.stringContaining('"time_spent":17')
-			})
-		);
-	});
-
 	it('should fetch feedback and return correct_answer when is_reviewed is true', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 		vi.mocked(fetch)

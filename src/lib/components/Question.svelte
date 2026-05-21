@@ -19,7 +19,6 @@
 	import { navState } from '$lib/navState.svelte';
 	import type { TQuestion, TSelection, TQuestionSetCandidate } from '$lib/types';
 	import { t } from 'svelte-i18n';
-	import { onMount } from 'svelte';
 
 	let { candidate, testQuestions, testDetails = null } = $props();
 	let isSubmittingTest = $state(false);
@@ -53,7 +52,6 @@
 	const sectionByQuestionId = $derived(normalizedQuestionData.sectionByQuestionId);
 	const totalQuestions = questions.length;
 	const perPage = testQuestions.question_pagination || totalQuestions;
-	const singleQuestionPerPage = perPage === 1;
 
 	const sessionStore = createTestSessionStore(candidate);
 	let selectedQuestions = $state(sessionStore.current.selections);
@@ -61,8 +59,6 @@
 	// set paginiation related properties
 	let paginationPage = $state(sessionStore.current.currentPage || 1);
 	let paginationReady = $state(false);
-	let questionTimerTick = $state(0);
-	let currentQuestionStartedAt = $state(Date.now());
 
 	// question palette - track which question is currently selected
 	let currentQuestionIndex = $state((sessionStore.current.currentPage - 1) * perPage || 0);
@@ -89,14 +85,10 @@
 	});
 
 	// navigate to a specific question by index
-	async function navigateToQuestion(questionIndex: number) {
-		if (singleQuestionPerPage) {
-			await persistCurrentQuestionTime();
-		}
+	function navigateToQuestion(questionIndex: number) {
 		const targetPage = Math.floor(questionIndex / perPage) + 1;
 		paginationPage = targetPage;
 		currentQuestionIndex = questionIndex;
-		currentQuestionStartedAt = Date.now();
 
 		// scroll to the specific question after page renders
 		setTimeout(() => {
@@ -134,113 +126,16 @@
 	});
 
 	// scroll to top and update current question index when page changes
-	async function handlePageChange(newPage: number) {
-		if (singleQuestionPerPage) {
-			await persistCurrentQuestionTime();
-		}
+	function handlePageChange(newPage: number) {
 		currentQuestionIndex = (newPage - 1) * perPage;
-		currentQuestionStartedAt = Date.now();
 		window.scrollTo({ top: 0, behavior: 'instant' });
 	}
-
-	onMount(() => {
-		if (!singleQuestionPerPage) {
-			return;
-		}
-
-		const interval = setInterval(() => {
-			questionTimerTick++;
-		}, 1000);
-
-		return () => clearInterval(interval);
-	});
-
-	const getSelectionForQuestion = (questionIndex: number) => {
-		const question = questions[questionIndex];
-		if (!question) return null;
-		return (
-			selectedQuestions.find((item: TSelection) => item.question_revision_id === question.id) ??
-			null
-		);
-	};
-
-	const getCurrentQuestionTimeSpent = () => {
-		questionTimerTick;
-		const currentSelection = getSelectionForQuestion(currentQuestionIndex);
-		const savedTimeSpent = currentSelection?.time_spent ?? 0;
-		return savedTimeSpent + Math.max(0, Math.floor((Date.now() - currentQuestionStartedAt) / 1000));
-	};
-
-	const syncCurrentQuestionTimeSpent = (nextTimeSpent: number) => {
-		const currentSelection = getSelectionForQuestion(currentQuestionIndex);
-		if (!currentSelection) return;
-
-		selectedQuestions = selectedQuestions.map((item: TSelection) =>
-			item.question_revision_id === currentSelection.question_revision_id
-				? { ...item, time_spent: nextTimeSpent }
-				: item
-		);
-		sessionStore.current = {
-			...sessionStore.current,
-			candidate,
-			selections: selectedQuestions,
-			currentPage: paginationPage
-		};
-		currentQuestionStartedAt = Date.now();
-	};
-
-	const persistCurrentQuestionTime = async () => {
-		if (!singleQuestionPerPage) {
-			return;
-		}
-
-		const currentQuestion = questions[currentQuestionIndex];
-		const currentSelection = getSelectionForQuestion(currentQuestionIndex);
-		if (!currentQuestion || !currentSelection) {
-			currentQuestionStartedAt = Date.now();
-			return;
-		}
-
-		const nextTimeSpent = getCurrentQuestionTimeSpent();
-		if (nextTimeSpent <= (currentSelection.time_spent ?? 0)) {
-			currentQuestionStartedAt = Date.now();
-			return;
-		}
-
-		try {
-			const response = await fetch(`/test/${page.params.slug}/api/submit-answer`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					question_revision_id: currentQuestion.id,
-					response: currentSelection.response,
-					candidate,
-					time_spent: nextTimeSpent,
-					bookmarked: currentSelection.bookmarked,
-					is_reviewed: currentSelection.is_reviewed
-				})
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to sync question time');
-			}
-
-			syncCurrentQuestionTimeSpent(nextTimeSpent);
-		} catch (error) {
-			console.error('Failed to sync question time:', error);
-		}
-	};
 
 	// enhance handler for submitTest form action
 	const handleSubmitTestEnhance = createFormEnhanceHandler({
 		setLoading: (loading) => (isSubmittingTest = loading),
 		setError: (error) => (submitError = error),
 		setDialogOpen: (open) => (submitDialogOpen = open)
-	});
-
-	$effect(() => {
-		if (!singleQuestionPerPage || !submitDialogOpen) return;
-		void persistCurrentQuestionTime();
 	});
 </script>
 
@@ -328,16 +223,6 @@
 									{question}
 									{totalQuestions}
 									bind:selectedQuestions
-									currentQuestionTimeSpent={singleQuestionPerPage
-										? (currentPage - 1) * perPage + index === currentQuestionIndex
-											? getCurrentQuestionTimeSpent()
-											: (selectedQuestions.find(
-													(item: TSelection) => item.question_revision_id === question.id
-												)?.time_spent ?? 0)
-										: undefined}
-									onTimeSpentSynced={singleQuestionPerPage
-										? (nextTimeSpent) => syncCurrentQuestionTimeSpent(nextTimeSpent)
-										: undefined}
 									showFeedback={testDetails.show_feedback_immediately}
 									showMarkForReview={testDetails.bookmark}
 									showMarks={testDetails?.show_marks ?? true}
