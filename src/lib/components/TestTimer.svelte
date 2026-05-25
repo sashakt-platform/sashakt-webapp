@@ -79,8 +79,7 @@
 	};
 
 	const startCountdown = () => {
-		if (countdownInterval || timeLeft <= 0) return;
-
+		clearCountdownInterval();
 		countdownInterval = setInterval(() => {
 			if (timeLeft === 10 * 60) open = true;
 			if (timeLeft <= 1) {
