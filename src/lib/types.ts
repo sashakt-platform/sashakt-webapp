@@ -210,6 +210,7 @@ export type TTestDetails = {
 	total_questions: number;
 	time_limit?: number | null;
 	question_pagination?: number | null;
+	pause_timer_when_inactive: boolean;
 	start_time: string;
 	start_instructions?: string;
 	completion_message?: string;

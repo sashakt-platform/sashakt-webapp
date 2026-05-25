@@ -362,7 +362,6 @@
 			saveError = null;
 			try {
 				await submitAnswer(questionId, newResponse, currentBookmarked);
-
 				if (answeredQuestion) {
 					selectedQuestions = selectedQuestions.map((q) =>
 						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
@@ -425,7 +424,7 @@
 			updateStore();
 
 			try {
-				await submitAnswer(questionId, newResponse);
+				await submitAnswer(questionId, newResponse, currentBookmarked);
 			} catch (error) {
 				// revert on error
 				selectedQuestions = previousState;

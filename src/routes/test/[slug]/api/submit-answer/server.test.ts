@@ -47,7 +47,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		expect(data.correct_answer).toBeNull();
 		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(fetch).toHaveBeenCalledWith(
-			`http://test-backend.com/candidate/submit_answer/${mockCandidate.candidate_test_id}/?candidate_uuid=${mockCandidate.candidate_uuid}`,
+			`http://test-backend.com/candidate/submit_answer/${mockCandidate.candidate_test_id}?candidate_uuid=${mockCandidate.candidate_uuid}`,
 			expect.objectContaining({
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },

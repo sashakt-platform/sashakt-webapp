@@ -77,6 +77,16 @@ describe('hooks.server - handleTest', () => {
 		await expect(handleTest({ event, resolve: mockResolve } as any)).rejects.toThrow();
 	});
 
+	it('should pass through for test api routes', async () => {
+		const event = createMockEvent('/test/[slug]/api/timer', 'sample-test');
+
+		await handleTest({ event, resolve: mockResolve } as any);
+
+		expect(getTestDetailsBySlug).not.toHaveBeenCalled();
+		expect(getPreTestTimer).not.toHaveBeenCalled();
+		expect(mockResolve).toHaveBeenCalledWith(event);
+	});
+
 	it('should pass through for non-test routes', async () => {
 		const event = createMockEvent('/other-route');
 

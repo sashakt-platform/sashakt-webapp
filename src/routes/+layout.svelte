@@ -24,6 +24,7 @@
 	const showTimer = $derived(
 		page.data?.timeLeft !== null && page.data.candidate && !page.form?.submitTest
 	);
+	const pauseTimerWhenInactive = $derived(page.data.testData?.pause_timer_when_inactive ?? false);
 </script>
 
 <nav class="bg-card border-border sticky top-0 z-50 border-b px-6 py-6">
@@ -34,7 +35,11 @@
 					<ArrowLeft class="h-5 w-5" />
 				</Button>
 			{:else if showTimer}
-				<TestTimer timeLeft={page.data?.timeLeft} />
+				<TestTimer
+					timeLeft={page.data?.timeLeft}
+					candidate={page.data.candidate}
+					{pauseTimerWhenInactive}
+				/>
 			{/if}
 		</div>
 
@@ -73,7 +78,11 @@
 			<h2 class="text-primary text-xl font-extrabold tracking-tight uppercase">Sashakt</h2>
 			<div class="flex items-center gap-3">
 				{#if showTimer}
-					<TestTimer timeLeft={page.data?.timeLeft} />
+					<TestTimer
+						timeLeft={page.data?.timeLeft}
+						candidate={page.data.candidate}
+						{pauseTimerWhenInactive}
+					/>
 				{/if}
 				<InstructionsDialog instructions={navState.instructions} />
 			</div>
@@ -92,7 +101,11 @@
 			</h2>
 			<div class="flex justify-end">
 				{#if showTimer}
-					<TestTimer timeLeft={page.data?.timeLeft} />
+					<TestTimer
+						timeLeft={page.data?.timeLeft}
+						candidate={page.data.candidate}
+						{pauseTimerWhenInactive}
+					/>
 				{/if}
 			</div>
 		</div>

@@ -1,34 +1,150 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
+	import type { TCandidate } from '$lib/types';
 	import { Clock } from '@lucide/svelte';
 	import { t } from 'svelte-i18n';
+	import { onMount } from 'svelte';
 
-	let { timeLeft: initialTime } = $props();
+	let {
+		timeLeft: initialTime,
+		candidate = null,
+		pauseTimerWhenInactive = false
+	}: {
+		timeLeft: number;
+		candidate?: TCandidate | null;
+		pauseTimerWhenInactive?: boolean;
+	} = $props();
+
+	const HEARTBEAT_INTERVAL_MS = 15000;
+
 	let formElement = $state<HTMLFormElement>();
 	let timeLeft = $state(initialTime);
 	let open = $state(false);
 	let isSubmitting = $state(false);
 	let submitError = $state<string | null>(null);
+	let countdownInterval: ReturnType<typeof setInterval> | null = null;
+	let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+	let submitTimeout: ReturnType<typeof setTimeout> | null = null;
+	let hasTriggeredAutoSubmit = $state(false);
+	let nextSyncRequestId = 0;
+	let latestAppliedSyncRequestId = 0;
 
-	$effect(() => {
-		const intervalId = setInterval(() => {
+	const clearCountdownInterval = () => {
+		if (countdownInterval) {
+			clearInterval(countdownInterval);
+			countdownInterval = null;
+		}
+	};
+
+	const clearHeartbeatInterval = () => {
+		if (heartbeatInterval) {
+			clearInterval(heartbeatInterval);
+			heartbeatInterval = null;
+		}
+	};
+
+	const clearSubmitTimeout = () => {
+		if (submitTimeout) {
+			clearTimeout(submitTimeout);
+			submitTimeout = null;
+		}
+	};
+
+	const triggerAutoSubmit = () => {
+		if (hasTriggeredAutoSubmit) return;
+		hasTriggeredAutoSubmit = true;
+		clearSubmitTimeout();
+		submitTimeout = setTimeout(() => {
+			formElement?.requestSubmit();
+		}, 5000);
+	};
+
+	const handleTimeUp = () => {
+		timeLeft = 0;
+		open = true;
+		clearCountdownInterval();
+		clearHeartbeatInterval();
+		triggerAutoSubmit();
+	};
+
+	const updateTimeLeft = (nextTimeLeft: number) => {
+		timeLeft = Math.max(nextTimeLeft, 0);
+		if (timeLeft === 10 * 60) open = true;
+		if (timeLeft === 0) handleTimeUp();
+	};
+
+	const startCountdown = () => {
+		if (countdownInterval || timeLeft <= 0) return;
+
+		countdownInterval = setInterval(() => {
 			if (timeLeft === 10 * 60) open = true;
-			if (timeLeft === 0) {
-				open = true;
-				clearInterval(intervalId);
-				setTimeout(() => {
-					formElement?.requestSubmit();
-				}, 5000);
+			if (timeLeft <= 1) {
+				handleTimeUp();
 			} else {
 				timeLeft--;
 			}
 		}, 1000);
+	};
 
-		return () => clearInterval(intervalId);
+	const syncTimer = async (event: 'resume' | 'heartbeat') => {
+		if (!pauseTimerWhenInactive || !candidate) return;
+
+		const requestId = ++nextSyncRequestId;
+
+		try {
+			const response = await fetch(`/test/${page.params.slug}/api/timer`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ candidate, event })
+			});
+
+			if (!response.ok) return;
+
+			const data = await response.json();
+			if (typeof data.time_left !== 'number') return;
+			if (requestId < latestAppliedSyncRequestId) return;
+
+			latestAppliedSyncRequestId = requestId;
+			updateTimeLeft(Math.min(timeLeft, data.time_left));
+		} catch {}
+	};
+
+	const startHeartbeat = () => {
+		if (!pauseTimerWhenInactive || !candidate || heartbeatInterval) return;
+
+		heartbeatInterval = setInterval(() => {
+			void syncTimer('heartbeat');
+		}, HEARTBEAT_INTERVAL_MS);
+	};
+
+	const resumeTimer = () => {
+		startCountdown();
+		startHeartbeat();
+		void syncTimer('resume');
+	};
+
+	onMount(() => {
+		if (!pauseTimerWhenInactive) {
+			startCountdown();
+			return () => {
+				clearHeartbeatInterval();
+				clearCountdownInterval();
+				clearSubmitTimeout();
+			};
+		}
+
+		resumeTimer();
+
+		return () => {
+			clearCountdownInterval();
+			clearHeartbeatInterval();
+			clearSubmitTimeout();
+		};
 	});
 
 	const lessTime = () => {

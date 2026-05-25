@@ -8,6 +8,7 @@ import {
 	mockTestData,
 	setLocaleForTests
 } from '$lib/test-utils';
+import { createTestSessionStore } from '$lib/helpers/testSession';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -16,8 +17,19 @@ vi.mock('$app/forms', () => ({
 
 vi.mock('$app/state', () => ({
 	page: {
-		form: null
+		form: null,
+		params: { slug: 'sample-test' }
 	}
+}));
+
+vi.mock('$lib/helpers/testSession', () => ({
+	createTestSessionStore: vi.fn(() => ({
+		current: {
+			candidate: mockCandidate,
+			selections: [],
+			currentPage: 1
+		}
+	}))
 }));
 
 vi.mock('$lib/helpers/formErrorHandler', () => ({
@@ -40,6 +52,17 @@ const testQuestions = {
 const testDetails = mockTestData;
 
 describe('Question', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(createTestSessionStore).mockReturnValue({
+			current: {
+				candidate: mockCandidate,
+				selections: [],
+				currentPage: 1
+			}
+		} as any);
+	});
+
 	it('should render questions', async () => {
 		render(Question, {
 			props: {
@@ -143,6 +166,21 @@ describe('Question', () => {
 
 		// Second question should not be visible on first page
 		expect(screen.queryByText(mockQuestions[1].question_text)).not.toBeInTheDocument();
+	});
+
+	it('should render sectioned payloads in the existing flat question flow', async () => {
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: { ...mockSectionedTestQuestionsResponse, question_pagination: 2 },
+				testDetails
+			}
+		});
+
+		await vi.waitFor(() => {
+			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+			expect(screen.getByText(mockQuestions[1].question_text)).toBeInTheDocument();
+		});
 	});
 
 	it('should handle questions without pagination', async () => {
@@ -348,7 +386,7 @@ describe('Question', () => {
 		beforeEach(() => {
 			capturedSetLoading = undefined;
 			vi.mocked(createFormEnhanceHandler).mockImplementation((opts) => {
-				capturedSetLoading = opts.setLoading;
+				capturedSetLoading = opts?.setLoading;
 				return vi.fn();
 			});
 		});
@@ -425,7 +463,7 @@ describe('Question', () => {
 		beforeEach(() => {
 			capturedSetError = undefined;
 			vi.mocked(createFormEnhanceHandler).mockImplementation((opts) => {
-				capturedSetError = opts.setError;
+				capturedSetError = opts?.setError;
 				return vi.fn();
 			});
 		});

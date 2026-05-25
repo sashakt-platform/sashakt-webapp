@@ -173,7 +173,7 @@
 							{@const section = sectionByQuestionId.get(question.id) ?? null}
 							{#if section && index === 0}
 								<div class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm">
-									<p class="text-sm font-semibold text-card-foreground">{section.title}</p>
+									<p class="text-card-foreground text-sm font-semibold">{section.title}</p>
 									{#if section.description}
 										<RichText
 											content={section.description}
