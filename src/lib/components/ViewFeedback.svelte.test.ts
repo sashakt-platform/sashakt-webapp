@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, within } from '@testing-library/svelte';
 import ViewFeedback from './ViewFeedback.svelte';
 import {
 	mockSingleChoiceQuestion,
@@ -14,7 +14,9 @@ import {
 	mockImageMedia,
 	mockYoutubeMedia,
 	mockMatrixInputTextQuestion,
-	mockMatrixInputNumberQuestion
+	mockMatrixInputNumberQuestion,
+	mockMatrixMatchQuestion,
+	mockMatrixRatingQuestion
 } from '$lib/test-utils';
 
 const createFeedback = (
@@ -826,8 +828,8 @@ describe('ViewFeedback', () => {
 		});
 	});
 
-	describe('matrix input question types (not applicable)', () => {
-		it('should show Not Applicable for matrix-string question', () => {
+	describe('matrix-input question feedback', () => {
+		describe('text input type', () => {
 			const testQuestions = {
 				question_revisions: [mockMatrixInputTextQuestion],
 				question_pagination: 5
@@ -835,73 +837,434 @@ describe('ViewFeedback', () => {
 			const feedback = [
 				{
 					question_revision_id: mockMatrixInputTextQuestion.id,
-					submitted_answer: '{"1":"Paris"}',
+					submitted_answer: '{"1":"Paris","2":"Tokyo"}',
 					correct_answer: []
 				}
 			];
 
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			it('should render question text', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
 
-			expect(screen.getByText(mockMatrixInputTextQuestion.question_text)).toBeInTheDocument();
-			expect(screen.getByText('Not Applicable')).toBeInTheDocument();
+				expect(screen.getByText(mockMatrixInputTextQuestion.question_text)).toBeInTheDocument();
+			});
+
+			it('should render the rows label as a column header', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.getByText('Country')).toBeInTheDocument();
+			});
+
+			it('should render the columns label as a column header', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.getByText('Capital City')).toBeInTheDocument();
+			});
+
+			it('should render row values', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.getByText('France')).toBeInTheDocument();
+				expect(screen.getByText('Japan')).toBeInTheDocument();
+			});
+
+			it('should render one text input per row (2 rows = 2 inputs)', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.getAllByRole('textbox')).toHaveLength(2);
+			});
+
+			it('should display submitted values inside the inputs', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+				const values = inputs.map((i) => i.value);
+				expect(values).toContain('Paris');
+				expect(values).toContain('Tokyo');
+			});
+
+			it('should render inputs as readonly', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+				expect(inputs.every((i) => i.readOnly)).toBe(true);
+			});
+
+			it('should show empty inputs when no answer was submitted', () => {
+				const unattemptedFeedback = [
+					{
+						question_revision_id: mockMatrixInputTextQuestion.id,
+						submitted_answer: '{}',
+						correct_answer: []
+					}
+				];
+				render(ViewFeedback, { props: { feedback: unattemptedFeedback, testQuestions } });
+
+				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+				expect(inputs.every((i) => i.value === '')).toBe(true);
+			});
+
+			it('should not show Not Applicable text', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.queryByText('Not Applicable')).not.toBeInTheDocument();
+			});
+
+			it('should not render radio buttons or checkboxes', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.queryAllByRole('radio')).toHaveLength(0);
+				expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+			});
 		});
 
-		it('should show Not Applicable for matrix-number question', () => {
+		describe('number input type', () => {
 			const testQuestions = {
 				question_revisions: [mockMatrixInputNumberQuestion],
 				question_pagination: 5
 			};
+
 			const feedback = [
 				{
 					question_revision_id: mockMatrixInputNumberQuestion.id,
-					submitted_answer: '{"1":"42"}',
+					submitted_answer: '{"1":"42","2":"15"}',
 					correct_answer: []
 				}
 			];
 
+			it('should render the rows and columns labels', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.getByText('Item')).toBeInTheDocument();
+				expect(screen.getByText('Quantity')).toBeInTheDocument();
+			});
+
+			it('should render row values', () => {
+				render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				expect(screen.getByText('Apples')).toBeInTheDocument();
+				expect(screen.getByText('Oranges')).toBeInTheDocument();
+			});
+
+			it('should render number inputs with submitted values', () => {
+				const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				const inputs = container.querySelectorAll<HTMLInputElement>('input[type="number"]');
+				const values = Array.from(inputs).map((i) => i.value);
+				expect(values).toContain('42');
+				expect(values).toContain('15');
+			});
+
+			it('should render number inputs as readonly', () => {
+				const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+				const inputs = container.querySelectorAll<HTMLInputElement>('input[type="number"]');
+				expect(Array.from(inputs).every((i) => i.readOnly)).toBe(true);
+			});
+		});
+	});
+
+	describe('matrix-match question feedback', () => {
+		const correctAnswer = JSON.stringify({ 801: [901], 802: [902] });
+		const submittedAnswer = JSON.stringify({ 801: [901, 902], 802: [] });
+
+		const testQuestions = {
+			question_revisions: [mockMatrixMatchQuestion],
+			question_pagination: 5
+		};
+
+		const feedback = [
+			{
+				question_revision_id: mockMatrixMatchQuestion.id,
+				submitted_answer: submittedAnswer,
+				correct_answer: correctAnswer
+			}
+		];
+
+		it('should render question text', () => {
 			render(ViewFeedback, { props: { feedback, testQuestions } });
 
-			expect(screen.getByText(mockMatrixInputNumberQuestion.question_text)).toBeInTheDocument();
-			expect(screen.getByText('Not Applicable')).toBeInTheDocument();
+			expect(screen.getByText(mockMatrixMatchQuestion.question_text)).toBeInTheDocument();
 		});
 
-		it('should show Not Applicable for matrix-input question', () => {
-			const testQuestions = {
-				question_revisions: [mockMatrixInputTextQuestion],
-				question_pagination: 5
-			};
-			const feedback = [
-				{
-					question_revision_id: mockMatrixInputTextQuestion.id,
-					submitted_answer: '{"1":"Paris"}',
-					correct_answer: []
-				}
-			];
-
+		it('should render row label and column label', () => {
 			render(ViewFeedback, { props: { feedback, testQuestions } });
 
-			expect(screen.getByText(mockMatrixInputTextQuestion.question_text)).toBeInTheDocument();
-			expect(screen.getByText('Not Applicable')).toBeInTheDocument();
+			expect(screen.getByText('Column A')).toBeInTheDocument();
+			expect(screen.getByText('Column B')).toBeInTheDocument();
 		});
 
-		it('should not render choice options or inputs for matrix input questions', () => {
-			const testQuestions = {
-				question_revisions: [mockMatrixInputTextQuestion],
-				question_pagination: 5
-			};
-			const feedback = [
+		it('should render row values', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('Apple')).toBeInTheDocument();
+			expect(screen.getByText('Banana')).toBeInTheDocument();
+		});
+
+		it('should render column values', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('Red fruit')).toBeInTheDocument();
+			expect(screen.getByText('Yellow fruit')).toBeInTheDocument();
+		});
+
+		it('should render column keys as table headers', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const headers = screen.getAllByRole('columnheader');
+			const headerTexts = headers.map((h) => h.textContent?.trim()).filter(Boolean);
+			expect(headerTexts).toContain('P');
+			expect(headerTexts).toContain('Q');
+		});
+
+		it('should render row keys in the table body', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = screen.getByRole('table');
+			expect(within(table).getByText('A')).toBeInTheDocument();
+			expect(within(table).getByText('B')).toBeInTheDocument();
+		});
+
+		it('should show correct styling for a cell that is submitted and correct', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			expect(table?.querySelector('.bg-success.border-success')).toBeInTheDocument();
+		});
+
+		it('should show wrong styling for a cell that is submitted but not correct', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			expect(table?.querySelector('.bg-error.border-error')).toBeInTheDocument();
+		});
+
+		it('should show missed styling for a cell that is correct but not submitted', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			expect(table?.querySelector('.border-success:not(.bg-success)')).toBeInTheDocument();
+		});
+
+		it('should show none styling for a cell that is neither submitted nor correct', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			expect(table?.querySelector('.bg-card.border-border')).toBeInTheDocument();
+		});
+
+		it('should render a check icon inside correct cells', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			const correctBox = table?.querySelector('.bg-success.border-success');
+			expect(correctBox?.querySelector('svg')).toBeInTheDocument();
+		});
+
+		it('should render a check icon inside wrong cells', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			const wrongBox = table?.querySelector('.bg-error.border-error');
+			expect(wrongBox?.querySelector('svg')).toBeInTheDocument();
+		});
+
+		it('should not render a check icon inside missed cells', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			const missedBox = table?.querySelector('.border-success:not(.bg-success)');
+			expect(missedBox?.querySelector('svg')).not.toBeInTheDocument();
+		});
+
+		it('should not render a check icon inside none cells', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			const noneBox = table?.querySelector('.bg-card.border-border');
+			expect(noneBox?.querySelector('svg')).not.toBeInTheDocument();
+		});
+
+		it('should render 4 status indicator boxes for 2×2 matrix', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const table = container.querySelector('table');
+			expect(table?.querySelectorAll('.h-5.w-5')).toHaveLength(4);
+		});
+
+		it('should show Correct result badge when all rows match', () => {
+			const allCorrectFeedback = [
 				{
-					question_revision_id: mockMatrixInputTextQuestion.id,
-					submitted_answer: '{"1":"Paris"}',
-					correct_answer: []
+					question_revision_id: mockMatrixMatchQuestion.id,
+					submitted_answer: correctAnswer,
+					correct_answer: correctAnswer
 				}
 			];
 
+			render(ViewFeedback, { props: { feedback: allCorrectFeedback, testQuestions } });
+
+			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
+		});
+
+		it('should show Incorrect result badge when rows do not fully match', () => {
 			render(ViewFeedback, { props: { feedback, testQuestions } });
 
-			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
+		});
+
+		it('should not show Not Applicable text', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.queryByText('Not Applicable')).not.toBeInTheDocument();
+		});
+
+		it('should not render checkboxes or radio buttons', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
 			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
-			expect(screen.queryAllByRole('textbox')).toHaveLength(0);
+			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+		});
+
+		it('should show Unattempted result badge when submitted answer is empty', () => {
+			const unattemptedFeedback = [
+				{
+					question_revision_id: mockMatrixMatchQuestion.id,
+					submitted_answer: '{}',
+					correct_answer: correctAnswer
+				}
+			];
+
+			render(ViewFeedback, { props: { feedback: unattemptedFeedback, testQuestions } });
+
+			expect(screen.getByText(/^Not Attempted:/)).toBeInTheDocument();
+		});
+	});
+
+	describe('matrix-rating question feedback', () => {
+		const testQuestions = {
+			question_revisions: [mockMatrixRatingQuestion],
+			question_pagination: 5
+		};
+
+		const submittedAnswer = JSON.stringify({ '1': 2, '2': 3 });
+
+		const feedback = [
+			{
+				question_revision_id: mockMatrixRatingQuestion.id,
+				submitted_answer: submittedAnswer,
+				correct_answer: []
+			}
+		];
+
+		it('should render question text', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText(mockMatrixRatingQuestion.question_text)).toBeInTheDocument();
+		});
+
+		it('should render the rows label', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('Subjects')).toBeInTheDocument();
+		});
+
+		it('should render all column values as headers', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('Very difficult')).toBeInTheDocument();
+			expect(screen.getByText('A little difficult')).toBeInTheDocument();
+			expect(screen.getByText('Okay / manageable')).toBeInTheDocument();
+		});
+
+		it('should render column keys in parentheses', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('(1)')).toBeInTheDocument();
+			expect(screen.getByText('(2)')).toBeInTheDocument();
+			expect(screen.getByText('(3)')).toBeInTheDocument();
+		});
+
+		it('should render all row values', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getByText('Math')).toBeInTheDocument();
+			expect(screen.getByText('Physics')).toBeInTheDocument();
+			expect(screen.getByText('Chemistry')).toBeInTheDocument();
+		});
+
+		it('should render one radio button per row-column combination (3 rows × 3 cols = 9)', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.getAllByRole('radio')).toHaveLength(9);
+		});
+
+		it('should check the submitted radio for row 1 (Math → A little difficult)', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const row1Radios = container.querySelectorAll<HTMLInputElement>(
+				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-1"]`
+			);
+			const checked = Array.from(row1Radios).find((r) => r.checked);
+			expect(checked?.value).toBe('2');
+		});
+
+		it('should check the submitted radio for row 2 (Physics → Okay / manageable)', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const row2Radios = container.querySelectorAll<HTMLInputElement>(
+				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-2"]`
+			);
+			const checked = Array.from(row2Radios).find((r) => r.checked);
+			expect(checked?.value).toBe('3');
+		});
+
+		it('should leave all radios unchecked for an unanswered row', () => {
+			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const row3Radios = container.querySelectorAll<HTMLInputElement>(
+				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-3"]`
+			);
+			expect(Array.from(row3Radios).every((r) => !r.checked)).toBe(true);
+		});
+
+		it('should render all radios unchecked when submitted answer is empty', () => {
+			const unattemptedFeedback = [
+				{
+					question_revision_id: mockMatrixRatingQuestion.id,
+					submitted_answer: '{}',
+					correct_answer: []
+				}
+			];
+			render(ViewFeedback, { props: { feedback: unattemptedFeedback, testQuestions } });
+
+			const radios = screen.getAllByRole('radio') as HTMLInputElement[];
+			expect(radios.every((r) => !r.checked)).toBe(true);
+		});
+
+		it('should render all radios unchecked when no feedback entry exists', () => {
+			render(ViewFeedback, { props: { feedback: [], testQuestions } });
+
+			const radios = screen.getAllByRole('radio') as HTMLInputElement[];
+			expect(radios.every((r) => !r.checked)).toBe(true);
+		});
+
+		it('should have disabled attribute on all radio buttons', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			const radios = screen.getAllByRole('radio') as HTMLInputElement[];
+			expect(radios.every((r) => r.disabled)).toBe(true);
+		});
+
+		it('should not show Not Applicable text', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.queryByText('Not Applicable')).not.toBeInTheDocument();
+		});
+
+		it('should not show a result badge for matrix-rating questions', () => {
+			render(ViewFeedback, { props: { feedback, testQuestions } });
+
+			expect(screen.queryByText(/^Correct:/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/^Incorrect:/)).not.toBeInTheDocument();
 		});
 	});
 });

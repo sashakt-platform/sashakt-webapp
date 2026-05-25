@@ -2569,6 +2569,203 @@ describe('QuestionCard', () => {
 				expect(parsed['801']).toEqual([]);
 			});
 		});
+
+		describe('feedback view (isFeedbackViewed)', () => {
+			const correctAnswer = JSON.stringify({ 801: [901], 802: [902] });
+
+			const buildSelection = (response: string): TSelection => ({
+				question_revision_id: mockMatrixMatchQuestion.id,
+				response,
+				correct_answer: correctAnswer,
+				visited: true,
+				time_spent: 0,
+				bookmarked: false,
+				is_reviewed: true
+			});
+
+			it('should show "View Feedback" button for matrix-match when answered and showFeedback is true', () => {
+				const selectedQuestions = [
+					{
+						question_revision_id: mockMatrixMatchQuestion.id,
+						response: JSON.stringify({ 801: [901] }),
+						visited: true,
+						time_spent: 0,
+						bookmarked: false,
+						is_reviewed: false
+					}
+				];
+
+				render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions,
+						showFeedback: true
+					}
+				});
+
+				expect(screen.getByRole('button', { name: /view Result/i })).toBeInTheDocument();
+			});
+
+			it('should replace checkboxes with status indicators when is_reviewed is true', () => {
+				render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901], 802: [] }))]
+					}
+				});
+
+				expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+
+				const { container } = render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901], 802: [] }))]
+					}
+				});
+				const statusBoxes = container.querySelectorAll('table .h-5.w-5');
+				expect(statusBoxes).toHaveLength(4);
+			});
+
+			it('should mark cell as correct when submitted and in correct answer', () => {
+				const { container } = render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901], 802: [] }))]
+					}
+				});
+
+				const table = container.querySelector('table');
+				expect(table?.querySelector('.bg-success.border-success')).toBeInTheDocument();
+			});
+
+			it('should mark cell as wrong when submitted but not in correct answer', () => {
+				const { container } = render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901, 902], 802: [] }))]
+					}
+				});
+
+				const table = container.querySelector('table');
+				expect(table?.querySelector('.bg-error.border-error')).toBeInTheDocument();
+			});
+
+			it('should mark cell as missed when in correct answer but not submitted', () => {
+				const { container } = render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901], 802: [] }))]
+					}
+				});
+
+				const table = container.querySelector('table');
+				expect(table?.querySelector('.border-success:not(.bg-success)')).toBeInTheDocument();
+			});
+
+			it('should mark cell as none when neither submitted nor in correct answer', () => {
+				const { container } = render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901], 802: [] }))]
+					}
+				});
+
+				const table = container.querySelector('table');
+				expect(table?.querySelector('.bg-card.border-border')).toBeInTheDocument();
+			});
+
+			it('should render a check icon inside correct cells', () => {
+				const { container } = render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901], 802: [] }))]
+					}
+				});
+
+				const table = container.querySelector('table');
+				const correctBox = table?.querySelector('.bg-success.border-success');
+				expect(correctBox?.querySelector('svg')).toBeInTheDocument();
+			});
+
+			it('should render a check icon inside wrong cells', () => {
+				const { container } = render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901, 902], 802: [] }))]
+					}
+				});
+
+				const table = container.querySelector('table');
+				const wrongBox = table?.querySelector('.bg-error.border-error');
+				expect(wrongBox?.querySelector('svg')).toBeInTheDocument();
+			});
+
+			it('should not render a check icon inside missed cells', () => {
+				const { container } = render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901], 802: [] }))]
+					}
+				});
+
+				const table = container.querySelector('table');
+				const missedBox = table?.querySelector('.border-success:not(.bg-success)');
+				expect(missedBox?.querySelector('svg')).not.toBeInTheDocument();
+			});
+
+			it('should not render a check icon inside none cells', () => {
+				const { container } = render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901], 802: [] }))]
+					}
+				});
+
+				const table = container.querySelector('table');
+				const noneBox = table?.querySelector('.bg-card.border-border');
+				expect(noneBox?.querySelector('svg')).not.toBeInTheDocument();
+			});
+
+			it('should render column keys as table headers in feedback view', () => {
+				render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901], 802: [] }))]
+					}
+				});
+
+				const headers = screen.getAllByRole('columnheader');
+				const headerTexts = headers.map((h) => h.textContent?.trim()).filter(Boolean);
+				expect(headerTexts).toContain('P');
+				expect(headerTexts).toContain('Q');
+			});
+
+			it('should render row keys in table body in feedback view', () => {
+				render(QuestionCard, {
+					props: {
+						question: mockMatrixMatchQuestion,
+						...defaultProps,
+						selectedQuestions: [buildSelection(JSON.stringify({ 801: [901], 802: [] }))]
+					}
+				});
+
+				const table = screen.getByRole('table');
+				expect(within(table).getByText('A')).toBeInTheDocument();
+				expect(within(table).getByText('B')).toBeInTheDocument();
+			});
+		});
 	});
 
 	describe('media support', () => {
