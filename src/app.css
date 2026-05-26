@@ -115,6 +115,15 @@
 		height: auto;
 	}
 
+	.rich-text a {
+		color: hsl(var(--primary));
+		text-decoration: underline;
+	}
+
+	.rich-text a:hover {
+		text-decoration: none;
+	}
+
 	.rich-text .MathJax {
 		overflow-x: auto;
 		overflow-y: hidden;
