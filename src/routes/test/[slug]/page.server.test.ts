@@ -31,6 +31,12 @@ vi.mock('$lib/server/test', () => ({
 
 // Mock SvelteKit functions
 vi.mock('@sveltejs/kit', () => ({
+	error: (status: number, body: any) => {
+		const error = new Error(typeof body === 'string' ? body : 'Error');
+		(error as any).status = status;
+		(error as any).body = body;
+		throw error;
+	},
 	fail: (status: number, data: any) => ({ status, ...data }),
 	redirect: (status: number, location: string) => {
 		const error = new Error('Redirect');
@@ -223,6 +229,58 @@ describe('Page Server - load function', () => {
 		).rejects.toThrow('Redirect');
 
 		expect(mockCookies.delete).toHaveBeenCalledWith('sashakt-candidate', expect.any(Object));
+	});
+
+	it('should exchange external launch ids for a candidate cookie and clean URL', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockFetch = vi.fn().mockResolvedValue(await createMockResponse(mockCandidate));
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: mockFetch,
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=${mockCandidate.candidate_test_id}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 303, location: `/test/${mockTestData.link}` });
+
+		expect(mockFetch).toHaveBeenCalledWith(
+			'http://test-backend.com/candidate/external/start_test',
+			expect.objectContaining({
+				method: 'POST',
+				body: JSON.stringify({
+					test_link_uuid: mockTestData.link,
+					candidate_uuid: mockCandidate.candidate_uuid,
+					candidate_test_id: mockCandidate.candidate_test_id
+				})
+			})
+		);
+		expect(mockCookies.set).toHaveBeenCalledWith(
+			'sashakt-candidate',
+			JSON.stringify(mockCandidate),
+			expect.objectContaining({
+				path: `/test/${mockTestData.link}`,
+				httpOnly: true
+			})
+		);
+	});
+
+	it('should reject an invalid external launch', async () => {
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: vi.fn(),
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 400 });
 	});
 });
 

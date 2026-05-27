@@ -4,7 +4,7 @@ import { getCandidate } from '$lib/helpers/getCandidate';
 import { getTestQuestions, getTimeLeft, getStates, type TState } from '$lib/server/test';
 import { validateForm } from '$lib/components/form/validation';
 import type { TTestDetails } from '$lib/types';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect, type Cookies } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
@@ -16,9 +16,62 @@ function hasLocationFields(testData: TTestDetails): boolean {
 	return testData.form.fields.some((field) => locationFieldTypes.includes(field.field_type));
 }
 
-export const load: PageServerLoad = async ({ locals, cookies }) => {
+function setCandidateCookie(cookies: Cookies, testLink: string, candidateData: unknown) {
+	cookies.set('sashakt-candidate', JSON.stringify(candidateData), {
+		expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
+		path: '/test/' + testLink,
+		httpOnly: true,
+		sameSite: 'lax',
+		secure: !dev
+	});
+}
+
+function getExternalCandidateLaunch(url: URL) {
+	const candidateUuid = url.searchParams.get('candidate_uuid');
+	const candidateTestIdRaw = url.searchParams.get('candidate_test_id');
+
+	if (!candidateUuid && !candidateTestIdRaw) return null;
+	if (!candidateUuid || !candidateTestIdRaw) {
+		throw error(400, 'Invalid external candidate launch');
+	}
+
+	const candidateTestId = Number(candidateTestIdRaw);
+	if (!Number.isInteger(candidateTestId) || candidateTestId <= 0) {
+		throw error(400, 'Invalid external candidate launch');
+	}
+
+	return {
+		candidate_uuid: candidateUuid,
+		candidate_test_id: candidateTestId
+	};
+}
+
+export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 	const testData = locals.testData;
 	if (!testData) throw redirect(302, '/');
+
+	const externalLaunch = url ? getExternalCandidateLaunch(url) : null;
+	if (externalLaunch) {
+		const response = await fetch(`${BACKEND_URL}/candidate/external/start_test`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				test_link_uuid: testData.link,
+				candidate_uuid: externalLaunch.candidate_uuid,
+				candidate_test_id: externalLaunch.candidate_test_id
+			})
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json().catch(() => ({}));
+			const errorMessage = errorData?.detail || errorData?.message || 'Failed to start test';
+			throw error(response.status, errorMessage);
+		}
+
+		const candidateData = await response.json();
+		setCandidateCookie(cookies, testData.link, candidateData);
+		throw redirect(303, '/test/' + testData.link);
+	}
 
 	const candidate = getCandidate(cookies);
 
@@ -155,13 +208,7 @@ export const actions = {
 				candidateData.use_omr = omrMode;
 			}
 
-			cookies.set('sashakt-candidate', JSON.stringify(candidateData), {
-				expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
-				path: '/test/' + testData.link,
-				httpOnly: true,
-				sameSite: 'lax',
-				secure: !dev
-			});
+			setCandidateCookie(cookies, testData.link, candidateData);
 			return {
 				success: true,
 				candidateData: candidateData
