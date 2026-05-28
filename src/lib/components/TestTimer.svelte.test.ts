@@ -117,6 +117,19 @@ describe('TestTimer', () => {
 		expect(screen.getByText('02:00:00')).toBeInTheDocument();
 	});
 
+	it('shows Time Up dialog when loaded with timeLeft already zero and pause is disabled', async () => {
+		render(TestTimer, {
+			props: {
+				timeLeft: 0,
+				pauseTimerWhenInactive: false
+			}
+		});
+
+		await vi.advanceTimersByTimeAsync(1000);
+
+		expect(screen.getByText('Time Up!')).toBeInTheDocument();
+	});
+
 	it('does not sync timer when pauseTimerWhenInactive is disabled', async () => {
 		render(TestTimer, {
 			props: {

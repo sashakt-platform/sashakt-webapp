@@ -27,7 +27,9 @@
 	import {
 		isNumericalAnswerCorrect,
 		getQuestionResult,
-		GRADABLE_QUESTION_TYPES
+		GRADABLE_QUESTION_TYPES,
+		parseMatrixAnswer,
+		getMatrixCellStatus
 	} from '$lib/helpers/feedbackHelpers';
 	import RichText from './RichText.svelte';
 
@@ -1043,6 +1045,7 @@
 			{@const matrix = options as TMatrixOptions}
 			{@const matrixRows = matrix.rows.items}
 			{@const matrixColumns = matrix.columns.items}
+			{@const correctMatrix = isFeedbackViewed ? parseMatrixAnswer(correctAnswer) : {}}
 
 			<div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div class="border-border overflow-hidden rounded-xl border">
@@ -1084,39 +1087,64 @@
 				</div>
 			</div>
 
-			<div class="overflow-x-auto md:flex md:justify-center">
-				<div class="border-border overflow-hidden rounded-xl border">
-					<table class="w-full border-collapse text-sm md:w-auto">
-						<thead>
-							<tr class="bg-muted">
-								<th class="w-14 px-4 py-5"></th>
+			<div class="overflow-x-auto">
+				<table class="w-full border-collapse text-sm">
+					<thead>
+						<tr class="bg-muted">
+							<th class="border-border w-14 border px-4 py-3"></th>
+							{#each matrixColumns as col (col.id)}
+								<th
+									class="border-border text-foreground min-w-16 border px-4 py-3 text-center font-semibold"
+								>
+									{col.key}
+								</th>
+							{/each}
+						</tr>
+					</thead>
+					<tbody>
+						{#each matrixRows as row (row.id)}
+							<tr class="border-border border-t">
+								<td
+									class="border-border text-foreground border px-4 py-3 text-center text-sm font-semibold"
+									>{row.key}</td
+								>
 								{#each matrixColumns as col (col.id)}
-									<th class="text-foreground min-w-36 px-4 py-5 text-center text-sm font-semibold">
-										{col.key}
-									</th>
-								{/each}
-							</tr>
-						</thead>
-						<tbody>
-							{#each matrixRows as row (row.id)}
-								<tr class="border-border border-t">
-									<td class="text-foreground w-14 px-4 py-5 text-sm font-semibold">{row.key}</td>
-									{#each matrixColumns as col (col.id)}
-										{@const isChecked = (matrixSelections[row.id] ?? []).includes(col.id)}
-										<td class="px-4 py-5 text-center">
+									<td class="border-border border px-4 py-3 text-center">
+										{#if isFeedbackViewed}
+											{@const status = getMatrixCellStatus(
+												row.id,
+												col.id,
+												matrixSelections,
+												correctMatrix
+											)}
+											<div
+												class={cn(
+													'mx-auto flex h-5 w-5 items-center justify-center rounded border-2',
+													status === 'correct' && 'bg-success border-success',
+													status === 'missed' && 'bg-card border-success',
+													status === 'wrong' && 'bg-error border-error',
+													status === 'none' && 'bg-card border-border'
+												)}
+											>
+												{#if status === 'correct' || status === 'wrong'}
+													<Check size={14} class="text-primary-foreground" />
+												{/if}
+											</div>
+										{:else}
+											{@const isChecked = (matrixSelections[row.id] ?? []).includes(col.id)}
 											<Checkbox
 												checked={isChecked}
 												disabled={isLocked}
 												onCheckedChange={() => handleMatrixInput(row.id, col.id)}
 												class="border-input data-[state=checked]:border-primary"
 											/>
-										</td>
-									{/each}
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
+										{/if}
+									</td>
+								{/each}
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
 		{:else if question.question_type === question_type_enum.MATRIXRATING}
 			{@const matrixOpts = question.options as unknown as TMatrixOptions}
@@ -1265,7 +1293,7 @@
 			</div>
 		{/if}
 
-		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== 'matrix-match' && question.question_type !== question_type_enum.MATRIXRATING && question.question_type !== question_type_enum.MATRIXINPUT}
+		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== question_type_enum.MATRIXRATING && question.question_type !== question_type_enum.MATRIXINPUT}
 			<Button
 				variant="outline"
 				class="border-primary bg-primary/10 text-primary hover:bg-primary/20 mt-4 w-full"

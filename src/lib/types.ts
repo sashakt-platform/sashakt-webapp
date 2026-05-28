@@ -10,7 +10,7 @@ export type TSelection = {
 	time_spent: number;
 	bookmarked: boolean;
 	is_reviewed?: boolean;
-	correct_answer?: number[] | number | null;
+	correct_answer?: number[] | number | null | string;
 };
 
 export type TTestSession = {
