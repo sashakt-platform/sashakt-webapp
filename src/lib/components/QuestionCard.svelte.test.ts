@@ -72,7 +72,8 @@ describe('QuestionCard', () => {
 				serialNumber: 1,
 				candidate: mockCandidate,
 				totalQuestions: 10,
-				selectedQuestions: []
+				selectedQuestions: [],
+				trackTimeSpent: true
 			}
 		});
 
@@ -293,6 +294,37 @@ describe('QuestionCard', () => {
 
 	it('uses the local per-card timer when parent timing is not provided', async () => {
 		vi.useFakeTimers();
+		try {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [],
+					trackTimeSpent: true
+				}
+			});
+
+			await vi.advanceTimersByTimeAsync(3000);
+			await fireEvent.click(screen.getAllByRole('radio')[0]);
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalled();
+			});
+
+			const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+			expect(body.time_spent).toBeGreaterThanOrEqual(3);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('does not send time_spent when question timing is not enabled', async () => {
 		vi.mocked(fetch).mockResolvedValueOnce(
 			createMockResponse({ success: true }) as unknown as Response
 		);
@@ -307,7 +339,6 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		await vi.advanceTimersByTimeAsync(3000);
 		await fireEvent.click(screen.getAllByRole('radio')[0]);
 
 		await waitFor(() => {
@@ -315,9 +346,7 @@ describe('QuestionCard', () => {
 		});
 
 		const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
-		expect(body.time_spent).toBeGreaterThanOrEqual(3);
-
-		vi.useRealTimers();
+		expect(body).not.toHaveProperty('time_spent');
 	});
 
 	it('uses parent-supplied timing when currentQuestionTimeSpent is provided', async () => {
@@ -333,6 +362,7 @@ describe('QuestionCard', () => {
 				candidate: mockCandidate,
 				totalQuestions: 10,
 				selectedQuestions: [],
+				trackTimeSpent: true,
 				currentQuestionTimeSpent: 17,
 				onTimeSpentSynced
 			}
@@ -501,6 +531,7 @@ describe('QuestionCard', () => {
 					candidate: mockCandidate,
 					totalQuestions: 10,
 					selectedQuestions: [],
+					trackTimeSpent: true,
 					currentQuestionTimeSpent: 23,
 					onTimeSpentSynced
 				}
@@ -977,6 +1008,7 @@ describe('QuestionCard', () => {
 					candidate: mockCandidate,
 					totalQuestions: 10,
 					selectedQuestions: [],
+					trackTimeSpent: true,
 					currentQuestionTimeSpent: 31,
 					onTimeSpentSynced
 				}

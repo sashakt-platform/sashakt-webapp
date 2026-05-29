@@ -63,6 +63,7 @@
 	let paginationReady = $state(false);
 	let questionTimerTick = $state(0);
 	let currentQuestionStartedAt = $state(Date.now());
+	let pendingQuestionTimeSync: Promise<void> | null = null;
 
 	// question palette - track which question is currently selected
 	let currentQuestionIndex = $state((sessionStore.current.currentPage - 1) * perPage || 0);
@@ -150,6 +151,7 @@
 
 		const interval = setInterval(() => {
 			questionTimerTick++;
+			syncCurrentQuestionTimeSpent(getCurrentQuestionTimeSpent());
 		}, 1000);
 
 		return () => clearInterval(interval);
@@ -165,21 +167,34 @@
 	};
 
 	const getCurrentQuestionTimeSpent = () => {
-		questionTimerTick;
+		void questionTimerTick;
 		const currentSelection = getSelectionForQuestion(currentQuestionIndex);
 		const savedTimeSpent = currentSelection?.time_spent ?? 0;
 		return savedTimeSpent + Math.max(0, Math.floor((Date.now() - currentQuestionStartedAt) / 1000));
 	};
 
 	const syncCurrentQuestionTimeSpent = (nextTimeSpent: number) => {
-		const currentSelection = getSelectionForQuestion(currentQuestionIndex);
-		if (!currentSelection) return;
+		const currentQuestion = questions[currentQuestionIndex];
+		if (!currentQuestion) return;
 
-		selectedQuestions = selectedQuestions.map((item: TSelection) =>
-			item.question_revision_id === currentSelection.question_revision_id
-				? { ...item, time_spent: nextTimeSpent }
-				: item
+		const selectionIndex = selectedQuestions.findIndex(
+			(item: TSelection) => item.question_revision_id === currentQuestion.id
 		);
+		if (selectionIndex >= 0) {
+			selectedQuestions[selectionIndex].time_spent = nextTimeSpent;
+		} else {
+			selectedQuestions = [
+				...selectedQuestions,
+				{
+					question_revision_id: currentQuestion.id,
+					response: [],
+					visited: true,
+					time_spent: nextTimeSpent,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+		}
 		sessionStore.current = {
 			...sessionStore.current,
 			candidate,
@@ -196,13 +211,13 @@
 
 		const currentQuestion = questions[currentQuestionIndex];
 		const currentSelection = getSelectionForQuestion(currentQuestionIndex);
-		if (!currentQuestion || !currentSelection) {
+		if (!currentQuestion) {
 			currentQuestionStartedAt = Date.now();
 			return;
 		}
 
 		const nextTimeSpent = getCurrentQuestionTimeSpent();
-		if (nextTimeSpent <= (currentSelection.time_spent ?? 0)) {
+		if (nextTimeSpent <= 0) {
 			currentQuestionStartedAt = Date.now();
 			return;
 		}
@@ -213,11 +228,11 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					question_revision_id: currentQuestion.id,
-					response: currentSelection.response,
+					response: currentSelection?.response ?? null,
 					candidate,
 					time_spent: nextTimeSpent,
-					bookmarked: currentSelection.bookmarked,
-					is_reviewed: currentSelection.is_reviewed
+					bookmarked: currentSelection?.bookmarked ?? false,
+					is_reviewed: currentSelection?.is_reviewed ?? false
 				})
 			});
 
@@ -232,15 +247,24 @@
 	};
 
 	// enhance handler for submitTest form action
-	const handleSubmitTestEnhance = createFormEnhanceHandler({
+	const baseSubmitTestEnhance = createFormEnhanceHandler({
 		setLoading: (loading) => (isSubmittingTest = loading),
 		setError: (error) => (submitError = error),
 		setDialogOpen: (open) => (submitDialogOpen = open)
 	});
 
+	const handleSubmitTestEnhance = async () => {
+		if (singleQuestionPerPage) {
+			await (pendingQuestionTimeSync ?? persistCurrentQuestionTime());
+		}
+		return baseSubmitTestEnhance();
+	};
+
 	$effect(() => {
 		if (!singleQuestionPerPage || !submitDialogOpen) return;
-		void persistCurrentQuestionTime();
+		pendingQuestionTimeSync = persistCurrentQuestionTime().finally(() => {
+			pendingQuestionTimeSync = null;
+		});
 	});
 </script>
 
@@ -328,6 +352,7 @@
 									{question}
 									{totalQuestions}
 									bind:selectedQuestions
+									trackTimeSpent={singleQuestionPerPage}
 									currentQuestionTimeSpent={singleQuestionPerPage
 										? (currentPage - 1) * perPage + index === currentQuestionIndex
 											? getCurrentQuestionTimeSpent()

@@ -43,6 +43,7 @@
 		candidate,
 		totalQuestions,
 		selectedQuestions = $bindable(),
+		trackTimeSpent = false,
 		currentQuestionTimeSpent = undefined,
 		onTimeSpentSynced,
 		showFeedback = false,
@@ -54,6 +55,7 @@
 		serialNumber: number;
 		totalQuestions: number;
 		selectedQuestions: TSelection[];
+		trackTimeSpent?: boolean;
 		currentQuestionTimeSpent?: number | undefined;
 		onTimeSpentSynced?: (nextTimeSpent: number) => void;
 		showFeedback?: boolean;
@@ -83,6 +85,8 @@
 	const isLocked = $derived(isFeedbackViewed);
 
 	onMount(() => {
+		if (!trackTimeSpent) return;
+
 		const interval = setInterval(() => {
 			localQuestionTimerTick++;
 		}, 1000);
@@ -91,21 +95,27 @@
 	});
 
 	$effect(() => {
-		question.id;
-		localQuestionStartedAt = Date.now();
+		void question.id;
+		if (trackTimeSpent) {
+			localQuestionStartedAt = Date.now();
+		}
 	});
 
 	const getCurrentTimeSpent = () => {
+		if (!trackTimeSpent) {
+			return undefined;
+		}
 		if (typeof currentQuestionTimeSpent === 'number') {
 			return currentQuestionTimeSpent;
 		}
 
-		localQuestionTimerTick;
+		void localQuestionTimerTick;
 		const savedTimeSpent = selectedQuestion(question.id)?.time_spent ?? 0;
 		return savedTimeSpent + Math.max(0, Math.floor((Date.now() - localQuestionStartedAt) / 1000));
 	};
 
-	const handleTimeSpentSynced = (nextTimeSpent: number) => {
+	const handleTimeSpentSynced = (nextTimeSpent: number | undefined) => {
+		if (typeof nextTimeSpent !== 'number') return;
 		if (onTimeSpentSynced) {
 			onTimeSpentSynced(nextTimeSpent);
 			return;
@@ -615,6 +625,7 @@
 		if (!answeredQuestion) return;
 
 		const currentBookmarked = answeredQuestion.bookmarked ?? false;
+		const currentTimeSpent = getCurrentTimeSpent();
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 		const previousMatrixSelections = { ...matrixSelections };
 		const clearedResponse =
@@ -633,6 +644,7 @@
 						...selection,
 						response: clearedResponse,
 						visited: true,
+						time_spent: currentTimeSpent,
 						bookmarked: currentBookmarked,
 						is_reviewed: false,
 						correct_answer: undefined
@@ -649,7 +661,8 @@
 		}
 
 		try {
-			await submitAnswer(question.id, clearedResponse, currentBookmarked);
+			await submitAnswer(question.id, clearedResponse, currentBookmarked, false, currentTimeSpent);
+			handleTimeSpentSynced(currentTimeSpent);
 			if (question.question_type === question_type_enum.SINGLE) {
 				radioGroupKey++;
 			}
