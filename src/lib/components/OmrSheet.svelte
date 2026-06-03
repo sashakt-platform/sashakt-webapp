@@ -600,7 +600,8 @@
 						{/if}
 						{#if question_type == question_type_enum.SUBJECTIVE}
 							<textarea
-								class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+								style="field-sizing: content;"
+								class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full resize-none overflow-hidden rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 								placeholder={$t('Type your answer here...')}
 								bind:value={candidateInput[question.id]}
 								maxlength={question.subjective_answer_limit || undefined}
