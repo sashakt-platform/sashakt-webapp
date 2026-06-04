@@ -64,6 +64,7 @@
 	let questionTimerTick = $state(0);
 	let currentQuestionStartedAt = $state(Date.now());
 	let pendingQuestionTimeSync: Promise<void> | null = null;
+	const QUESTION_TIME_SYNC_INTERVAL_MS = 20_000;
 
 	// question palette - track which question is currently selected
 	let currentQuestionIndex = $state((sessionStore.current.currentPage - 1) * perPage || 0);
@@ -92,7 +93,7 @@
 	// navigate to a specific question by index
 	async function navigateToQuestion(questionIndex: number) {
 		if (singleQuestionPerPage) {
-			await persistCurrentQuestionTime();
+			await queueQuestionTimeSync();
 		}
 		const targetPage = Math.floor(questionIndex / perPage) + 1;
 		paginationPage = targetPage;
@@ -137,7 +138,7 @@
 	// scroll to top and update current question index when page changes
 	async function handlePageChange(newPage: number) {
 		if (singleQuestionPerPage) {
-			await persistCurrentQuestionTime();
+			await queueQuestionTimeSync();
 		}
 		currentQuestionIndex = (newPage - 1) * perPage;
 		currentQuestionStartedAt = Date.now();
@@ -149,12 +150,18 @@
 			return;
 		}
 
-		const interval = setInterval(() => {
+		const localTimerInterval = setInterval(() => {
 			questionTimerTick++;
 			syncCurrentQuestionTimeSpent(getCurrentQuestionTimeSpent());
 		}, 1000);
+		const backendSyncInterval = setInterval(() => {
+			void queueQuestionTimeSync();
+		}, QUESTION_TIME_SYNC_INTERVAL_MS);
 
-		return () => clearInterval(interval);
+		return () => {
+			clearInterval(localTimerInterval);
+			clearInterval(backendSyncInterval);
+		};
 	});
 
 	const getSelectionForQuestion = (questionIndex: number) => {
@@ -221,6 +228,15 @@
 			currentQuestionStartedAt = Date.now();
 			return;
 		}
+		const currentResponse = currentSelection?.response;
+		const responseForSync =
+			typeof currentResponse === 'string'
+				? currentResponse.trim().length > 0
+					? currentResponse
+					: null
+				: (currentResponse?.length ?? 0) > 0
+					? currentResponse
+					: null;
 
 		try {
 			const response = await fetch(`/test/${page.params.slug}/api/submit-answer`, {
@@ -228,7 +244,7 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					question_revision_id: currentQuestion.id,
-					response: currentSelection?.response ?? null,
+					response: responseForSync,
 					candidate,
 					time_spent: nextTimeSpent,
 					bookmarked: currentSelection?.bookmarked ?? false,
@@ -246,6 +262,13 @@
 		}
 	};
 
+	const queueQuestionTimeSync = () => {
+		pendingQuestionTimeSync ??= persistCurrentQuestionTime().finally(() => {
+			pendingQuestionTimeSync = null;
+		});
+		return pendingQuestionTimeSync;
+	};
+
 	// enhance handler for submitTest form action
 	const baseSubmitTestEnhance = createFormEnhanceHandler({
 		setLoading: (loading) => (isSubmittingTest = loading),
@@ -255,16 +278,14 @@
 
 	const handleSubmitTestEnhance = async () => {
 		if (singleQuestionPerPage) {
-			await (pendingQuestionTimeSync ?? persistCurrentQuestionTime());
+			await queueQuestionTimeSync();
 		}
 		return baseSubmitTestEnhance();
 	};
 
 	$effect(() => {
 		if (!singleQuestionPerPage || !submitDialogOpen) return;
-		pendingQuestionTimeSync = persistCurrentQuestionTime().finally(() => {
-			pendingQuestionTimeSync = null;
-		});
+		void queueQuestionTimeSync();
 	});
 </script>
 
@@ -352,17 +373,6 @@
 									{question}
 									{totalQuestions}
 									bind:selectedQuestions
-									trackTimeSpent={singleQuestionPerPage}
-									currentQuestionTimeSpent={singleQuestionPerPage
-										? (currentPage - 1) * perPage + index === currentQuestionIndex
-											? getCurrentQuestionTimeSpent()
-											: (selectedQuestions.find(
-													(item: TSelection) => item.question_revision_id === question.id
-												)?.time_spent ?? 0)
-										: undefined}
-									onTimeSpentSynced={singleQuestionPerPage
-										? (nextTimeSpent) => syncCurrentQuestionTimeSpent(nextTimeSpent)
-										: undefined}
 									showFeedback={testDetails.show_feedback_immediately}
 									showMarkForReview={testDetails.bookmark}
 									showMarks={testDetails?.show_marks ?? true}

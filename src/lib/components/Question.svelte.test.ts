@@ -452,6 +452,49 @@ describe('Question', () => {
 		vi.useRealTimers();
 	});
 
+	it('periodically syncs current question time for single-question pages', async () => {
+		vi.useFakeTimers();
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		const singleQuestionPage = {
+			question_revisions: [{ ...mockSubjectiveQuestion, is_mandatory: false }],
+			question_pagination: 1
+		};
+
+		vi.mocked(createTestSessionStore).mockReturnValue({
+			current: {
+				candidate: mockCandidate,
+				selections: [],
+				currentPage: 1
+			}
+		} as any);
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: singleQuestionPage,
+				testDetails
+			}
+		});
+
+		await vi.advanceTimersByTimeAsync(20_000);
+
+		await waitFor(() => {
+			expect(fetch).toHaveBeenCalledWith(
+				'/test/sample-test/api/submit-answer',
+				expect.objectContaining({ method: 'POST' })
+			);
+		});
+
+		const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+		expect(body.response).toBeNull();
+		expect(body.time_spent).toBeGreaterThanOrEqual(20);
+
+		vi.useRealTimers();
+	});
+
 	it('should render section header for sectioned tests', async () => {
 		render(Question, {
 			props: {

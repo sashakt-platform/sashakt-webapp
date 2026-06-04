@@ -12,14 +12,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		);
 	}
 
-	const {
-		question_revision_id,
-		response,
-		candidate,
-		time_spent,
-		bookmarked,
-		is_reviewed
-	}: {
+	const payload: {
 		question_revision_id: number;
 		response: number[] | string | null;
 		candidate: TCandidate;
@@ -27,6 +20,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		bookmarked?: boolean;
 		is_reviewed?: boolean;
 	} = await request.json();
+
+	const { question_revision_id, response, candidate, bookmarked, is_reviewed } = payload;
 
 	if (
 		cookieCandidate.candidate_test_id !== candidate?.candidate_test_id ||
@@ -46,23 +41,29 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 	}
 
 	try {
+		const backendResponse =
+			typeof response === 'string'
+				? response.trim().length > 0
+					? response
+					: null
+				: (response?.length ?? 0) > 0
+					? JSON.stringify(response)
+					: null;
+		const backendPayload = {
+			question_revision_id,
+			response: backendResponse,
+			visited: true,
+			bookmarked: bookmarked ?? false,
+			is_reviewed: is_reviewed ?? false,
+			...('time_spent' in payload ? { time_spent: payload.time_spent } : {})
+		};
+
 		const res = await fetch(
 			`${BACKEND_URL}/candidate/submit_answer/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`,
 			{
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					question_revision_id,
-					response: response
-						? typeof response === 'string'
-							? response
-							: JSON.stringify(response)
-						: null,
-					visited: true,
-					time_spent: time_spent ?? null,
-					bookmarked: bookmarked ?? false,
-					is_reviewed: is_reviewed ?? false
-				})
+				body: JSON.stringify(backendPayload)
 			}
 		);
 

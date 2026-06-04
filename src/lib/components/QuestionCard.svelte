@@ -22,7 +22,6 @@
 		type TSelection
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
-	import { onMount } from 'svelte';
 	import { cn } from '$lib/utils';
 	import {
 		isNumericalAnswerCorrect,
@@ -43,9 +42,6 @@
 		candidate,
 		totalQuestions,
 		selectedQuestions = $bindable(),
-		trackTimeSpent = false,
-		currentQuestionTimeSpent = undefined,
-		onTimeSpentSynced,
 		showFeedback = false,
 		showMarkForReview = true,
 		showMarks = true
@@ -55,9 +51,6 @@
 		serialNumber: number;
 		totalQuestions: number;
 		selectedQuestions: TSelection[];
-		trackTimeSpent?: boolean;
-		currentQuestionTimeSpent?: number | undefined;
-		onTimeSpentSynced?: (nextTimeSpent: number) => void;
 		showFeedback?: boolean;
 		showMarkForReview?: boolean;
 		showMarks?: boolean;
@@ -69,8 +62,6 @@
 	let radioGroupKey = $state(0);
 	let isSubmitting = $state(false);
 	let saveError = $state<string | null>(null);
-	let localQuestionTimerTick = $state(0);
-	let localQuestionStartedAt = $state(Date.now());
 	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 
 	const sessionStore = createTestSessionStore(candidate);
@@ -84,45 +75,9 @@
 	const isFeedbackViewed = $derived(currentSelection?.is_reviewed === true);
 	const isLocked = $derived(isFeedbackViewed);
 
-	onMount(() => {
-		if (!trackTimeSpent) return;
-
-		const interval = setInterval(() => {
-			localQuestionTimerTick++;
-		}, 1000);
-
-		return () => clearInterval(interval);
-	});
-
 	$effect(() => {
 		void question.id;
-		if (trackTimeSpent) {
-			localQuestionStartedAt = Date.now();
-		}
 	});
-
-	const getCurrentTimeSpent = () => {
-		if (!trackTimeSpent) {
-			return undefined;
-		}
-		if (typeof currentQuestionTimeSpent === 'number') {
-			return currentQuestionTimeSpent;
-		}
-
-		void localQuestionTimerTick;
-		const savedTimeSpent = selectedQuestion(question.id)?.time_spent ?? 0;
-		return savedTimeSpent + Math.max(0, Math.floor((Date.now() - localQuestionStartedAt) / 1000));
-	};
-
-	const handleTimeSpentSynced = (nextTimeSpent: number | undefined) => {
-		if (typeof nextTimeSpent !== 'number') return;
-		if (onTimeSpentSynced) {
-			onTimeSpentSynced(nextTimeSpent);
-			return;
-		}
-
-		localQuestionStartedAt = Date.now();
-	};
 
 	const checkNumberAnswerCorrect = $derived(() => {
 		if (!currentSelection) return null;
@@ -181,7 +136,6 @@
 
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-		const currentTimeSpent = getCurrentTimeSpent();
 		const normalized = normalizeMatrixInputValues(matrixInputValues);
 		const serialized = Object.keys(normalized).length > 0 ? JSON.stringify(normalized) : '';
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
@@ -191,9 +145,7 @@
 
 		if (answeredQuestion) {
 			selectedQuestions = selectedQuestions.map((q) =>
-				q.question_revision_id === question.id
-					? { ...q, response: serialized, time_spent: currentTimeSpent }
-					: q
+				q.question_revision_id === question.id ? { ...q, response: serialized } : q
 			);
 		} else {
 			selectedQuestions = [
@@ -202,7 +154,6 @@
 					question_revision_id: question.id,
 					response: serialized,
 					visited: true,
-					time_spent: currentTimeSpent,
 					bookmarked: currentBookmarked,
 					is_reviewed: false
 				}
@@ -211,8 +162,7 @@
 		updateStore();
 
 		try {
-			await submitAnswer(question.id, serialized, currentBookmarked, false, currentTimeSpent);
-			handleTimeSpentSynced(currentTimeSpent);
+			await submitAnswer(question.id, serialized, currentBookmarked, false);
 			lastSavedMatrixInputValues = { ...matrixInputValues };
 		} catch {
 			selectedQuestions = previousState;
@@ -237,14 +187,11 @@
 
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-		const currentTimeSpent = getCurrentTimeSpent();
 
 		const applyUpdate = (newResponse: string) => {
 			if (answeredQuestion) {
 				selectedQuestions = selectedQuestions.map((q) =>
-					q.question_revision_id === question.id
-						? { ...q, response: newResponse, time_spent: currentTimeSpent }
-						: q
+					q.question_revision_id === question.id ? { ...q, response: newResponse } : q
 				);
 			} else {
 				selectedQuestions = [
@@ -253,7 +200,6 @@
 						question_revision_id: question.id,
 						response: newResponse,
 						visited: true,
-						time_spent: currentTimeSpent,
 						bookmarked: currentBookmarked,
 						is_reviewed: false
 					}
@@ -280,8 +226,7 @@
 			updateStore();
 
 			try {
-				await submitAnswer(question.id, serialized, currentBookmarked, false, currentTimeSpent);
-				handleTimeSpentSynced(currentTimeSpent);
+				await submitAnswer(question.id, serialized, currentBookmarked, false);
 			} catch {
 				matrixSelections = prevSelections;
 				selectedQuestions = prevState;
@@ -298,10 +243,9 @@
 			});
 
 			try {
-				await submitAnswer(question.id, newResponse, currentBookmarked, false, currentTimeSpent);
+				await submitAnswer(question.id, newResponse, currentBookmarked, false);
 				applyUpdate(newResponse);
 				updateStore();
-				handleTimeSpentSynced(currentTimeSpent);
 			} catch {
 				saveError = $t('Failed to save your answer. Please try again.');
 				setTimeout(() => (saveError = null), 5000);
@@ -369,24 +313,14 @@
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentResponse = answeredQuestion?.response ?? [];
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-		const currentTimeSpent = getCurrentTimeSpent();
 
 		selectedQuestions = selectedQuestions.map((q) =>
-			q.question_revision_id === question.id
-				? { ...q, is_reviewed: true, time_spent: currentTimeSpent }
-				: q
+			q.question_revision_id === question.id ? { ...q, is_reviewed: true } : q
 		);
 		updateStore();
 
 		try {
-			const result = await submitAnswer(
-				question.id,
-				currentResponse,
-				currentBookmarked,
-				true,
-				currentTimeSpent
-			);
-			handleTimeSpentSynced(currentTimeSpent);
+			const result = await submitAnswer(question.id, currentResponse, currentBookmarked, true);
 			if (result?.correct_answer != null) {
 				selectedQuestions = selectedQuestions.map((q) =>
 					q.question_revision_id === question.id
@@ -405,7 +339,6 @@
 
 		const answeredQuestion = selectedQuestion(questionId);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-		const currentTimeSpent = getCurrentTimeSpent();
 
 		let newResponse: number[];
 		if (isRemoving) {
@@ -430,12 +363,10 @@
 			isSubmitting = true;
 			saveError = null;
 			try {
-				await submitAnswer(questionId, newResponse, currentBookmarked, false, currentTimeSpent);
+				await submitAnswer(questionId, newResponse, currentBookmarked, false);
 				if (answeredQuestion) {
 					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId
-							? { ...q, response: newResponse, time_spent: currentTimeSpent }
-							: q
+						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
 					);
 				} else {
 					selectedQuestions = [
@@ -444,14 +375,12 @@
 							question_revision_id: questionId,
 							response: newResponse,
 							visited: true,
-							time_spent: currentTimeSpent,
 							bookmarked: currentBookmarked,
 							is_reviewed: false
 						}
 					];
 				}
 				updateStore();
-				handleTimeSpentSynced(currentTimeSpent);
 			} catch (error) {
 				// force complete remount of RadioGroup
 				radioGroupKey++;
@@ -472,17 +401,14 @@
 					q.question_revision_id === questionId && typeof q.response !== 'string'
 						? {
 								...q,
-								response: q.response.filter((id) => id !== optionId),
-								time_spent: currentTimeSpent
+								response: q.response.filter((id) => id !== optionId)
 							}
 						: q
 				);
 			} else {
 				if (answeredQuestion) {
 					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId
-							? { ...q, response: newResponse, time_spent: currentTimeSpent }
-							: q
+						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
 					);
 				} else {
 					selectedQuestions = [
@@ -491,7 +417,6 @@
 							question_revision_id: questionId,
 							response: newResponse,
 							visited: true,
-							time_spent: currentTimeSpent,
 							bookmarked: currentBookmarked,
 
 							is_reviewed: false
@@ -502,8 +427,7 @@
 			updateStore();
 
 			try {
-				await submitAnswer(questionId, newResponse, currentBookmarked, false, currentTimeSpent);
-				handleTimeSpentSynced(currentTimeSpent);
+				await submitAnswer(questionId, newResponse, currentBookmarked, false);
 			} catch (error) {
 				// revert on error
 				selectedQuestions = previousState;
@@ -519,14 +443,12 @@
 		questionId: number,
 		response: number[] | string | null,
 		bookmarked?: boolean,
-		is_reviewed?: boolean,
-		time_spent?: number
+		is_reviewed?: boolean
 	) => {
 		const data = {
 			question_revision_id: questionId,
 			response: response == null ? null : response.length > 0 ? response : null,
 			candidate,
-			time_spent,
 			bookmarked,
 			is_reviewed
 		};
@@ -559,7 +481,6 @@
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
 		const newBookmarked = !currentBookmarked;
 		const currentResponse = answeredQuestion?.response;
-		const currentTimeSpent = getCurrentTimeSpent();
 
 		if (isSubmitting) return;
 		isSubmitting = true;
@@ -571,8 +492,7 @@
 					? {
 							...q,
 							bookmarked: newBookmarked,
-							visited: true,
-							time_spent: currentTimeSpent
+							visited: true
 						}
 					: q
 			);
@@ -584,7 +504,6 @@
 					question_revision_id: question.id,
 					response: defaultResponse,
 					visited: true,
-					time_spent: currentTimeSpent,
 					bookmarked: newBookmarked,
 					is_reviewed: false
 				}
@@ -593,14 +512,7 @@
 		updateStore();
 
 		try {
-			await submitAnswer(
-				question.id,
-				currentResponse ?? [],
-				newBookmarked,
-				false,
-				currentTimeSpent
-			);
-			handleTimeSpentSynced(currentTimeSpent);
+			await submitAnswer(question.id, currentResponse ?? [], newBookmarked, false);
 		} catch (error) {
 			// revert on error
 			if (answeredQuestion) {
@@ -625,7 +537,6 @@
 		if (!answeredQuestion) return;
 
 		const currentBookmarked = answeredQuestion.bookmarked ?? false;
-		const currentTimeSpent = getCurrentTimeSpent();
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 		const previousMatrixSelections = { ...matrixSelections };
 		const clearedResponse =
@@ -644,7 +555,6 @@
 						...selection,
 						response: clearedResponse,
 						visited: true,
-						time_spent: currentTimeSpent,
 						bookmarked: currentBookmarked,
 						is_reviewed: false,
 						correct_answer: undefined
@@ -661,8 +571,7 @@
 		}
 
 		try {
-			await submitAnswer(question.id, clearedResponse, currentBookmarked, false, currentTimeSpent);
-			handleTimeSpentSynced(currentTimeSpent);
+			await submitAnswer(question.id, clearedResponse, currentBookmarked, false);
 			if (question.question_type === question_type_enum.SINGLE) {
 				radioGroupKey++;
 			}
@@ -695,7 +604,6 @@
 
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-		const currentTimeSpent = getCurrentTimeSpent();
 
 		isSubmitting = true;
 		saveError = null;
@@ -705,9 +613,7 @@
 		const inputValue = String(candidateInput ?? '');
 		if (answeredQuestion) {
 			selectedQuestions = selectedQuestions.map((q) =>
-				q.question_revision_id === question.id
-					? { ...q, response: inputValue, time_spent: currentTimeSpent }
-					: q
+				q.question_revision_id === question.id ? { ...q, response: inputValue } : q
 			);
 		} else {
 			selectedQuestions = [
@@ -716,7 +622,6 @@
 					question_revision_id: question.id,
 					response: inputValue,
 					visited: true,
-					time_spent: currentTimeSpent,
 					bookmarked: currentBookmarked,
 					is_reviewed: false
 				}
@@ -725,8 +630,7 @@
 		updateStore();
 
 		try {
-			await submitAnswer(question.id, inputValue, currentBookmarked, false, currentTimeSpent);
-			handleTimeSpentSynced(currentTimeSpent);
+			await submitAnswer(question.id, inputValue, currentBookmarked, false);
 			lastSavedInput = candidateInput;
 		} catch (error) {
 			selectedQuestions = previousState;

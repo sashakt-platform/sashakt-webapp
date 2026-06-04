@@ -54,9 +54,8 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 				body: expect.stringContaining('"question_revision_id":1')
 			})
 		);
-		expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body).toContain(
-			'"time_spent":null'
-		);
+		const backendBody = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+		expect(backendBody).not.toHaveProperty('time_spent');
 	});
 
 	it('passes time_spent through to backend when provided', async () => {
@@ -220,7 +219,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		);
 	});
 
-	it('should handle null response when question is unanswered and skip feedback', async () => {
+	it('should send null response when question is unanswered and skip feedback', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 		vi.mocked(fetch).mockResolvedValueOnce(
 			createMockResponse({ success: true }) as unknown as Response
@@ -229,7 +228,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		const mockCookies = createMockCookies();
 		const request = createMockRequest({
 			question_revision_id: 1,
-			response: null,
+			response: [],
 			candidate: mockCandidate
 		});
 		const response = await POST({ request, cookies: mockCookies } as any);
