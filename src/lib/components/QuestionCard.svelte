@@ -847,7 +847,8 @@
 		{:else if question.question_type === question_type_enum.SUBJECTIVE}
 			<div class="flex flex-col gap-2">
 				<textarea
-					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring h-22 w-full rounded-[10px] border px-[14px] py-[10px] text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+					style="field-sizing: content;"
+					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring min-h-22 w-full resize-none overflow-hidden rounded-[10px] border px-[14px] py-[10px] text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 					placeholder={$t('Type your answer here...')}
 					bind:value={candidateInput}
 					maxlength={question.subjective_answer_limit || undefined}
@@ -1005,7 +1006,9 @@
 						<tr class="bg-muted">
 							<th class="border-border w-14 border px-4 py-3"></th>
 							{#each matrixColumns as col (col.id)}
-								<th class="border-border text-foreground min-w-16 border px-4 py-3 text-center font-semibold">
+								<th
+									class="border-border text-foreground min-w-16 border px-4 py-3 text-center font-semibold"
+								>
 									{col.key}
 								</th>
 							{/each}
@@ -1014,43 +1017,46 @@
 					<tbody>
 						{#each matrixRows as row (row.id)}
 							<tr class="border-border border-t">
-								<td class="border-border text-foreground border px-4 py-3 text-center text-sm font-semibold">{row.key}</td>
+								<td
+									class="border-border text-foreground border px-4 py-3 text-center text-sm font-semibold"
+									>{row.key}</td
+								>
 								{#each matrixColumns as col (col.id)}
 									<td class="border-border border px-4 py-3 text-center">
-											{#if isFeedbackViewed}
-												{@const status = getMatrixCellStatus(
-													row.id,
-													col.id,
-													matrixSelections,
-													correctMatrix
+										{#if isFeedbackViewed}
+											{@const status = getMatrixCellStatus(
+												row.id,
+												col.id,
+												matrixSelections,
+												correctMatrix
+											)}
+											<div
+												class={cn(
+													'mx-auto flex h-5 w-5 items-center justify-center rounded border-2',
+													status === 'correct' && 'bg-success border-success',
+													status === 'missed' && 'bg-card border-success',
+													status === 'wrong' && 'bg-error border-error',
+													status === 'none' && 'bg-card border-border'
 												)}
-												<div
-													class={cn(
-														'mx-auto flex h-5 w-5 items-center justify-center rounded border-2',
-														status === 'correct' && 'bg-success border-success',
-														status === 'missed' && 'bg-card border-success',
-														status === 'wrong' && 'bg-error border-error',
-														status === 'none' && 'bg-card border-border'
-													)}
-												>
-													{#if status === 'correct' || status === 'wrong'}
-														<Check size={14} class="text-primary-foreground" />
-													{/if}
-												</div>
-											{:else}
-												{@const isChecked = (matrixSelections[row.id] ?? []).includes(col.id)}
-												<Checkbox
-													checked={isChecked}
-													disabled={isLocked}
-													onCheckedChange={() => handleMatrixInput(row.id, col.id)}
-													class="border-input data-[state=checked]:border-primary"
-												/>
-											{/if}
-										</td>
-									{/each}
-								</tr>
-							{/each}
-						</tbody>
+											>
+												{#if status === 'correct' || status === 'wrong'}
+													<Check size={14} class="text-primary-foreground" />
+												{/if}
+											</div>
+										{:else}
+											{@const isChecked = (matrixSelections[row.id] ?? []).includes(col.id)}
+											<Checkbox
+												checked={isChecked}
+												disabled={isLocked}
+												onCheckedChange={() => handleMatrixInput(row.id, col.id)}
+												class="border-input data-[state=checked]:border-primary"
+											/>
+										{/if}
+									</td>
+								{/each}
+							</tr>
+						{/each}
+					</tbody>
 				</table>
 			</div>
 		{:else if question.question_type === question_type_enum.MATRIXRATING}
