@@ -293,6 +293,44 @@ describe('DynamicForm validation hints', () => {
 	});
 });
 
+describe('DynamicForm continue button enablement', () => {
+	it('disables the Continue to Test button when a required field is empty', () => {
+		const field = createField({ is_required: true, label: 'Full Name', name: 'full_name' });
+		render(DynamicForm, {
+			props: { form: createForm([field]), testDetails, onContinue: vi.fn() }
+		});
+
+		expect(screen.getByRole('button', { name: /Continue to Test/ })).toBeDisabled();
+	});
+
+	it('enables the Continue to Test button once all required fields are filled', async () => {
+		const fields = [
+			createField({ id: 1, name: 'full_name', label: 'Full Name', is_required: true, order: 1 }),
+			createField({
+				id: 2,
+				name: 'email',
+				label: 'Email',
+				field_type: 'email',
+				is_required: true,
+				order: 2
+			})
+		];
+		render(DynamicForm, {
+			props: { form: createForm(fields), testDetails, onContinue: vi.fn() }
+		});
+
+		const button = screen.getByRole('button', { name: /Continue to Test/ });
+		expect(button).toBeDisabled();
+
+		const [nameInput, emailInput] = screen.getAllByRole('textbox');
+		await fireEvent.input(nameInput, { target: { value: 'John Doe' } });
+		expect(button).toBeDisabled();
+
+		await fireEvent.input(emailInput, { target: { value: 'john@example.com' } });
+		expect(button).not.toBeDisabled();
+	});
+});
+
 describe('DynamicForm submit error', () => {
 	beforeEach(() => {
 		vi.mocked(fetch).mockReset();
