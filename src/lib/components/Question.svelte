@@ -310,17 +310,18 @@
 											</div>
 
 											<div class="bg-card flex justify-end gap-3 px-6 pb-6">
-												<Dialog.Close>
-													<Button variant="outline" disabled={isSubmittingTest}>
+												<Dialog.Close class="flex-1 sm:flex-none">
+													<Button variant="outline" disabled={isSubmittingTest} class="w-full">
 														{$t('Cancel')}
 													</Button>
 												</Dialog.Close>
 												<form
+													class="flex-1 sm:flex-none"
 													action="?/submitTest"
 													method="POST"
 													use:enhance={handleSubmitTestEnhance}
 												>
-													<Button type="submit" disabled={isSubmittingTest}>
+													<Button type="submit" disabled={isSubmittingTest} class="w-full">
 														{#if isSubmittingTest}
 															<Spinner />
 														{/if}
