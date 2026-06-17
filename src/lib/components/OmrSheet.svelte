@@ -983,13 +983,25 @@
 					</div>
 				</Dialog.Content>
 			{:else}
-				<Dialog.Content class="w-80 rounded-xl">
-					<Dialog.Title class="mt-4">{$t('Answer all mandatory questions!')}</Dialog.Title>
-					<Dialog.Description class="text-center">
-						{$t('Please make sure all mandatory questions are answered')}
-						{$t('before submitting the test')}.
-					</Dialog.Description>
-					<Dialog.Close><Button class="mt-2 w-full">{$t('Okay')}</Button></Dialog.Close>
+				<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
+					<div class="bg-muted px-6 pt-6 pr-12 pb-4">
+						<Dialog.Title class="text-base font-semibold">{$t('Answer all mandatory questions!')}</Dialog.Title>
+					</div>
+
+					<div class="border-border border-t"></div>
+
+					<div class="bg-card px-6 py-6">
+						<Dialog.Description>
+							<p class="text-muted-foreground text-sm">
+								{$t('Please make sure all mandatory questions are answered')}
+								{$t('before submitting the test')}.
+							</p>
+						</Dialog.Description>
+					</div>
+
+					<div class="bg-card flex justify-end px-6 pb-6">
+						<Dialog.Close><Button>{$t('Okay')}</Button></Dialog.Close>
+					</div>
 				</Dialog.Content>
 			{/if}
 		</Dialog.Root>
