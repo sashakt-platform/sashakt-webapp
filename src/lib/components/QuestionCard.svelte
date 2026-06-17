@@ -35,6 +35,8 @@
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
 	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
+	import BottomSheetModal from './BottomSheetModal.svelte';
+	import MarkingSchemeContent from './MarkingSchemeContent.svelte';
 
 	let {
 		question,
@@ -62,6 +64,7 @@
 	let radioGroupKey = $state(0);
 	let isSubmitting = $state(false);
 	let saveError = $state<string | null>(null);
+	let markingSchemeOpen = $state(false);
 	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 
 	const sessionStore = createTestSessionStore(candidate);
@@ -637,6 +640,20 @@
 	};
 </script>
 
+{#snippet marksPill()}
+	<span
+		data-testid="marks-pill"
+		class="border-border inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm"
+	>
+		<span class="text-muted-foreground font-medium">{$t('Marks')}:</span>
+		<span class="text-success font-semibold">+{question.marking_scheme?.correct}</span>
+		{#if question.marking_scheme?.wrong !== 0}
+			<span class="text-error font-semibold">{question.marking_scheme?.wrong}</span>
+		{/if}
+		<ChevronDown size={13} class="text-muted-foreground" />
+	</span>
+{/snippet}
+
 {#snippet showCorrectWrongMark(answerStatus: string)}
 	{#if answerStatus === 'correct'}
 		<span
@@ -675,60 +692,35 @@
 
 				{#if showMarks && question?.marking_scheme && !(showFeedback && isLocked)}
 					{@const scheme = question.marking_scheme}
+					<div class="hidden lg:block">
+						<button
+							type="button"
+							class="group relative cursor-pointer select-none"
+							aria-label={$t('Marking scheme')}
+						>
+							{@render marksPill()}
+							<div
+								class="bg-card absolute top-full right-0 z-20 mt-1 hidden min-w-52 rounded-xl border p-4 text-sm shadow-lg group-hover:block group-focus:block"
+							>
+								<MarkingSchemeContent {scheme} questionType={question.question_type} />
+							</div>
+						</button>
+					</div>
+
 					<button
 						type="button"
-						class="group relative cursor-pointer select-none"
+						class="cursor-pointer select-none lg:hidden"
 						aria-label={$t('Marking scheme')}
+						onclick={() => (markingSchemeOpen = true)}
 					>
-						<span
-							data-testid="marks-pill"
-							class="border-border inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm"
-						>
-							<span class="text-muted-foreground font-medium">{$t('Marks')}:</span>
-							<span class="text-success font-semibold">+{scheme.correct}</span>
-							{#if scheme.wrong !== 0}
-								<span class="text-error font-semibold">{scheme.wrong}</span>
-							{/if}
-							<ChevronDown size={13} class="text-muted-foreground" />
-						</span>
-						<div
-							class="bg-card absolute top-full right-0 z-20 mt-1 hidden min-w-52 rounded-xl border p-4 text-sm shadow-lg group-hover:block group-focus:block"
-						>
-							<div class="space-y-3">
-								<div class="flex justify-between gap-4">
-									<span class="text-success font-semibold">{$t('Correct')}</span>
-									<span class="text-success font-semibold">+{scheme.correct}</span>
-								</div>
-								<div class="flex justify-between gap-4">
-									<span class="text-error font-semibold">{$t('Incorrect')}</span>
-									<span class="text-error font-semibold"
-										>{scheme.wrong > 0 ? `+${scheme.wrong}` : scheme.wrong}</span
-									>
-								</div>
-								<div class="flex justify-between gap-4">
-									<span class="text-warning font-semibold">{$t('Unanswered')}</span>
-									<span class="text-warning font-semibold">{scheme.skipped}</span>
-								</div>
-							</div>
-							{#if scheme.partial?.correct_answers?.length && question.question_type === 'multi-choice'}
-								<div class="border-border mt-3 border-t pt-3">
-									<p class="text-muted-foreground mb-2 text-xs leading-snug">
-										{$t('Partial marks awarded if no wrong option is selected')}:
-									</p>
-									<div class="space-y-2">
-										{#each scheme.partial.correct_answers as rule, i (i)}
-											<div class="flex justify-between gap-4">
-												<span class="text-success font-medium"
-													>{rule.num_correct_selected} {$t('correct selected')}</span
-												>
-												<span class="text-success font-semibold">+{rule.marks}</span>
-											</div>
-										{/each}
-									</div>
-								</div>
-							{/if}
-						</div>
+						{@render marksPill()}
 					</button>
+
+					<BottomSheetModal bind:open={markingSchemeOpen} title={$t('Marking scheme')}>
+						<div class="p-5">
+							<MarkingSchemeContent {scheme} questionType={question.question_type} />
+						</div>
+					</BottomSheetModal>
 				{/if}
 
 				{#if showFeedback && isLocked && question?.marking_scheme && GRADABLE_QUESTION_TYPES.has(question.question_type)}
