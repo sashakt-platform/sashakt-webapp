@@ -79,6 +79,7 @@
 		navState.onPaletteOpen = testDetails?.show_question_palette
 			? () => (paletteOpen = true)
 			: undefined;
+		navState.onBeforeTimedSubmit = singleQuestionPerPage ? flushCurrentQuestionTime : undefined;
 		navState.remainingMandatoryCount = paletteStats.remainingMandatory;
 		return () => {
 			navState.active = false;
@@ -86,6 +87,7 @@
 			navState.showPalette = false;
 			navState.onPaletteOpen = undefined;
 			navState.remainingMandatoryCount = 0;
+			navState.onBeforeTimedSubmit = undefined;
 		};
 	});
 
@@ -186,6 +188,9 @@
 		const selectionIndex = selectedQuestions.findIndex(
 			(item: TSelection) => item.question_revision_id === currentQuestion.id
 		);
+		const previousTimeSpent =
+			selectionIndex >= 0 ? (selectedQuestions[selectionIndex].time_spent ?? 0) : 0;
+
 		if (selectionIndex >= 0) {
 			selectedQuestions[selectionIndex].time_spent = nextTimeSpent;
 		} else {
@@ -204,7 +209,10 @@
 			selections: selectedQuestions,
 			currentPage: paginationPage
 		};
-		currentQuestionStartedAt = Date.now();
+		const elapsedSeconds = nextTimeSpent - previousTimeSpent;
+		if (elapsedSeconds > 0) {
+			currentQuestionStartedAt += elapsedSeconds * 1000;
+		}
 	};
 
 	const persistCurrentQuestionTime = async () => {

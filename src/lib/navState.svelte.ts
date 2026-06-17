@@ -5,6 +5,7 @@ class NavState {
 	remainingMandatoryCount = $state(0);
 	showPalette = $state(false);
 	onBack = $state<(() => void) | undefined>(undefined);
+	onBeforeTimedSubmit = $state<(() => Promise<void> | void) | undefined>(undefined);
 }
 
 export const navState = new NavState();
