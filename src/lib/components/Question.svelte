@@ -263,8 +263,8 @@
 									</Dialog.Trigger>
 									{#if answeredAllMandatory(selectedQuestions, questions)}
 										<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
-											<div class="bg-card px-6 pt-6 pr-12 pb-4">
-												<Dialog.Title class="text-xl font-bold">
+											<div class="bg-muted px-6 pt-6 pr-12 pb-4">
+												<Dialog.Title class="text-normal">
 													{#if submitError || page.form?.submitTest === false || page.form?.error}
 														{$t('Submission Failed')}
 													{:else}
@@ -311,7 +311,7 @@
 
 											<div class="bg-card flex justify-end gap-3 px-6 pb-6">
 												<Dialog.Close class="flex-1 sm:flex-none">
-													<Button variant="outline" disabled={isSubmittingTest} class="w-full">
+													<Button variant="outline" disabled={isSubmittingTest} class="w-full border-primary text-primary hover:text-primary">
 														{$t('Cancel')}
 													</Button>
 												</Dialog.Close>

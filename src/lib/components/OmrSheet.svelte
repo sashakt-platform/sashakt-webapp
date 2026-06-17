@@ -926,44 +926,54 @@
 				<Button class="w-24">{$t('Submit')}</Button>
 			</Dialog.Trigger>
 			{#if answeredAllMandatory(selections, questions)}
-				<Dialog.Content class="w-80 rounded-xl">
-					<Dialog.Title>
-						{#if submitError || page.form?.submitTest === false || page.form?.error}
-							{$t('Submission Failed')}
-						{:else}
-							{$t('Submit test?')}
-						{/if}
-					</Dialog.Title>
-					<Dialog.Description>
-						{#if submitError || page.form?.submitTest === false || page.form?.error}
-							<div class="text-destructive">
-								{#if submitError}
-									<p class="mb-2">{submitError}</p>
-								{:else if page.form?.error}
-									<p class="mb-2">{page.form.error}</p>
-								{:else}
-									<p class="mb-2">
-										{$t('There was an issue with your previous submission.')}
+				<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
+					<div class="bg-muted px-6 pt-6 pr-12 pb-4">
+						<Dialog.Title class="text-xl font-bold">
+							{#if submitError || page.form?.submitTest === false || page.form?.error}
+								{$t('Submission Failed')}
+							{:else}
+								{$t('Submit test?')}
+							{/if}
+						</Dialog.Title>
+					</div>
+
+					<div class="border-border border-t"></div>
+
+					<div class="bg-card px-6 py-6">
+						<Dialog.Description>
+							{#if submitError || page.form?.submitTest === false || page.form?.error}
+								<div class="space-y-2">
+									<p class="text-destructive text-sm font-medium">
+										{#if submitError}
+											{submitError}
+										{:else if page.form?.error}
+											{page.form.error}
+										{:else}
+											{$t('There was an issue with your previous submission.')}
+										{/if}
 									</p>
-								{/if}
-								<p class="text-muted-foreground">
-									{$t('Please click Confirm again to retry.')}
+									<p class="text-muted-foreground text-sm">
+										{$t('Please click Confirm again to retry.')}
+									</p>
+								</div>
+							{:else}
+								<p class="text-muted-foreground text-sm">
+									{$t(
+										'Are you sure you want to submit for final marking? No changes will be allowed after submission.'
+									)}
 								</p>
-							</div>
-						{:else}
-							{$t(
-								'Are you sure you want to submit for final marking? No changes will be allowed after submission.'
-							)}
-						{/if}
-					</Dialog.Description>
-					<div class="mt-2 inline-flex items-center justify-between">
-						<Dialog.Close>
-							<Button variant="outline" class="w-32" disabled={isSubmittingTest}>
+							{/if}
+						</Dialog.Description>
+					</div>
+
+					<div class="bg-card flex justify-end gap-3 px-6 pb-6">
+						<Dialog.Close class="flex-1 sm:flex-none">
+							<Button variant="outline" class="w-full border-primary text-primary hover:text-primary" disabled={isSubmittingTest}>
 								{$t('Cancel')}
 							</Button>
 						</Dialog.Close>
-						<form action="?/submitTest" method="POST" use:enhance={handleSubmitTestEnhance}>
-							<Button type="submit" class="w-32" disabled={isSubmittingTest}>
+						<form class="flex-1 sm:flex-none" action="?/submitTest" method="POST" use:enhance={handleSubmitTestEnhance}>
+							<Button type="submit" class="w-full" disabled={isSubmittingTest}>
 								{#if isSubmittingTest}
 									<Spinner />
 								{/if}
