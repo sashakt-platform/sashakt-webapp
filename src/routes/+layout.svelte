@@ -83,6 +83,7 @@
 						candidate={page.data.candidate}
 						{pauseTimerWhenInactive}
 					/>
+					<div class="bg-border h-8 w-px"></div>
 				{/if}
 				<InstructionsDialog instructions={navState.instructions} />
 			</div>
