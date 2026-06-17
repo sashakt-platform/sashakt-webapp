@@ -13,6 +13,7 @@ import {
 	mockOptionalQuestion
 } from '$lib/test-utils';
 import { createTestSessionStore } from '$lib/helpers/testSession';
+import type { TSelection } from '$lib/types';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -45,6 +46,18 @@ import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 type MockPageForm = { submitTest?: boolean; error?: string; result?: boolean } | null;
 const mockPage = page as { form: MockPageForm };
 
+const createSessionStoreFixture = (
+	selections: TSelection[] = [],
+	currentPage = 1
+): ReturnType<typeof createTestSessionStore> =>
+	({
+		current: {
+			candidate: mockCandidate,
+			selections,
+			currentPage
+		}
+	}) as ReturnType<typeof createTestSessionStore>;
+
 // Mock fetch for API calls
 vi.stubGlobal('fetch', vi.fn());
 
@@ -58,13 +71,7 @@ const testDetails = mockTestData;
 describe('Question', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.mocked(createTestSessionStore).mockReturnValue({
-			current: {
-				candidate: mockCandidate,
-				selections: [],
-				currentPage: 1
-			}
-		} as any);
+		vi.mocked(createTestSessionStore).mockReturnValue(createSessionStoreFixture());
 	});
 
 	it('should render questions', async () => {
@@ -223,22 +230,18 @@ describe('Question', () => {
 			question_pagination: 2
 		};
 
-		vi.mocked(createTestSessionStore).mockReturnValue({
-			current: {
-				candidate: mockCandidate,
-				selections: [
-					{
-						question_revision_id: mockSubjectiveQuestion.id,
-						response: 'saved answer',
-						visited: true,
-						time_spent: 7,
-						bookmarked: false,
-						is_reviewed: false
-					}
-				],
-				currentPage: 1
-			}
-		} as any);
+		vi.mocked(createTestSessionStore).mockReturnValue(
+			createSessionStoreFixture([
+				{
+					question_revision_id: mockSubjectiveQuestion.id,
+					response: 'saved answer',
+					visited: true,
+					time_spent: 7,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			])
+		);
 
 		render(Question, {
 			props: {
@@ -280,22 +283,18 @@ describe('Question', () => {
 			question_pagination: 1
 		};
 
-		vi.mocked(createTestSessionStore).mockReturnValue({
-			current: {
-				candidate: mockCandidate,
-				selections: [
-					{
-						question_revision_id: mockSubjectiveQuestion.id,
-						response: 'saved answer',
-						visited: true,
-						time_spent: 7,
-						bookmarked: false,
-						is_reviewed: false
-					}
-				],
-				currentPage: 1
-			}
-		} as any);
+		vi.mocked(createTestSessionStore).mockReturnValue(
+			createSessionStoreFixture([
+				{
+					question_revision_id: mockSubjectiveQuestion.id,
+					response: 'saved answer',
+					visited: true,
+					time_spent: 7,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			])
+		);
 
 		render(Question, {
 			props: {
@@ -339,22 +338,18 @@ describe('Question', () => {
 			question_pagination: 1
 		};
 
-		vi.mocked(createTestSessionStore).mockReturnValue({
-			current: {
-				candidate: mockCandidate,
-				selections: [
-					{
-						question_revision_id: mockSubjectiveQuestion.id,
-						response: 'saved answer',
-						visited: true,
-						time_spent: 5,
-						bookmarked: true,
-						is_reviewed: false
-					}
-				],
-				currentPage: 1
-			}
-		} as any);
+		vi.mocked(createTestSessionStore).mockReturnValue(
+			createSessionStoreFixture([
+				{
+					question_revision_id: mockSubjectiveQuestion.id,
+					response: 'saved answer',
+					visited: true,
+					time_spent: 5,
+					bookmarked: true,
+					is_reviewed: false
+				}
+			])
+		);
 
 		render(Question, {
 			props: {
@@ -403,22 +398,18 @@ describe('Question', () => {
 			question_pagination: 1
 		};
 
-		vi.mocked(createTestSessionStore).mockReturnValue({
-			current: {
-				candidate: mockCandidate,
-				selections: [
-					{
-						question_revision_id: mockSubjectiveQuestion.id,
-						response: 'saved answer',
-						visited: true,
-						time_spent: 2,
-						bookmarked: false,
-						is_reviewed: false
-					}
-				],
-				currentPage: 1
-			}
-		} as any);
+		vi.mocked(createTestSessionStore).mockReturnValue(
+			createSessionStoreFixture([
+				{
+					question_revision_id: mockSubjectiveQuestion.id,
+					response: 'saved answer',
+					visited: true,
+					time_spent: 2,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			])
+		);
 
 		render(Question, {
 			props: {
@@ -463,13 +454,7 @@ describe('Question', () => {
 			question_pagination: 1
 		};
 
-		vi.mocked(createTestSessionStore).mockReturnValue({
-			current: {
-				candidate: mockCandidate,
-				selections: [],
-				currentPage: 1
-			}
-		} as any);
+		vi.mocked(createTestSessionStore).mockReturnValue(createSessionStoreFixture());
 
 		render(Question, {
 			props: {

@@ -4,7 +4,6 @@
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import QuestionPaletteModal from '$lib/components/QuestionPaletteModal.svelte';
 	import QuestionPaletteSidebar from '$lib/components/QuestionPaletteSidebar.svelte';
-	import QuestionPaletteToggleButton from '$lib/components/QuestionPaletteToggleButton.svelte';
 	import RichText from '$lib/components/RichText.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -190,17 +189,14 @@
 		if (selectionIndex >= 0) {
 			selectedQuestions[selectionIndex].time_spent = nextTimeSpent;
 		} else {
-			selectedQuestions = [
-				...selectedQuestions,
-				{
-					question_revision_id: currentQuestion.id,
-					response: [],
-					visited: true,
-					time_spent: nextTimeSpent,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			];
+			selectedQuestions.push({
+				question_revision_id: currentQuestion.id,
+				response: [],
+				visited: true,
+				time_spent: nextTimeSpent,
+				bookmarked: false,
+				is_reviewed: false
+			});
 		}
 		sessionStore.current = {
 			...sessionStore.current,
@@ -269,6 +265,12 @@
 		return pendingQuestionTimeSync;
 	};
 
+	const flushCurrentQuestionTime = async () => {
+		if (!singleQuestionPerPage) return;
+		await pendingQuestionTimeSync;
+		await persistCurrentQuestionTime();
+	};
+
 	// enhance handler for submitTest form action
 	const baseSubmitTestEnhance = createFormEnhanceHandler({
 		setLoading: (loading) => (isSubmittingTest = loading),
@@ -278,7 +280,7 @@
 
 	const handleSubmitTestEnhance = async () => {
 		if (singleQuestionPerPage) {
-			await queueQuestionTimeSync();
+			await flushCurrentQuestionTime();
 		}
 		return baseSubmitTestEnhance();
 	};
@@ -373,6 +375,7 @@
 									{question}
 									{totalQuestions}
 									bind:selectedQuestions
+									onBeforeReview={flushCurrentQuestionTime}
 									showFeedback={testDetails.show_feedback_immediately}
 									showMarkForReview={testDetails.bookmark}
 									showMarks={testDetails?.show_marks ?? true}

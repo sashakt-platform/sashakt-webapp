@@ -44,7 +44,8 @@
 		selectedQuestions = $bindable(),
 		showFeedback = false,
 		showMarkForReview = true,
-		showMarks = true
+		showMarks = true,
+		onBeforeReview
 	}: {
 		question: TQuestion;
 		candidate: TCandidate;
@@ -54,7 +55,9 @@
 		showFeedback?: boolean;
 		showMarkForReview?: boolean;
 		showMarks?: boolean;
+		onBeforeReview?: () => Promise<void> | void;
 	} = $props();
+	void totalQuestions;
 
 	const options = question.options;
 
@@ -310,27 +313,34 @@
 	};
 
 	const confirmViewFeedback = async () => {
-		const answeredQuestion = selectedQuestion(question.id);
-		const currentResponse = answeredQuestion?.response ?? [];
-		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-
-		selectedQuestions = selectedQuestions.map((q) =>
-			q.question_revision_id === question.id ? { ...q, is_reviewed: true } : q
-		);
-		updateStore();
-
 		try {
-			const result = await submitAnswer(question.id, currentResponse, currentBookmarked, true);
+			await onBeforeReview?.();
+			const answeredQuestion = selectedQuestion(question.id);
+			const currentResponse = answeredQuestion?.response ?? [];
+			const currentBookmarked = answeredQuestion?.bookmarked ?? false;
+			const currentTimeSpent =
+				typeof answeredQuestion?.time_spent === 'number' ? answeredQuestion.time_spent : undefined;
+
+			const result = await submitAnswer(
+				question.id,
+				currentResponse,
+				currentBookmarked,
+				true,
+				currentTimeSpent
+			);
 			if (result?.correct_answer != null) {
 				selectedQuestions = selectedQuestions.map((q) =>
 					q.question_revision_id === question.id
-						? { ...q, correct_answer: result.correct_answer }
+						? { ...q, is_reviewed: true, correct_answer: result.correct_answer }
 						: q
 				);
 				updateStore();
+			} else {
+				saveError = $t('Failed to load result. Please try again.');
+				setTimeout(() => (saveError = null), 5000);
 			}
-		} catch {
-			// Question stays locked — user already saw the correct answer
+		} catch (error) {
+			setTransientSaveError(error, 'Failed to load result. Please try again.');
 		}
 	};
 
@@ -443,14 +453,16 @@
 		questionId: number,
 		response: number[] | string | null,
 		bookmarked?: boolean,
-		is_reviewed?: boolean
+		is_reviewed?: boolean,
+		time_spent?: number
 	) => {
 		const data = {
 			question_revision_id: questionId,
 			response: response == null ? null : response.length > 0 ? response : null,
 			candidate,
 			bookmarked,
-			is_reviewed
+			is_reviewed,
+			...(typeof time_spent === 'number' ? { time_spent } : {})
 		};
 
 		try {
@@ -539,6 +551,8 @@
 		const currentBookmarked = answeredQuestion.bookmarked ?? false;
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 		const previousMatrixSelections = { ...matrixSelections };
+		const previousMatrixInputValues = { ...matrixInputValues };
+		const previousLastSavedMatrixInputValues = { ...lastSavedMatrixInputValues };
 		const clearedResponse =
 			question.question_type === question_type_enum.SUBJECTIVE ||
 			question.question_type === question_type_enum.NUMERICALINTEGER ||
@@ -568,6 +582,9 @@
 			lastSavedInput = '';
 		} else if (question.question_type === question_type_enum.MATRIXMATCH) {
 			matrixSelections = {};
+		} else if (question.question_type === question_type_enum.MATRIXINPUT) {
+			matrixInputValues = {};
+			lastSavedMatrixInputValues = {};
 		}
 
 		try {
@@ -587,6 +604,9 @@
 				lastSavedInput = candidateInput;
 			} else if (question.question_type === question_type_enum.MATRIXMATCH) {
 				matrixSelections = previousMatrixSelections;
+			} else if (question.question_type === question_type_enum.MATRIXINPUT) {
+				matrixInputValues = previousMatrixInputValues;
+				lastSavedMatrixInputValues = previousLastSavedMatrixInputValues;
 			}
 
 			setTransientSaveError(error, 'Failed to clear your answer. Please try again.');

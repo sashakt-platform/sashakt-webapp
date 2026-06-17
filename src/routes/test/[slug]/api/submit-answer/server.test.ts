@@ -3,6 +3,8 @@ import { createMockResponse, mockCandidate, createMockCookies } from '$lib/test-
 import { getCandidate } from '$lib/helpers/getCandidate';
 import { POST } from './+server';
 
+type PostEvent = Parameters<typeof POST>[0];
+
 // Mock the environment variable
 vi.mock('$env/static/private', () => ({
 	BACKEND_URL: 'http://test-backend.com'
@@ -23,9 +25,18 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		vi.unstubAllGlobals();
 	});
 
-	const createMockRequest = (body: any) => ({
+	const createMockRequest = (body: unknown) => ({
 		json: () => Promise.resolve(body)
 	});
+
+	const createInvalidJsonRequest = () => ({
+		json: () => Promise.reject(new SyntaxError('Invalid JSON'))
+	});
+
+	const createPostEvent = (
+		request: ReturnType<typeof createMockRequest> | ReturnType<typeof createInvalidJsonRequest>,
+		cookies: ReturnType<typeof createMockCookies>
+	): PostEvent => ({ request, cookies }) as unknown as PostEvent;
 
 	it('should submit answer successfully without fetching feedback', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
@@ -39,7 +50,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [101],
 			candidate: mockCandidate
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 		const data = await response.json();
 
 		expect(response.status).toBe(200);
@@ -71,7 +82,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			candidate: mockCandidate,
 			time_spent: 17
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 
 		expect(response.status).toBe(200);
 		expect(fetch).toHaveBeenCalledWith(
@@ -99,7 +110,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			candidate: mockCandidate,
 			is_reviewed: true
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 		const data = await response.json();
 
 		expect(response.status).toBe(200);
@@ -117,12 +128,38 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [101],
 			candidate: mockCandidate
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 		const data = await response.json();
 
 		expect(response.status).toBe(401);
 		expect(data.success).toBe(false);
 		expect(data.error).toBe('Session expired or test already submitted');
+	});
+
+	it('should return 400 when request JSON is invalid', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+
+		const mockCookies = createMockCookies();
+		const request = createInvalidJsonRequest();
+		const response = await POST(createPostEvent(request, mockCookies));
+		const data = await response.json();
+
+		expect(response.status).toBe(400);
+		expect(data.success).toBe(false);
+		expect(data.error).toBe('Invalid JSON body');
+	});
+
+	it('should return 400 when request body is not an object', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest(null);
+		const response = await POST(createPostEvent(request, mockCookies));
+		const data = await response.json();
+
+		expect(response.status).toBe(400);
+		expect(data.success).toBe(false);
+		expect(data.error).toBe('Invalid request body');
 	});
 
 	it('should return 401 when cookie candidate does not match request candidate', async () => {
@@ -137,7 +174,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [101],
 			candidate: mockCandidate
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 		const data = await response.json();
 
 		expect(response.status).toBe(401);
@@ -153,7 +190,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [101],
 			candidate: mockCandidate
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 		const data = await response.json();
 
 		expect(response.status).toBe(400);
@@ -170,7 +207,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [101],
 			candidate: { candidate_uuid: 'uuid' }
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 		const data = await response.json();
 
 		expect(response.status).toBe(401);
@@ -187,7 +224,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [101],
 			candidate: { candidate_test_id: 1 }
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 		const data = await response.json();
 
 		expect(response.status).toBe(401);
@@ -207,7 +244,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [201, 202, 203],
 			candidate: mockCandidate
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 
 		expect(response.status).toBe(200);
 		expect(fetch).toHaveBeenCalledTimes(1);
@@ -231,7 +268,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [],
 			candidate: mockCandidate
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 		const data = await response.json();
 
 		expect(response.status).toBe(200);
@@ -258,7 +295,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			candidate: mockCandidate,
 			bookmarked: true
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 
 		expect(response.status).toBe(200);
 		expect(fetch).toHaveBeenCalledTimes(1);
@@ -282,7 +319,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [101],
 			candidate: mockCandidate
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 
 		expect(response.status).toBe(200);
 		expect(fetch).toHaveBeenCalledTimes(1);
@@ -309,7 +346,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [101],
 			candidate: mockCandidate
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 		const data = await response.json();
 
 		expect(response.status).toBe(500);
@@ -332,7 +369,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [101],
 			candidate: mockCandidate
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 		const data = await response.json();
 
 		expect(response.status).toBe(400);
@@ -350,7 +387,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 			response: [101],
 			candidate: mockCandidate
 		});
-		const response = await POST({ request, cookies: mockCookies } as any);
+		const response = await POST(createPostEvent(request, mockCookies));
 		const data = await response.json();
 
 		expect(response.status).toBe(500);

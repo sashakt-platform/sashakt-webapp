@@ -3,41 +3,52 @@ import { getCandidate } from '$lib/helpers/getCandidate';
 import type { TCandidate } from '$lib/types';
 import type { RequestHandler } from './$types';
 
+const jsonResponse = (body: Record<string, unknown>, status: number) =>
+	new Response(JSON.stringify(body), {
+		status,
+		headers: { 'Content-Type': 'application/json' }
+	});
+
 export const POST: RequestHandler = async ({ request, cookies }) => {
 	const cookieCandidate = getCandidate(cookies);
 	if (!cookieCandidate) {
-		return new Response(
-			JSON.stringify({ success: false, error: 'Session expired or test already submitted' }),
-			{ status: 401, headers: { 'Content-Type': 'application/json' } }
+		return jsonResponse(
+			{ success: false, error: 'Session expired or test already submitted' },
+			401
 		);
 	}
 
-	const payload: {
+	let payload: unknown;
+	try {
+		payload = await request.json();
+	} catch {
+		return jsonResponse({ success: false, error: 'Invalid JSON body' }, 400);
+	}
+
+	if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+		return jsonResponse({ success: false, error: 'Invalid request body' }, 400);
+	}
+
+	const typedPayload = payload as {
 		question_revision_id: number;
 		response: number[] | string | null;
 		candidate: TCandidate;
 		time_spent?: number | null;
 		bookmarked?: boolean;
 		is_reviewed?: boolean;
-	} = await request.json();
+	};
 
-	const { question_revision_id, response, candidate, bookmarked, is_reviewed } = payload;
+	const { question_revision_id, response, candidate, bookmarked, is_reviewed } = typedPayload;
 
 	if (
 		cookieCandidate.candidate_test_id !== candidate?.candidate_test_id ||
 		cookieCandidate.candidate_uuid !== candidate?.candidate_uuid
 	) {
-		return new Response(JSON.stringify({ success: false, error: 'Session mismatch' }), {
-			status: 401,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return jsonResponse({ success: false, error: 'Session mismatch' }, 401);
 	}
 
 	if (!question_revision_id || !candidate?.candidate_test_id || !candidate?.candidate_uuid) {
-		return new Response(JSON.stringify({ success: false, error: 'Missing required fields' }), {
-			status: 400,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return jsonResponse({ success: false, error: 'Missing required fields' }, 400);
 	}
 
 	try {
@@ -55,7 +66,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			visited: true,
 			bookmarked: bookmarked ?? false,
 			is_reviewed: is_reviewed ?? false,
-			...('time_spent' in payload ? { time_spent: payload.time_spent } : {})
+			...('time_spent' in typedPayload ? { time_spent: typedPayload.time_spent } : {})
 		};
 
 		const res = await fetch(
@@ -73,12 +84,11 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			try {
 				const errorData = await res.json();
 				errorMessage = errorData?.detail || errorData?.message || errorData?.error || errorMessage;
-			} catch {}
+			} catch {
+				// Keep the status-based fallback when the backend error body is not JSON.
+			}
 
-			return new Response(JSON.stringify({ success: false, error: errorMessage }), {
-				status: res.status,
-				headers: { 'Content-Type': 'application/json' }
-			});
+			return jsonResponse({ success: false, error: errorMessage }, res.status);
 		}
 
 		let correct_answer = null;
@@ -95,17 +105,14 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 						correct_answer = feedbackData[0].correct_answer;
 					}
 				}
-			} catch {}
+			} catch {
+				// Keep answer save successful even if immediate feedback cannot be loaded.
+			}
 		}
 
-		return new Response(JSON.stringify({ success: true, correct_answer }), {
-			status: 200,
-			headers: { 'Content-Type': 'application/json' }
-		});
-	} catch (error: any) {
-		return new Response(JSON.stringify({ success: false, error: error.message }), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		return jsonResponse({ success: true, correct_answer }, 200);
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Failed to submit answer';
+		return jsonResponse({ success: false, error: errorMessage }, 500);
 	}
 };
