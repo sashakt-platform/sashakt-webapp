@@ -4,7 +4,6 @@
 @import '@fontsource/open-sans/700.css';
 @import 'tailwindcss';
 @config '../tailwind.config.ts';
-@plugin '@tailwindcss/typography';
 
 @layer base {
 	:root {
@@ -96,6 +95,27 @@
 		line-height: 1.6;
 	}
 
+	.rich-text h1 {
+		font-size: 1.5rem;
+		font-weight: 700;
+		margin-top: 1rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.rich-text h2 {
+		font-size: 1.25rem;
+		font-weight: 700;
+		margin-top: 1rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.rich-text h3 {
+		font-size: 1.125rem;
+		font-weight: 600;
+		margin-top: 0.75rem;
+		margin-bottom: 0.5rem;
+	}
+
 	.rich-text p {
 		margin: 0;
 	}
@@ -109,6 +129,14 @@
 	.rich-text ul,
 	.rich-text ol {
 		padding-left: 1.25rem;
+	}
+
+	.rich-text ul {
+		list-style-type: disc;
+	}
+
+	.rich-text ol {
+		list-style-type: decimal;
 	}
 
 	.rich-text img {
