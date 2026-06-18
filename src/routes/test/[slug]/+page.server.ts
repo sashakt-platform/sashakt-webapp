@@ -68,7 +68,11 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 			throw error(response.status, errorMessage);
 		}
 
-		const candidateData = await response.json();
+		const candidateData = {
+			...(await response.json()),
+			external_launch: true,
+			pending_start: true
+		};
 		setCandidateCookie(cookies, testData.link, candidateData);
 		throw redirect(303, '/test/' + testData.link);
 	}
@@ -86,7 +90,12 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 		}
 	}
 
-	if (candidate && candidate.candidate_test_id && candidate.candidate_uuid) {
+	if (
+		candidate &&
+		candidate.candidate_test_id &&
+		candidate.candidate_uuid &&
+		!candidate.pending_start
+	) {
 		try {
 			const timerResponse = await getTimeLeft(
 				candidate.candidate_test_id,
@@ -144,6 +153,14 @@ export const actions = {
 			existingCandidate.candidate_test_id &&
 			existingCandidate.candidate_uuid
 		) {
+			if (existingCandidate.pending_start) {
+				const candidateData = { ...existingCandidate, pending_start: false };
+				setCandidateCookie(cookies, testData.link, candidateData);
+				return {
+					success: true,
+					candidateData
+				};
+			}
 			return {
 				success: true,
 				candidateData: existingCandidate
@@ -227,15 +244,14 @@ export const actions = {
 			return fail(400, { candidate, missing: true });
 		}
 
-		const candidateUrl = (purpose: string) => {
-			return `${BACKEND_URL}/candidate/${purpose}/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`;
-		};
-
 		try {
-			const response = await fetch(candidateUrl('submit_test'), {
-				method: 'POST',
-				headers: { accept: 'application/json' }
-			});
+			const response = await fetch(
+				`${BACKEND_URL}/candidate/submit_test/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`,
+				{
+					method: 'POST',
+					headers: { accept: 'application/json' }
+				}
+			);
 
 			// handle 400 errors from backend and display error message
 			if (response.status === 400) {
@@ -245,10 +261,13 @@ export const actions = {
 			}
 
 			if (response.status === 200) {
-				const result = await fetch(candidateUrl('result'), {
-					method: 'GET',
-					headers: { accept: 'application/json' }
-				});
+				const result = await fetch(
+					`${BACKEND_URL}/candidate/result/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`,
+					{
+						method: 'GET',
+						headers: { accept: 'application/json' }
+					}
+				);
 
 				if (!result.ok) return fail(400, { result: false, submitTest: true });
 
@@ -296,10 +315,15 @@ export const actions = {
 					}
 				}
 
-				cookies.delete('sashakt-candidate', {
-					path: '/test/' + testData.link,
-					secure: !dev
-				});
+				// Keep the cookie for external (portal) launches so a refresh after
+				// submit stays bound to the submitted attempt instead of dropping back
+				// to the landing page where a new attempt could be started.
+				if (!candidate.external_launch) {
+					cookies.delete('sashakt-candidate', {
+						path: '/test/' + testData.link,
+						secure: !dev
+					});
+				}
 
 				return { result: resultData, feedback, testQuestions, submitTest: true };
 			}

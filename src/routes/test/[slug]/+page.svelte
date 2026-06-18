@@ -30,7 +30,6 @@
 	const hasRenderableQuestions = $derived(
 		normalizeTestQuestions(data.testQuestions).questions.length > 0
 	);
-
 	$effect(() => {
 		form;
 		showFeedbackView = false;

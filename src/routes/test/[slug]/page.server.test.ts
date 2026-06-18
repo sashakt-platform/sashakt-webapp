@@ -260,7 +260,7 @@ describe('Page Server - load function', () => {
 		);
 		expect(mockCookies.set).toHaveBeenCalledWith(
 			'sashakt-candidate',
-			JSON.stringify(mockCandidate),
+			JSON.stringify({ ...mockCandidate, external_launch: true, pending_start: true }),
 			expect.objectContaining({
 				path: `/test/${mockTestData.link}`,
 				httpOnly: true
@@ -562,6 +562,29 @@ describe('Page Server - submitTest action', () => {
 			mockCandidate.candidate_uuid
 		);
 		expect(mockCookies.delete).toHaveBeenCalledWith('sashakt-candidate', expect.any(Object));
+	});
+
+	it('should keep candidate cookie after external launch submit', async () => {
+		const externalCandidate = { ...mockCandidate, external_launch: true };
+		vi.mocked(getCandidate).mockReturnValue(externalCandidate);
+
+		const mockResult = { score: 85, passed: true };
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
+			.mockResolvedValueOnce(createMockResponse(mockResult));
+
+		const mockCookies = createMockCookies();
+
+		const result = await actions.submitTest({
+			cookies: mockCookies,
+			fetch: mockFetch,
+			locals: { testData: { ...mockTestData, show_feedback_on_completion: false } }
+		} as any);
+
+		expect(result.submitTest).toBe(true);
+		expect(result.result).toEqual(mockResult);
+		expect(mockCookies.delete).not.toHaveBeenCalled();
 	});
 
 	it('should handle empty feedback from review-feedback API', async () => {
