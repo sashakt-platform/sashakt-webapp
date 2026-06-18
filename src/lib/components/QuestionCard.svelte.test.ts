@@ -666,72 +666,7 @@ describe('QuestionCard', () => {
 			expect(screen.getByPlaceholderText(/type your answer here/i)).toBeInTheDocument();
 		});
 
-		it('should render Save Answer button for subjective questions', () => {
-			render(QuestionCard, {
-				props: {
-					question: mockSubjectiveQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions: []
-				}
-			});
-
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
-		});
-
-		it('should disable Save Answer button when textarea is empty', () => {
-			render(QuestionCard, {
-				props: {
-					question: mockSubjectiveQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions: []
-				}
-			});
-
-			const saveButton = screen.getByRole('button', { name: /save answer/i });
-			expect(saveButton).toBeDisabled();
-		});
-
-		it('should enable Save Answer button when text is entered', async () => {
-			render(QuestionCard, {
-				props: {
-					question: mockSubjectiveQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions: []
-				}
-			});
-
-			const textarea = screen.getByPlaceholderText(/type your answer here/i);
-			await fireEvent.input(textarea, { target: { value: 'My answer' } });
-
-			const saveButton = screen.getByRole('button', { name: /save answer/i });
-			expect(saveButton).not.toBeDisabled();
-		});
-
-		it('should disable Save Answer button when only whitespace is entered', async () => {
-			render(QuestionCard, {
-				props: {
-					question: mockSubjectiveQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions: []
-				}
-			});
-
-			const textarea = screen.getByPlaceholderText(/type your answer here/i);
-			await fireEvent.input(textarea, { target: { value: '   ' } });
-
-			const saveButton = screen.getByRole('button', { name: /save answer/i });
-			expect(saveButton).toBeDisabled();
-		});
-
-		it('should display character count when limit is set', () => {
+it('should display character count when limit is set', () => {
 			render(QuestionCard, {
 				props: {
 					question: mockSubjectiveQuestion, // 500 char limit
@@ -840,7 +775,8 @@ describe('QuestionCard', () => {
 			expect(charCountSpan).toBeInTheDocument();
 		});
 
-		it('should call API when Save Answer is clicked', async () => {
+		it('should call API after debounce when text is entered', async () => {
+			vi.useFakeTimers();
 			vi.mocked(fetch).mockResolvedValueOnce(
 				createMockResponse({ success: true }) as unknown as Response
 			);
@@ -858,8 +794,7 @@ describe('QuestionCard', () => {
 			const textarea = screen.getByPlaceholderText(/type your answer here/i);
 			await fireEvent.input(textarea, { target: { value: 'My detailed answer' } });
 
-			const saveButton = screen.getByRole('button', { name: /save answer/i });
-			await saveButton.click();
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				expect(fetch).toHaveBeenCalledWith(
@@ -870,9 +805,12 @@ describe('QuestionCard', () => {
 					})
 				);
 			});
+
+			vi.useRealTimers();
 		});
 
 		it('should show error message when save fails', async () => {
+			vi.useFakeTimers();
 			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 
 			render(QuestionCard, {
@@ -888,12 +826,13 @@ describe('QuestionCard', () => {
 			const textarea = screen.getByPlaceholderText(/type your answer here/i);
 			await fireEvent.input(textarea, { target: { value: 'My answer' } });
 
-			const saveButton = screen.getByRole('button', { name: /save answer/i });
-			await saveButton.click();
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
 			});
+
+			vi.useRealTimers();
 		});
 
 		it('should display existing answer when question was previously answered', () => {
@@ -1176,69 +1115,7 @@ describe('QuestionCard', () => {
 			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
 		});
 
-		it('should render Save Answer button for numerical-integer questions', () => {
-			render(QuestionCard, {
-				props: {
-					question: mockNumericalIntegerQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions: []
-				}
-			});
-
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
-		});
-
-		it('should disable Save Answer button when input is empty', () => {
-			render(QuestionCard, {
-				props: {
-					question: mockNumericalIntegerQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions: []
-				}
-			});
-
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
-		});
-
-		it('should disable Save Answer button when only whitespace is entered', async () => {
-			render(QuestionCard, {
-				props: {
-					question: mockNumericalIntegerQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions: []
-				}
-			});
-
-			const input = screen.getByPlaceholderText(/type your answer here/i);
-			await fireEvent.input(input, { target: { value: '   ' } });
-
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
-		});
-
-		it('should enable Save Answer button when a value is entered', async () => {
-			render(QuestionCard, {
-				props: {
-					question: mockNumericalIntegerQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions: []
-				}
-			});
-
-			const input = screen.getByPlaceholderText(/type your answer here/i);
-			await fireEvent.input(input, { target: { value: '8' } });
-
-			expect(screen.getByRole('button', { name: /save answer/i })).not.toBeDisabled();
-		});
-
-		it('should display existing answer when previously answered', () => {
+it('should display existing answer when previously answered', () => {
 			const selectedQuestions = [
 				{
 					question_revision_id: mockNumericalIntegerQuestion.id,
@@ -1264,61 +1141,8 @@ describe('QuestionCard', () => {
 			expect(input).toHaveValue(8);
 		});
 
-		it('should show Saved state when question was previously answered without changes', () => {
-			const selectedQuestions = [
-				{
-					question_revision_id: mockNumericalIntegerQuestion.id,
-					response: '8',
-					visited: true,
-					time_spent: 20,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			];
-
-			render(QuestionCard, {
-				props: {
-					question: mockNumericalIntegerQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions
-				}
-			});
-
-			expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
-			expect(screen.getByRole('button', { name: /saved/i })).toBeDisabled();
-		});
-
-		it('should show Update Answer button when modifying a previously saved answer', async () => {
-			const selectedQuestions = [
-				{
-					question_revision_id: mockNumericalIntegerQuestion.id,
-					response: '8',
-					visited: true,
-					time_spent: 20,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			];
-
-			render(QuestionCard, {
-				props: {
-					question: mockNumericalIntegerQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions
-				}
-			});
-
-			const input = screen.getByPlaceholderText(/type your answer here/i);
-			await fireEvent.input(input, { target: { value: '42' } });
-
-			expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
-		});
-
-		it('should call API when Save Answer is clicked with entered value', async () => {
+		it('should call API after debounce when a value is entered', async () => {
+			vi.useFakeTimers();
 			vi.mocked(fetch).mockResolvedValueOnce(
 				createMockResponse({ success: true }) as unknown as Response
 			);
@@ -1336,8 +1160,7 @@ describe('QuestionCard', () => {
 			const input = screen.getByPlaceholderText(/type your answer here/i);
 			await fireEvent.input(input, { target: { value: '8' } });
 
-			const saveButton = screen.getByRole('button', { name: /save answer/i });
-			await saveButton.click();
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				expect(fetch).toHaveBeenCalledWith(
@@ -1348,9 +1171,12 @@ describe('QuestionCard', () => {
 					})
 				);
 			});
+
+			vi.useRealTimers();
 		});
 
 		it('should show error message when save fails', async () => {
+			vi.useFakeTimers();
 			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 
 			render(QuestionCard, {
@@ -1366,12 +1192,13 @@ describe('QuestionCard', () => {
 			const input = screen.getByPlaceholderText(/type your answer here/i);
 			await fireEvent.input(input, { target: { value: '8' } });
 
-			const saveButton = screen.getByRole('button', { name: /save answer/i });
-			await saveButton.click();
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
 			});
+
+			vi.useRealTimers();
 		});
 
 		it('should show View Result button for answered numerical-integer question when showFeedback is true', () => {
@@ -2922,14 +2749,11 @@ describe('QuestionCard', () => {
 				expect(inputs[1].value).toBe('Tokyo');
 			});
 
-			it('should show Save Answer button initially', () => {
-				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
-				expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
-			});
-		});
+});
 
 		describe('save interaction', () => {
-			it('should call fetch with JSON-encoded row values on save', async () => {
+			it('should call fetch with JSON-encoded row values after debounce', async () => {
+				vi.useFakeTimers();
 				vi.mocked(fetch).mockResolvedValueOnce(
 					createMockResponse({ success: true }) as unknown as Response
 				);
@@ -2937,7 +2761,8 @@ describe('QuestionCard', () => {
 
 				const inputs = screen.getAllByRole('textbox');
 				await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-				await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+				await vi.advanceTimersByTimeAsync(800);
 
 				await waitFor(() => {
 					expect(fetch).toHaveBeenCalledWith(
@@ -2948,9 +2773,12 @@ describe('QuestionCard', () => {
 					const response = JSON.parse(body.response);
 					expect(response['1']).toBe('Paris');
 				});
+
+				vi.useRealTimers();
 			});
 
-			it('should show Saved after a successful save with no pending changes', async () => {
+			it('should show Saved text after a successful save', async () => {
+				vi.useFakeTimers();
 				vi.mocked(fetch).mockResolvedValueOnce(
 					createMockResponse({ success: true }) as unknown as Response
 				);
@@ -2958,55 +2786,49 @@ describe('QuestionCard', () => {
 
 				const inputs = screen.getAllByRole('textbox');
 				await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-				await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+				await vi.advanceTimersByTimeAsync(800);
 
 				await waitFor(() => {
-					expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+					expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 				});
-			});
 
-			it('should show Update Answer after save when new changes are made', async () => {
-				vi.mocked(fetch).mockResolvedValueOnce(
-					createMockResponse({ success: true }) as unknown as Response
-				);
-				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
-
-				const inputs = screen.getAllByRole('textbox');
-				await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-				await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
-				await waitFor(() =>
-					expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument()
-				);
-
-				await fireEvent.input(inputs[0], { target: { value: 'Lyon' } });
-				expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
+				vi.useRealTimers();
 			});
 
 			it('should show error message when API call fails', async () => {
+				vi.useFakeTimers();
 				vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
 
 				const inputs = screen.getAllByRole('textbox');
 				await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-				await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+				await vi.advanceTimersByTimeAsync(800);
 
 				await waitFor(() => {
 					expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
 				});
+
+				vi.useRealTimers();
 			});
 
 			it('should keep input value after API failure', async () => {
+				vi.useFakeTimers();
 				vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 				render(QuestionCard, { props: { question: mockMatrixInputTextQuestion, ...defaultProps } });
 
 				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
 				await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-				await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+				await vi.advanceTimersByTimeAsync(800);
 
 				await waitFor(() =>
 					expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument()
 				);
 				expect(inputs[0].value).toBe('Paris');
+
+				vi.useRealTimers();
 			});
 		});
 
