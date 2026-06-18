@@ -65,6 +65,8 @@
 	let isSubmitting = $state(false);
 	let saveError = $state<string | null>(null);
 	let markingSchemeOpen = $state(false);
+	let debounceTimer: ReturnType<typeof setTimeout> | undefined = $state(undefined);
+	let saveStatus: 'idle' | 'pending' | 'saving' | 'saved' = $state('idle');
 	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 
 	const sessionStore = createTestSessionStore(candidate);
@@ -110,7 +112,6 @@
 		return typeof selected?.response === 'string' ? selected.response : '';
 	};
 	let candidateInput = $state(getExistingInputResponse());
-	let lastSavedInput = $state(getExistingInputResponse());
 
 	const getExistingMatrixSelections = (): Record<string, number[]> => {
 		const parsed = parseJsonRecord<number | number[]>(selectedQuestion(question.id)?.response);
@@ -256,10 +257,6 @@
 		}
 	};
 
-	const hasUnsavedChanges = $derived(
-		String(candidateInput ?? '').trim() !== String(lastSavedInput ?? '').trim()
-	);
-	const hasSavedBefore = $derived(String(lastSavedInput ?? '').trim().length > 0);
 	const hasAttemptedResponse = (response: number[] | string | undefined): boolean => {
 		if (typeof response === 'string') {
 			return response.trim().length > 0;
@@ -562,7 +559,9 @@
 
 		if (typeof clearedResponse === 'string') {
 			candidateInput = '';
-			lastSavedInput = '';
+			clearTimeout(debounceTimer);
+			debounceTimer = undefined;
+			saveStatus = 'idle';
 		} else if (question.question_type === question_type_enum.MATRIXMATCH) {
 			matrixSelections = {};
 		}
@@ -581,7 +580,6 @@
 					(selection: TSelection) => selection.question_revision_id === question.id
 				)?.response;
 				candidateInput = typeof previousResponse === 'string' ? previousResponse : '';
-				lastSavedInput = candidateInput;
 			} else if (question.question_type === question_type_enum.MATRIXMATCH) {
 				matrixSelections = previousMatrixSelections;
 			}
@@ -603,6 +601,7 @@
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
 
 		isSubmitting = true;
+		saveStatus = 'saving';
 		saveError = null;
 
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
@@ -629,15 +628,31 @@
 
 		try {
 			await submitAnswer(question.id, inputValue, currentBookmarked);
-			lastSavedInput = candidateInput;
+			saveStatus = 'saved';
 		} catch (error) {
 			selectedQuestions = previousState;
 			updateStore();
+			saveStatus = 'idle';
 			setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 		} finally {
 			isSubmitting = false;
 		}
 	};
+
+	const scheduleSave = () => {
+		saveStatus = 'pending';
+		clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => handleSubjectiveSubmit(), 800);
+	};
+
+	$effect(() => {
+		return () => {
+			if (debounceTimer !== undefined && saveStatus === 'pending') {
+				clearTimeout(debounceTimer);
+				handleSubjectiveSubmit();
+			}
+		};
+	});
 </script>
 
 {#snippet marksPill()}
@@ -842,25 +857,25 @@
 					style="field-sizing: content;"
 					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring min-h-22 w-full resize-none overflow-hidden rounded-[10px] border px-[14px] py-[10px] text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 					placeholder={$t('Type your answer here...')}
-					bind:value={candidateInput}
+					value={candidateInput}
+					oninput={(e) => {
+						candidateInput = e.currentTarget.value;
+						scheduleSave();
+					}}
 					maxlength={question.subjective_answer_limit || undefined}
 				></textarea>
 				<div class="flex items-center justify-between">
-					<Button
-						variant="default"
-						size="sm"
-						onclick={handleSubjectiveSubmit}
-						disabled={isSubmitting || !String(candidateInput ?? '').trim() || !hasUnsavedChanges}
-					>
-						{#if !hasUnsavedChanges && hasSavedBefore}
-							<Check class="mr-1 h-4 w-4" />
-							{$t('Saved')}
-						{:else if hasSavedBefore}
-							{$t('Update Answer')}
-						{:else}
-							{$t('Save Answer')}
-						{/if}
-					</Button>
+					{#if saveStatus === 'saving'}
+						<span class="text-muted-foreground flex items-center gap-1 text-xs">
+							<Spinner class="size-3" />{$t('Saving...')}
+						</span>
+					{:else if saveStatus === 'saved'}
+						<span class="text-success flex items-center gap-1 text-xs">
+							<Check class="size-3" />{$t('Saved')}
+						</span>
+					{:else}
+						<span></span>
+					{/if}
 					{#if question.subjective_answer_limit}
 						{@const remaining = question.subjective_answer_limit - candidateInput.length}
 						<div class="flex flex-col">
@@ -925,25 +940,21 @@
 						step={question.question_type === question_type_enum.NUMERICALDECIMAL ? 'any' : '1'}
 						class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border border-dashed px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 						placeholder={$t('Type your answer here...')}
-						bind:value={candidateInput}
+						value={candidateInput}
+						oninput={(e) => {
+							candidateInput = e.currentTarget.value;
+							scheduleSave();
+						}}
 					/>
-					<div class="flex items-center justify-between">
-						<Button
-							variant="default"
-							size="sm"
-							onclick={handleSubjectiveSubmit}
-							disabled={isSubmitting || !String(candidateInput ?? '').trim() || !hasUnsavedChanges}
-						>
-							{#if !hasUnsavedChanges && hasSavedBefore}
-								<Check class="mr-1 h-4 w-4" />
-								{$t('Saved')}
-							{:else if hasSavedBefore}
-								{$t('Update Answer')}
-							{:else}
-								{$t('Save Answer')}
-							{/if}
-						</Button>
-					</div>
+					{#if saveStatus === 'saving'}
+						<span class="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
+							<Spinner class="size-3" />{$t('Saving...')}
+						</span>
+					{:else if saveStatus === 'saved'}
+						<span class="text-success mt-1 flex items-center gap-1 text-xs">
+							<Check class="size-3" />{$t('Saved')}
+						</span>
+					{/if}
 				</div>
 			{/if}
 		{:else if question.question_type === question_type_enum.MATRIXMATCH}
