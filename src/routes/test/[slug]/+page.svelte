@@ -66,6 +66,12 @@
 			testQuestions={form.testQuestions}
 			onViewFeedback={handleViewFeedback}
 		/>
+	{:else if data.submitted}
+		{#if data.result}
+			<TestResult resultData={data.result} testDetails={data.testData} />
+		{:else}
+			<p>{$t('You have already submitted this test.')}</p>
+		{/if}
 	{:else if !data.candidate && !showProfileForm}
 		<LandingPage testDetails={data.testData} bind:showProfileForm />
 	{:else if !data.candidate && hasDynamicForm && !showOmrChoice && data.testData.form}

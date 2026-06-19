@@ -107,6 +107,27 @@ describe('Page Server - load function', () => {
 		expect(getTestQuestions).not.toHaveBeenCalled();
 	});
 
+	it('should show result without resuming timer when external launch is submitted', async () => {
+		const submittedCandidate = { ...mockCandidate, external_launch: true, submitted: true };
+		vi.mocked(getCandidate).mockReturnValue(submittedCandidate);
+
+		const mockResult = { total_questions: 5, correct_answer: 3 };
+		const mockFetch = vi.fn().mockResolvedValue(createMockResponse(mockResult));
+
+		const mockCookies = createMockCookies();
+		const result = await load({
+			locals: { testData: mockTestData, timeToBegin: 300 },
+			cookies: mockCookies,
+			fetch: mockFetch
+		} as any);
+
+		expect(result.submitted).toBe(true);
+		expect(result.result).toEqual(mockResult);
+		expect(result.testQuestions).toBeNull();
+		expect(getTimeLeft).not.toHaveBeenCalled();
+		expect(getTestQuestions).not.toHaveBeenCalled();
+	});
+
 	it('should fetch questions when time_left is null (unlimited)', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 		vi.mocked(getTimeLeft).mockResolvedValue({ time_left: null });

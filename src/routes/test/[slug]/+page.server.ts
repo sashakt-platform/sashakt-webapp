@@ -90,6 +90,33 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 		}
 	}
 
+	// Already-submitted external launches keep their cookie so a refresh shows
+	// the result instead of resuming the timer / re-rendering the quiz.
+	if (candidate && candidate.candidate_test_id && candidate.candidate_uuid && candidate.submitted) {
+		let result = null;
+		try {
+			const resultResponse = await fetch(
+				`${BACKEND_URL}/candidate/result/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`,
+				{ method: 'GET', headers: { accept: 'application/json' } }
+			);
+			if (resultResponse.ok) {
+				result = await resultResponse.json();
+			}
+		} catch (error) {
+			console.error('Error fetching submitted result:', error);
+		}
+		return {
+			candidate,
+			testData,
+			submitted: true,
+			result,
+			// null (not 0) so the layout TestTimer does not render / auto-submit.
+			timeLeft: null,
+			testQuestions: null,
+			locations
+		};
+	}
+
 	if (
 		candidate &&
 		candidate.candidate_test_id &&
@@ -315,10 +342,13 @@ export const actions = {
 					}
 				}
 
-				// Keep the cookie for external (portal) launches so a refresh after
-				// submit stays bound to the submitted attempt instead of dropping back
-				// to the landing page where a new attempt could be started.
-				if (!candidate.external_launch) {
+				// For external (portal) launches, keep the cookie and mark it
+				// submitted so a refresh shows the result instead of dropping back to
+				// the landing page (where a new attempt could start) or re-rendering
+				// the quiz with a resuming timer.
+				if (candidate.external_launch) {
+					setCandidateCookie(cookies, testData.link, { ...candidate, submitted: true });
+				} else {
 					cookies.delete('sashakt-candidate', {
 						path: '/test/' + testData.link,
 						secure: !dev
