@@ -1000,64 +1000,68 @@
 				</div>
 			</div>
 
-			<div class="overflow-x-auto">
-				<table class="w-full border-collapse text-sm">
-					<thead>
-						<tr class="bg-muted">
-							<th class="border-border w-14 border px-4 py-3"></th>
-							{#each matrixColumns as col (col.id)}
-								<th
-									class="border-border text-foreground min-w-16 border px-4 py-3 text-center font-semibold"
-								>
-									{col.key}
-								</th>
-							{/each}
-						</tr>
-					</thead>
-					<tbody>
-						{#each matrixRows as row (row.id)}
-							<tr class="border-border border-t">
-								<td
-									class="border-border text-foreground border px-4 py-3 text-center text-sm font-semibold"
-									>{row.key}</td
-								>
-								{#each matrixColumns as col (col.id)}
-									<td class="border-border border px-4 py-3 text-center">
-										{#if isFeedbackViewed}
-											{@const status = getMatrixCellStatus(
-												row.id,
-												col.id,
-												matrixSelections,
-												correctMatrix
-											)}
-											<div
-												class={cn(
-													'mx-auto flex h-5 w-5 items-center justify-center rounded border-2',
-													status === 'correct' && 'bg-success border-success',
-													status === 'missed' && 'bg-card border-success',
-													status === 'wrong' && 'bg-error border-error',
-													status === 'none' && 'bg-card border-border'
-												)}
-											>
-												{#if status === 'correct' || status === 'wrong'}
-													<Check size={14} class="text-primary-foreground" />
+			<div class="mt-6 flex justify-center">
+				<div class="w-full max-w-2xl">
+					<div class="border-border overflow-hidden rounded-xl border">
+						<table class="w-full border-collapse text-sm">
+							<thead>
+								<tr class="bg-muted">
+									<th class="w-14 px-4 py-3"></th>
+									{#each matrixColumns as col (col.id)}
+										<th
+											class="text-foreground min-w-16 px-4 py-3 text-center font-semibold"
+										>
+											{col.key}
+										</th>
+									{/each}
+								</tr>
+							</thead>
+							<tbody>
+								{#each matrixRows as row (row.id)}
+									<tr class="border-border border-b last:border-b-0">
+										<td
+											class="text-foreground px-4 py-3 text-center text-sm font-semibold"
+											>{row.key}
+										</td>
+										{#each matrixColumns as col (col.id)}
+											<td class="px-4 py-3 text-center">
+												{#if isFeedbackViewed}
+													{@const status = getMatrixCellStatus(
+														row.id,
+														col.id,
+														matrixSelections,
+														correctMatrix
+													)}
+													<div
+														class={cn(
+															'mx-auto flex h-5 w-5 items-center justify-center rounded border-2',
+															status === 'correct' && 'bg-success border-success',
+															status === 'missed' && 'bg-card border-success',
+															status === 'wrong' && 'bg-error border-error',
+															status === 'none' && 'bg-card border-border'
+														)}
+													>
+														{#if status === 'correct' || status === 'wrong'}
+															<Check size={14} class="text-primary-foreground" />
+														{/if}
+													</div>
+												{:else}
+													{@const isChecked = (matrixSelections[row.id] ?? []).includes(col.id)}
+													<Checkbox
+														checked={isChecked}
+														disabled={isLocked}
+														onCheckedChange={() => handleMatrixInput(row.id, col.id)}
+														class="border-input data-[state=checked]:border-primary"
+													/>
 												{/if}
-											</div>
-										{:else}
-											{@const isChecked = (matrixSelections[row.id] ?? []).includes(col.id)}
-											<Checkbox
-												checked={isChecked}
-												disabled={isLocked}
-												onCheckedChange={() => handleMatrixInput(row.id, col.id)}
-												class="border-input data-[state=checked]:border-primary"
-											/>
-										{/if}
-									</td>
+											</td>
+										{/each}
+									</tr>
 								{/each}
-							</tr>
-						{/each}
-					</tbody>
-				</table>
+							</tbody>
+						</table>
+					</div>
+				</div>
 			</div>
 		{:else if question.question_type === question_type_enum.MATRIXRATING}
 			{@const matrixOpts = question.options as unknown as TMatrixOptions}
@@ -1105,39 +1109,41 @@
 			{@const inputType = matrixOpts.columns.input_type}
 			<div class="overflow-x-auto">
 				<div class="border-border overflow-hidden rounded-xl border">
-					<table class="w-full border-collapse text-sm">
-						<thead>
-							<tr class="border-border bg-muted border-b">
-								<th class="text-foreground px-4 py-3 text-left font-semibold">
-									{matrixOpts.rows.label}
-								</th>
-								<th class="text-foreground px-4 py-3 text-left font-semibold">
-									{matrixOpts.columns.label}
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each matrixOpts.rows.items as row (row.id)}
-								<tr class="border-border hover:bg-accent border-b last:border-b-0">
-									<td class="w-1/2 px-4 py-3 font-medium">
-										<span class="font-semibold">{row.key}.</span>
-										<span class="ml-1">{row.value}</span>
-									</td>
-									<td class="w-1/2 px-4 py-3">
-										<input
-											type={inputType}
-											class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-											placeholder={$t('Enter answer')}
-											value={matrixInputValues[String(row.id)] ?? ''}
-											disabled={isLocked}
-											oninput={(e) =>
-												handleMatrixInputChange(row.id, (e.target as HTMLInputElement).value)}
-										/>
-									</td>
+					<div class="px-4">
+						<table class="w-full border-collapse text-sm">
+							<thead>
+								<tr class="border-border bg-muted border-b">
+									<th class="text-foreground px-4 py-3 text-left font-semibold">
+										{matrixOpts.rows.label}
+									</th>
+									<th class="text-foreground px-4 py-3 text-left font-semibold">
+										{matrixOpts.columns.label}
+									</th>
 								</tr>
-							{/each}
-						</tbody>
-					</table>
+							</thead>
+							<tbody>
+								{#each matrixOpts.rows.items as row (row.id)}
+									<tr class="border-border hover:bg-accent border-b last:border-b-0">
+										<td class="w-1/2 px-4 py-3 font-medium">
+											<span class="font-semibold">{row.key}.</span>
+											<span class="ml-1">{row.value}</span>
+										</td>
+										<td class="w-1/2 px-4 py-3">
+											<input
+												type={inputType}
+												class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+												placeholder={$t('Enter answer')}
+												value={matrixInputValues[String(row.id)] ?? ''}
+												disabled={isLocked}
+												oninput={(e) =>
+													handleMatrixInputChange(row.id, (e.target as HTMLInputElement).value)}
+											/>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 			<div class="mt-3 flex items-center">
