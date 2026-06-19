@@ -1,7 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import SelectField from './SelectField.svelte';
 import type { TFormField } from '$lib/types';
+import { initializeI18nForTests, setLocaleForTests } from '$lib/test-utils';
+
+beforeAll(() => {
+	initializeI18nForTests();
+});
+
+beforeEach(async () => {
+	await setLocaleForTests('en-US');
+});
 
 function createField(overrides: Partial<TFormField> = {}): TFormField {
 	return {

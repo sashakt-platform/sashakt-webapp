@@ -1,7 +1,12 @@
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach, type Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import SearchableLocationField from './SearchableLocationField.svelte';
 import type { TFormField } from '$lib/types';
+import { initializeI18nForTests, setLocaleForTests } from '$lib/test-utils';
+
+beforeAll(() => {
+	initializeI18nForTests();
+});
 
 function createField(overrides: Partial<TFormField> = {}): TFormField {
 	return {
@@ -41,9 +46,15 @@ function mockFetchFailure() {
 	(global.fetch as Mock).mockResolvedValue({ ok: false });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+	await setLocaleForTests('en-US');
 	vi.useFakeTimers();
 	global.fetch = vi.fn();
+});
+
+afterEach(() => {
+	vi.useRealTimers();
+	vi.restoreAllMocks();
 });
 
 describe('SearchableLocationField rendering', () => {

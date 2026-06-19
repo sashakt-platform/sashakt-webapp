@@ -1,7 +1,12 @@
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach, type Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import SearchableEntityField from './SearchableEntityField.svelte';
 import type { TFormField } from '$lib/types';
+import { initializeI18nForTests, setLocaleForTests } from '$lib/test-utils';
+
+beforeAll(() => {
+	initializeI18nForTests();
+});
 
 function createField(overrides: Partial<TFormField> = {}): TFormField {
 	return {
@@ -52,9 +57,15 @@ const defaultProps = {
 	testLink: 'test-abc-123'
 };
 
-beforeEach(() => {
+beforeEach(async () => {
+	await setLocaleForTests('en-US');
 	vi.useFakeTimers();
 	global.fetch = vi.fn();
+});
+
+afterEach(() => {
+	vi.useRealTimers();
+	vi.restoreAllMocks();
 });
 
 describe('SearchableEntityField rendering', () => {
