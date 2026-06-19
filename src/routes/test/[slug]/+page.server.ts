@@ -68,11 +68,13 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 			throw error(response.status, errorMessage);
 		}
 
-		const candidateData = {
-			...(await response.json()),
-			external_launch: true,
-			pending_start: true
-		};
+		const startData = await response.json();
+		// If the launched attempt is already submitted (e.g. re-launched from the
+		// portal after finishing), go straight to the result instead of the start
+		// screen so the candidate never re-enters the quiz.
+		const candidateData = startData.is_submitted
+			? { ...startData, external_launch: true, submitted: true }
+			: { ...startData, external_launch: true, pending_start: true };
 		setCandidateCookie(cookies, testData.link, candidateData);
 		throw redirect(303, '/test/' + testData.link);
 	}

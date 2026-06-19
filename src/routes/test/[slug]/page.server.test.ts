@@ -289,6 +289,36 @@ describe('Page Server - load function', () => {
 		);
 	});
 
+	it('should mark cookie submitted when external launch resumes a submitted attempt', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValue(await createMockResponse({ ...mockCandidate, is_submitted: true }));
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: mockFetch,
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=${mockCandidate.candidate_test_id}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 303, location: `/test/${mockTestData.link}` });
+
+		expect(mockCookies.set).toHaveBeenCalledWith(
+			'sashakt-candidate',
+			JSON.stringify({
+				...mockCandidate,
+				is_submitted: true,
+				external_launch: true,
+				submitted: true
+			}),
+			expect.objectContaining({ path: `/test/${mockTestData.link}` })
+		);
+	});
+
 	it('should reject an invalid external launch', async () => {
 		const mockCookies = createMockCookies();
 
