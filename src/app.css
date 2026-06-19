@@ -95,6 +95,27 @@
 		line-height: 1.6;
 	}
 
+	.rich-text h1 {
+		font-size: 1.5rem;
+		font-weight: 700;
+		margin-top: 1rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.rich-text h2 {
+		font-size: 1.25rem;
+		font-weight: 700;
+		margin-top: 1rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.rich-text h3 {
+		font-size: 1.125rem;
+		font-weight: 600;
+		margin-top: 0.75rem;
+		margin-bottom: 0.5rem;
+	}
+
 	.rich-text p {
 		margin: 0;
 	}
@@ -110,9 +131,26 @@
 		padding-left: 1.25rem;
 	}
 
+	.rich-text ul {
+		list-style-type: disc;
+	}
+
+	.rich-text ol {
+		list-style-type: decimal;
+	}
+
 	.rich-text img {
 		max-width: 100%;
 		height: auto;
+	}
+
+	.rich-text a {
+		color: hsl(var(--primary));
+		text-decoration: underline;
+	}
+
+	.rich-text a:hover {
+		text-decoration: none;
 	}
 
 	.rich-text .MathJax {

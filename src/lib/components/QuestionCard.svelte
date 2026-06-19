@@ -872,7 +872,8 @@
 		{:else if question.question_type === question_type_enum.SUBJECTIVE}
 			<div class="flex flex-col gap-2">
 				<textarea
-					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring h-22 w-full rounded-[10px] border px-[14px] py-[10px] text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+					style="field-sizing: content;"
+					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring min-h-22 w-full resize-none overflow-hidden rounded-[10px] border px-[14px] py-[10px] text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 					placeholder={$t('Type your answer here...')}
 					bind:value={candidateInput}
 					maxlength={question.subjective_answer_limit || undefined}

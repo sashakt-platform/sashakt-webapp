@@ -24,11 +24,12 @@
 	minlength={field.validation?.min_length ?? undefined}
 	maxlength={field.validation?.max_length ?? undefined}
 	required={field.is_required}
-	rows={4}
+	style="field-sizing: content;"
 	class={cn(
-		'border-input bg-card flex min-h-[80px] w-full rounded-xl border px-4 py-3 text-sm',
+		'border-input bg-card min-h-20 w-full rounded-xl border px-4 py-3 text-sm',
 		'placeholder:text-muted-foreground',
 		'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-		'disabled:cursor-not-allowed disabled:opacity-50'
+		'disabled:cursor-not-allowed disabled:opacity-50',
+		'resize-none overflow-hidden'
 	)}>{String(value ?? field.default_value ?? '')}</textarea
 >
