@@ -33,26 +33,38 @@ async function getAccessToken(request: APIRequestContext): Promise<TokenResponse
 	return cachedTokens;
 }
 
-type ApiTest = { id: number; name: string; link: string };
+type ApiTest = { id: number; name: string };
 
 /**
- * Look up a published (non-template) test seeded in the backend and return its
- * public link slug. The slug is what the candidate-facing /test/[slug] route
- * uses, and it isn't stable across seed runs, so we discover it at test time
- * instead of pinning it in env.
+ * Look up a seeded (non-template) test in the backend and return a shareable
+ * link UUID for it. The webapp's /test/[slug] route resolves the slug against
+ * the backend's TestLink table — a TestLink is created lazily the first time
+ * an admin requests one for a given test, so we list the seeded tests and ask
+ * for a link on the first hit. The UUID isn't stable across seed runs, so
+ * discovering it at test time beats pinning it in env.
  */
 export async function getSeededTestSlug(request: APIRequestContext): Promise<string> {
 	const { access_token } = await getAccessToken(request);
-	const res = await request.get(`${BACKEND_URL}/test/?is_template=false&page=1&size=50`, {
-		headers: { Authorization: `Bearer ${access_token}` }
+	const auth = { Authorization: `Bearer ${access_token}` };
+
+	const listRes = await request.get(`${BACKEND_URL}/test/?is_template=false&page=1&size=1`, {
+		headers: auth
 	});
-	if (!res.ok()) {
-		throw new Error(`Failed to list tests (${res.status()}): ${await res.text()}`);
+	if (!listRes.ok()) {
+		throw new Error(`Failed to list tests (${listRes.status()}): ${await listRes.text()}`);
 	}
-	const body = (await res.json()) as { items: ApiTest[] };
-	const test = body.items?.find((t) => !!t.link);
+	const list = (await listRes.json()) as { items: ApiTest[] };
+	const test = list.items?.[0];
 	if (!test) {
-		throw new Error('No seeded tests with a public link found in the backend');
+		throw new Error('No seeded non-template tests found in the backend');
 	}
-	return test.link;
+
+	const linkRes = await request.get(`${BACKEND_URL}/test/${test.id}/link`, { headers: auth });
+	if (!linkRes.ok()) {
+		throw new Error(
+			`Failed to fetch shareable link for test ${test.id} (${linkRes.status()}): ${await linkRes.text()}`
+		);
+	}
+	const { uuid } = (await linkRes.json()) as { uuid: string };
+	return uuid;
 }
