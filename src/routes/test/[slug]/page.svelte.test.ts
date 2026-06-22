@@ -72,6 +72,40 @@ describe('Test Page', () => {
 		// Also shows "Result summary"
 	});
 
+	it('should render TestResult on refresh when data is submitted', () => {
+		render(Page, {
+			props: {
+				data: {
+					...baseData,
+					candidate: mockCandidate,
+					submitted: true,
+					result: mockResultData,
+					testQuestions: null
+				},
+				form: null
+			}
+		});
+
+		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
+	});
+
+	it('should show already-submitted message when submitted without a result', () => {
+		render(Page, {
+			props: {
+				data: {
+					...baseData,
+					candidate: mockCandidate,
+					submitted: true,
+					result: null,
+					testQuestions: null
+				},
+				form: null
+			}
+		});
+
+		expect(screen.getByText('You have already submitted this test.')).toBeInTheDocument();
+	});
+
 	it('should render LandingPage when no candidate', async () => {
 		render(Page, {
 			props: {

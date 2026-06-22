@@ -333,6 +333,112 @@ describe('Page Server - load function', () => {
 			} as any)
 		).rejects.toMatchObject({ status: 400 });
 	});
+
+	it('should reject an external launch with a non-numeric candidate_test_id', async () => {
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: vi.fn(),
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=abc`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 400 });
+	});
+
+	it('should ignore external launch handling when no launch params are present', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockCookies = createMockCookies();
+
+		const result = await load({
+			locals: { testData: mockTestData, timeToBegin: 300 },
+			cookies: mockCookies,
+			fetch: vi.fn(),
+			url: new URL(`http://localhost/test/${mockTestData.link}`)
+		} as any);
+
+		expect(result.candidate).toBeNull();
+	});
+
+	it('should propagate the backend error when external start_test fails', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValue(
+				await createMockResponse({ detail: 'Test link not found' }, { ok: false, status: 404 })
+			);
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: mockFetch,
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=${mockCandidate.candidate_test_id}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 404 });
+	});
+
+	it('should fall back to a default message when external start_test error has no body', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockFetch = vi.fn().mockResolvedValue({
+			ok: false,
+			status: 500,
+			json: () => Promise.reject(new Error('bad json'))
+		});
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: mockFetch,
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=${mockCandidate.candidate_test_id}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 500 });
+	});
+
+	it('should return submitted with null result when the result fetch is not ok', async () => {
+		const submittedCandidate = { ...mockCandidate, external_launch: true, submitted: true };
+		vi.mocked(getCandidate).mockReturnValue(submittedCandidate);
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValue(await createMockResponse({}, { ok: false, status: 500 }));
+		const mockCookies = createMockCookies();
+
+		const result = await load({
+			locals: { testData: mockTestData, timeToBegin: 300 },
+			cookies: mockCookies,
+			fetch: mockFetch
+		} as any);
+
+		expect(result.submitted).toBe(true);
+		expect(result.result).toBeNull();
+	});
+
+	it('should return submitted with null result when the result fetch fails', async () => {
+		const submittedCandidate = { ...mockCandidate, external_launch: true, submitted: true };
+		vi.mocked(getCandidate).mockReturnValue(submittedCandidate);
+		const mockFetch = vi.fn().mockRejectedValue(new Error('network'));
+		const mockCookies = createMockCookies();
+
+		const result = await load({
+			locals: { testData: mockTestData, timeToBegin: 300 },
+			cookies: mockCookies,
+			fetch: mockFetch
+		} as any);
+
+		expect(result.submitted).toBe(true);
+		expect(result.result).toBeNull();
+		expect(getTimeLeft).not.toHaveBeenCalled();
+	});
 });
 
 describe('Page Server - createCandidate action', () => {
@@ -350,6 +456,26 @@ describe('Page Server - createCandidate action', () => {
 			get: (key: string) => data[key] || null
 		};
 	};
+
+	it('should clear pending_start for an existing externally launched candidate', async () => {
+		const pendingCandidate = { ...mockCandidate, external_launch: true, pending_start: true };
+		vi.mocked(getCandidate).mockReturnValue(pendingCandidate);
+
+		const mockFetch = vi.fn();
+		const mockCookies = createMockCookies();
+
+		const result = await actions.createCandidate({
+			request: { formData: () => Promise.resolve(createMockFormData({})) },
+			locals: { testData: mockTestData },
+			fetch: mockFetch,
+			cookies: mockCookies
+		} as any);
+
+		expect(result.success).toBe(true);
+		expect(result.candidateData.pending_start).toBe(false);
+		expect(mockFetch).not.toHaveBeenCalled();
+		expect(mockCookies.set).toHaveBeenCalled();
+	});
 
 	it('should create candidate successfully', async () => {
 		// check no existing candidate
