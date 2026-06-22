@@ -6,9 +6,14 @@ import {
 	mockQuestions,
 	mockSectionedTestQuestionsResponse,
 	mockTestData,
-	setLocaleForTests
+	setLocaleForTests,
+	createMockResponse,
+	mockSubjectiveQuestion,
+	mockSingleChoiceQuestion,
+	mockOptionalQuestion
 } from '$lib/test-utils';
 import { createTestSessionStore } from '$lib/helpers/testSession';
+import type { TSelection } from '$lib/types';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -41,6 +46,18 @@ import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 type MockPageForm = { submitTest?: boolean; error?: string; result?: boolean } | null;
 const mockPage = page as { form: MockPageForm };
 
+const createSessionStoreFixture = (
+	selections: TSelection[] = [],
+	currentPage = 1
+): ReturnType<typeof createTestSessionStore> =>
+	({
+		current: {
+			candidate: mockCandidate,
+			selections,
+			currentPage
+		}
+	}) as ReturnType<typeof createTestSessionStore>;
+
 // Mock fetch for API calls
 vi.stubGlobal('fetch', vi.fn());
 
@@ -54,13 +71,7 @@ const testDetails = mockTestData;
 describe('Question', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.mocked(createTestSessionStore).mockReturnValue({
-			current: {
-				candidate: mockCandidate,
-				selections: [],
-				currentPage: 1
-			}
-		} as any);
+		vi.mocked(createTestSessionStore).mockReturnValue(createSessionStoreFixture());
 	});
 
 	it('should render questions', async () => {
@@ -203,6 +214,270 @@ describe('Question', () => {
 				expect(screen.getByText(q.question_text)).toBeInTheDocument();
 			});
 		});
+	});
+
+	it('does not sync question time on page change when multiple questions share a page', async () => {
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		const multiQuestionPage = {
+			question_revisions: [
+				{ ...mockSubjectiveQuestion, is_mandatory: false },
+				{ ...mockSingleChoiceQuestion, is_mandatory: false },
+				{ ...mockOptionalQuestion, id: 99, is_mandatory: false }
+			],
+			question_pagination: 2
+		};
+
+		vi.mocked(createTestSessionStore).mockReturnValue(
+			createSessionStoreFixture([
+				{
+					question_revision_id: mockSubjectiveQuestion.id,
+					response: 'saved answer',
+					visited: true,
+					time_spent: 7,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			])
+		);
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: multiQuestionPage,
+				testDetails
+			}
+		});
+
+		await waitFor(() => {
+			expect(
+				screen.getByText(multiQuestionPage.question_revisions[0].question_text)
+			).toBeInTheDocument();
+		});
+
+		await fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+		await waitFor(() => {
+			expect(
+				screen.getByText(multiQuestionPage.question_revisions[2].question_text)
+			).toBeInTheDocument();
+		});
+
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('syncs current question time on page change for single-question pages', async () => {
+		vi.useFakeTimers();
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		const singleQuestionPages = {
+			question_revisions: [
+				{ ...mockSubjectiveQuestion, is_mandatory: false },
+				{ ...mockSingleChoiceQuestion, is_mandatory: false },
+				{ ...mockOptionalQuestion, id: 99, is_mandatory: false }
+			],
+			question_pagination: 1
+		};
+
+		vi.mocked(createTestSessionStore).mockReturnValue(
+			createSessionStoreFixture([
+				{
+					question_revision_id: mockSubjectiveQuestion.id,
+					response: 'saved answer',
+					visited: true,
+					time_spent: 7,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			])
+		);
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: singleQuestionPages,
+				testDetails
+			}
+		});
+
+		await vi.advanceTimersByTimeAsync(20);
+		await waitFor(() => {
+			expect(
+				screen.getByText(singleQuestionPages.question_revisions[0].question_text)
+			).toBeInTheDocument();
+		});
+
+		await vi.advanceTimersByTimeAsync(3000);
+		await fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+		await waitFor(() => {
+			expect(fetch).toHaveBeenCalledWith(
+				'/test/sample-test/api/submit-answer',
+				expect.objectContaining({ method: 'POST' })
+			);
+		});
+
+		const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+		expect(body.time_spent).toBeGreaterThanOrEqual(10);
+
+		vi.useRealTimers();
+	});
+
+	it('syncs current question time when submit confirmation opens', async () => {
+		vi.useFakeTimers();
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		const singleQuestionPage = {
+			question_revisions: [{ ...mockSubjectiveQuestion, is_mandatory: false }],
+			question_pagination: 1
+		};
+
+		vi.mocked(createTestSessionStore).mockReturnValue(
+			createSessionStoreFixture([
+				{
+					question_revision_id: mockSubjectiveQuestion.id,
+					response: 'saved answer',
+					visited: true,
+					time_spent: 5,
+					bookmarked: true,
+					is_reviewed: false
+				}
+			])
+		);
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: singleQuestionPage,
+				testDetails
+			}
+		});
+
+		await vi.advanceTimersByTimeAsync(20);
+		await waitFor(() => {
+			expect(
+				screen.getByText(singleQuestionPage.question_revisions[0].question_text)
+			).toBeInTheDocument();
+		});
+
+		await vi.advanceTimersByTimeAsync(2000);
+		await fireEvent.click(screen.getAllByRole('button', { name: /submit test/i })[0]);
+
+		await waitFor(() => {
+			expect(fetch).toHaveBeenCalledWith(
+				'/test/sample-test/api/submit-answer',
+				expect.objectContaining({ method: 'POST' })
+			);
+		});
+
+		const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+		expect(body.time_spent).toBeGreaterThanOrEqual(7);
+		expect(body.bookmarked).toBe(true);
+
+		vi.useRealTimers();
+	});
+
+	it('continues when syncing question time fails before page change', async () => {
+		vi.useFakeTimers();
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ error: 'failed' }, { ok: false, status: 500 }) as unknown as Response
+		);
+		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		const singleQuestionPages = {
+			question_revisions: [
+				{ ...mockSubjectiveQuestion, is_mandatory: false },
+				{ ...mockSingleChoiceQuestion, is_mandatory: false }
+			],
+			question_pagination: 1
+		};
+
+		vi.mocked(createTestSessionStore).mockReturnValue(
+			createSessionStoreFixture([
+				{
+					question_revision_id: mockSubjectiveQuestion.id,
+					response: 'saved answer',
+					visited: true,
+					time_spent: 2,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			])
+		);
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: singleQuestionPages,
+				testDetails
+			}
+		});
+
+		await vi.advanceTimersByTimeAsync(20);
+		await waitFor(() => {
+			expect(
+				screen.getByText(singleQuestionPages.question_revisions[0].question_text)
+			).toBeInTheDocument();
+		});
+
+		await vi.advanceTimersByTimeAsync(2000);
+		await fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+		await waitFor(() => {
+			expect(
+				screen.getByText(singleQuestionPages.question_revisions[1].question_text)
+			).toBeInTheDocument();
+		});
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			'Failed to sync question time:',
+			expect.any(Error)
+		);
+
+		consoleErrorSpy.mockRestore();
+		vi.useRealTimers();
+	});
+
+	it('periodically syncs current question time for single-question pages', async () => {
+		vi.useFakeTimers();
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		const singleQuestionPage = {
+			question_revisions: [{ ...mockSubjectiveQuestion, is_mandatory: false }],
+			question_pagination: 1
+		};
+
+		vi.mocked(createTestSessionStore).mockReturnValue(createSessionStoreFixture());
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: singleQuestionPage,
+				testDetails
+			}
+		});
+
+		await vi.advanceTimersByTimeAsync(20_000);
+
+		await waitFor(() => {
+			expect(fetch).toHaveBeenCalledWith(
+				'/test/sample-test/api/submit-answer',
+				expect.objectContaining({ method: 'POST' })
+			);
+		});
+
+		const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+		expect(body.response).toBeNull();
+		expect(body.time_spent).toBeGreaterThanOrEqual(20);
+
+		vi.useRealTimers();
 	});
 
 	it('should render section header for sectioned tests', async () => {

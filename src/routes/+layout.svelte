@@ -10,8 +10,11 @@
 	import { register, init, isLoading } from 'svelte-i18n';
 	import { languages, DEFAULT_LANGUAGE } from '$lib/utils';
 	import { t } from 'svelte-i18n';
+	import { onMount } from 'svelte';
 
 	let { children } = $props();
+	let isDesktop = $state(false);
+	let viewportReady = $state(false);
 
 	register(languages.English, () => import('$locales/en-US.json'));
 	register(languages.Hindi, () => import('$locales/hi-IN.json'));
@@ -25,6 +28,21 @@
 		page.data?.timeLeft !== null && page.data.candidate && !page.form?.submitTest
 	);
 	const pauseTimerWhenInactive = $derived(page.data.testData?.pause_timer_when_inactive ?? false);
+
+	onMount(() => {
+		const mediaQuery = window.matchMedia('(min-width: 1024px)');
+		const updateViewport = () => {
+			isDesktop = mediaQuery.matches;
+			viewportReady = true;
+		};
+
+		updateViewport();
+		mediaQuery.addEventListener('change', updateViewport);
+
+		return () => {
+			mediaQuery.removeEventListener('change', updateViewport);
+		};
+	});
 </script>
 
 <nav class="bg-card border-border sticky top-0 z-50 border-b px-6 py-6">
@@ -34,11 +52,12 @@
 				<Button variant="outline" size="icon" onclick={navState.onBack}>
 					<ArrowLeft class="h-5 w-5" />
 				</Button>
-			{:else if showTimer}
+			{:else if showTimer && (!viewportReady || !isDesktop)}
 				<TestTimer
 					timeLeft={page.data?.timeLeft}
 					candidate={page.data.candidate}
 					{pauseTimerWhenInactive}
+					onBeforeSubmit={navState.onBeforeTimedSubmit}
 				/>
 			{/if}
 		</div>
@@ -77,11 +96,12 @@
 		<div class="hidden items-center justify-between lg:flex">
 			<h2 class="text-primary text-xl font-extrabold tracking-tight uppercase">Sashakt</h2>
 			<div class="flex items-center gap-3">
-				{#if showTimer}
+				{#if showTimer && viewportReady && isDesktop}
 					<TestTimer
 						timeLeft={page.data?.timeLeft}
 						candidate={page.data.candidate}
 						{pauseTimerWhenInactive}
+						onBeforeSubmit={navState.onBeforeTimedSubmit}
 					/>
 				{/if}
 				<InstructionsDialog instructions={navState.instructions} />
@@ -100,11 +120,12 @@
 				Sashakt
 			</h2>
 			<div class="flex justify-end">
-				{#if showTimer}
+				{#if showTimer && viewportReady && isDesktop}
 					<TestTimer
 						timeLeft={page.data?.timeLeft}
 						candidate={page.data.candidate}
 						{pauseTimerWhenInactive}
+						onBeforeSubmit={navState.onBeforeTimedSubmit}
 					/>
 				{/if}
 			</div>
