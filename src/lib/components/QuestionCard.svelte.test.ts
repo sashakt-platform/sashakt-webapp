@@ -2756,6 +2756,64 @@ describe('QuestionCard', () => {
 				expect(radio).toBeDisabled();
 			});
 		});
+
+		it('should not update selection on API failure', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(QuestionCard, {
+				props: { question: mockMatrixRatingQuestion, ...defaultProps }
+			});
+
+			const radios = screen.getAllByRole('radio');
+			radios.forEach((radio) => expect(radio).not.toBeChecked());
+
+			const firstRadio = radios.find(
+				(r) =>
+					(r as HTMLInputElement).name ===
+					`matrix-${mockMatrixRatingQuestion.id}-row-${mockMatrixRatingOptions.rows.items[0].id}`
+			) as HTMLElement;
+
+			await fireEvent.change(firstRadio);
+
+			await waitFor(() => {
+				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
+			});
+
+			radios.forEach((radio) => expect(radio).not.toBeChecked());
+		});
+
+		it('should clear a saved matrix rating answer', async () => {
+			vi.mocked(fetch).mockResolvedValue(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			const selectedQuestions: TSelection[] = [
+				{
+					question_revision_id: mockMatrixRatingQuestion.id,
+					response: JSON.stringify({ '1': 2 }),
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockMatrixRatingQuestion,
+					...defaultProps,
+					selectedQuestions
+				}
+			});
+
+			await fireEvent.click(screen.getByRole('button', { name: /clear answer/i }));
+
+			await waitFor(() => {
+				screen.getAllByRole('radio').forEach((radio) => {
+					expect(radio).not.toBeChecked();
+				});
+			});
+		});
 	});
 
 	describe('MATRIXMATCH question type', () => {
@@ -3092,6 +3150,123 @@ describe('QuestionCard', () => {
 				expect(within(table).getByText('B')).toBeInTheDocument();
 			});
 		});
+
+		it('should call API when a checkbox is toggled', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps }
+			});
+
+			const checkboxes = screen.getAllByRole('checkbox');
+			await checkboxes[0].click();
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalledWith(
+					expect.stringContaining('/api/submit-answer'),
+					expect.objectContaining({ method: 'POST' })
+				);
+			});
+		});
+
+		it('should revert checkbox state on API failure', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps }
+			});
+
+			const checkboxes = screen.getAllByRole('checkbox');
+			checkboxes.forEach((cb) => expect(cb).toHaveAttribute('aria-checked', 'false'));
+
+			await checkboxes[0].click();
+
+			await waitFor(() => {
+				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
+			});
+
+			checkboxes.forEach((cb) => expect(cb).toHaveAttribute('aria-checked', 'false'));
+		});
+
+		it('should clear a saved matrix match answer', async () => {
+			vi.mocked(fetch).mockResolvedValue(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			const selectedQuestions = [
+				{
+					question_revision_id: mockMatrixMatchQuestion.id,
+					response: JSON.stringify({ 801: [901] }),
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps, selectedQuestions }
+			});
+
+			expect(screen.getAllByRole('checkbox')[0]).toHaveAttribute('aria-checked', 'true');
+
+			await fireEvent.click(screen.getByRole('button', { name: /clear answer/i }));
+
+			await waitFor(() => {
+				screen.getAllByRole('checkbox').forEach((cb) => {
+					expect(cb).toHaveAttribute('aria-checked', 'false');
+				});
+			});
+		});
+
+		it('should revert checkboxes on clear answer API failure', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			const selectedQuestions = [
+				{
+					question_revision_id: mockMatrixMatchQuestion.id,
+					response: JSON.stringify({ 801: [901] }),
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps, selectedQuestions }
+			});
+
+			await fireEvent.click(screen.getByRole('button', { name: /clear answer/i }));
+
+			await waitFor(() => {
+				expect(screen.getByText(/network error|failed to clear your answer/i)).toBeInTheDocument();
+			});
+
+			expect(screen.getAllByRole('checkbox')[0]).toHaveAttribute('aria-checked', 'true');
+		});
+
+		it('should replace checkboxes with status indicators when locked', () => {
+			const selectedQuestions = [
+				{
+					question_revision_id: mockMatrixMatchQuestion.id,
+					response: JSON.stringify({ 801: [901] }),
+					correct_answer: JSON.stringify({ 801: [901], 802: [902] }),
+					visited: true,
+					time_spent: 0,
+					bookmarked: false,
+					is_reviewed: true
+				}
+			];
+
+			render(QuestionCard, {
+				props: { question: mockMatrixMatchQuestion, ...defaultProps, selectedQuestions }
+			});
+
+			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+		});
 	});
 
 	describe('media support', () => {
@@ -3385,6 +3560,83 @@ describe('QuestionCard', () => {
 				screen.getAllByRole('textbox').forEach((input) => {
 					expect(input).toBeDisabled();
 				});
+			});
+
+			it('should not allow saving when locked', () => {
+				const selectedQuestions: TSelection[] = [
+					{
+						question_revision_id: mockMatrixInputTextQuestion.id,
+						response: JSON.stringify({ '1': 'Paris' }),
+						visited: true,
+						time_spent: 0,
+						bookmarked: false,
+						is_reviewed: true
+					}
+				];
+				render(QuestionCard, {
+					props: { question: mockMatrixInputTextQuestion, ...defaultProps, selectedQuestions }
+				});
+
+				expect(screen.getByRole('button', { name: /saved/i })).toBeDisabled();
+			});
+		});
+
+		describe('clear answer', () => {
+			it('should revert input values on clear answer API failure', async () => {
+				vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+				const selectedQuestions: TSelection[] = [
+					{
+						question_revision_id: mockMatrixInputTextQuestion.id,
+						response: JSON.stringify({ '1': 'Paris', '2': 'Tokyo' }),
+						visited: true,
+						time_spent: 12,
+						bookmarked: false,
+						is_reviewed: false
+					}
+				];
+				render(QuestionCard, {
+					props: { question: mockMatrixInputTextQuestion, ...defaultProps, selectedQuestions }
+				});
+
+				await fireEvent.click(screen.getByRole('button', { name: /clear answer/i }));
+
+				await waitFor(() => {
+					expect(
+						screen.getByText(/network error|failed to clear your answer/i)
+					).toBeInTheDocument();
+				});
+
+				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+				expect(inputs[0].value).toBe('Paris');
+				expect(inputs[1].value).toBe('Tokyo');
+			});
+		});
+
+		describe('View Feedback button', () => {
+			it('should hide View Result button for matrix input regardless of showFeedback', () => {
+				const selectedQuestions: TSelection[] = [
+					{
+						question_revision_id: mockMatrixInputTextQuestion.id,
+						response: JSON.stringify({ '1': 'Paris' }),
+						visited: true,
+						time_spent: 10,
+						bookmarked: false,
+						is_reviewed: false
+					}
+				];
+				render(QuestionCard, {
+					props: {
+						question: mockMatrixInputTextQuestion,
+						...defaultProps,
+						selectedQuestions,
+						showFeedback: true
+					}
+				});
+
+				expect(
+					screen.queryByRole('button', { name: /view result/i })
+				).not.toBeInTheDocument();
 			});
 		});
 
