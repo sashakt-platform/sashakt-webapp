@@ -677,6 +677,21 @@ describe('QuestionCard', () => {
 	});
 
 	describe('Subjective question functionality', () => {
+		const savedSubjectiveSelection = (
+			response: string,
+			overrides: Record<string, unknown> = {}
+		) => [
+			{
+				question_revision_id: mockSubjectiveQuestion.id,
+				response,
+				visited: true,
+				time_spent: 30,
+				bookmarked: false,
+				is_reviewed: false,
+				...overrides
+			}
+		];
+
 		it('should render textarea for subjective questions', () => {
 			render(QuestionCard, {
 				props: {
@@ -922,23 +937,13 @@ describe('QuestionCard', () => {
 		});
 
 		it('should display existing answer when question was previously answered', () => {
-			const selectedQuestions = [
-				{
-					question_revision_id: mockSubjectiveQuestion.id,
-					response: 'My previous answer',
-					visited: true,
-					time_spent: 60,
-					bookmarked: false
-				}
-			];
-
 			render(QuestionCard, {
 				props: {
 					question: mockSubjectiveQuestion,
 					serialNumber: 1,
 					candidate: mockCandidate,
 					totalQuestions: 10,
-					selectedQuestions
+					selectedQuestions: savedSubjectiveSelection('My previous answer', { time_spent: 60 })
 				}
 			});
 
@@ -973,6 +978,230 @@ describe('QuestionCard', () => {
 			});
 
 			expect(screen.getAllByText('+5').length).toBeGreaterThan(0);
+		});
+
+		it('should show Saved state when previously answered without changes', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: savedSubjectiveSelection('My previous answer')
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: /saved/i })).toBeDisabled();
+		});
+
+		it('should show Update Answer button when modifying a previously saved answer', async () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: savedSubjectiveSelection('My previous answer')
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: 'My updated answer' } });
+
+			expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
+		});
+
+		it('should show Saved state after a successful save with no pending changes', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: 'My answer' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+			});
+		});
+
+		it('should disable Save Answer button when text matches the last saved value', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: 'My answer' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+			});
+
+			await fireEvent.input(textarea, { target: { value: 'My answer' } });
+			expect(screen.getByRole('button', { name: /saved/i })).toBeDisabled();
+		});
+
+		it('should clear a saved subjective answer', async () => {
+			vi.mocked(fetch).mockResolvedValue(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: savedSubjectiveSelection('My saved answer')
+				}
+			});
+
+			await fireEvent.click(screen.getByRole('button', { name: /clear answer/i }));
+
+			await waitFor(() => {
+				const textarea = screen.getByPlaceholderText(/type your answer here/i);
+				expect(textarea).toHaveValue('');
+			});
+		});
+
+		it('should disable Clear answer button when there is no saved answer', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /clear answer/i })).toBeDisabled();
+		});
+
+		it('should revert textarea on clear answer API failure', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: savedSubjectiveSelection('My saved answer')
+				}
+			});
+
+			await fireEvent.click(screen.getByRole('button', { name: /clear answer/i }));
+
+			await waitFor(() => {
+				const textarea = screen.getByPlaceholderText(/type your answer here/i);
+				expect(textarea).toHaveValue('My saved answer');
+			});
+		});
+
+		it('should keep textarea value after save API failure', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: 'My answer' } });
+			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await waitFor(() => {
+				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
+			});
+			expect(textarea).toHaveValue('My answer');
+		});
+
+		it('should have maxlength attribute when subjective_answer_limit is set', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			expect(textarea).toHaveAttribute('maxlength', '500');
+		});
+
+		it('should not have maxlength attribute when no limit is set', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestionNoLimit,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: []
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			expect(textarea).not.toHaveAttribute('maxlength');
+		});
+
+		it('should call API with correct response when updating an existing answer', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+
+			render(QuestionCard, {
+				props: {
+					question: mockSubjectiveQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: savedSubjectiveSelection('Old answer')
+				}
+			});
+
+			const textarea = screen.getByPlaceholderText(/type your answer here/i);
+			await fireEvent.input(textarea, { target: { value: 'Updated answer' } });
+			await fireEvent.click(screen.getByRole('button', { name: /update answer/i }));
+
+			await waitFor(() => {
+				expect(fetch).toHaveBeenCalledWith(
+					expect.stringContaining('/api/submit-answer'),
+					expect.objectContaining({
+						method: 'POST',
+						body: expect.stringContaining('Updated answer')
+					})
+				);
+			});
 		});
 	});
 
