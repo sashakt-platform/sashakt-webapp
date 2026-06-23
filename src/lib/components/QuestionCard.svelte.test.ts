@@ -104,7 +104,6 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		const optionRows = Array.from(container.querySelectorAll('div.flex.items-center'));
 		mockSingleChoiceQuestion.options.forEach((option) => {
 			expect(screen.getByText(option.key)).toBeInTheDocument();
 			expect(screen.getByText(option.value)).toBeInTheDocument();
@@ -122,7 +121,6 @@ describe('QuestionCard', () => {
 			}
 		});
 
-		const optionRows = Array.from(container.querySelectorAll('div.flex.items-center'));
 		mockMultipleChoiceQuestion.options.forEach((option) => {
 			expect(screen.getByText(option.key)).toBeInTheDocument();
 			expect(screen.getByText(option.value)).toBeInTheDocument();
@@ -587,7 +585,6 @@ describe('QuestionCard', () => {
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
-			const optionRows = Array.from(container.querySelectorAll('div.flex.items-center'));
 			mockSingleChoiceQuestion.options.forEach((option) => {
 				expect(screen.getByText(option.value)).toBeInTheDocument();
 			});
