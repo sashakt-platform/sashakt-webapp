@@ -7,7 +7,7 @@ export type TSelection = {
 	question_revision_id: number;
 	response: number[] | string;
 	visited: boolean;
-	time_spent?: number | null;
+	time_spent: number;
 	bookmarked: boolean;
 	is_reviewed?: boolean;
 	correct_answer?: number[] | number | null | string;

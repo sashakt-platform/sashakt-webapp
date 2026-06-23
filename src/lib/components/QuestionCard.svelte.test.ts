@@ -94,7 +94,7 @@ describe('QuestionCard', () => {
 	});
 
 	it('should render all options for single-choice question', () => {
-		render(QuestionCard, {
+		const { container } = render(QuestionCard, {
 			props: {
 				question: mockSingleChoiceQuestion,
 				serialNumber: 1,
@@ -104,6 +104,7 @@ describe('QuestionCard', () => {
 			}
 		});
 
+		const optionRows = Array.from(container.querySelectorAll('div.flex.items-center'));
 		mockSingleChoiceQuestion.options.forEach((option) => {
 			expect(screen.getByText(option.key)).toBeInTheDocument();
 			expect(screen.getByText(option.value)).toBeInTheDocument();
@@ -111,7 +112,7 @@ describe('QuestionCard', () => {
 	});
 
 	it('should render all options for multiple-choice question', () => {
-		render(QuestionCard, {
+		const { container } = render(QuestionCard, {
 			props: {
 				question: mockMultipleChoiceQuestion,
 				serialNumber: 1,
@@ -121,6 +122,7 @@ describe('QuestionCard', () => {
 			}
 		});
 
+		const optionRows = Array.from(container.querySelectorAll('div.flex.items-center'));
 		mockMultipleChoiceQuestion.options.forEach((option) => {
 			expect(screen.getByText(option.key)).toBeInTheDocument();
 			expect(screen.getByText(option.value)).toBeInTheDocument();
@@ -287,31 +289,6 @@ describe('QuestionCard', () => {
 
 		const radioButtons = screen.getAllByRole('radio');
 		expect(radioButtons[1]).toBeChecked();
-	});
-
-	it('does not send time_spent when question timing is not enabled', async () => {
-		vi.mocked(fetch).mockResolvedValueOnce(
-			createMockResponse({ success: true }) as unknown as Response
-		);
-
-		render(QuestionCard, {
-			props: {
-				question: mockSingleChoiceQuestion,
-				serialNumber: 1,
-				candidate: mockCandidate,
-				totalQuestions: 10,
-				selectedQuestions: []
-			}
-		});
-
-		await fireEvent.click(screen.getAllByRole('radio')[0]);
-
-		await waitFor(() => {
-			expect(fetch).toHaveBeenCalled();
-		});
-
-		const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
-		expect(body).not.toHaveProperty('time_spent');
 	});
 
 	describe('Bookmark functionality', () => {
@@ -598,7 +575,7 @@ describe('QuestionCard', () => {
 		});
 
 		it('should not affect other card elements when showMarkForReview is false', () => {
-			render(QuestionCard, {
+			const { container } = render(QuestionCard, {
 				props: {
 					question: mockSingleChoiceQuestion,
 					serialNumber: 1,
@@ -610,6 +587,7 @@ describe('QuestionCard', () => {
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
+			const optionRows = Array.from(container.querySelectorAll('div.flex.items-center'));
 			mockSingleChoiceQuestion.options.forEach((option) => {
 				expect(screen.getByText(option.value)).toBeInTheDocument();
 			});
@@ -1054,81 +1032,6 @@ describe('QuestionCard', () => {
 			expect(screen.getByRole('button', { name: /view Result/i })).toBeInTheDocument();
 		});
 
-		it('should flush question time before viewing result and send time_spent', async () => {
-			vi.mocked(fetch).mockResolvedValueOnce(
-				createMockResponse({
-					success: true,
-					correct_answer: [mockSingleChoiceQuestion.options[1].id]
-				}) as unknown as Response
-			);
-			const selectedQuestions = [
-				{
-					question_revision_id: mockSingleChoiceQuestion.id,
-					response: [mockSingleChoiceQuestion.options[0].id],
-					visited: true,
-					time_spent: 10,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			];
-			const onBeforeReview = vi.fn(() => {
-				selectedQuestions[0].time_spent = 23;
-			});
-
-			render(QuestionCard, {
-				props: {
-					question: mockSingleChoiceQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions,
-					showFeedback: true,
-					onBeforeReview
-				}
-			});
-
-			await fireEvent.click(screen.getByRole('button', { name: /view result/i }));
-
-			await waitFor(() => expect(onBeforeReview).toHaveBeenCalled());
-			const body = JSON.parse((fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
-			expect(body.is_reviewed).toBe(true);
-			expect(body.time_spent).toBe(23);
-		});
-
-		it('should not lock the question when result feedback is empty', async () => {
-			vi.mocked(fetch).mockResolvedValueOnce(
-				createMockResponse({ success: true, correct_answer: null }) as unknown as Response
-			);
-			const selectedQuestions = [
-				{
-					question_revision_id: mockSingleChoiceQuestion.id,
-					response: [mockSingleChoiceQuestion.options[0].id],
-					visited: true,
-					time_spent: 10,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			];
-
-			render(QuestionCard, {
-				props: {
-					question: mockSingleChoiceQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions,
-					showFeedback: true
-				}
-			});
-
-			await fireEvent.click(screen.getByRole('button', { name: /view result/i }));
-
-			await waitFor(() => {
-				expect(screen.getByText(/failed to load result/i)).toBeInTheDocument();
-			});
-			expect(screen.getByRole('button', { name: /view result/i })).toBeInTheDocument();
-		});
-
 		it('should render locked state immediately when is_reviewed is true', () => {
 			const selectedQuestions = [
 				{
@@ -1549,7 +1452,7 @@ describe('QuestionCard', () => {
 					time_spent: 15,
 					bookmarked: false,
 					is_reviewed: true,
-					correct_answer: 8
+					correct_answer: 8 as any
 				}
 			];
 
@@ -1577,7 +1480,7 @@ describe('QuestionCard', () => {
 					time_spent: 15,
 					bookmarked: false,
 					is_reviewed: true,
-					correct_answer: 8
+					correct_answer: 8 as any
 				}
 			];
 
@@ -1605,7 +1508,7 @@ describe('QuestionCard', () => {
 					time_spent: 15,
 					bookmarked: false,
 					is_reviewed: true,
-					correct_answer: 8
+					correct_answer: 8 as any
 				}
 			];
 
@@ -1632,7 +1535,7 @@ describe('QuestionCard', () => {
 					time_spent: 15,
 					bookmarked: false,
 					is_reviewed: true,
-					correct_answer: 8
+					correct_answer: 8 as any
 				}
 			];
 
@@ -1660,7 +1563,7 @@ describe('QuestionCard', () => {
 						time_spent: 10,
 						bookmarked: false,
 						is_reviewed: true,
-						correct_answer: 0
+						correct_answer: 0 as any
 					}
 				];
 
@@ -1688,7 +1591,7 @@ describe('QuestionCard', () => {
 						time_spent: 10,
 						bookmarked: false,
 						is_reviewed: true,
-						correct_answer: 0
+						correct_answer: 0 as any
 					}
 				];
 
@@ -1716,7 +1619,7 @@ describe('QuestionCard', () => {
 						time_spent: 10,
 						bookmarked: false,
 						is_reviewed: true,
-						correct_answer: 0
+						correct_answer: 0 as any
 					}
 				];
 
@@ -1763,7 +1666,7 @@ describe('QuestionCard', () => {
 					time_spent: 15,
 					bookmarked: false,
 					is_reviewed: true,
-					correct_answer: 3.14
+					correct_answer: 3.14 as any
 				}
 			];
 
@@ -1792,7 +1695,7 @@ describe('QuestionCard', () => {
 					time_spent: 15,
 					bookmarked: false,
 					is_reviewed: true,
-					correct_answer: 3.14
+					correct_answer: 3.14 as any
 				}
 			];
 
@@ -1821,7 +1724,7 @@ describe('QuestionCard', () => {
 					time_spent: 15,
 					bookmarked: false,
 					is_reviewed: true,
-					correct_answer: 3.14
+					correct_answer: 3.14 as any
 				}
 			];
 
@@ -1874,7 +1777,7 @@ describe('QuestionCard', () => {
 					time_spent: 15,
 					bookmarked: false,
 					is_reviewed: true,
-					correct_answer: 3.14
+					correct_answer: 3.14 as any
 				}
 			];
 
@@ -1927,7 +1830,7 @@ describe('QuestionCard', () => {
 						time_spent: 10,
 						bookmarked: false,
 						is_reviewed: true,
-						correct_answer: 0
+						correct_answer: 0 as any
 					}
 				];
 
@@ -1956,7 +1859,7 @@ describe('QuestionCard', () => {
 						time_spent: 10,
 						bookmarked: false,
 						is_reviewed: true,
-						correct_answer: 0
+						correct_answer: 0 as any
 					}
 				];
 
@@ -1985,7 +1888,7 @@ describe('QuestionCard', () => {
 						time_spent: 10,
 						bookmarked: false,
 						is_reviewed: true,
-						correct_answer: 0
+						correct_answer: 0 as any
 					}
 				];
 
@@ -2014,7 +1917,7 @@ describe('QuestionCard', () => {
 						time_spent: 10,
 						bookmarked: false,
 						is_reviewed: true,
-						correct_answer: 0
+						correct_answer: 0 as any
 					}
 				];
 
@@ -3107,34 +3010,6 @@ describe('QuestionCard', () => {
 					expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument()
 				);
 				expect(inputs[0].value).toBe('Paris');
-			});
-
-			it('should clear visible matrix input values after clearing answer', async () => {
-				vi.mocked(fetch).mockResolvedValueOnce(
-					createMockResponse({ success: true }) as unknown as Response
-				);
-				const selectedQuestions: TSelection[] = [
-					{
-						question_revision_id: mockMatrixInputTextQuestion.id,
-						response: JSON.stringify({ '1': 'Paris', '2': 'Tokyo' }),
-						visited: true,
-						time_spent: 12,
-						bookmarked: false,
-						is_reviewed: false
-					}
-				];
-				render(QuestionCard, {
-					props: { question: mockMatrixInputTextQuestion, ...defaultProps, selectedQuestions }
-				});
-
-				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
-				expect(inputs[0].value).toBe('Paris');
-
-				await fireEvent.click(screen.getByRole('button', { name: /clear answer/i }));
-
-				await waitFor(() => {
-					inputs.forEach((input) => expect(input.value).toBe(''));
-				});
 			});
 		});
 

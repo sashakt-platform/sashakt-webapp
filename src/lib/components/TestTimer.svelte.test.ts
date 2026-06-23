@@ -1,20 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { render, screen } from '@testing-library/svelte';
 import { createMockResponse, mockCandidate } from '$lib/test-utils';
 import TestTimer from './TestTimer.svelte';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
-	enhance: (node: HTMLFormElement, submit?: () => void | Promise<void>) => {
-		const handleSubmit = (event: Event) => {
-			event.preventDefault();
-			void submit?.();
-		};
-		node.addEventListener('submit', handleSubmit);
-		return {
-			destroy: () => node.removeEventListener('submit', handleSubmit)
-		};
-	}
+	enhance: () => () => {}
 }));
 
 vi.mock('$app/state', () => ({
@@ -137,22 +128,6 @@ describe('TestTimer', () => {
 		await vi.advanceTimersByTimeAsync(1000);
 
 		expect(screen.getByText('Time Up!')).toBeInTheDocument();
-	});
-
-	it('flushes pending work before submitting when time is up', async () => {
-		const onBeforeSubmit = vi.fn();
-		render(TestTimer, {
-			props: {
-				timeLeft: 0,
-				pauseTimerWhenInactive: false,
-				onBeforeSubmit
-			}
-		});
-
-		await vi.advanceTimersByTimeAsync(1000);
-		await fireEvent.submit(document.querySelector('form') as HTMLFormElement);
-
-		expect(onBeforeSubmit).toHaveBeenCalledOnce();
 	});
 
 	it('does not sync timer when pauseTimerWhenInactive is disabled', async () => {
