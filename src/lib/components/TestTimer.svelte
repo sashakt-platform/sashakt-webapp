@@ -13,13 +13,11 @@
 	let {
 		timeLeft: initialTime,
 		candidate = null,
-		pauseTimerWhenInactive = false,
-		onBeforeSubmit
+		pauseTimerWhenInactive = false
 	}: {
 		timeLeft: number;
 		candidate?: TCandidate | null;
 		pauseTimerWhenInactive?: boolean;
-		onBeforeSubmit?: () => Promise<void> | void;
 	} = $props();
 
 	const HEARTBEAT_INTERVAL_MS = 15000;
@@ -112,9 +110,7 @@
 
 			latestAppliedSyncRequestId = requestId;
 			updateTimeLeft(Math.min(timeLeft, data.time_left));
-		} catch {
-			// Keep the local countdown running if timer sync fails.
-		}
+		} catch {}
 	};
 
 	const startHeartbeat = () => {
@@ -166,16 +162,11 @@
 	};
 
 	// enhance handler for auto-submit form action
-	const baseSubmitTestEnhance = createFormEnhanceHandler({
+	const handleSubmitTestEnhance = createFormEnhanceHandler({
 		setLoading: (loading) => (isSubmitting = loading),
 		setError: (error) => (submitError = error),
 		setDialogOpen: (openState) => (open = openState)
 	});
-
-	const handleSubmitTestEnhance = async () => {
-		await onBeforeSubmit?.();
-		return baseSubmitTestEnhance();
-	};
 </script>
 
 <div
