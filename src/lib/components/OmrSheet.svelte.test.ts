@@ -20,6 +20,7 @@ import {
 	mockMatrixInputNumberOptions,
 	createMockResponse
 } from '$lib/test-utils';
+import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 import type { TQuestion, TSelection, TMatrixOptions, TOptions } from '$lib/types';
 import { createTestSessionStore } from '$lib/helpers/testSession';
 
@@ -1248,6 +1249,97 @@ describe('OmrSheet', () => {
 			expect(screen.getByText('Q.1:')).toBeInTheDocument();
 			expect(screen.getByText('Q.2:')).toBeInTheDocument();
 			expect(screen.getByText('Q.3:')).toBeInTheDocument();
+		});
+	});
+
+	describe('Submit dialog', () => {
+		it('opens the dialog when the Submit button is clicked', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			expect(await screen.findByRole('dialog')).toBeInTheDocument();
+		});
+
+		it('shows "Submit test?" title when all mandatory questions are answered', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			expect(await screen.findByText('Submit test?')).toBeInTheDocument();
+		});
+
+		it('shows the confirmation message', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			expect(
+				await screen.findByText(
+					'Are you sure you want to submit for final marking? No changes will be allowed after submission.'
+				)
+			).toBeInTheDocument();
+		});
+
+		it('shows Cancel and Confirm buttons in the dialog', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			await screen.findByRole('dialog');
+			expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /cancel/i }).length).toBeGreaterThan(0);
+		});
+
+		it('closes the dialog when Cancel is clicked', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+			await screen.findByRole('dialog');
+
+			const cancelButtons = screen.getAllByRole('button', { name: /cancel/i });
+			await fireEvent.click(cancelButtons[0]);
+
+			await waitFor(() => {
+				expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('Mandatory questions dialog', () => {
+		beforeEach(() => {
+			vi.mocked(answeredAllMandatory).mockReturnValue(false);
+		});
+
+		it('shows "Answer all mandatory questions!" when not all answered', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			expect(await screen.findByText('Answer all mandatory questions!')).toBeInTheDocument();
+		});
+
+		it('shows the descriptive message about mandatory questions', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			await screen.findByRole('dialog');
+			expect(screen.getByText(/Please make sure all mandatory questions are answered/)).toBeInTheDocument();
+		});
+
+		it('shows an Okay button that closes the dialog', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+			await screen.findByRole('dialog');
+
+			const okayButtons = screen.getAllByRole('button', { name: /okay/i });
+			await fireEvent.click(okayButtons[0]);
+
+			await waitFor(() => {
+				expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+			});
 		});
 	});
 });

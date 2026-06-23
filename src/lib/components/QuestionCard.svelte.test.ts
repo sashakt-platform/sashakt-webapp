@@ -3313,4 +3313,98 @@ describe('QuestionCard', () => {
 			expect(screen.getAllByRole('button', { name: /mark for review/i })).toHaveLength(2);
 		});
 	});
+
+	
+describe('Marking scheme modal (mobile) vs dropdown (desktop)', () => {
+	const defaultProps = {
+		serialNumber: 1,
+		candidate: mockCandidate,
+		totalQuestions: 10,
+		selectedQuestions: []
+	};
+
+	it('mobile marks pill opens a bottom sheet modal', async () => {
+		const { container } = render(QuestionCard, {
+			props: { question: mockSingleChoiceQuestion, ...defaultProps }
+		});
+
+		const mobileButton = container.querySelector(
+			'button.lg\\:hidden[aria-label="Marking scheme"]'
+		) as HTMLElement;
+		expect(mobileButton).toBeInTheDocument();
+
+		await fireEvent.click(mobileButton);
+
+		const dialog = await screen.findByRole('dialog');
+		expect(dialog).toBeInTheDocument();
+	});
+
+	it('modal shows marking scheme title and all rows', async () => {
+		const { container } = render(QuestionCard, {
+			props: { question: mockSingleChoiceQuestion, ...defaultProps }
+		});
+
+		const mobileButton = container.querySelector(
+			'button.lg\\:hidden[aria-label="Marking scheme"]'
+		) as HTMLElement;
+		await fireEvent.click(mobileButton);
+
+		const dialog = await screen.findByRole('dialog');
+		expect(within(dialog).getAllByText('Marking scheme').length).toBeGreaterThan(0);
+		expect(within(dialog).getByText('Correct')).toBeInTheDocument();
+		expect(within(dialog).getByText('Incorrect')).toBeInTheDocument();
+		expect(within(dialog).getByText('Unanswered')).toBeInTheDocument();
+	});
+
+	it('modal shows the correct mark values', async () => {
+		const { container } = render(QuestionCard, {
+			props: { question: mockSingleChoiceQuestion, ...defaultProps } // correct: 1, wrong: 0
+		});
+
+		const mobileButton = container.querySelector(
+			'button.lg\\:hidden[aria-label="Marking scheme"]'
+		) as HTMLElement;
+		await fireEvent.click(mobileButton);
+
+		const dialog = await screen.findByRole('dialog');
+		expect(within(dialog).getAllByText('+1').length).toBeGreaterThan(0);
+	});
+
+	it('modal can be closed using the close button', async () => {
+		const { container } = render(QuestionCard, {
+			props: { question: mockSingleChoiceQuestion, ...defaultProps }
+		});
+
+		const mobileButton = container.querySelector(
+			'button.lg\\:hidden[aria-label="Marking scheme"]'
+		) as HTMLElement;
+		await fireEvent.click(mobileButton);
+
+		const dialog = await screen.findByRole('dialog');
+		await fireEvent.click(within(dialog).getByRole('button', { name: /close/i }));
+
+		await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+	});
+
+	it('desktop marks pill shows an inline hover dropdown, not a modal', async () => {
+		const { container } = render(QuestionCard, {
+			props: { question: mockSingleChoiceQuestion, ...defaultProps }
+		});
+
+		const desktopWrapper = container.querySelector('.lg\\:block') as HTMLElement;
+		expect(desktopWrapper).toBeInTheDocument();
+
+		// The hover dropdown div is inside the desktop button (visible on hover/focus, not via click)
+		const hoverDropdown = desktopWrapper.querySelector('.group-hover\\:block') as HTMLElement;
+		expect(hoverDropdown).toBeInTheDocument();
+		expect(within(hoverDropdown).getByText('Correct')).toBeInTheDocument();
+
+		// Clicking the desktop button does NOT open a dialog
+		const desktopButton = desktopWrapper.querySelector('button') as HTMLElement;
+		await fireEvent.click(desktopButton);
+
+		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+	});
+});
+
 });

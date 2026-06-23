@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, waitFor } from '@testing-library/svelte';
 import { createMockResponse, mockCandidate } from '$lib/test-utils';
 import TestTimer from './TestTimer.svelte';
 
@@ -279,5 +279,48 @@ describe('TestTimer', () => {
 		await vi.advanceTimersByTimeAsync(15000);
 
 		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	describe('10-minute warning dialog', () => {
+		it('shows the warning dialog when countdown reaches 10 minutes', async () => {
+			// Start at 601: tick 1 → 600, tick 2 → open=true + 599
+			render(TestTimer, { props: { timeLeft: 601 } });
+
+			await vi.advanceTimersByTimeAsync(2000);
+
+			expect(screen.getByText('10 mins left!')).toBeInTheDocument();
+		});
+
+		it('does not show the warning dialog when timeLeft is above 10 minutes', () => {
+			render(TestTimer, { props: { timeLeft: 700 } });
+
+			expect(screen.queryByText('10 mins left!')).not.toBeInTheDocument();
+		});
+
+		it('shows the warning description text when dialog opens', async () => {
+			render(TestTimer, { props: { timeLeft: 601 } });
+
+			await vi.advanceTimersByTimeAsync(2000);
+
+			expect(
+				screen.getByText(
+					'Please note that there is only 10 mins left for the test to complete, hurry up!'
+				)
+			).toBeInTheDocument();
+		});
+
+		it('closes the warning dialog when Okay button is clicked', async () => {
+			render(TestTimer, { props: { timeLeft: 601 } });
+
+			await vi.advanceTimersByTimeAsync(2000);
+
+			// bits-ui Dialog.Close wraps Button, so there may be nested button elements — pick the innermost
+			const okayButtons = screen.getAllByRole('button', { name: /okay/i });
+			okayButtons[0].click();
+
+			await waitFor(() => {
+				expect(screen.queryByText('10 mins left!')).not.toBeInTheDocument();
+			});
+		});
 	});
 });
