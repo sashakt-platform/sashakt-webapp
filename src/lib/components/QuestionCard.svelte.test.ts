@@ -3507,6 +3507,71 @@ describe('QuestionCard', () => {
 				});
 			});
 		});
+
+		describe('when changing an existing answer (answeredQuestion branch)', () => {
+			const existingSelection: TSelection[] = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [mockSingleChoiceQuestion.options[0].id],
+					visited: true,
+					time_spent: 15,
+					bookmarked: true,
+					is_reviewed: false
+				}
+			];
+
+			it('should send the new option to API when switching from option A to B', async () => {
+				vi.mocked(fetch).mockResolvedValueOnce(
+					createMockResponse({ success: true }) as unknown as Response
+				);
+				renderSingleChoice({ selectedQuestions: [...existingSelection] });
+
+				expect(screen.getAllByRole('radio')[0]).toBeChecked();
+
+				await fireEvent.click(screen.getAllByRole('radio')[2]);
+
+				await waitFor(() => {
+					const body = JSON.parse(
+						(vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
+					);
+					expect(body.response).toEqual([mockSingleChoiceQuestion.options[2].id]);
+				});
+			});
+
+			it('should show the new option checked optimistically before API resolves', async () => {
+				const resolve = mockPendingApi();
+				renderSingleChoice({ selectedQuestions: [...existingSelection] });
+
+				await fireEvent.click(screen.getAllByRole('radio')[2]);
+
+				await waitFor(() => {
+					expect(screen.getAllByRole('radio')[0]).not.toBeChecked();
+					expect(screen.getAllByRole('radio')[2]).toBeChecked();
+				});
+				expect(fetch).toHaveBeenCalledTimes(1);
+
+				resolve();
+			});
+
+			it('should revert to previous option on API failure', async () => {
+				vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+				renderSingleChoice({ selectedQuestions: [...existingSelection] });
+
+				expect(screen.getAllByRole('radio')[0]).toBeChecked();
+
+				await fireEvent.click(screen.getAllByRole('radio')[2]);
+
+				await waitFor(() => {
+					expect(
+						screen.getByText(/network error|failed to save your answer/i)
+					).toBeInTheDocument();
+				});
+				await waitFor(() => {
+					expect(screen.getAllByRole('radio')[0]).toBeChecked();
+					expect(screen.getAllByRole('radio')[2]).not.toBeChecked();
+				});
+			});
+		});
 	});
 
 	describe('Multi-choice selection', () => {
@@ -3597,6 +3662,70 @@ describe('QuestionCard', () => {
 
 			expect(fetch).toHaveBeenCalledTimes(1);
 			resolve();
+		});
+
+		describe('when adding to an existing answer (answeredQuestion branch)', () => {
+			const existingSelection: TSelection[] = [
+				{
+					question_revision_id: mockMultipleChoiceQuestion.id,
+					response: [mockMultipleChoiceQuestion.options[0].id],
+					visited: true,
+					time_spent: 20,
+					bookmarked: true,
+					is_reviewed: false
+				}
+			];
+
+			it('should append new option to existing response and send to API', async () => {
+				vi.mocked(fetch).mockResolvedValueOnce(
+					createMockResponse({ success: true }) as unknown as Response
+				);
+				renderMultiChoice({ selectedQuestions: [...existingSelection] });
+
+				await fireEvent.click(screen.getAllByRole('checkbox')[1]);
+
+				await waitFor(() => {
+					const body = JSON.parse(
+						(vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string
+					);
+					expect(body.response).toEqual([
+						mockMultipleChoiceQuestion.options[0].id,
+						mockMultipleChoiceQuestion.options[1].id
+					]);
+				});
+			});
+
+			it('should show both options checked optimistically before API resolves', async () => {
+				const resolve = mockPendingApi();
+				renderMultiChoice({ selectedQuestions: [...existingSelection] });
+
+				await fireEvent.click(screen.getAllByRole('checkbox')[1]);
+
+				await waitFor(() => {
+					expect(screen.getAllByRole('checkbox')[0]).toHaveAttribute('aria-checked', 'true');
+					expect(screen.getAllByRole('checkbox')[1]).toHaveAttribute('aria-checked', 'true');
+				});
+				expect(fetch).toHaveBeenCalledTimes(1);
+
+				resolve();
+			});
+
+			it('should revert to previous selection on API failure', async () => {
+				vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+				renderMultiChoice({ selectedQuestions: [...existingSelection] });
+
+				await fireEvent.click(screen.getAllByRole('checkbox')[1]);
+
+				await waitFor(() => {
+					expect(
+						screen.getByText(/network error|failed to save your answer/i)
+					).toBeInTheDocument();
+				});
+				await waitFor(() => {
+					expect(screen.getAllByRole('checkbox')[0]).toHaveAttribute('aria-checked', 'true');
+					expect(screen.getAllByRole('checkbox')[1]).toHaveAttribute('aria-checked', 'false');
+				});
+			});
 		});
 	});
 });
