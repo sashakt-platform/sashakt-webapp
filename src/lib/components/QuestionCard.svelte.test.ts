@@ -3441,4 +3441,162 @@ describe('QuestionCard', () => {
 			expect(screen.getAllByRole('button', { name: /mark for review/i })).toHaveLength(2);
 		});
 	});
+
+	describe('Single-choice selection', () => {
+		const renderSingleChoice = (overrides: { selectedQuestions?: TSelection[] } = {}) =>
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [],
+					...overrides
+				}
+			});
+
+		const mockPendingApi = () => {
+			let resolveApi: (value: Response) => void;
+			const pendingApi = new Promise<Response>((resolve) => {
+				resolveApi = resolve;
+			});
+			vi.mocked(fetch).mockReturnValueOnce(pendingApi);
+			return () => resolveApi(createMockResponse({ success: true }) as unknown as Response);
+		};
+
+		it('should send response as [optionId] to the API when a radio option is clicked', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+			renderSingleChoice();
+
+			await fireEvent.click(screen.getAllByRole('radio')[0]);
+
+			await waitFor(() => {
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				expect(body.response).toEqual([mockSingleChoiceQuestion.options[0].id]);
+			});
+		});
+
+		it('should update selectedQuestions optimistically before API resolves', async () => {
+			const resolve = mockPendingApi();
+			renderSingleChoice();
+
+			await fireEvent.click(screen.getAllByRole('radio')[1]);
+
+			await waitFor(() => {
+				expect(screen.getAllByRole('radio')[1]).toBeChecked();
+			});
+			expect(fetch).toHaveBeenCalledTimes(1);
+
+			resolve();
+		});
+
+		it('should revert selection and show error on API failure', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Server error'));
+			renderSingleChoice();
+
+			await fireEvent.click(screen.getAllByRole('radio')[0]);
+
+			await waitFor(() => {
+				expect(screen.getByText(/server error|failed to save your answer/i)).toBeInTheDocument();
+			});
+			await waitFor(() => {
+				screen.getAllByRole('radio').forEach((radio) => {
+					expect(radio).not.toBeChecked();
+				});
+			});
+		});
+	});
+
+	describe('Multi-choice selection', () => {
+		const renderMultiChoice = (overrides: { selectedQuestions?: TSelection[] } = {}) =>
+			render(QuestionCard, {
+				props: {
+					question: mockMultipleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: [],
+					...overrides
+				}
+			});
+
+		const mockPendingApi = () => {
+			let resolveApi: (value: Response) => void;
+			const pendingApi = new Promise<Response>((resolve) => {
+				resolveApi = resolve;
+			});
+			vi.mocked(fetch).mockReturnValueOnce(pendingApi);
+			return () => resolveApi(createMockResponse({ success: true }) as unknown as Response);
+		};
+
+		it('should send correct response array to API when a checkbox is clicked', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+			renderMultiChoice();
+
+			await fireEvent.click(screen.getAllByRole('checkbox')[0]);
+
+			await waitFor(() => {
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				expect(body.response).toEqual([mockMultipleChoiceQuestion.options[0].id]);
+			});
+		});
+
+		it('should remove option from response when unchecking a checkbox', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+			renderMultiChoice({
+				selectedQuestions: [
+					{
+						question_revision_id: mockMultipleChoiceQuestion.id,
+						response: [
+							mockMultipleChoiceQuestion.options[0].id,
+							mockMultipleChoiceQuestion.options[1].id
+						],
+						visited: true,
+						time_spent: 0,
+						bookmarked: false,
+						is_reviewed: false
+					}
+				]
+			});
+
+			await fireEvent.click(screen.getAllByRole('checkbox')[0]);
+
+			await waitFor(() => {
+				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+				expect(body.response).toEqual([mockMultipleChoiceQuestion.options[1].id]);
+			});
+		});
+
+		it('should revert checkbox state and show error on API failure', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+			renderMultiChoice();
+
+			const checkboxes = screen.getAllByRole('checkbox');
+			await fireEvent.click(checkboxes[0]);
+
+			await waitFor(() => {
+				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
+			});
+			await waitFor(() => {
+				expect(checkboxes[0]).toHaveAttribute('aria-checked', 'false');
+			});
+		});
+
+		it('should ignore click while already submitting', async () => {
+			const resolve = mockPendingApi();
+			renderMultiChoice();
+
+			await fireEvent.click(screen.getAllByRole('checkbox')[0]);
+			await fireEvent.click(screen.getAllByRole('checkbox')[1]);
+
+			expect(fetch).toHaveBeenCalledTimes(1);
+			resolve();
+		});
+	});
 });
