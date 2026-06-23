@@ -372,27 +372,31 @@
 			}
 			isSubmitting = true;
 			saveError = null;
+			const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+
+			if (answeredQuestion) {
+				selectedQuestions = selectedQuestions.map((q) =>
+					q.question_revision_id === questionId ? { ...q, response: newResponse } : q
+				);
+			} else {
+				selectedQuestions = [
+					...selectedQuestions,
+					{
+						question_revision_id: questionId,
+						response: newResponse,
+						visited: true,
+						bookmarked: currentBookmarked,
+						is_reviewed: false
+					}
+				];
+			}
+			updateStore();
+
 			try {
 				await submitAnswer(questionId, newResponse, currentBookmarked, false);
-				if (answeredQuestion) {
-					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
-					);
-				} else {
-					selectedQuestions = [
-						...selectedQuestions,
-						{
-							question_revision_id: questionId,
-							response: newResponse,
-							visited: true,
-							bookmarked: currentBookmarked,
-							is_reviewed: false
-						}
-					];
-				}
-				updateStore();
 			} catch (error) {
-				// force complete remount of RadioGroup
+				selectedQuestions = previousState;
+				updateStore();
 				radioGroupKey++;
 				setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 			} finally {
