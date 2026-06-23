@@ -4,7 +4,6 @@
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import QuestionPaletteModal from '$lib/components/QuestionPaletteModal.svelte';
 	import QuestionPaletteSidebar from '$lib/components/QuestionPaletteSidebar.svelte';
-	import QuestionPaletteToggleButton from '$lib/components/QuestionPaletteToggleButton.svelte';
 	import RichText from '$lib/components/RichText.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
