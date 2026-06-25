@@ -236,6 +236,7 @@
 									showFeedback={testDetails.show_feedback_immediately}
 									showMarkForReview={testDetails.bookmark}
 									showMarks={testDetails?.show_marks ?? true}
+									trackTime={perPage === 1}
 								/>
 							</div>
 						{/each}
