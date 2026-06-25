@@ -304,6 +304,8 @@
 	};
 
 	const confirmViewFeedback = async () => {
+		flushTime();
+
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentResponse = answeredQuestion?.response ?? [];
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
@@ -492,7 +494,7 @@
 	}
 
 	$effect(() => {
-		if (!trackTime) return;
+		if (!trackTime || isFeedbackViewed) return;
 
 		const questionId = question.id;
 		const questionType = question.question_type;
