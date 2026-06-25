@@ -17,13 +17,15 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		response,
 		candidate,
 		bookmarked,
-		is_reviewed
+		is_reviewed,
+		time_spent
 	}: {
 		question_revision_id: number;
 		response: number[] | string | null;
 		candidate: TCandidate;
 		bookmarked?: boolean;
 		is_reviewed?: boolean;
+		time_spent?: number;
 	} = await request.json();
 
 	if (
@@ -58,7 +60,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 						: null,
 					visited: true,
 					bookmarked: bookmarked ?? false,
-					is_reviewed: is_reviewed ?? false
+					is_reviewed: is_reviewed ?? false,
+					time_spent: time_spent ?? 0
 				})
 			}
 		);
