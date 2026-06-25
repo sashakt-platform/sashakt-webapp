@@ -81,7 +81,9 @@
 					<div class="bg-card px-6 py-6">
 						<Dialog.Description>
 							<p class="text-muted-foreground text-sm">
-								{$t('Please note that there is only 10 mins left for the test to complete, hurry up!')}
+								{$t(
+									'Please note that there is only 10 mins left for the test to complete, hurry up!'
+								)}
 							</p>
 						</Dialog.Description>
 					</div>
