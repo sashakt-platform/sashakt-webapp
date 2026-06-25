@@ -430,18 +430,92 @@
 		}
 	};
 
+	$effect(() => {
+		const questionId = question.id;
+		const questionType = question.question_type;
+		const timerKey = `sashakt-timer-${candidate.candidate_test_id}`;
+
+		const stored = sessionStorage.getItem(timerKey);
+		const storedData = stored ? JSON.parse(stored) : null;
+		const startTime = storedData?.questionId === questionId ? storedData.startTime : Date.now();
+
+		sessionStorage.setItem(timerKey, JSON.stringify({ questionId, startTime }));
+
+		return () => {
+			sessionStorage.removeItem(timerKey);
+			const elapsed = Math.round((Date.now() - startTime) / 1000);
+			if (elapsed <= 0) return;
+
+			const existing = selectedQuestions.find((q) => q.question_revision_id === questionId);
+			const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+
+			let updatedTime: number;
+			let submitResponse: number[] | string | null;
+			let submitBookmarked: boolean;
+			let submitIsReviewed: boolean;
+
+			if (existing) {
+				updatedTime = existing.time_spent + elapsed;
+				submitResponse = existing.response;
+				submitBookmarked = existing.bookmarked;
+				submitIsReviewed = existing.is_reviewed ?? false;
+				selectedQuestions = selectedQuestions.map((q) =>
+					q.question_revision_id === questionId ? { ...q, time_spent: updatedTime } : q
+				);
+			} else {
+				updatedTime = elapsed;
+				submitResponse = null;
+				submitBookmarked = false;
+				submitIsReviewed = false;
+				const defaultResponse = questionType === question_type_enum.SUBJECTIVE ? '' : [];
+				selectedQuestions = [
+					...selectedQuestions,
+					{
+						question_revision_id: questionId,
+						response: defaultResponse,
+						visited: true,
+						time_spent: updatedTime,
+						bookmarked: false,
+						is_reviewed: false
+					}
+				];
+			}
+			updateStore();
+			isSubmitting = true;
+
+			(async () => {
+				try {
+					await submitAnswer(
+						questionId,
+						submitResponse,
+						submitBookmarked,
+						submitIsReviewed,
+						updatedTime
+					);
+				} catch {
+					selectedQuestions = previousState;
+					updateStore();
+				} finally {
+					isSubmitting = false;
+				}
+			})();
+		};
+	});
+
 	const submitAnswer = async (
 		questionId: number,
 		response: number[] | string | null,
 		bookmarked?: boolean,
-		is_reviewed?: boolean
+		is_reviewed?: boolean,
+		time_spent?: number
 	) => {
 		const data = {
 			question_revision_id: questionId,
 			response: response == null ? null : response.length > 0 ? response : null,
 			candidate,
 			bookmarked,
-			is_reviewed
+			is_reviewed,
+			time_spent: time_spent ?? 0
 		};
 
 		try {
@@ -1014,9 +1088,7 @@
 								<tr class="bg-muted">
 									<th class="w-14 px-4 py-3"></th>
 									{#each matrixColumns as col (col.id)}
-										<th
-											class="text-foreground min-w-16 px-4 py-3 text-center font-semibold"
-										>
+										<th class="text-foreground min-w-16 px-4 py-3 text-center font-semibold">
 											{col.key}
 										</th>
 									{/each}
@@ -1025,8 +1097,7 @@
 							<tbody>
 								{#each matrixRows as row (row.id)}
 									<tr class="border-border border-b last:border-b-0">
-										<td
-											class="text-foreground px-4 py-3 text-center text-sm font-semibold"
+										<td class="text-foreground px-4 py-3 text-center text-sm font-semibold"
 											>{row.key}
 										</td>
 										{#each matrixColumns as col (col.id)}
