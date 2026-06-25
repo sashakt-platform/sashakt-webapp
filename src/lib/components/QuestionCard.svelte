@@ -37,7 +37,8 @@
 		selectedQuestions = $bindable(),
 		showFeedback = false,
 		showMarkForReview = true,
-		showMarks = true
+		showMarks = true,
+		trackTime = false
 	}: {
 		question: TQuestion;
 		candidate: TCandidate;
@@ -47,6 +48,7 @@
 		showFeedback?: boolean;
 		showMarkForReview?: boolean;
 		showMarks?: boolean;
+		trackTime?: boolean;
 	} = $props();
 
 	// key to force remount of RadioGroup on error, this is to prevent radio button from being checked
@@ -123,6 +125,8 @@
 	};
 
 	$effect(() => {
+		if (!trackTime) return;
+
 		const questionId = question.id;
 		const questionType = question.question_type;
 		const timerKey = `sashakt-timer-${candidate.candidate_test_id}`;
