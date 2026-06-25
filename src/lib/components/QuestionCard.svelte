@@ -515,7 +515,7 @@
 			candidate,
 			bookmarked,
 			is_reviewed,
-			time_spent: time_spent ?? 0
+			...(time_spent !== undefined ? { time_spent } : {})
 		};
 
 		try {
