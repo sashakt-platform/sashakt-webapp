@@ -21,6 +21,7 @@
 
 	let { candidate, testQuestions, testDetails = null } = $props();
 	let isSubmittingTest = $state(false);
+	let questionCardRef = $state<{ flushTime: () => void } | undefined>();
 
 	// for controlling confirmation dialog display
 	let submitDialogOpen = $state(false);
@@ -122,6 +123,13 @@
 		// clear the localStorage on un-mount of the component, which takes place
 		// only if the test is submitted successfully
 		return () => localStorage.removeItem(`sashakt-session-${candidate.candidate_test_id}`);
+	});
+
+	$effect(() => {
+		if (perPage !== 1) return;
+		const handler = () => questionCardRef?.flushTime?.();
+		window.addEventListener('sashakt-time-up', handler);
+		return () => window.removeEventListener('sashakt-time-up', handler);
 	});
 
 	// scroll to top and update current question index when page changes
@@ -237,6 +245,7 @@
 									showMarkForReview={testDetails.bookmark}
 									showMarks={testDetails?.show_marks ?? true}
 									trackTime={perPage === 1}
+									bind:this={questionCardRef}
 								/>
 							</div>
 						{/each}
@@ -333,7 +342,8 @@
 													method="POST"
 													use:enhance={handleSubmitTestEnhance}
 												>
-													<Button type="submit" disabled={isSubmittingTest} class="w-full">
+													<Button type="submit" disabled={isSubmittingTest} class="w-full"
+														onclick={() => questionCardRef?.flushTime?.()}>
 														{#if isSubmittingTest}
 															<Spinner />
 														{/if}

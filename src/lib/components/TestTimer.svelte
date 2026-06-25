@@ -69,6 +69,7 @@
 		open = true;
 		clearCountdownInterval();
 		clearHeartbeatInterval();
+		window.dispatchEvent(new CustomEvent('sashakt-time-up'));
 		triggerAutoSubmit();
 	};
 

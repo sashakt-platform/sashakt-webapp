@@ -432,6 +432,65 @@
 		}
 	};
 
+	export function flushTime() {
+		if (!trackTime) return;
+
+		const timerKey = `sashakt-timer-${candidate.candidate_test_id}`;
+		const current = sessionStorage.getItem(timerKey);
+		sessionStorage.removeItem(timerKey);
+
+		if (!current) return;
+
+		const { questionId, questionType, startTime } = JSON.parse(current);
+		const elapsed = Math.round((Date.now() - startTime) / 1000);
+		if (elapsed <= 0) return;
+
+		const existing = selectedQuestions.find((q) => q.question_revision_id === questionId);
+		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+
+		let updatedTime: number;
+		let submitResponse: number[] | string | null;
+		let submitBookmarked: boolean;
+		let submitIsReviewed: boolean;
+
+		if (existing) {
+			updatedTime = existing.time_spent + elapsed;
+			submitResponse = existing.response;
+			submitBookmarked = existing.bookmarked;
+			submitIsReviewed = existing.is_reviewed ?? false;
+			selectedQuestions = selectedQuestions.map((q) =>
+				q.question_revision_id === questionId ? { ...q, time_spent: updatedTime } : q
+			);
+		} else {
+			updatedTime = elapsed;
+			submitResponse = null;
+			submitBookmarked = false;
+			submitIsReviewed = false;
+			const defaultResponse = questionType === question_type_enum.SUBJECTIVE ? '' : [];
+			selectedQuestions = [
+				...selectedQuestions,
+				{
+					question_revision_id: questionId,
+					response: defaultResponse,
+					visited: true,
+					time_spent: updatedTime,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+		}
+		updateStore();
+
+		(async () => {
+			try {
+				await submitAnswer(questionId, submitResponse, submitBookmarked, submitIsReviewed, updatedTime);
+			} catch {
+				selectedQuestions = previousState;
+				updateStore();
+			}
+		})();
+	}
+
 	$effect(() => {
 		if (!trackTime) return;
 
@@ -443,66 +502,10 @@
 		const storedData = stored ? JSON.parse(stored) : null;
 		const startTime = storedData?.questionId === questionId ? storedData.startTime : Date.now();
 
-		sessionStorage.setItem(timerKey, JSON.stringify({ questionId, startTime }));
+		sessionStorage.setItem(timerKey, JSON.stringify({ questionId, questionType, startTime }));
 
 		return () => {
-			sessionStorage.removeItem(timerKey);
-			const elapsed = Math.round((Date.now() - startTime) / 1000);
-			if (elapsed <= 0) return;
-
-			const existing = selectedQuestions.find((q) => q.question_revision_id === questionId);
-			const previousState = JSON.parse(JSON.stringify(selectedQuestions));
-
-			let updatedTime: number;
-			let submitResponse: number[] | string | null;
-			let submitBookmarked: boolean;
-			let submitIsReviewed: boolean;
-
-			if (existing) {
-				updatedTime = existing.time_spent + elapsed;
-				submitResponse = existing.response;
-				submitBookmarked = existing.bookmarked;
-				submitIsReviewed = existing.is_reviewed ?? false;
-				selectedQuestions = selectedQuestions.map((q) =>
-					q.question_revision_id === questionId ? { ...q, time_spent: updatedTime } : q
-				);
-			} else {
-				updatedTime = elapsed;
-				submitResponse = null;
-				submitBookmarked = false;
-				submitIsReviewed = false;
-				const defaultResponse = questionType === question_type_enum.SUBJECTIVE ? '' : [];
-				selectedQuestions = [
-					...selectedQuestions,
-					{
-						question_revision_id: questionId,
-						response: defaultResponse,
-						visited: true,
-						time_spent: updatedTime,
-						bookmarked: false,
-						is_reviewed: false
-					}
-				];
-			}
-			updateStore();
-			isSubmitting = true;
-
-			(async () => {
-				try {
-					await submitAnswer(
-						questionId,
-						submitResponse,
-						submitBookmarked,
-						submitIsReviewed,
-						updatedTime
-					);
-				} catch {
-					selectedQuestions = previousState;
-					updateStore();
-				} finally {
-					isSubmitting = false;
-				}
-			})();
+			flushTime();
 		};
 	});
 
