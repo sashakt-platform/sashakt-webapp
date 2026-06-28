@@ -29,7 +29,8 @@ vi.mock('$lib/helpers/testSession', () => ({
 			selections: [],
 			currentPage: 1
 		}
-	}))
+	})),
+	mapSavedAnswersToSelections: vi.fn(() => [])
 }));
 
 vi.mock('$lib/helpers/formErrorHandler', () => ({

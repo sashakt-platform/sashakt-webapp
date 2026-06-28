@@ -13,7 +13,7 @@
 	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { countQuestionStatuses } from '$lib/helpers/questionPaletteHelpers';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
-	import { createTestSessionStore } from '$lib/helpers/testSession';
+	import { createTestSessionStore, mapSavedAnswersToSelections } from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { navState } from '$lib/navState.svelte';
 	import type { TQuestion, TSelection, TQuestionSetCandidate } from '$lib/types';
@@ -53,7 +53,17 @@
 	const perPage = testQuestions.question_pagination || totalQuestions;
 
 	const sessionStore = createTestSessionStore(candidate);
-	let selectedQuestions = $state(sessionStore.current.selections);
+
+	// Seed on-screen answers from the server when this device has no local cache
+	// yet (e.g. resuming on another device). localStorage stays the fast local
+	// cache; the server's saved answers are the cross-device source of truth.
+	function getInitialSelections(): TSelection[] {
+		if (sessionStore.current.selections.length > 0) {
+			return sessionStore.current.selections;
+		}
+		return mapSavedAnswersToSelections(testQuestions?.saved_answers);
+	}
+	let selectedQuestions = $state(getInitialSelections());
 
 	// set paginiation related properties.
 	// Prefer the server-saved current question (so the test resumes on another
