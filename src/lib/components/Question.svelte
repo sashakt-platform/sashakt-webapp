@@ -13,7 +13,11 @@
 	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { countQuestionStatuses } from '$lib/helpers/questionPaletteHelpers';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
-	import { createTestSessionStore, getInitialSelections } from '$lib/helpers/testSession';
+	import {
+		createTestSessionStore,
+		getInitialSelections,
+		resolveInitialQuestionIndex
+	} from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { navState } from '$lib/navState.svelte';
 	import type { TQuestion, TSelection, TQuestionSetCandidate } from '$lib/types';
@@ -62,17 +66,15 @@
 	}
 	let selectedQuestions = $state(getInitialSelectionsForLoad());
 
-	// set paginiation related properties.
 	// Prefer the exact server-saved current question (so the test resumes on the
 	// same question on another device), then fall back to the locally stored page.
 	function getInitialQuestionIndex(): number {
-		const serverRevisionId = testQuestions?.candidate_test?.current_question_revision_id;
-		if (serverRevisionId != null) {
-			const index = questions.findIndex((question) => question.id === serverRevisionId);
-			if (index >= 0) return index;
-		}
-		// localStorage only remembers the page, not the exact question
-		return ((sessionStore.current.currentPage || 1) - 1) * perPage;
+		return resolveInitialQuestionIndex(
+			testQuestions?.candidate_test?.current_question_revision_id,
+			questions.map((question) => question.id),
+			perPage,
+			sessionStore.current.currentPage
+		);
 	}
 	const initialQuestionIndex = getInitialQuestionIndex();
 	let paginationPage = $state(Math.floor(initialQuestionIndex / perPage) + 1);

@@ -62,3 +62,21 @@ export const getInitialSelections = (
 	savedAnswers: TSavedAnswer[] | null | undefined
 ): TSelection[] =>
 	localSelections.length > 0 ? localSelections : mapSavedAnswersToSelections(savedAnswers);
+
+/**
+ * The question index a fresh page load should start on: the exact server-saved
+ * question if known (cross-device resume), else the first question of the
+ * locally stored page (which only remembers the page, not the exact question).
+ */
+export const resolveInitialQuestionIndex = (
+	savedRevisionId: number | null | undefined,
+	questionIds: number[],
+	perPage: number,
+	storedPage: number | null | undefined
+): number => {
+	if (savedRevisionId != null) {
+		const index = questionIds.indexOf(savedRevisionId);
+		if (index >= 0) return index;
+	}
+	return ((storedPage || 1) - 1) * perPage;
+};
