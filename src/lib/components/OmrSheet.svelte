@@ -11,7 +11,7 @@
 	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
-	import { createTestSessionStore } from '$lib/helpers/testSession';
+	import { createTestSessionStore, getInitialSelections } from '$lib/helpers/testSession';
 	import { parseJsonRecord, normalizeMatrixInputValues } from '$lib/helpers/matrixHelpers';
 	import {
 		question_type_enum,
@@ -35,7 +35,10 @@
 	const questions: TQuestion[] = $derived(normalizedQuestionData.questions);
 	const sectionByQuestionId = $derived(normalizedQuestionData.sectionByQuestionId);
 	const sessionStore = createTestSessionStore(candidate);
-	let selections = $state<TSelection[]>(sessionStore.current.selections);
+	// Seed from the server when this device has no local cache (cross-device resume).
+	let selections = $state<TSelection[]>(
+		getInitialSelections(sessionStore.current.selections, testQuestions?.saved_answers)
+	);
 	let submittingQuestion = $state<number | null>(null);
 	let questionErrors = $state<Record<number, string>>({});
 
@@ -430,7 +433,9 @@
 		const previousSelections = JSON.parse(JSON.stringify(selections));
 		const previousMatrixSelections = JSON.parse(JSON.stringify(matrixSelections));
 		const previousMatrixInputValues = JSON.parse(JSON.stringify(matrixInputValues));
-		const previousLastSavedMatrixInputValues = JSON.parse(JSON.stringify(lastSavedMatrixInputValues));
+		const previousLastSavedMatrixInputValues = JSON.parse(
+			JSON.stringify(lastSavedMatrixInputValues)
+		);
 		submittingQuestion = question.id;
 		clearQuestionError(question.id);
 
@@ -513,10 +518,10 @@
 	};
 </script>
 
-<div class="min-h-screen bg-muted p-4 pb-20 lg:p-6 lg:pb-20">
-	<h1 class="mb-6 text-center text-xl font-semibold text-foreground">{$t('OMR Sheet')}</h1>
+<div class="bg-muted min-h-screen p-4 pb-20 lg:p-6 lg:pb-20">
+	<h1 class="text-foreground mb-6 text-center text-xl font-semibold">{$t('OMR Sheet')}</h1>
 
-	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-card p-4 shadow-sm sm:p-6">
+	<div class="bg-card mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl p-4 shadow-sm sm:p-6">
 		{#each questions as question, i (question.id)}
 			{@const section = sectionByQuestionId.get(question.id) ?? null}
 			{#if section && i === 0}
@@ -592,7 +597,7 @@
 							>
 								{questionErrors[question.id]}
 								{#if isSectionLimitMessage(questionErrors[question.id])}
-									<p class="mt-2 text-xs text-warning">
+									<p class="text-warning mt-2 text-xs">
 										{$t('Clear another answered question in this section to attempt this one.')}
 									</p>
 								{/if}
@@ -741,15 +746,11 @@
 							<table class="w-full border-collapse text-xs sm:text-sm">
 								<thead>
 									<tr>
-										<th
-											class="border border-border bg-muted px-3 py-2 text-left font-semibold"
-										>
+										<th class="border-border bg-muted border px-3 py-2 text-left font-semibold">
 											{matrixOpts.rows.label}
 										</th>
 										{#each matrixOpts.columns.items as col (col.id)}
-											<th
-												class="border border-border bg-muted px-3 py-2 text-center font-semibold"
-											>
+											<th class="border-border bg-muted border px-3 py-2 text-center font-semibold">
 												{col.key}
 											</th>
 										{/each}
@@ -758,9 +759,9 @@
 								<tbody>
 									{#each matrixOpts.rows.items as row (row.id)}
 										<tr class="hover:bg-muted/50">
-											<td class="border border-border px-3 py-2 font-medium">{row.value}</td>
+											<td class="border-border border px-3 py-2 font-medium">{row.value}</td>
 											{#each matrixOpts.columns.items as col (col.id)}
-												<td class="border border-border px-3 py-2 text-center">
+												<td class="border-border border px-3 py-2 text-center">
 													<input
 														type="radio"
 														name="omr-matrix-{question.id}-row-{row.id}"
@@ -803,14 +804,14 @@
 									<tr>
 										<th class="w-10 px-3 py-2"></th>
 										{#each matrixColumns as col (col.id)}
-											<th class="px-5 py-2 text-center font-semibold text-foreground">{col.key}</th>
+											<th class="text-foreground px-5 py-2 text-center font-semibold">{col.key}</th>
 										{/each}
 									</tr>
 								</thead>
 								<tbody>
 									{#each matrixRows as row (row.id)}
 										<tr>
-											<td class="px-3 py-3 font-semibold text-foreground">{row.key}</td>
+											<td class="text-foreground px-3 py-3 font-semibold">{row.key}</td>
 											{#each matrixColumns as col (col.id)}
 												{@const isChecked = (
 													matrixSelections[question.id]?.[String(row.id)] ?? []
@@ -901,12 +902,11 @@
 								size="sm"
 								variant="outline"
 								onclick={() => clearAnswer(question)}
-								disabled={
-									submittingQuestion === question.id ||
+								disabled={submittingQuestion === question.id ||
 									!hasAttemptedResponse(
-										selections.find((selection) => selection.question_revision_id === question.id)?.response
-									)
-								}
+										selections.find((selection) => selection.question_revision_id === question.id)
+											?.response
+									)}
 							>
 								{$t('Clear answer')}
 							</Button>
@@ -968,11 +968,20 @@
 
 					<div class="bg-card flex justify-end gap-3 px-6 pb-6">
 						<Dialog.Close class="flex-1 sm:flex-none">
-							<Button variant="outline" class="w-full border-primary text-primary hover:text-primary" disabled={isSubmittingTest}>
+							<Button
+								variant="outline"
+								class="border-primary text-primary hover:text-primary w-full"
+								disabled={isSubmittingTest}
+							>
 								{$t('Cancel')}
 							</Button>
 						</Dialog.Close>
-						<form class="flex-1 sm:flex-none" action="?/submitTest" method="POST" use:enhance={handleSubmitTestEnhance}>
+						<form
+							class="flex-1 sm:flex-none"
+							action="?/submitTest"
+							method="POST"
+							use:enhance={handleSubmitTestEnhance}
+						>
 							<Button type="submit" class="w-full" disabled={isSubmittingTest}>
 								{#if isSubmittingTest}
 									<Spinner />
@@ -985,7 +994,9 @@
 			{:else}
 				<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
 					<div class="bg-muted px-6 pt-6 pr-12 pb-4">
-						<Dialog.Title class="text-base font-semibold">{$t('Answer all mandatory questions!')}</Dialog.Title>
+						<Dialog.Title class="text-base font-semibold"
+							>{$t('Answer all mandatory questions!')}</Dialog.Title
+						>
 					</div>
 
 					<div class="border-border border-t"></div>
