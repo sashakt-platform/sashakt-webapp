@@ -55,12 +55,23 @@
 	const sessionStore = createTestSessionStore(candidate);
 	let selectedQuestions = $state(sessionStore.current.selections);
 
-	// set paginiation related properties
-	let paginationPage = $state(sessionStore.current.currentPage || 1);
+	// set paginiation related properties.
+	// Prefer the server-saved current question (so the test resumes on another
+	// device with the same login), then fall back to the locally stored page.
+	function getInitialPage(): number {
+		const serverRevisionId = testQuestions?.candidate_test?.current_question_revision_id;
+		if (serverRevisionId != null) {
+			const index = questions.findIndex((question) => question.id === serverRevisionId);
+			if (index >= 0) return Math.floor(index / perPage) + 1;
+		}
+		return sessionStore.current.currentPage || 1;
+	}
+	const initialPage = getInitialPage();
+	let paginationPage = $state(initialPage);
 	let paginationReady = $state(false);
 
 	// question palette - track which question is currently selected
-	let currentQuestionIndex = $state((sessionStore.current.currentPage - 1) * perPage || 0);
+	let currentQuestionIndex = $state((initialPage - 1) * perPage);
 	const paletteStats = $derived(countQuestionStatuses(questions, selectedQuestions));
 	const markedForReviewCount = $derived(
 		selectedQuestions.filter((s: TSelection) => s.bookmarked).length
@@ -83,11 +94,24 @@
 		};
 	});
 
+	// Persist the current question server-side so the attempt can resume on
+	// another device. Fire-and-forget, mirroring the answer sync.
+	function syncCurrentPosition(questionIndex: number) {
+		const currentQuestion = questions[questionIndex];
+		if (!currentQuestion) return;
+		fetch(`/test/${page.params.slug}/api/current-position`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ question_revision_id: currentQuestion.id, candidate })
+		}).catch((error) => console.error('Failed to sync current position:', error));
+	}
+
 	// navigate to a specific question by index
 	function navigateToQuestion(questionIndex: number) {
 		const targetPage = Math.floor(questionIndex / perPage) + 1;
 		paginationPage = targetPage;
 		currentQuestionIndex = questionIndex;
+		syncCurrentPosition(questionIndex);
 
 		// scroll to the specific question after page renders
 		setTimeout(() => {
@@ -127,6 +151,7 @@
 	// scroll to top and update current question index when page changes
 	function handlePageChange(newPage: number) {
 		currentQuestionIndex = (newPage - 1) * perPage;
+		syncCurrentPosition(currentQuestionIndex);
 		window.scrollTo({ top: 0, behavior: 'instant' });
 	}
 
@@ -141,7 +166,9 @@
 {#snippet mandatoryQuestionDialog(lastPage: boolean)}
 	<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
 		<div class="bg-muted px-6 pt-6 pr-12 pb-4">
-			<Dialog.Title class="text-base font-semibold">{$t('Answer all mandatory questions!')}</Dialog.Title>
+			<Dialog.Title class="text-base font-semibold"
+				>{$t('Answer all mandatory questions!')}</Dialog.Title
+			>
 		</div>
 
 		<div class="border-border border-t"></div>
@@ -322,7 +349,11 @@
 
 											<div class="bg-card flex justify-end gap-3 px-6 pb-6">
 												<Dialog.Close class="flex-1 sm:flex-none">
-													<Button variant="outline" disabled={isSubmittingTest} class="w-full border-primary text-primary hover:text-primary">
+													<Button
+														variant="outline"
+														disabled={isSubmittingTest}
+														class="border-primary text-primary hover:text-primary w-full"
+													>
 														{$t('Cancel')}
 													</Button>
 												</Dialog.Close>
