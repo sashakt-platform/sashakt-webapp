@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { getInitialSelections, mapSavedAnswersToSelections } from './testSession';
+import {
+	getInitialSelections,
+	mapSavedAnswersToSelections,
+	resolveInitialQuestionIndex
+} from './testSession';
 
 describe('mapSavedAnswersToSelections', () => {
 	it('returns an empty list for null/undefined', () => {
@@ -68,5 +72,26 @@ describe('getInitialSelections', () => {
 		expect(result).toHaveLength(1);
 		expect(result[0].question_revision_id).toBe(9);
 		expect(result[0].response).toEqual([3]);
+	});
+});
+
+describe('resolveInitialQuestionIndex', () => {
+	const ids = [11, 12, 13, 14, 15, 16, 17];
+
+	it('returns the exact index of the server-saved question', () => {
+		// question 14 is index 3 → page 2 when perPage is 2, but the index is exact
+		expect(resolveInitialQuestionIndex(14, ids, 2, 1)).toBe(3);
+	});
+
+	it('falls back to the first question of the stored page when no server question', () => {
+		expect(resolveInitialQuestionIndex(null, ids, 2, 3)).toBe(4);
+	});
+
+	it('falls back when the saved question is not in the assigned list', () => {
+		expect(resolveInitialQuestionIndex(999, ids, 5, 2)).toBe(5);
+	});
+
+	it('defaults to the first question when there is no stored page', () => {
+		expect(resolveInitialQuestionIndex(null, ids, 5, undefined)).toBe(0);
 	});
 });
