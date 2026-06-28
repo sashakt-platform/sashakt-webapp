@@ -29,7 +29,20 @@ vi.mock('$lib/helpers/testSession', () => ({
 			selections: [],
 			currentPage: 1
 		}
-	}))
+	})),
+	getInitialSelections: vi.fn((local: unknown) => local),
+	resolveInitialQuestionIndex: (
+		rev: number | null | undefined,
+		ids: number[],
+		perPage: number,
+		page: number | null | undefined
+	) => {
+		if (rev != null) {
+			const i = ids.indexOf(rev);
+			if (i >= 0) return i;
+		}
+		return ((page || 1) - 1) * perPage;
+	}
 }));
 
 vi.mock('$lib/helpers/formErrorHandler', () => ({
@@ -76,6 +89,30 @@ describe('Question', () => {
 		await vi.waitFor(() => {
 			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
 		});
+	});
+
+	it('syncs the current question to the backend when navigating via the palette', async () => {
+		// reject so the fire-and-forget error path is exercised too
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+		vi.mocked(fetch).mockRejectedValue(new Error('offline'));
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions,
+				testDetails: { ...mockTestData, show_question_palette: true }
+			}
+		});
+
+		const target = await screen.findByRole('button', { name: /go to question 2/i });
+		await fireEvent.click(target);
+
+		await waitFor(() => {
+			expect(fetch).toHaveBeenCalledWith(
+				'/test/sample-test/api/current-position',
+				expect.objectContaining({ method: 'POST' })
+			);
+		});
+		consoleError.mockRestore();
 	});
 
 	it('should render pagination controls', async () => {

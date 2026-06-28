@@ -31,7 +31,8 @@ vi.mock('$app/state', () => ({
 }));
 
 vi.mock('$lib/helpers/testSession', () => ({
-	createTestSessionStore: vi.fn(() => ({ current: { selections: [] } }))
+	createTestSessionStore: vi.fn(() => ({ current: { selections: [] } })),
+	getInitialSelections: vi.fn((local: unknown) => local)
 }));
 
 vi.mock('$lib/helpers/testFunctionalities', () => ({
@@ -381,7 +382,10 @@ describe('OmrSheet', () => {
 			withSelections([
 				{
 					question_revision_id: mockMultipleChoiceQuestion.id,
-					response: [mockMultipleChoiceQuestion.options[0].id, mockMultipleChoiceQuestion.options[1].id],
+					response: [
+						mockMultipleChoiceQuestion.options[0].id,
+						mockMultipleChoiceQuestion.options[1].id
+					],
 					visited: true,
 					time_spent: 0,
 					bookmarked: false,
@@ -1325,7 +1329,9 @@ describe('OmrSheet', () => {
 			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
 
 			await screen.findByRole('dialog');
-			expect(screen.getByText(/Please make sure all mandatory questions are answered/)).toBeInTheDocument();
+			expect(
+				screen.getByText(/Please make sure all mandatory questions are answered/)
+			).toBeInTheDocument();
 		});
 
 		it('shows an Okay button that closes the dialog', async () => {

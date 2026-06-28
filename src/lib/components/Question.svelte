@@ -13,7 +13,11 @@
 	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { countQuestionStatuses } from '$lib/helpers/questionPaletteHelpers';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
-	import { createTestSessionStore } from '$lib/helpers/testSession';
+	import {
+		createTestSessionStore,
+		getInitialSelections,
+		resolveInitialQuestionIndex
+	} from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { navState } from '$lib/navState.svelte';
 	import type { TQuestion, TSelection, TQuestionSetCandidate } from '$lib/types';
@@ -53,14 +57,31 @@
 	const perPage = testQuestions.question_pagination || totalQuestions;
 
 	const sessionStore = createTestSessionStore(candidate);
-	let selectedQuestions = $state(sessionStore.current.selections);
 
-	// set paginiation related properties
-	let paginationPage = $state(sessionStore.current.currentPage || 1);
+	// Seed on-screen answers from the server when this device has no local cache
+	// yet (e.g. resuming on another device). localStorage stays the fast local
+	// cache; the server's saved answers are the cross-device source of truth.
+	function getInitialSelectionsForLoad(): TSelection[] {
+		return getInitialSelections(sessionStore.current.selections, testQuestions?.saved_answers);
+	}
+	let selectedQuestions = $state(getInitialSelectionsForLoad());
+
+	// Prefer the exact server-saved current question (so the test resumes on the
+	// same question on another device), then fall back to the locally stored page.
+	function getInitialQuestionIndex(): number {
+		return resolveInitialQuestionIndex(
+			testQuestions?.candidate_test?.current_question_revision_id,
+			questions.map((question) => question.id),
+			perPage,
+			sessionStore.current.currentPage
+		);
+	}
+	const initialQuestionIndex = getInitialQuestionIndex();
+	let paginationPage = $state(Math.floor(initialQuestionIndex / perPage) + 1);
 	let paginationReady = $state(false);
 
 	// question palette - track which question is currently selected
-	let currentQuestionIndex = $state((sessionStore.current.currentPage - 1) * perPage || 0);
+	let currentQuestionIndex = $state(initialQuestionIndex);
 	const paletteStats = $derived(countQuestionStatuses(questions, selectedQuestions));
 	const markedForReviewCount = $derived(
 		selectedQuestions.filter((s: TSelection) => s.bookmarked).length
@@ -83,13 +104,20 @@
 		};
 	});
 
-	// navigate to a specific question by index
-	function navigateToQuestion(questionIndex: number) {
-		const targetPage = Math.floor(questionIndex / perPage) + 1;
-		paginationPage = targetPage;
-		currentQuestionIndex = questionIndex;
+	// Persist the current question server-side so the attempt can resume on
+	// another device. Fire-and-forget, mirroring the answer sync.
+	function syncCurrentPosition(questionIndex: number) {
+		const currentQuestion = questions[questionIndex];
+		if (!currentQuestion) return;
+		fetch(`/test/${page.params.slug}/api/current-position`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ question_revision_id: currentQuestion.id, candidate })
+		}).catch((error) => console.error('Failed to sync current position:', error));
+	}
 
-		// scroll to the specific question after page renders
+	// scroll a specific question into view after the page renders
+	function scrollToQuestion(questionIndex: number) {
 		setTimeout(() => {
 			const element = document.getElementById(`question-${questionIndex}`);
 			if (element) {
@@ -98,6 +126,14 @@
 				window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
 			}
 		}, 50);
+	}
+
+	// navigate to a specific question by index
+	function navigateToQuestion(questionIndex: number) {
+		paginationPage = Math.floor(questionIndex / perPage) + 1;
+		currentQuestionIndex = questionIndex;
+		syncCurrentPosition(questionIndex);
+		scrollToQuestion(questionIndex);
 	}
 
 	// sync page number to localStorage when page changes
@@ -114,6 +150,8 @@
 	$effect(() => {
 		const timer = setTimeout(() => {
 			paginationReady = true;
+			// land on the exact resumed question, not just its page
+			scrollToQuestion(currentQuestionIndex);
 		}, 10);
 		return () => clearTimeout(timer);
 	});
@@ -127,6 +165,7 @@
 	// scroll to top and update current question index when page changes
 	function handlePageChange(newPage: number) {
 		currentQuestionIndex = (newPage - 1) * perPage;
+		syncCurrentPosition(currentQuestionIndex);
 		window.scrollTo({ top: 0, behavior: 'instant' });
 	}
 
@@ -141,7 +180,9 @@
 {#snippet mandatoryQuestionDialog(lastPage: boolean)}
 	<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
 		<div class="bg-muted px-6 pt-6 pr-12 pb-4">
-			<Dialog.Title class="text-base font-semibold">{$t('Answer all mandatory questions!')}</Dialog.Title>
+			<Dialog.Title class="text-base font-semibold"
+				>{$t('Answer all mandatory questions!')}</Dialog.Title
+			>
 		</div>
 
 		<div class="border-border border-t"></div>
@@ -322,7 +363,11 @@
 
 											<div class="bg-card flex justify-end gap-3 px-6 pb-6">
 												<Dialog.Close class="flex-1 sm:flex-none">
-													<Button variant="outline" disabled={isSubmittingTest} class="w-full border-primary text-primary hover:text-primary">
+													<Button
+														variant="outline"
+														disabled={isSubmittingTest}
+														class="border-primary text-primary hover:text-primary w-full"
+													>
 														{$t('Cancel')}
 													</Button>
 												</Dialog.Close>
