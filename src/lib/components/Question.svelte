@@ -57,27 +57,29 @@
 	// Seed on-screen answers from the server when this device has no local cache
 	// yet (e.g. resuming on another device). localStorage stays the fast local
 	// cache; the server's saved answers are the cross-device source of truth.
-	let selectedQuestions = $state(
-		getInitialSelections(sessionStore.current.selections, testQuestions?.saved_answers)
-	);
+	function getInitialSelectionsForLoad(): TSelection[] {
+		return getInitialSelections(sessionStore.current.selections, testQuestions?.saved_answers);
+	}
+	let selectedQuestions = $state(getInitialSelectionsForLoad());
 
 	// set paginiation related properties.
-	// Prefer the server-saved current question (so the test resumes on another
-	// device with the same login), then fall back to the locally stored page.
-	function getInitialPage(): number {
+	// Prefer the exact server-saved current question (so the test resumes on the
+	// same question on another device), then fall back to the locally stored page.
+	function getInitialQuestionIndex(): number {
 		const serverRevisionId = testQuestions?.candidate_test?.current_question_revision_id;
 		if (serverRevisionId != null) {
 			const index = questions.findIndex((question) => question.id === serverRevisionId);
-			if (index >= 0) return Math.floor(index / perPage) + 1;
+			if (index >= 0) return index;
 		}
-		return sessionStore.current.currentPage || 1;
+		// localStorage only remembers the page, not the exact question
+		return ((sessionStore.current.currentPage || 1) - 1) * perPage;
 	}
-	const initialPage = getInitialPage();
-	let paginationPage = $state(initialPage);
+	const initialQuestionIndex = getInitialQuestionIndex();
+	let paginationPage = $state(Math.floor(initialQuestionIndex / perPage) + 1);
 	let paginationReady = $state(false);
 
 	// question palette - track which question is currently selected
-	let currentQuestionIndex = $state((initialPage - 1) * perPage);
+	let currentQuestionIndex = $state(initialQuestionIndex);
 	const paletteStats = $derived(countQuestionStatuses(questions, selectedQuestions));
 	const markedForReviewCount = $derived(
 		selectedQuestions.filter((s: TSelection) => s.bookmarked).length
@@ -112,14 +114,8 @@
 		}).catch((error) => console.error('Failed to sync current position:', error));
 	}
 
-	// navigate to a specific question by index
-	function navigateToQuestion(questionIndex: number) {
-		const targetPage = Math.floor(questionIndex / perPage) + 1;
-		paginationPage = targetPage;
-		currentQuestionIndex = questionIndex;
-		syncCurrentPosition(questionIndex);
-
-		// scroll to the specific question after page renders
+	// scroll a specific question into view after the page renders
+	function scrollToQuestion(questionIndex: number) {
 		setTimeout(() => {
 			const element = document.getElementById(`question-${questionIndex}`);
 			if (element) {
@@ -128,6 +124,14 @@
 				window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
 			}
 		}, 50);
+	}
+
+	// navigate to a specific question by index
+	function navigateToQuestion(questionIndex: number) {
+		paginationPage = Math.floor(questionIndex / perPage) + 1;
+		currentQuestionIndex = questionIndex;
+		syncCurrentPosition(questionIndex);
+		scrollToQuestion(questionIndex);
 	}
 
 	// sync page number to localStorage when page changes
@@ -144,6 +148,8 @@
 	$effect(() => {
 		const timer = setTimeout(() => {
 			paginationReady = true;
+			// land on the exact resumed question, not just its page
+			scrollToQuestion(currentQuestionIndex);
 		}, 10);
 		return () => clearTimeout(timer);
 	});
