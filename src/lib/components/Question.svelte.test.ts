@@ -30,7 +30,7 @@ vi.mock('$lib/helpers/testSession', () => ({
 			currentPage: 1
 		}
 	})),
-	mapSavedAnswersToSelections: vi.fn(() => [])
+	getInitialSelections: vi.fn((local: unknown) => local)
 }));
 
 vi.mock('$lib/helpers/formErrorHandler', () => ({

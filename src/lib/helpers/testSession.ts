@@ -18,7 +18,10 @@ export type TSavedAnswer = {
 	question_revision_id: number;
 	response: string | null;
 	visited?: boolean;
+	time_spent?: number | null;
 	bookmarked?: boolean;
+	is_reviewed?: boolean;
+	correct_answer?: number[] | number | null | string;
 };
 
 const parseSavedResponse = (raw: string | null): number[] | string => {
@@ -43,8 +46,19 @@ export const mapSavedAnswersToSelections = (
 		question_revision_id: answer.question_revision_id,
 		response: parseSavedResponse(answer.response),
 		visited: answer.visited ?? false,
-		time_spent: 0,
+		time_spent: answer.time_spent ?? 0,
 		bookmarked: answer.bookmarked ?? false,
-		is_reviewed: false
+		is_reviewed: answer.is_reviewed ?? false,
+		correct_answer: answer.correct_answer ?? undefined
 	}));
 };
+
+/**
+ * The selections a fresh page load should start with: the locally cached ones
+ * if present, otherwise seeded from the server (resuming on another device).
+ */
+export const getInitialSelections = (
+	localSelections: TSelection[],
+	savedAnswers: TSavedAnswer[] | null | undefined
+): TSelection[] =>
+	localSelections.length > 0 ? localSelections : mapSavedAnswersToSelections(savedAnswers);
