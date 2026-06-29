@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/svelte';
 import QuestionCard from './QuestionCard.svelte';
 import { fireEvent } from '@testing-library/svelte';
@@ -32,6 +32,8 @@ describe('QuestionCard', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
+
+	afterEach(() => vi.useRealTimers());
 
 	it('should clear a saved single-choice answer', async () => {
 		vi.mocked(fetch).mockResolvedValue(
@@ -666,7 +668,7 @@ describe('QuestionCard', () => {
 			expect(screen.getByPlaceholderText(/type your answer here/i)).toBeInTheDocument();
 		});
 
-it('should display character count when limit is set', () => {
+		it('should display character count when limit is set', () => {
 			render(QuestionCard, {
 				props: {
 					question: mockSubjectiveQuestion, // 500 char limit
@@ -805,8 +807,6 @@ it('should display character count when limit is set', () => {
 					})
 				);
 			});
-
-			vi.useRealTimers();
 		});
 
 		it('should show error message when save fails', async () => {
@@ -831,8 +831,6 @@ it('should display character count when limit is set', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
 			});
-
-			vi.useRealTimers();
 		});
 
 		it('should display existing answer when question was previously answered', () => {
@@ -1115,7 +1113,7 @@ it('should display character count when limit is set', () => {
 			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
 		});
 
-it('should display existing answer when previously answered', () => {
+		it('should display existing answer when previously answered', () => {
 			const selectedQuestions = [
 				{
 					question_revision_id: mockNumericalIntegerQuestion.id,
@@ -1171,8 +1169,6 @@ it('should display existing answer when previously answered', () => {
 					})
 				);
 			});
-
-			vi.useRealTimers();
 		});
 
 		it('should show error message when save fails', async () => {
@@ -1197,8 +1193,6 @@ it('should display existing answer when previously answered', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
 			});
-
-			vi.useRealTimers();
 		});
 
 		it('should show View Result button for answered numerical-integer question when showFeedback is true', () => {
@@ -2748,8 +2742,7 @@ it('should display existing answer when previously answered', () => {
 				expect(inputs[0].value).toBe('Paris');
 				expect(inputs[1].value).toBe('Tokyo');
 			});
-
-});
+		});
 
 		describe('save interaction', () => {
 			it('should call fetch with JSON-encoded row values after debounce', async () => {
@@ -2773,8 +2766,6 @@ it('should display existing answer when previously answered', () => {
 					const response = JSON.parse(body.response);
 					expect(response['1']).toBe('Paris');
 				});
-
-				vi.useRealTimers();
 			});
 
 			it('should show Saved text after a successful save', async () => {
@@ -2792,8 +2783,6 @@ it('should display existing answer when previously answered', () => {
 				await waitFor(() => {
 					expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 				});
-
-				vi.useRealTimers();
 			});
 
 			it('should show error message when API call fails', async () => {
@@ -2809,8 +2798,6 @@ it('should display existing answer when previously answered', () => {
 				await waitFor(() => {
 					expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument();
 				});
-
-				vi.useRealTimers();
 			});
 
 			it('should keep input value after API failure', async () => {
@@ -2827,8 +2814,6 @@ it('should display existing answer when previously answered', () => {
 					expect(screen.getByText(/failed to save your answer/i)).toBeInTheDocument()
 				);
 				expect(inputs[0].value).toBe('Paris');
-
-				vi.useRealTimers();
 			});
 		});
 
@@ -3136,97 +3121,95 @@ it('should display existing answer when previously answered', () => {
 		});
 	});
 
-	
-describe('Marking scheme modal (mobile) vs dropdown (desktop)', () => {
-	const defaultProps = {
-		serialNumber: 1,
-		candidate: mockCandidate,
-		totalQuestions: 10,
-		selectedQuestions: []
-	};
+	describe('Marking scheme modal (mobile) vs dropdown (desktop)', () => {
+		const defaultProps = {
+			serialNumber: 1,
+			candidate: mockCandidate,
+			totalQuestions: 10,
+			selectedQuestions: []
+		};
 
-	it('mobile marks pill opens a bottom sheet modal', async () => {
-		const { container } = render(QuestionCard, {
-			props: { question: mockSingleChoiceQuestion, ...defaultProps }
+		it('mobile marks pill opens a bottom sheet modal', async () => {
+			const { container } = render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			});
+
+			const mobileButton = container.querySelector(
+				'button.lg\\:hidden[aria-label="Marking scheme"]'
+			) as HTMLElement;
+			expect(mobileButton).toBeInTheDocument();
+
+			await fireEvent.click(mobileButton);
+
+			const dialog = await screen.findByRole('dialog');
+			expect(dialog).toBeInTheDocument();
 		});
 
-		const mobileButton = container.querySelector(
-			'button.lg\\:hidden[aria-label="Marking scheme"]'
-		) as HTMLElement;
-		expect(mobileButton).toBeInTheDocument();
+		it('modal shows marking scheme title and all rows', async () => {
+			const { container } = render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			});
 
-		await fireEvent.click(mobileButton);
+			const mobileButton = container.querySelector(
+				'button.lg\\:hidden[aria-label="Marking scheme"]'
+			) as HTMLElement;
+			await fireEvent.click(mobileButton);
 
-		const dialog = await screen.findByRole('dialog');
-		expect(dialog).toBeInTheDocument();
-	});
-
-	it('modal shows marking scheme title and all rows', async () => {
-		const { container } = render(QuestionCard, {
-			props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			const dialog = await screen.findByRole('dialog');
+			expect(within(dialog).getAllByText('Marking scheme').length).toBeGreaterThan(0);
+			expect(within(dialog).getByText('Correct')).toBeInTheDocument();
+			expect(within(dialog).getByText('Incorrect')).toBeInTheDocument();
+			expect(within(dialog).getByText('Unanswered')).toBeInTheDocument();
 		});
 
-		const mobileButton = container.querySelector(
-			'button.lg\\:hidden[aria-label="Marking scheme"]'
-		) as HTMLElement;
-		await fireEvent.click(mobileButton);
+		it('modal shows the correct mark values', async () => {
+			const { container } = render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps } // correct: 1, wrong: 0
+			});
 
-		const dialog = await screen.findByRole('dialog');
-		expect(within(dialog).getAllByText('Marking scheme').length).toBeGreaterThan(0);
-		expect(within(dialog).getByText('Correct')).toBeInTheDocument();
-		expect(within(dialog).getByText('Incorrect')).toBeInTheDocument();
-		expect(within(dialog).getByText('Unanswered')).toBeInTheDocument();
-	});
+			const mobileButton = container.querySelector(
+				'button.lg\\:hidden[aria-label="Marking scheme"]'
+			) as HTMLElement;
+			await fireEvent.click(mobileButton);
 
-	it('modal shows the correct mark values', async () => {
-		const { container } = render(QuestionCard, {
-			props: { question: mockSingleChoiceQuestion, ...defaultProps } // correct: 1, wrong: 0
+			const dialog = await screen.findByRole('dialog');
+			expect(within(dialog).getAllByText('+1').length).toBeGreaterThan(0);
 		});
 
-		const mobileButton = container.querySelector(
-			'button.lg\\:hidden[aria-label="Marking scheme"]'
-		) as HTMLElement;
-		await fireEvent.click(mobileButton);
+		it('modal can be closed using the close button', async () => {
+			const { container } = render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			});
 
-		const dialog = await screen.findByRole('dialog');
-		expect(within(dialog).getAllByText('+1').length).toBeGreaterThan(0);
-	});
+			const mobileButton = container.querySelector(
+				'button.lg\\:hidden[aria-label="Marking scheme"]'
+			) as HTMLElement;
+			await fireEvent.click(mobileButton);
 
-	it('modal can be closed using the close button', async () => {
-		const { container } = render(QuestionCard, {
-			props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			const dialog = await screen.findByRole('dialog');
+			await fireEvent.click(within(dialog).getByRole('button', { name: /close/i }));
+
+			await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 		});
 
-		const mobileButton = container.querySelector(
-			'button.lg\\:hidden[aria-label="Marking scheme"]'
-		) as HTMLElement;
-		await fireEvent.click(mobileButton);
+		it('desktop marks pill shows an inline hover dropdown, not a modal', async () => {
+			const { container } = render(QuestionCard, {
+				props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			});
 
-		const dialog = await screen.findByRole('dialog');
-		await fireEvent.click(within(dialog).getByRole('button', { name: /close/i }));
+			const desktopWrapper = container.querySelector('.lg\\:block') as HTMLElement;
+			expect(desktopWrapper).toBeInTheDocument();
 
-		await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-	});
+			// The hover dropdown div is inside the desktop button (visible on hover/focus, not via click)
+			const hoverDropdown = desktopWrapper.querySelector('.group-hover\\:block') as HTMLElement;
+			expect(hoverDropdown).toBeInTheDocument();
+			expect(within(hoverDropdown).getByText('Correct')).toBeInTheDocument();
 
-	it('desktop marks pill shows an inline hover dropdown, not a modal', async () => {
-		const { container } = render(QuestionCard, {
-			props: { question: mockSingleChoiceQuestion, ...defaultProps }
+			// Clicking the desktop button does NOT open a dialog
+			const desktopButton = desktopWrapper.querySelector('button') as HTMLElement;
+			await fireEvent.click(desktopButton);
+
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 		});
-
-		const desktopWrapper = container.querySelector('.lg\\:block') as HTMLElement;
-		expect(desktopWrapper).toBeInTheDocument();
-
-		// The hover dropdown div is inside the desktop button (visible on hover/focus, not via click)
-		const hoverDropdown = desktopWrapper.querySelector('.group-hover\\:block') as HTMLElement;
-		expect(hoverDropdown).toBeInTheDocument();
-		expect(within(hoverDropdown).getByText('Correct')).toBeInTheDocument();
-
-		// Clicking the desktop button does NOT open a dialog
-		const desktopButton = desktopWrapper.querySelector('button') as HTMLElement;
-		await fireEvent.click(desktopButton);
-
-		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 	});
-});
-
 });

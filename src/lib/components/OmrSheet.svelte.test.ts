@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import { fireEvent } from '@testing-library/svelte';
 import OmrSheet from './OmrSheet.svelte';
@@ -64,6 +64,8 @@ describe('OmrSheet', () => {
 			createMockResponse({ success: true }) as unknown as Response
 		);
 	});
+
+	afterEach(() => vi.useRealTimers());
 
 	describe('Rendering', () => {
 		it('renders the OMR Sheet heading', () => {
@@ -425,7 +427,6 @@ describe('OmrSheet', () => {
 					expect.objectContaining({ method: 'POST' })
 				);
 			});
-			vi.useRealTimers();
 		});
 
 		it('shows Saved state after a successful save', async () => {
@@ -439,7 +440,6 @@ describe('OmrSheet', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 			});
-			vi.useRealTimers();
 		});
 
 		it('clears a saved subjective answer', async () => {
@@ -484,7 +484,6 @@ describe('OmrSheet', () => {
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
 				expect(body.response).toBe('8');
 			});
-			vi.useRealTimers();
 		});
 
 		it('shows Saved state after a successful save', async () => {
@@ -496,7 +495,6 @@ describe('OmrSheet', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 			});
-			vi.useRealTimers();
 		});
 
 		it('pre-populates an existing integer answer from selections', () => {
@@ -534,7 +532,6 @@ describe('OmrSheet', () => {
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
 				expect(body.response).toBe('3.14');
 			});
-			vi.useRealTimers();
 		});
 
 		it('shows Saved state after saving a decimal answer', async () => {
@@ -546,7 +543,6 @@ describe('OmrSheet', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 			});
-			vi.useRealTimers();
 		});
 	});
 
@@ -907,7 +903,6 @@ describe('OmrSheet', () => {
 				const response = JSON.parse(body.response);
 				expect(response['1']).toBe('Paris');
 			});
-			vi.useRealTimers();
 		});
 
 		it('excludes empty row values from the serialized payload', async () => {
@@ -922,7 +917,6 @@ describe('OmrSheet', () => {
 				const response = JSON.parse(body.response);
 				expect(response['2']).toBeUndefined();
 			});
-			vi.useRealTimers();
 		});
 
 		it('sends null response when all rows are cleared', async () => {
@@ -947,7 +941,6 @@ describe('OmrSheet', () => {
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
 				expect(body.response).toBeNull();
 			});
-			vi.useRealTimers();
 		});
 
 		it('shows Saved state after a successful save', async () => {
@@ -960,7 +953,6 @@ describe('OmrSheet', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 			});
-			vi.useRealTimers();
 		});
 
 		it('shows loading state while submitting', async () => {
@@ -1062,7 +1054,6 @@ describe('OmrSheet', () => {
 				const response = JSON.parse(body.response);
 				expect(response['1']).toBe('7');
 			});
-			vi.useRealTimers();
 		});
 
 		it('blocks non-numeric key input (e.g. letter "a")', async () => {
@@ -1117,7 +1108,6 @@ describe('OmrSheet', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 			});
-			vi.useRealTimers();
 		});
 	});
 
