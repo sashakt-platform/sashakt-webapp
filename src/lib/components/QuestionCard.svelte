@@ -34,7 +34,6 @@
 
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
-	import SaveAnswerButton from '$lib/components/SaveAnswerButton.svelte';
 	import BottomSheetModal from './BottomSheetModal.svelte';
 	import MarkingSchemeContent from './MarkingSchemeContent.svelte';
 
@@ -65,6 +64,9 @@
 	let isSubmitting = $state(false);
 	let saveError = $state<string | null>(null);
 	let markingSchemeOpen = $state(false);
+	let debounceTimer: ReturnType<typeof setTimeout> | undefined = $state(undefined);
+	let saveStatus: 'idle' | 'pending' | 'saving' | 'saved' = $state('idle');
+	let flushFn: (() => void) | undefined;
 	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 
 	const sessionStore = createTestSessionStore(candidate);
@@ -110,7 +112,6 @@
 		return typeof selected?.response === 'string' ? selected.response : '';
 	};
 	let candidateInput = $state(getExistingInputResponse());
-	let lastSavedInput = $state(getExistingInputResponse());
 
 	const getExistingMatrixSelections = (): Record<string, number[]> => {
 		const parsed = parseJsonRecord<number | number[]>(selectedQuestion(question.id)?.response);
@@ -123,11 +124,11 @@
 	let matrixInputValues = $state<Record<string, string>>(
 		parseJsonRecord<string>(selectedQuestion(question.id)?.response)
 	);
-	let lastSavedMatrixInputValues = $state<Record<string, string>>({ ...matrixInputValues });
 
 	const handleMatrixInputChange = (rowId: number, value: string) => {
 		if (isLocked || isSubmitting) return;
 		matrixInputValues = { ...matrixInputValues, [String(rowId)]: value };
+		scheduleSave(handleMatrixInputSave);
 	};
 
 	const handleMatrixInputSave = async () => {
@@ -140,6 +141,7 @@
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 
 		isSubmitting = true;
+		saveStatus = 'saving';
 		saveError = null;
 
 		if (answeredQuestion) {
@@ -163,24 +165,17 @@
 
 		try {
 			await submitAnswer(question.id, serialized, currentBookmarked);
-			lastSavedMatrixInputValues = { ...matrixInputValues };
+			saveStatus = 'saved';
 		} catch {
 			selectedQuestions = previousState;
 			updateStore();
+			saveStatus = 'idle';
 			saveError = $t('Failed to save your answer. Please try again.');
 			setTimeout(() => (saveError = null), 5000);
 		} finally {
 			isSubmitting = false;
 		}
 	};
-
-	const hasUnsavedMatrixInputChanges = $derived(
-		JSON.stringify(normalizeMatrixInputValues(matrixInputValues)) !==
-			JSON.stringify(normalizeMatrixInputValues(lastSavedMatrixInputValues))
-	);
-	const hasSavedMatrixInputBefore = $derived(
-		Object.values(lastSavedMatrixInputValues).some((v) => v.trim().length > 0)
-	);
 
 	const handleMatrixInput = async (rowKey: string | number, colId: number) => {
 		if (isLocked || isSubmitting) return;
@@ -256,10 +251,6 @@
 		}
 	};
 
-	const hasUnsavedChanges = $derived(
-		String(candidateInput ?? '').trim() !== String(lastSavedInput ?? '').trim()
-	);
-	const hasSavedBefore = $derived(String(lastSavedInput ?? '').trim().length > 0);
 	const hasAttemptedResponse = (response: number[] | string | undefined): boolean => {
 		if (typeof response === 'string') {
 			return response.trim().length > 0;
@@ -536,6 +527,7 @@
 		const currentBookmarked = answeredQuestion.bookmarked ?? false;
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
 		const previousMatrixSelections = { ...matrixSelections };
+		const previousMatrixInputValues = { ...matrixInputValues };
 		const clearedResponse =
 			question.question_type === question_type_enum.SUBJECTIVE ||
 			question.question_type === question_type_enum.NUMERICALINTEGER ||
@@ -562,9 +554,16 @@
 
 		if (typeof clearedResponse === 'string') {
 			candidateInput = '';
-			lastSavedInput = '';
+			clearTimeout(debounceTimer);
+			debounceTimer = undefined;
+			saveStatus = 'idle';
 		} else if (question.question_type === question_type_enum.MATRIXMATCH) {
 			matrixSelections = {};
+		} else if (question.question_type === question_type_enum.MATRIXINPUT) {
+			matrixInputValues = {};
+			clearTimeout(debounceTimer);
+			debounceTimer = undefined;
+			saveStatus = 'idle';
 		}
 
 		try {
@@ -581,9 +580,10 @@
 					(selection: TSelection) => selection.question_revision_id === question.id
 				)?.response;
 				candidateInput = typeof previousResponse === 'string' ? previousResponse : '';
-				lastSavedInput = candidateInput;
 			} else if (question.question_type === question_type_enum.MATRIXMATCH) {
 				matrixSelections = previousMatrixSelections;
+			} else if (question.question_type === question_type_enum.MATRIXINPUT) {
+				matrixInputValues = previousMatrixInputValues;
 			}
 
 			setTransientSaveError(error, 'Failed to clear your answer. Please try again.');
@@ -603,6 +603,7 @@
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
 
 		isSubmitting = true;
+		saveStatus = 'saving';
 		saveError = null;
 
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
@@ -629,15 +630,32 @@
 
 		try {
 			await submitAnswer(question.id, inputValue, currentBookmarked);
-			lastSavedInput = candidateInput;
+			saveStatus = 'saved';
 		} catch (error) {
 			selectedQuestions = previousState;
 			updateStore();
+			saveStatus = 'idle';
 			setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 		} finally {
 			isSubmitting = false;
 		}
 	};
+
+	const scheduleSave = (saveFn: () => void = handleSubjectiveSubmit) => {
+		saveStatus = 'pending';
+		flushFn = saveFn;
+		clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => saveFn(), 800);
+	};
+
+	$effect(() => {
+		return () => {
+			if (debounceTimer !== undefined && saveStatus === 'pending' && flushFn) {
+				clearTimeout(debounceTimer);
+				flushFn();
+			}
+		};
+	});
 </script>
 
 {#snippet marksPill()}
@@ -842,25 +860,25 @@
 					style="field-sizing: content;"
 					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring min-h-22 w-full resize-none overflow-hidden rounded-[10px] border px-[14px] py-[10px] text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 					placeholder={$t('Type your answer here...')}
-					bind:value={candidateInput}
+					value={candidateInput}
+					oninput={(e) => {
+						candidateInput = e.currentTarget.value;
+						scheduleSave();
+					}}
 					maxlength={question.subjective_answer_limit || undefined}
 				></textarea>
 				<div class="flex items-center justify-between">
-					<Button
-						variant="default"
-						size="sm"
-						onclick={handleSubjectiveSubmit}
-						disabled={isSubmitting || !String(candidateInput ?? '').trim() || !hasUnsavedChanges}
-					>
-						{#if !hasUnsavedChanges && hasSavedBefore}
-							<Check class="mr-1 h-4 w-4" />
-							{$t('Saved')}
-						{:else if hasSavedBefore}
-							{$t('Update Answer')}
-						{:else}
-							{$t('Save Answer')}
-						{/if}
-					</Button>
+					{#if saveStatus === 'saving'}
+						<span class="text-muted-foreground flex items-center gap-1 text-xs">
+							<Spinner class="size-3" />{$t('Saving...')}
+						</span>
+					{:else if saveStatus === 'saved'}
+						<span class="text-success flex items-center gap-1 text-xs">
+							<Check class="size-3" />{$t('Saved')}
+						</span>
+					{:else}
+						<span></span>
+					{/if}
 					{#if question.subjective_answer_limit}
 						{@const remaining = question.subjective_answer_limit - candidateInput.length}
 						<div class="flex flex-col">
@@ -925,25 +943,21 @@
 						step={question.question_type === question_type_enum.NUMERICALDECIMAL ? 'any' : '1'}
 						class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border border-dashed px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 						placeholder={$t('Type your answer here...')}
-						bind:value={candidateInput}
+						value={candidateInput}
+						oninput={(e) => {
+							candidateInput = e.currentTarget.value;
+							scheduleSave();
+						}}
 					/>
-					<div class="flex items-center justify-between">
-						<Button
-							variant="default"
-							size="sm"
-							onclick={handleSubjectiveSubmit}
-							disabled={isSubmitting || !String(candidateInput ?? '').trim() || !hasUnsavedChanges}
-						>
-							{#if !hasUnsavedChanges && hasSavedBefore}
-								<Check class="mr-1 h-4 w-4" />
-								{$t('Saved')}
-							{:else if hasSavedBefore}
-								{$t('Update Answer')}
-							{:else}
-								{$t('Save Answer')}
-							{/if}
-						</Button>
-					</div>
+					{#if saveStatus === 'saving'}
+						<span class="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
+							<Spinner class="size-3" />{$t('Saving...')}
+						</span>
+					{:else if saveStatus === 'saved'}
+						<span class="text-success mt-1 flex items-center gap-1 text-xs">
+							<Check class="size-3" />{$t('Saved')}
+						</span>
+					{/if}
 				</div>
 			{/if}
 		{:else if question.question_type === question_type_enum.MATRIXMATCH}
@@ -1138,14 +1152,15 @@
 					</div>
 				</div>
 			</div>
-			<div class="mt-3 flex items-center">
-				<SaveAnswerButton
-					onclick={handleMatrixInputSave}
-					disabled={isSubmitting}
-					hasUnsaved={hasUnsavedMatrixInputChanges}
-					hasSaved={hasSavedMatrixInputBefore}
-				/>
-			</div>
+			{#if saveStatus === 'saving'}
+				<span class="text-muted-foreground mt-3 flex items-center gap-1 text-xs">
+					<Spinner class="size-3" />{$t('Saving...')}
+				</span>
+			{:else if saveStatus === 'saved'}
+				<span class="text-success mt-3 flex items-center gap-1 text-xs">
+					<Check class="size-3" />{$t('Saved')}
+				</span>
+			{/if}
 		{:else}
 			{@const typedOptions = options as TOptions[]}
 			<div class="flex flex-col gap-3">
