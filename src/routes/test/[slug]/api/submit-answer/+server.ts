@@ -61,7 +61,12 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 					visited: true,
 					bookmarked: bookmarked ?? false,
 					is_reviewed: is_reviewed ?? false,
-					...(time_spent !== undefined ? { time_spent } : {})
+					...(typeof time_spent === 'number' &&
+					Number.isFinite(time_spent) &&
+					Number.isSafeInteger(time_spent) &&
+					time_spent >= 0
+						? { time_spent }
+						: {})
 				})
 			}
 		);

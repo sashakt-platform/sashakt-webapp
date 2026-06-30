@@ -331,4 +331,77 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		expect(data.success).toBe(false);
 		expect(data.error).toBe('Connection refused');
 	});
+
+	describe('time_spent validation', () => {
+		const validRequest = (time_spent: unknown) =>
+			createMockRequest({ question_revision_id: 1, response: [101], candidate: mockCandidate, time_spent });
+
+		beforeEach(() => {
+			vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+			vi.mocked(fetch).mockResolvedValue(
+				createMockResponse({ success: true }) as unknown as Response
+			);
+		});
+
+		it('forwards a valid positive integer time_spent to the backend', async () => {
+			const response = await POST({ request: validRequest(30), cookies: createMockCookies() } as any);
+			expect(response.status).toBe(200);
+			expect(fetch).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({ body: expect.stringContaining('"time_spent":30') })
+			);
+		});
+
+		it('forwards time_spent of 0', async () => {
+			const response = await POST({ request: validRequest(0), cookies: createMockCookies() } as any);
+			expect(response.status).toBe(200);
+			expect(fetch).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({ body: expect.stringContaining('"time_spent":0') })
+			);
+		});
+
+		it('omits time_spent when value is null', async () => {
+			await POST({ request: validRequest(null), cookies: createMockCookies() } as any);
+			const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+			expect(body).not.toHaveProperty('time_spent');
+		});
+
+		it('omits time_spent when value is a string', async () => {
+			await POST({ request: validRequest('10'), cookies: createMockCookies() } as any);
+			const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+			expect(body).not.toHaveProperty('time_spent');
+		});
+
+		it('omits time_spent when value is negative', async () => {
+			await POST({ request: validRequest(-5), cookies: createMockCookies() } as any);
+			const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+			expect(body).not.toHaveProperty('time_spent');
+		});
+
+		it('omits time_spent when value is Infinity', async () => {
+			await POST({ request: validRequest(Infinity), cookies: createMockCookies() } as any);
+			const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+			expect(body).not.toHaveProperty('time_spent');
+		});
+
+		it('omits time_spent when value is NaN', async () => {
+			await POST({ request: validRequest(NaN), cookies: createMockCookies() } as any);
+			const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+			expect(body).not.toHaveProperty('time_spent');
+		});
+
+		it('omits time_spent when value is an unsafe large number', async () => {
+			await POST({ request: validRequest(Number.MAX_SAFE_INTEGER + 1), cookies: createMockCookies() } as any);
+			const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+			expect(body).not.toHaveProperty('time_spent');
+		});
+
+		it('still saves the answer successfully when time_spent is invalid', async () => {
+			const response = await POST({ request: validRequest('bad'), cookies: createMockCookies() } as any);
+			const data = await response.json();
+			expect(response.status).toBe(200);
+			expect(data.success).toBe(true);
+		});
+	});
 });
