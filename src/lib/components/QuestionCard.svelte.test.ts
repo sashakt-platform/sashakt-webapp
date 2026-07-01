@@ -3213,3 +3213,353 @@ describe('QuestionCard', () => {
 		});
 	});
 });
+
+describe('Time tracking', () => {
+	const timerKey = `sashakt-timer-${mockCandidate.candidate_test_id}`;
+
+	const baseProps = {
+		question: mockSingleChoiceQuestion,
+		serialNumber: 1,
+		candidate: mockCandidate,
+		totalQuestions: 10,
+		selectedQuestions: [] as TSelection[],
+		trackTime: true,
+		pauseTimerWhenInactive: false
+	};
+
+	// Flush the microtask queue enough for async IIFEs (submitAnswer chain) to resolve
+	const flushMicrotasks = async () => {
+		await Promise.resolve();
+		await Promise.resolve();
+		await Promise.resolve();
+	};
+
+	const getSubmitCalls = () =>
+		vi.mocked(fetch).mock.calls.filter((c) => String(c[0]).includes('/api/submit-answer'));
+
+	beforeEach(() => {
+		vi.useFakeTimers();
+		vi.mocked(fetch).mockResolvedValue(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+	});
+
+	describe('localStorage setup on mount', () => {
+		it('writes timer entry to localStorage when trackTime is true', () => {
+			render(QuestionCard, { props: baseProps });
+
+			const stored = localStorage.getItem(timerKey);
+			expect(stored).not.toBeNull();
+			const data = JSON.parse(stored!);
+			expect(data.questionId).toBe(mockSingleChoiceQuestion.id);
+			expect(data.questionType).toBe(mockSingleChoiceQuestion.question_type);
+			expect(typeof data.startTime).toBe('number');
+			expect(data.accumulated).toBe(0);
+		});
+
+		it('does not write to localStorage when trackTime is false', () => {
+			render(QuestionCard, { props: { ...baseProps, trackTime: false } });
+
+			expect(localStorage.getItem(timerKey)).toBeNull();
+		});
+
+		it('does not write to localStorage when question is already reviewed', () => {
+			render(QuestionCard, {
+				props: {
+					...baseProps,
+					selectedQuestions: [
+						{
+							question_revision_id: mockSingleChoiceQuestion.id,
+							response: [mockSingleChoiceQuestion.options[0].id],
+							visited: true,
+							time_spent: 10,
+							bookmarked: false,
+							is_reviewed: true
+						}
+					]
+				}
+			});
+
+			expect(localStorage.getItem(timerKey)).toBeNull();
+		});
+	});
+
+	describe('flushTime() on unmount', () => {
+		it('sends time_spent to the submit-answer API on unmount', async () => {
+			const { unmount } = render(QuestionCard, { props: baseProps });
+
+			vi.advanceTimersByTime(10000); // 10 seconds
+			unmount();
+			await flushMicrotasks();
+
+			const calls = getSubmitCalls();
+			expect(calls.length).toBeGreaterThan(0);
+			const body = JSON.parse((calls[0][1] as RequestInit).body as string);
+			expect(body.time_spent).toBe(10);
+			expect(body.question_revision_id).toBe(mockSingleChoiceQuestion.id);
+		});
+
+		it('adds elapsed time on top of existing time_spent from selectedQuestions', async () => {
+			const { unmount } = render(QuestionCard, {
+				props: {
+					...baseProps,
+					selectedQuestions: [
+						{
+							question_revision_id: mockSingleChoiceQuestion.id,
+							response: [mockSingleChoiceQuestion.options[0].id],
+							visited: true,
+							time_spent: 20,
+							bookmarked: false,
+							is_reviewed: false
+						}
+					]
+				}
+			});
+
+			vi.advanceTimersByTime(5000); // 5 more seconds on top of existing 20
+			unmount();
+			await flushMicrotasks();
+
+			const calls = getSubmitCalls();
+			const body = JSON.parse((calls[0][1] as RequestInit).body as string);
+			expect(body.time_spent).toBe(25); // 20 prior + 5 new
+		});
+
+		it('removes the localStorage key immediately (prevents double-counting on a second call)', async () => {
+			const { unmount } = render(QuestionCard, { props: baseProps });
+
+			vi.advanceTimersByTime(10000);
+			unmount();
+			await flushMicrotasks();
+
+			// Key removed synchronously inside flushTime() before the async API call
+			expect(localStorage.getItem(timerKey)).toBeNull();
+		});
+
+		it('does not call submit-answer API when elapsed time is 0', async () => {
+			const { unmount } = render(QuestionCard, { props: baseProps });
+
+			// No time advance — elapsed rounds to 0
+			unmount();
+			await flushMicrotasks();
+
+			expect(getSubmitCalls()).toHaveLength(0);
+		});
+
+		it('does not call submit-answer API on unmount when trackTime is false', async () => {
+			const { unmount } = render(QuestionCard, {
+				props: { ...baseProps, trackTime: false }
+			});
+
+			vi.advanceTimersByTime(10000);
+			unmount();
+			await flushMicrotasks();
+
+			expect(getSubmitCalls()).toHaveLength(0);
+		});
+
+		it('sends only time_spent (no response) for an unanswered non-subjective question', async () => {
+			const { unmount } = render(QuestionCard, { props: baseProps });
+
+			vi.advanceTimersByTime(7000);
+			unmount();
+			await flushMicrotasks();
+
+			const body = JSON.parse((getSubmitCalls()[0][1] as RequestInit).body as string);
+			expect(body.response).toBeUndefined();
+			expect(body.time_spent).toBe(7);
+		});
+
+		it('sends only time_spent (no response) for a new unanswered subjective question', async () => {
+			const { unmount } = render(QuestionCard, {
+				props: { ...baseProps, question: mockSubjectiveQuestion }
+			});
+
+			vi.advanceTimersByTime(10000);
+			unmount();
+			await flushMicrotasks();
+
+			const body = JSON.parse((getSubmitCalls()[0][1] as RequestInit).body as string);
+			expect(body.question_revision_id).toBe(mockSubjectiveQuestion.id);
+			expect(body.response).toBeUndefined();
+			expect(body.time_spent).toBe(10);
+		});
+
+		it('does not throw and still calls API even when the API call itself fails', async () => {
+			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+
+			const { unmount } = render(QuestionCard, { props: baseProps });
+
+			vi.advanceTimersByTime(10000);
+			expect(() => unmount()).not.toThrow();
+
+			await flushMicrotasks();
+
+			expect(getSubmitCalls().length).toBeGreaterThan(0);
+		});
+	});
+
+	describe('pagehide — tab close banking', () => {
+		it('banks accumulated time and nulls startTime in localStorage on pagehide', () => {
+			render(QuestionCard, { props: baseProps });
+
+			vi.advanceTimersByTime(10000); // 10s
+			window.dispatchEvent(new Event('pagehide'));
+
+			const data = JSON.parse(localStorage.getItem(timerKey)!);
+			expect(data.startTime).toBeNull();
+			expect(data.accumulated).toBeGreaterThanOrEqual(10000);
+		});
+
+		it('restores accumulated time on reopen and excludes the closed-tab gap', async () => {
+			// Simulate state left in localStorage after pagehide fired 10s into the question
+			localStorage.setItem(
+				timerKey,
+				JSON.stringify({
+					questionId: mockSingleChoiceQuestion.id,
+					questionType: mockSingleChoiceQuestion.question_type,
+					startTime: null,
+					accumulated: 10000
+				})
+			);
+
+			// Gap while tab was closed — Date.now() advances but the component is not mounted
+			vi.advanceTimersByTime(60000);
+
+			// Candidate reopens the tab
+			const { unmount } = render(QuestionCard, { props: baseProps });
+			vi.advanceTimersByTime(5000); // 5s after reopen
+			unmount();
+			await flushMicrotasks();
+
+			const body = JSON.parse((getSubmitCalls()[0][1] as RequestInit).body as string);
+			// 10s accumulated + 5s new; 60s gap is excluded because $effect resets startTime on mount
+			expect(body.time_spent).toBe(15);
+		});
+
+		it('does not carry over accumulated time when reopening on a different question', async () => {
+			// Pre-banked time belongs to mockSingleChoiceQuestion (id=1)
+			localStorage.setItem(
+				timerKey,
+				JSON.stringify({
+					questionId: mockSingleChoiceQuestion.id,
+					questionType: mockSingleChoiceQuestion.question_type,
+					startTime: null,
+					accumulated: 30000
+				})
+			);
+
+			// Candidate reopens on a different question
+			const { unmount } = render(QuestionCard, {
+				props: { ...baseProps, question: mockMultipleChoiceQuestion }
+			});
+			vi.advanceTimersByTime(5000);
+			unmount();
+			await flushMicrotasks();
+
+			const body = JSON.parse((getSubmitCalls()[0][1] as RequestInit).body as string);
+			expect(body.question_revision_id).toBe(mockMultipleChoiceQuestion.id);
+			expect(body.time_spent).toBe(5); // no carry-over from the different question's banked time
+		});
+	});
+
+	describe('pauseTimerWhenInactive = true — tab visibility', () => {
+		it('nulls startTime (pauses timer) in localStorage when tab becomes hidden', () => {
+			render(QuestionCard, { props: { ...baseProps, pauseTimerWhenInactive: true } });
+
+			vi.advanceTimersByTime(10000);
+			Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+			document.dispatchEvent(new Event('visibilitychange'));
+
+			const data = JSON.parse(localStorage.getItem(timerKey)!);
+			expect(data.startTime).toBeNull();
+			expect(data.accumulated).toBeGreaterThanOrEqual(10000);
+		});
+
+		it('sets a fresh startTime (resumes timer) when tab becomes visible again', () => {
+			render(QuestionCard, { props: { ...baseProps, pauseTimerWhenInactive: true } });
+
+			// Hide
+			Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+			document.dispatchEvent(new Event('visibilitychange'));
+
+			vi.advanceTimersByTime(30000);
+
+			// Show
+			Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+			document.dispatchEvent(new Event('visibilitychange'));
+
+			const data = JSON.parse(localStorage.getItem(timerKey)!);
+			expect(data.startTime).not.toBeNull(); // timer running again
+		});
+
+		it('excludes hidden time from elapsed: 10s visible + 30s hidden + 5s visible = 15s', async () => {
+			const { unmount } = render(QuestionCard, {
+				props: { ...baseProps, pauseTimerWhenInactive: true }
+			});
+
+			vi.advanceTimersByTime(10000); // 10s visible
+
+			Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+			document.dispatchEvent(new Event('visibilitychange'));
+			vi.advanceTimersByTime(30000); // 30s hidden — should NOT count
+
+			Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+			document.dispatchEvent(new Event('visibilitychange'));
+			vi.advanceTimersByTime(5000); // 5s visible again
+
+			unmount();
+			await flushMicrotasks();
+
+			const body = JSON.parse((getSubmitCalls()[0][1] as RequestInit).body as string);
+			expect(body.time_spent).toBe(15); // 10 + 5, not 45
+		});
+
+		it('counts only accumulated when unmounted while tab is hidden', async () => {
+			const { unmount } = render(QuestionCard, {
+				props: { ...baseProps, pauseTimerWhenInactive: true }
+			});
+
+			vi.advanceTimersByTime(10000); // 10s visible
+
+			Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+			document.dispatchEvent(new Event('visibilitychange'));
+			vi.advanceTimersByTime(30000); // 30s hidden
+
+			unmount(); // flushTime called while tab is still hidden
+			await flushMicrotasks();
+
+			const body = JSON.parse((getSubmitCalls()[0][1] as RequestInit).body as string);
+			expect(body.time_spent).toBe(10); // only the visible accumulated; hidden gap excluded
+		});
+	});
+
+	describe('pauseTimerWhenInactive = false — tab visibility', () => {
+		it('does not pause on tab hide — startTime stays non-null', () => {
+			render(QuestionCard, { props: { ...baseProps, pauseTimerWhenInactive: false } });
+
+			vi.advanceTimersByTime(10000);
+			Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+			document.dispatchEvent(new Event('visibilitychange'));
+
+			const data = JSON.parse(localStorage.getItem(timerKey)!);
+			expect(data.startTime).not.toBeNull(); // timer still running
+		});
+
+		it('pagehide still banks time even when pauseTimerWhenInactive is false', () => {
+			render(QuestionCard, { props: { ...baseProps, pauseTimerWhenInactive: false } });
+
+			vi.advanceTimersByTime(10000);
+			window.dispatchEvent(new Event('pagehide'));
+
+			const data = JSON.parse(localStorage.getItem(timerKey)!);
+			expect(data.startTime).toBeNull();
+			expect(data.accumulated).toBeGreaterThanOrEqual(10000);
+		});
+	});
+});

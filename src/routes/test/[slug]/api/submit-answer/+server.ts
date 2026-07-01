@@ -17,13 +17,15 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		response,
 		candidate,
 		bookmarked,
-		is_reviewed
+		is_reviewed,
+		time_spent
 	}: {
 		question_revision_id: number;
-		response: number[] | string | null;
+		response?: number[] | string | null;
 		candidate: TCandidate;
 		bookmarked?: boolean;
 		is_reviewed?: boolean;
+		time_spent?: number;
 	} = await request.json();
 
 	if (
@@ -51,14 +53,23 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					question_revision_id,
-					response: response
-						? typeof response === 'string'
-							? response
-							: JSON.stringify(response)
-						: null,
-					visited: true,
-					bookmarked: bookmarked ?? false,
-					is_reviewed: is_reviewed ?? false
+					...(response !== undefined
+						? {
+								response: response
+									? typeof response === 'string'
+										? response
+										: JSON.stringify(response)
+									: null,
+								...(bookmarked !== undefined ? { bookmarked } : {}),
+								...(is_reviewed !== undefined ? { is_reviewed } : {})
+							}
+						: {}),
+					...(typeof time_spent === 'number' &&
+					Number.isFinite(time_spent) &&
+					Number.isSafeInteger(time_spent) &&
+					time_spent >= 0
+						? { time_spent }
+						: {})
 				})
 			}
 		);
