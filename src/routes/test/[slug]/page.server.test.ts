@@ -31,6 +31,12 @@ vi.mock('$lib/server/test', () => ({
 
 // Mock SvelteKit functions
 vi.mock('@sveltejs/kit', () => ({
+	error: (status: number, body: any) => {
+		const error = new Error(typeof body === 'string' ? body : 'Error');
+		(error as any).status = status;
+		(error as any).body = body;
+		throw error;
+	},
 	fail: (status: number, data: any) => ({ status, ...data }),
 	redirect: (status: number, location: string) => {
 		const error = new Error('Redirect');
@@ -98,6 +104,27 @@ describe('Page Server - load function', () => {
 
 		expect(result.timeLeft).toBe(0);
 		expect(result.testQuestions).toBeNull();
+		expect(getTestQuestions).not.toHaveBeenCalled();
+	});
+
+	it('should show result without resuming timer when external launch is submitted', async () => {
+		const submittedCandidate = { ...mockCandidate, external_launch: true, submitted: true };
+		vi.mocked(getCandidate).mockReturnValue(submittedCandidate);
+
+		const mockResult = { total_questions: 5, correct_answer: 3 };
+		const mockFetch = vi.fn().mockResolvedValue(createMockResponse(mockResult));
+
+		const mockCookies = createMockCookies();
+		const result = await load({
+			locals: { testData: mockTestData, timeToBegin: 300 },
+			cookies: mockCookies,
+			fetch: mockFetch
+		} as any);
+
+		expect(result.submitted).toBe(true);
+		expect(result.result).toEqual(mockResult);
+		expect(result.testQuestions).toBeNull();
+		expect(getTimeLeft).not.toHaveBeenCalled();
 		expect(getTestQuestions).not.toHaveBeenCalled();
 	});
 
@@ -224,6 +251,194 @@ describe('Page Server - load function', () => {
 
 		expect(mockCookies.delete).toHaveBeenCalledWith('sashakt-candidate', expect.any(Object));
 	});
+
+	it('should exchange external launch ids for a candidate cookie and clean URL', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockFetch = vi.fn().mockResolvedValue(await createMockResponse(mockCandidate));
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: mockFetch,
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=${mockCandidate.candidate_test_id}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 303, location: `/test/${mockTestData.link}` });
+
+		expect(mockFetch).toHaveBeenCalledWith(
+			'http://test-backend.com/candidate/external/start_test',
+			expect.objectContaining({
+				method: 'POST',
+				body: JSON.stringify({
+					test_link_uuid: mockTestData.link,
+					candidate_uuid: mockCandidate.candidate_uuid,
+					candidate_test_id: mockCandidate.candidate_test_id
+				})
+			})
+		);
+		expect(mockCookies.set).toHaveBeenCalledWith(
+			'sashakt-candidate',
+			JSON.stringify({ ...mockCandidate, external_launch: true, pending_start: true }),
+			expect.objectContaining({
+				path: `/test/${mockTestData.link}`,
+				httpOnly: true
+			})
+		);
+	});
+
+	it('should mark cookie submitted when external launch resumes a submitted attempt', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValue(await createMockResponse({ ...mockCandidate, is_submitted: true }));
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: mockFetch,
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=${mockCandidate.candidate_test_id}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 303, location: `/test/${mockTestData.link}` });
+
+		expect(mockCookies.set).toHaveBeenCalledWith(
+			'sashakt-candidate',
+			JSON.stringify({
+				...mockCandidate,
+				is_submitted: true,
+				external_launch: true,
+				submitted: true
+			}),
+			expect.objectContaining({ path: `/test/${mockTestData.link}` })
+		);
+	});
+
+	it('should reject an invalid external launch', async () => {
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: vi.fn(),
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 400 });
+	});
+
+	it('should reject an external launch with a non-numeric candidate_test_id', async () => {
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: vi.fn(),
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=abc`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 400 });
+	});
+
+	it('should ignore external launch handling when no launch params are present', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockCookies = createMockCookies();
+
+		const result = await load({
+			locals: { testData: mockTestData, timeToBegin: 300 },
+			cookies: mockCookies,
+			fetch: vi.fn(),
+			url: new URL(`http://localhost/test/${mockTestData.link}`)
+		} as any);
+
+		expect(result.candidate).toBeNull();
+	});
+
+	it('should propagate the backend error when external start_test fails', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValue(
+				await createMockResponse({ detail: 'Test link not found' }, { ok: false, status: 404 })
+			);
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: mockFetch,
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=${mockCandidate.candidate_test_id}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 404 });
+	});
+
+	it('should fall back to a default message when external start_test error has no body', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockFetch = vi.fn().mockResolvedValue({
+			ok: false,
+			status: 500,
+			json: () => Promise.reject(new Error('bad json'))
+		});
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: mockFetch,
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=${mockCandidate.candidate_test_id}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 500 });
+	});
+
+	it('should return submitted with null result when the result fetch is not ok', async () => {
+		const submittedCandidate = { ...mockCandidate, external_launch: true, submitted: true };
+		vi.mocked(getCandidate).mockReturnValue(submittedCandidate);
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValue(await createMockResponse({}, { ok: false, status: 500 }));
+		const mockCookies = createMockCookies();
+
+		const result = await load({
+			locals: { testData: mockTestData, timeToBegin: 300 },
+			cookies: mockCookies,
+			fetch: mockFetch
+		} as any);
+
+		expect(result.submitted).toBe(true);
+		expect(result.result).toBeNull();
+	});
+
+	it('should return submitted with null result when the result fetch fails', async () => {
+		const submittedCandidate = { ...mockCandidate, external_launch: true, submitted: true };
+		vi.mocked(getCandidate).mockReturnValue(submittedCandidate);
+		const mockFetch = vi.fn().mockRejectedValue(new Error('network'));
+		const mockCookies = createMockCookies();
+
+		const result = await load({
+			locals: { testData: mockTestData, timeToBegin: 300 },
+			cookies: mockCookies,
+			fetch: mockFetch
+		} as any);
+
+		expect(result.submitted).toBe(true);
+		expect(result.result).toBeNull();
+		expect(getTimeLeft).not.toHaveBeenCalled();
+	});
 });
 
 describe('Page Server - createCandidate action', () => {
@@ -241,6 +456,26 @@ describe('Page Server - createCandidate action', () => {
 			get: (key: string) => data[key] || null
 		};
 	};
+
+	it('should clear pending_start for an existing externally launched candidate', async () => {
+		const pendingCandidate = { ...mockCandidate, external_launch: true, pending_start: true };
+		vi.mocked(getCandidate).mockReturnValue(pendingCandidate);
+
+		const mockFetch = vi.fn();
+		const mockCookies = createMockCookies();
+
+		const result = await actions.createCandidate({
+			request: { formData: () => Promise.resolve(createMockFormData({})) },
+			locals: { testData: mockTestData },
+			fetch: mockFetch,
+			cookies: mockCookies
+		} as any);
+
+		expect(result.success).toBe(true);
+		expect(result.candidateData.pending_start).toBe(false);
+		expect(mockFetch).not.toHaveBeenCalled();
+		expect(mockCookies.set).toHaveBeenCalled();
+	});
 
 	it('should create candidate successfully', async () => {
 		// check no existing candidate
@@ -504,6 +739,29 @@ describe('Page Server - submitTest action', () => {
 			mockCandidate.candidate_uuid
 		);
 		expect(mockCookies.delete).toHaveBeenCalledWith('sashakt-candidate', expect.any(Object));
+	});
+
+	it('should keep candidate cookie after external launch submit', async () => {
+		const externalCandidate = { ...mockCandidate, external_launch: true };
+		vi.mocked(getCandidate).mockReturnValue(externalCandidate);
+
+		const mockResult = { score: 85, passed: true };
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
+			.mockResolvedValueOnce(createMockResponse(mockResult));
+
+		const mockCookies = createMockCookies();
+
+		const result = await actions.submitTest({
+			cookies: mockCookies,
+			fetch: mockFetch,
+			locals: { testData: { ...mockTestData, show_feedback_on_completion: false } }
+		} as any);
+
+		expect(result.submitTest).toBe(true);
+		expect(result.result).toEqual(mockResult);
+		expect(mockCookies.delete).not.toHaveBeenCalled();
 	});
 
 	it('should handle empty feedback from review-feedback API', async () => {
