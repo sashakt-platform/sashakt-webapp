@@ -244,7 +244,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		);
 	});
 
-	it('should default bookmarked to false when not provided', async () => {
+	it('should omit bookmarked from backend payload when not provided', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 		vi.mocked(fetch).mockResolvedValueOnce(
 			createMockResponse({ success: true }) as unknown as Response
@@ -260,12 +260,8 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 
 		expect(response.status).toBe(200);
 		expect(fetch).toHaveBeenCalledTimes(1);
-		expect(fetch).toHaveBeenCalledWith(
-			expect.any(String),
-			expect.objectContaining({
-				body: expect.stringContaining('"bookmarked":false')
-			})
-		);
+		const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+		expect(body.bookmarked).toBeUndefined();
 	});
 
 	it('should return 500 when backend API fails', async () => {
