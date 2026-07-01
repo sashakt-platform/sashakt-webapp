@@ -360,28 +360,32 @@
 			}
 			isSubmitting = true;
 			saveError = null;
+			const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+
+			if (answeredQuestion) {
+				selectedQuestions = selectedQuestions.map((q) =>
+					q.question_revision_id === questionId ? { ...q, response: newResponse } : q
+				);
+			} else {
+				selectedQuestions = [
+					...selectedQuestions,
+					{
+						question_revision_id: questionId,
+						response: newResponse,
+						visited: true,
+						time_spent: 0,
+						bookmarked: currentBookmarked,
+						is_reviewed: false
+					}
+				];
+			}
+			updateStore();
+
 			try {
 				await submitAnswer(questionId, newResponse, currentBookmarked);
-				if (answeredQuestion) {
-					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
-					);
-				} else {
-					selectedQuestions = [
-						...selectedQuestions,
-						{
-							question_revision_id: questionId,
-							response: newResponse,
-							visited: true,
-							time_spent: 0,
-							bookmarked: currentBookmarked,
-							is_reviewed: false
-						}
-					];
-				}
-				updateStore();
 			} catch (error) {
-				// force complete remount of RadioGroup
+				selectedQuestions = previousState;
+				updateStore();
 				radioGroupKey++;
 				setTransientSaveError(error, 'Failed to save your answer. Please try again.');
 			} finally {
@@ -452,25 +456,13 @@
 
 		const existing = selectedQuestions.find((q) => q.question_revision_id === questionId);
 		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
-
-		let updatedTime: number;
-		let submitResponse: number[] | string | null;
-		let submitBookmarked: boolean;
-		let submitIsReviewed: boolean;
+		const updatedTime = (existing?.time_spent ?? 0) + elapsed;
 
 		if (existing) {
-			updatedTime = existing.time_spent + elapsed;
-			submitResponse = existing.response;
-			submitBookmarked = existing.bookmarked;
-			submitIsReviewed = existing.is_reviewed ?? false;
 			selectedQuestions = selectedQuestions.map((q) =>
 				q.question_revision_id === questionId ? { ...q, time_spent: updatedTime } : q
 			);
 		} else {
-			updatedTime = elapsed;
-			submitResponse = null;
-			submitBookmarked = false;
-			submitIsReviewed = false;
 			const defaultResponse = questionType === question_type_enum.SUBJECTIVE ? '' : [];
 			selectedQuestions = [
 				...selectedQuestions,
@@ -488,7 +480,7 @@
 
 		(async () => {
 			try {
-				await submitAnswer(questionId, submitResponse, submitBookmarked, submitIsReviewed, updatedTime);
+				await submitAnswer(questionId, undefined, undefined, undefined, updatedTime);
 			} catch {
 				selectedQuestions = previousState;
 				updateStore();
@@ -557,17 +549,21 @@
 
 	const submitAnswer = async (
 		questionId: number,
-		response: number[] | string | null,
+		response?: number[] | string | null,
 		bookmarked?: boolean,
 		is_reviewed?: boolean,
 		time_spent?: number
 	) => {
 		const data = {
 			question_revision_id: questionId,
-			response: response == null ? null : response.length > 0 ? response : null,
 			candidate,
-			bookmarked,
-			is_reviewed,
+			...(response !== undefined
+				? {
+						response: response == null ? null : response.length > 0 ? response : null,
+						...(bookmarked !== undefined ? { bookmarked } : {}),
+						...(is_reviewed !== undefined ? { is_reviewed } : {})
+					}
+				: {}),
 			...(time_spent !== undefined ? { time_spent } : {})
 		};
 

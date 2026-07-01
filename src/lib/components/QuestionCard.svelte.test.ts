@@ -4144,7 +4144,7 @@ describe('Time tracking', () => {
 			expect(getSubmitCalls()).toHaveLength(0);
 		});
 
-		it('sends response: null and time_spent for an unanswered non-subjective question', async () => {
+		it('sends only time_spent (no response) for an unanswered non-subjective question', async () => {
 			const { unmount } = render(QuestionCard, { props: baseProps });
 
 			vi.advanceTimersByTime(7000);
@@ -4152,11 +4152,11 @@ describe('Time tracking', () => {
 			await flushMicrotasks();
 
 			const body = JSON.parse((getSubmitCalls()[0][1] as RequestInit).body as string);
-			expect(body.response).toBeNull();
+			expect(body.response).toBeUndefined();
 			expect(body.time_spent).toBe(7);
 		});
 
-		it('sends response: null and time_spent for a new unanswered subjective question', async () => {
+		it('sends only time_spent (no response) for a new unanswered subjective question', async () => {
 			const { unmount } = render(QuestionCard, {
 				props: { ...baseProps, question: mockSubjectiveQuestion }
 			});
@@ -4167,7 +4167,7 @@ describe('Time tracking', () => {
 
 			const body = JSON.parse((getSubmitCalls()[0][1] as RequestInit).body as string);
 			expect(body.question_revision_id).toBe(mockSubjectiveQuestion.id);
-			expect(body.response).toBeNull(); // empty string '' maps to null in submitAnswer
+			expect(body.response).toBeUndefined();
 			expect(body.time_spent).toBe(10);
 		});
 
