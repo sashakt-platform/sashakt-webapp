@@ -1,0 +1,106 @@
+name: E2E tests
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Playwright against real backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout sashakt-webapp
+        uses: actions/checkout@v4
+        with:
+          path: webapp
+
+      - name: Checkout sashakt-core (backend)
+        uses: actions/checkout@v4
+        with:
+          repository: sashakt-platform/sashakt-core
+          path: core
+          ref: main
+
+      - name: Boot backend via Docker Compose
+        working-directory: core
+        run: |
+          cp .env.example .env
+          docker compose build backend
+          # db must come up first — `prestart` polls for the DB but doesn't
+          # declare it as a dependency, so `up --wait backend` alone hangs.
+          docker compose up -d --wait db
+          docker compose up -d --wait backend
+          curl --retry 10 --retry-delay 3 --retry-all-errors \
+            --fail http://localhost:8000/api/v1/utils/health-check
+
+      - name: Seed sample data
+        working-directory: core
+        run: docker compose exec -T backend python app/populate_sample_data.py
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: webapp/pnpm-lock.yaml
+
+      - name: Install webapp dependencies
+        working-directory: webapp
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        working-directory: webapp
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Configure webapp env
+        working-directory: webapp
+        run: |
+          cat <<'EOF' > .env
+          BACKEND_URL=http://localhost:8000/api/v1
+          PUBLIC_APP_ENV=development
+          SENTRY_AUTH_TOKEN=
+          E2E_USERNAME=systemadmin@example.com
+          E2E_PASSWORD=ChangeMe123!
+          EOF
+
+      - name: Run Playwright tests
+        working-directory: webapp
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: webapp/playwright-report/
+          retention-days: 7
+
+      - name: Collect backend logs on failure
+        if: failure()
+        working-directory: core
+        run: docker compose logs backend > backend.log 2>&1 || true
+
+      - name: Upload backend logs artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-logs
+          path: core/backend.log
+          retention-days: 7
