@@ -99,7 +99,7 @@
 				<div class="px-5 py-4">
 					<RichText
 						content={testDetails.start_instructions}
-						class="text-foreground prose prose-sm text-[13px]/relaxed"
+						class="text-foreground text-[13px]/relaxed"
 					/>
 				</div>
 			</div>

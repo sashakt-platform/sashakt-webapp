@@ -42,7 +42,7 @@
 		</Dialog.Header>
 		<div class="max-h-[60vh] overflow-y-auto">
 			{#if instructions}
-				<RichText content={instructions} class="prose prose-sm max-w-none" />
+				<RichText content={instructions} />
 			{:else}
 				<p class="text-muted-foreground text-center">{$t('No instructions available.')}</p>
 			{/if}

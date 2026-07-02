@@ -4,7 +4,6 @@
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import QuestionPaletteModal from '$lib/components/QuestionPaletteModal.svelte';
 	import QuestionPaletteSidebar from '$lib/components/QuestionPaletteSidebar.svelte';
-	import QuestionPaletteToggleButton from '$lib/components/QuestionPaletteToggleButton.svelte';
 	import RichText from '$lib/components/RichText.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -140,18 +139,29 @@
 </script>
 
 {#snippet mandatoryQuestionDialog(lastPage: boolean)}
-	<Dialog.Content class="w-80 rounded-xl">
-		<Dialog.Title class="mt-4">{$t('Answer all mandatory questions!')}</Dialog.Title>
-		<Dialog.Description class="text-center"
-			>{$t('Please make sure all mandatory questions are answered')}
-			{#if !lastPage}
-				{$t('before proceeding to the next page')}
-			{:else}
-				{$t('before submitting the test')}
-			{/if}.
-		</Dialog.Description>
+	<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
+		<div class="bg-muted px-6 pt-6 pr-12 pb-4">
+			<Dialog.Title class="text-base font-semibold">{$t('Answer all mandatory questions!')}</Dialog.Title>
+		</div>
 
-		<Dialog.Close><Button class="mt-2 w-full">{$t('Okay')}</Button></Dialog.Close>
+		<div class="border-border border-t"></div>
+
+		<div class="bg-card px-6 py-6">
+			<Dialog.Description>
+				<p class="text-muted-foreground text-sm">
+					{$t('Please make sure all mandatory questions are answered')}
+					{#if !lastPage}
+						{$t('before proceeding to the next page')}
+					{:else}
+						{$t('before submitting the test')}
+					{/if}.
+				</p>
+			</Dialog.Description>
+		</div>
+
+		<div class="bg-card flex justify-end px-6 pb-6">
+			<Dialog.Close><Button>{$t('Okay')}</Button></Dialog.Close>
+		</div>
 	</Dialog.Content>
 {/snippet}
 
@@ -264,8 +274,8 @@
 									</Dialog.Trigger>
 									{#if answeredAllMandatory(selectedQuestions, questions)}
 										<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
-											<div class="bg-card px-6 pt-6 pr-12 pb-4">
-												<Dialog.Title class="text-xl font-bold">
+											<div class="bg-muted px-6 pt-6 pr-12 pb-4">
+												<Dialog.Title class="text-normal">
 													{#if submitError || page.form?.submitTest === false || page.form?.error}
 														{$t('Submission Failed')}
 													{:else}
@@ -311,17 +321,18 @@
 											</div>
 
 											<div class="bg-card flex justify-end gap-3 px-6 pb-6">
-												<Dialog.Close>
-													<Button variant="outline" disabled={isSubmittingTest}>
+												<Dialog.Close class="flex-1 sm:flex-none">
+													<Button variant="outline" disabled={isSubmittingTest} class="w-full border-primary text-primary hover:text-primary">
 														{$t('Cancel')}
 													</Button>
 												</Dialog.Close>
 												<form
+													class="flex-1 sm:flex-none"
 													action="?/submitTest"
 													method="POST"
 													use:enhance={handleSubmitTestEnhance}
 												>
-													<Button type="submit" disabled={isSubmittingTest}>
+													<Button type="submit" disabled={isSubmittingTest} class="w-full">
 														{#if isSubmittingTest}
 															<Spinner />
 														{/if}

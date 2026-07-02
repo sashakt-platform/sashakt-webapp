@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import { fireEvent } from '@testing-library/svelte';
 import OmrSheet from './OmrSheet.svelte';
@@ -20,6 +20,7 @@ import {
 	mockMatrixInputNumberOptions,
 	createMockResponse
 } from '$lib/test-utils';
+import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 import type { TQuestion, TSelection, TMatrixOptions, TOptions } from '$lib/types';
 import { createTestSessionStore } from '$lib/helpers/testSession';
 
@@ -63,6 +64,8 @@ describe('OmrSheet', () => {
 			createMockResponse({ success: true }) as unknown as Response
 		);
 	});
+
+	afterEach(() => vi.useRealTimers());
 
 	describe('Rendering', () => {
 		it('renders the OMR Sheet heading', () => {
@@ -405,35 +408,18 @@ describe('OmrSheet', () => {
 			expect(screen.getByRole('textbox')).toBeInTheDocument();
 		});
 
-		it('renders a Save Answer button', () => {
-			render(OmrSheet, { props: makeProps([mockSubjectiveQuestion]) });
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
-		});
-
-		it('Save Answer button is disabled when textarea is empty', () => {
-			render(OmrSheet, { props: makeProps([mockSubjectiveQuestion]) });
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
-		});
-
-		it('Save Answer button is enabled after typing', async () => {
-			render(OmrSheet, { props: makeProps([mockSubjectiveQuestion]) });
-			await fireEvent.input(screen.getByRole('textbox'), {
-				target: { value: 'My answer' }
-			});
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeEnabled();
-		});
-
 		it('shows character count when answer limit is set', () => {
 			render(OmrSheet, { props: makeProps([mockSubjectiveQuestion]) });
 			expect(screen.getByText(/characters remaining/i)).toBeInTheDocument();
 		});
 
-		it('calls fetch when Save Answer is clicked', async () => {
+		it('calls fetch after debounce when text is entered', async () => {
+			vi.useFakeTimers();
 			render(OmrSheet, { props: makeProps([mockSubjectiveQuestion]) });
 			await fireEvent.input(screen.getByRole('textbox'), {
 				target: { value: 'Test answer' }
 			});
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				expect(fetch).toHaveBeenCalledWith(
@@ -444,29 +430,15 @@ describe('OmrSheet', () => {
 		});
 
 		it('shows Saved state after a successful save', async () => {
+			vi.useFakeTimers();
 			render(OmrSheet, { props: makeProps([mockSubjectiveQuestion]) });
 			await fireEvent.input(screen.getByRole('textbox'), {
 				target: { value: 'Test answer' }
 			});
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
-			});
-		});
-
-		it('shows Update Answer after modifying a saved answer', async () => {
-			render(OmrSheet, { props: makeProps([mockSubjectiveQuestion]) });
-			const textarea = screen.getByRole('textbox');
-
-			await fireEvent.input(textarea, { target: { value: 'First answer' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
-			await waitFor(() => screen.getByRole('button', { name: /saved/i }));
-
-			await fireEvent.input(textarea, { target: { value: 'Updated answer' } });
-
-			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
+				expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 			});
 		});
 
@@ -502,21 +474,11 @@ describe('OmrSheet', () => {
 			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
 		});
 
-		it('Save Answer button is disabled when input is empty', () => {
-			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
-		});
-
-		it('Save Answer button is enabled after typing a value', async () => {
+		it('calls fetch with the entered value after debounce', async () => {
+			vi.useFakeTimers();
 			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
 			await fireEvent.input(screen.getByRole('spinbutton'), { target: { value: '8' } });
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeEnabled();
-		});
-
-		it('calls fetch with the entered value when Save Answer is clicked', async () => {
-			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
-			await fireEvent.input(screen.getByRole('spinbutton'), { target: { value: '8' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
@@ -525,27 +487,13 @@ describe('OmrSheet', () => {
 		});
 
 		it('shows Saved state after a successful save', async () => {
+			vi.useFakeTimers();
 			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
 			await fireEvent.input(screen.getByRole('spinbutton'), { target: { value: '8' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
-			});
-		});
-
-		it('shows Update Answer after modifying a saved answer', async () => {
-			render(OmrSheet, { props: makeProps([mockNumericalIntegerQuestion]) });
-			const input = screen.getByRole('spinbutton');
-
-			await fireEvent.input(input, { target: { value: '8' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
-			await waitFor(() => screen.getByRole('button', { name: /saved/i }));
-
-			await fireEvent.input(input, { target: { value: '5' } });
-
-			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
+				expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 			});
 		});
 
@@ -574,10 +522,11 @@ describe('OmrSheet', () => {
 			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
 		});
 
-		it('calls fetch with the decimal value when Save Answer is clicked', async () => {
+		it('calls fetch with the decimal value after debounce', async () => {
+			vi.useFakeTimers();
 			render(OmrSheet, { props: makeProps([mockNumericalDecimalQuestion]) });
 			await fireEvent.input(screen.getByRole('spinbutton'), { target: { value: '3.14' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
@@ -586,12 +535,13 @@ describe('OmrSheet', () => {
 		});
 
 		it('shows Saved state after saving a decimal answer', async () => {
+			vi.useFakeTimers();
 			render(OmrSheet, { props: makeProps([mockNumericalDecimalQuestion]) });
 			await fireEvent.input(screen.getByRole('spinbutton'), { target: { value: '3.14' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+				expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 			});
 		});
 	});
@@ -920,23 +870,6 @@ describe('OmrSheet', () => {
 			});
 		});
 
-		it('renders the Save Answer button', () => {
-			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
-		});
-
-		it('Save Answer button is disabled when all inputs are empty', () => {
-			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
-		});
-
-		it('Save Answer button is enabled after typing into an input', async () => {
-			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
-			const inputs = screen.getAllByRole('textbox');
-			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeEnabled();
-		});
-
 		it('pre-fills inputs from saved selections on load', () => {
 			withSelections([
 				{
@@ -954,11 +887,12 @@ describe('OmrSheet', () => {
 			expect(inputs[1]).toHaveValue('Tokyo');
 		});
 
-		it('calls fetch with serialized JSON when Save Answer is clicked', async () => {
+		it('calls fetch with serialized JSON after debounce', async () => {
+			vi.useFakeTimers();
 			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
 			const inputs = screen.getAllByRole('textbox');
 			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				expect(fetch).toHaveBeenCalledWith(
@@ -972,11 +906,11 @@ describe('OmrSheet', () => {
 		});
 
 		it('excludes empty row values from the serialized payload', async () => {
+			vi.useFakeTimers();
 			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
 			const inputs = screen.getAllByRole('textbox');
 			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
@@ -986,6 +920,7 @@ describe('OmrSheet', () => {
 		});
 
 		it('sends null response when all rows are cleared', async () => {
+			vi.useFakeTimers();
 			withSelections([
 				{
 					question_revision_id: mockMatrixInputTextQuestion.id,
@@ -1000,7 +935,7 @@ describe('OmrSheet', () => {
 			const inputs = screen.getAllByRole('textbox');
 
 			await fireEvent.input(inputs[0], { target: { value: '' } });
-			await fireEvent.click(screen.getByRole('button', { name: /update answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
@@ -1009,51 +944,19 @@ describe('OmrSheet', () => {
 		});
 
 		it('shows Saved state after a successful save', async () => {
+			vi.useFakeTimers();
 			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
 			const inputs = screen.getAllByRole('textbox');
 			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
-			});
-		});
-
-		it('shows Update Answer after modifying a previously saved answer', async () => {
-			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
-			const inputs = screen.getAllByRole('textbox');
-
-			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
-			await waitFor(() => screen.getByRole('button', { name: /saved/i }));
-
-			await fireEvent.input(inputs[0], { target: { value: 'Lyon' } });
-			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
-			});
-		});
-
-		it('whitespace-only input does not count as a change', async () => {
-			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
-			const inputs = screen.getAllByRole('textbox');
-			await fireEvent.input(inputs[0], { target: { value: '   ' } });
-			expect(screen.getByRole('button', { name: /save answer/i })).toBeDisabled();
-		});
-
-		it('keeps Save Answer enabled after a failed save (no silent data loss)', async () => {
-			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
-
-			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
-			const inputs = screen.getAllByRole('textbox');
-			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
-
-			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
+				expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 			});
 		});
 
 		it('shows loading state while submitting', async () => {
+			vi.useFakeTimers();
 			let resolveFetch!: (value: Response | PromiseLike<Response>) => void;
 			vi.mocked(fetch).mockImplementationOnce(
 				() => new Promise((resolve) => (resolveFetch = resolve))
@@ -1062,7 +965,9 @@ describe('OmrSheet', () => {
 			render(OmrSheet, { props: makeProps([mockMatrixInputTextQuestion]) });
 			const inputs = screen.getAllByRole('textbox');
 			await fireEvent.input(inputs[0], { target: { value: 'Paris' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			vi.advanceTimersByTime(800);
+			vi.useRealTimers();
 
 			await waitFor(() => {
 				expect(document.querySelector('.pointer-events-none')).toBeInTheDocument();
@@ -1137,11 +1042,12 @@ describe('OmrSheet', () => {
 			expect(inputs[1]).toHaveValue(10);
 		});
 
-		it('calls fetch with the number value when Save Answer is clicked', async () => {
+		it('calls fetch with the number value after debounce', async () => {
+			vi.useFakeTimers();
 			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
 			const inputs = screen.getAllByRole('spinbutton');
 			await fireEvent.input(inputs[0], { target: { value: '7' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
@@ -1193,26 +1099,14 @@ describe('OmrSheet', () => {
 		});
 
 		it('shows Saved state after successfully saving a number answer', async () => {
+			vi.useFakeTimers();
 			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
 			const inputs = screen.getAllByRole('spinbutton');
 			await fireEvent.input(inputs[0], { target: { value: '42' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
-			});
-		});
-
-		it('keeps Save Answer enabled after a failed save', async () => {
-			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
-
-			render(OmrSheet, { props: makeProps([mockMatrixInputNumberQuestion]) });
-			const inputs = screen.getAllByRole('spinbutton');
-			await fireEvent.input(inputs[0], { target: { value: '42' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
-
-			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /save answer/i })).toBeInTheDocument();
+				expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 			});
 		});
 	});
@@ -1248,6 +1142,97 @@ describe('OmrSheet', () => {
 			expect(screen.getByText('Q.1:')).toBeInTheDocument();
 			expect(screen.getByText('Q.2:')).toBeInTheDocument();
 			expect(screen.getByText('Q.3:')).toBeInTheDocument();
+		});
+	});
+
+	describe('Submit dialog', () => {
+		it('opens the dialog when the Submit button is clicked', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			expect(await screen.findByRole('dialog')).toBeInTheDocument();
+		});
+
+		it('shows "Submit test?" title when all mandatory questions are answered', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			expect(await screen.findByText('Submit test?')).toBeInTheDocument();
+		});
+
+		it('shows the confirmation message', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			expect(
+				await screen.findByText(
+					'Are you sure you want to submit for final marking? No changes will be allowed after submission.'
+				)
+			).toBeInTheDocument();
+		});
+
+		it('shows Cancel and Confirm buttons in the dialog', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			await screen.findByRole('dialog');
+			expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument();
+			expect(screen.getAllByRole('button', { name: /cancel/i }).length).toBeGreaterThan(0);
+		});
+
+		it('closes the dialog when Cancel is clicked', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+			await screen.findByRole('dialog');
+
+			const cancelButtons = screen.getAllByRole('button', { name: /cancel/i });
+			await fireEvent.click(cancelButtons[0]);
+
+			await waitFor(() => {
+				expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('Mandatory questions dialog', () => {
+		beforeEach(() => {
+			vi.mocked(answeredAllMandatory).mockReturnValue(false);
+		});
+
+		it('shows "Answer all mandatory questions!" when not all answered', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			expect(await screen.findByText('Answer all mandatory questions!')).toBeInTheDocument();
+		});
+
+		it('shows the descriptive message about mandatory questions', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+
+			await screen.findByRole('dialog');
+			expect(screen.getByText(/Please make sure all mandatory questions are answered/)).toBeInTheDocument();
+		});
+
+		it('shows an Okay button that closes the dialog', async () => {
+			render(OmrSheet, { props: makeProps([mockSingleChoiceQuestion]) });
+
+			await fireEvent.click(screen.getAllByRole('button', { name: /^submit$/i })[0]);
+			await screen.findByRole('dialog');
+
+			const okayButtons = screen.getAllByRole('button', { name: /okay/i });
+			await fireEvent.click(okayButtons[0]);
+
+			await waitFor(() => {
+				expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+			});
 		});
 	});
 });

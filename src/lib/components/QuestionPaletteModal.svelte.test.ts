@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import QuestionPaletteModal from './QuestionPaletteModal.svelte';
 import type { TQuestion, TSelection } from '$lib/types';
+import { mockQuestionSets } from '$lib/test-utils';
 
 // Helper to create mock questions
 const createQuestion = (id: number, isMandatory: boolean): TQuestion => ({
@@ -114,5 +115,32 @@ describe('QuestionPaletteModal', () => {
 		expect(screen.getByText('Unanswered')).toBeInTheDocument();
 		expect(screen.getByText('Answered')).toBeInTheDocument();
 		expect(screen.getByText('Mandatory')).toBeInTheDocument();
+	});
+
+	it('should show section titles when questionSets is provided', () => {
+		const questions = mockQuestionSets.flatMap((qs) => qs.question_revisions);
+
+		render(QuestionPaletteModal, {
+			props: { ...defaultProps, questions, questionSets: mockQuestionSets }
+		});
+
+		expect(screen.getByText('Physics')).toBeInTheDocument();
+		expect(screen.getByText('Chemistry')).toBeInTheDocument();
+	});
+
+	it('should hide mark-for-review legend entry when showMarkForReview is false', () => {
+		render(QuestionPaletteModal, {
+			props: { ...defaultProps, showMarkForReview: false }
+		});
+
+		expect(screen.queryByText('Marked for Review')).not.toBeInTheDocument();
+	});
+
+	it('should show mark-for-review legend entry when showMarkForReview is true', () => {
+		render(QuestionPaletteModal, {
+			props: { ...defaultProps, showMarkForReview: true }
+		});
+
+		expect(screen.getByText('Marked for Review')).toBeInTheDocument();
 	});
 });

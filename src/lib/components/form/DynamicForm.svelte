@@ -27,6 +27,15 @@
 	// Sort fields by order
 	const sortedFields = $derived([...form.fields].sort((a, b) => a.order - b.order));
 
+	const allRequiredFieldsFilled = $derived(
+		sortedFields.every((field) => {
+			if (!field.is_required) return true;
+			const value = formResponses[field.name];
+			if (Array.isArray(value)) return value.length > 0;
+			return value !== undefined && value !== null && value !== '';
+		})
+	);
+
 	// Locate location fields by field_type to get their actual name properties
 	const stateField = $derived(form.fields.find((f) => f.field_type === 'state'));
 	const districtField = $derived(form.fields.find((f) => f.field_type === 'district'));
@@ -137,11 +146,20 @@
 <div class="bg-card fixed bottom-0 z-20 w-screen border-t px-4 py-4">
 	<div class="mx-auto max-w-xl lg:flex lg:justify-end">
 		{#if onContinue}
-			<Button onclick={handleContinue} class="w-full lg:w-auto">
+			<Button
+				onclick={handleContinue}
+				disabled={!allRequiredFieldsFilled}
+				class="w-full lg:w-auto"
+			>
 				{$t('Continue to Test')} →
 			</Button>
 		{:else}
-			<Button type="submit" form="dynamic-form" disabled={isSubmitting} class="w-full lg:w-auto">
+			<Button
+				type="submit"
+				form="dynamic-form"
+				disabled={isSubmitting || !allRequiredFieldsFilled}
+				class="w-full lg:w-auto"
+			>
 				{#if isSubmitting}
 					<Spinner />
 				{/if}

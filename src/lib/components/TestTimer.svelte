@@ -177,15 +177,24 @@
 
 	<Dialog.Root bind:open>
 		{#if timeLeft <= 10 * 60 && timeLeft}
-			<Dialog.Content class="w-80 rounded-xl">
-				<Dialog.Title>{$t('10 mins left!')}</Dialog.Title>
-				<Dialog.Description>
-					{$t('Please note that there is only 10 mins left for the test to complete, hurry up!')}
-				</Dialog.Description>
+			<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
+				<div class="bg-muted px-6 pt-6 pr-12 pb-4">
+					<Dialog.Title class="text-base font-semibold">{$t('10 mins left!')}</Dialog.Title>
+				</div>
 
-				<Dialog.Close>
-					<Button class="w-32 place-self-center">{$t('Okay')}</Button>
-				</Dialog.Close>
+				<div class="border-border border-t"></div>
+
+				<div class="bg-card px-6 py-6">
+					<Dialog.Description>
+						<p class="text-muted-foreground text-sm">
+							{$t('Please note that there is only 10 mins left for the test to complete, hurry up!')}
+						</p>
+					</Dialog.Description>
+				</div>
+
+				<div class="bg-card flex justify-end px-6 pb-6">
+					<Dialog.Close><Button>{$t('Okay')}</Button></Dialog.Close>
+				</div>
 			</Dialog.Content>
 		{:else}
 			<Dialog.Content
