@@ -50,6 +50,44 @@ async function getCurrentUser(request: APIRequestContext): Promise<{ organizatio
 	return (await res.json()) as { organization_id: number };
 }
 
+/**
+ * The backend refuses `POST /candidate/start_test` when the current time falls
+ * outside the org's `test_timings` window (defaults to 09:00–17:00 in whatever
+ * TIMEZONE the backend is configured with). CI runners are on UTC and can fire
+ * at any hour, so we widen the window to 00:00–23:59 once, up front. The change
+ * is org-scoped and idempotent.
+ */
+async function ensureOpenTestingWindow(
+	request: APIRequestContext,
+	organizationId: number
+): Promise<void> {
+	const headers = await authHeaders(request);
+	const getRes = await request.get(`${BACKEND_URL}/organization/${organizationId}/settings`, {
+		headers
+	});
+	if (!getRes.ok()) {
+		throw new Error(`Fetch org settings failed (${getRes.status()}): ${await getRes.text()}`);
+	}
+	const current = (await getRes.json()) as {
+		settings: {
+			test_timings: { value: { start_time?: string | null; end_time?: string | null } };
+		};
+	};
+	const timings = current.settings.test_timings.value;
+	if (timings.start_time === '00:00:00' && timings.end_time === '23:59:59') return;
+
+	current.settings.test_timings.value.start_time = '00:00:00';
+	current.settings.test_timings.value.end_time = '23:59:59';
+
+	const putRes = await request.put(`${BACKEND_URL}/organization/${organizationId}/settings`, {
+		headers: { ...headers, 'Content-Type': 'application/json' },
+		data: { settings: current.settings }
+	});
+	if (!putRes.ok()) {
+		throw new Error(`Widen org window failed (${putRes.status()}): ${await putRes.text()}`);
+	}
+}
+
 type ApiTest = { id: number; name: string };
 
 /**
@@ -110,6 +148,7 @@ export type DisposableTest = {
 export async function createDisposableTest(request: APIRequestContext): Promise<DisposableTest> {
 	const headers = { ...(await authHeaders(request)), 'Content-Type': 'application/json' };
 	const me = await getCurrentUser(request);
+	await ensureOpenTestingWindow(request, me.organization_id);
 	const suffix = uniqueSuffix();
 
 	const formRes = await request.post(`${BACKEND_URL}/form/`, {
