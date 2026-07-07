@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import { createMockResponse, mockCandidate } from '$lib/test-utils';
+import { testTimerState } from '$lib/testTimerState.svelte';
 import TestTimer from './TestTimer.svelte';
 
 // Mock SvelteKit modules
@@ -26,6 +27,7 @@ describe('TestTimer', () => {
 		vi.useRealTimers();
 		vi.unstubAllGlobals();
 		vi.clearAllMocks();
+		testTimerState.resetForTests();
 	});
 
 	it('should render time in HH:MM:SS format', () => {
@@ -321,6 +323,72 @@ describe('TestTimer', () => {
 			await waitFor(() => {
 				expect(screen.queryByText('10 mins left!')).not.toBeInTheDocument();
 			});
+		});
+
+		it('does not reopen after being dismissed when a resume sync and the countdown tick detect the same threshold independently', async () => {
+			// Both a resume sync response and the countdown's own first tick
+			// can independently notice timeLeft === 600; without a one-time
+			// latch, dismissing the dialog after the first detection gets
+			// reopened moments later by the second one.
+			vi.mocked(fetch).mockResolvedValue(
+				createMockResponse({ time_left: 600 }) as unknown as Response
+			);
+
+			render(TestTimer, {
+				props: { timeLeft: 600, candidate: mockCandidate, pauseTimerWhenInactive: true }
+			});
+
+			// let the resume sync resolve and open the dialog
+			await vi.waitFor(() => {
+				expect(screen.getByText('10 mins left!')).toBeInTheDocument();
+			});
+
+			const okayButtons = screen.getAllByRole('button', { name: /okay/i });
+			okayButtons[0].click();
+			await waitFor(() => {
+				expect(screen.queryByText('10 mins left!')).not.toBeInTheDocument();
+			});
+
+			// the countdown's own first tick also observes timeLeft === 600
+			// at this point; it must not reopen the dialog
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(screen.queryByText('10 mins left!')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('multiple simultaneous instances', () => {
+		// Regression coverage for the layout mounting one TestTimer per
+		// responsive breakpoint (mobile + desktop) at the same time.
+		it('shows only one 10-minute warning dialog when two instances are mounted', async () => {
+			render(TestTimer, { props: { timeLeft: 601 } });
+			render(TestTimer, { props: { timeLeft: 601 } });
+
+			await vi.advanceTimersByTimeAsync(2000);
+
+			expect(screen.getAllByText('10 mins left!')).toHaveLength(1);
+		});
+
+		it('keeps both instances displaying the same countdown', async () => {
+			render(TestTimer, { props: { timeLeft: 10 } });
+			render(TestTimer, { props: { timeLeft: 10 } });
+
+			expect(screen.getAllByText('00:00:10')).toHaveLength(2);
+
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(screen.getAllByText('00:00:09')).toHaveLength(2);
+		});
+
+		it('keeps the countdown running after the owning instance unmounts', async () => {
+			const first = render(TestTimer, { props: { timeLeft: 10 } });
+			render(TestTimer, { props: { timeLeft: 10 } });
+
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(screen.getAllByText('00:00:09')).toHaveLength(2);
+
+			first.unmount();
+
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(screen.getByText('00:00:08')).toBeInTheDocument();
 		});
 	});
 });
