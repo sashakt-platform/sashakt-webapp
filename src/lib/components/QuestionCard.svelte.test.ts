@@ -1043,39 +1043,8 @@ describe('QuestionCard', () => {
 			expect(screen.getAllByText('+5').length).toBeGreaterThan(0);
 		});
 
-		it('should show Saved state when previously answered without changes', () => {
-			render(QuestionCard, {
-				props: {
-					question: mockSubjectiveQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions: savedSubjectiveSelection('My previous answer')
-				}
-			});
-
-			expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
-			expect(screen.getByRole('button', { name: /saved/i })).toBeDisabled();
-		});
-
-		it('should show Update Answer button when modifying a previously saved answer', async () => {
-			render(QuestionCard, {
-				props: {
-					question: mockSubjectiveQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions: savedSubjectiveSelection('My previous answer')
-				}
-			});
-
-			const textarea = screen.getByPlaceholderText(/type your answer here/i);
-			await fireEvent.input(textarea, { target: { value: 'My updated answer' } });
-
-			expect(screen.getByRole('button', { name: /update answer/i })).toBeInTheDocument();
-		});
-
 		it('should show Saved state after a successful save with no pending changes', async () => {
+			vi.useFakeTimers();
 			vi.mocked(fetch).mockResolvedValueOnce(
 				createMockResponse({ success: true }) as unknown as Response
 			);
@@ -1092,38 +1061,12 @@ describe('QuestionCard', () => {
 
 			const textarea = screen.getByPlaceholderText(/type your answer here/i);
 			await fireEvent.input(textarea, { target: { value: 'My answer' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
+				expect(screen.getByText(/^saved$/i)).toBeInTheDocument();
 			});
-		});
-
-		it('should disable Save Answer button when text matches the last saved value', async () => {
-			vi.mocked(fetch).mockResolvedValueOnce(
-				createMockResponse({ success: true }) as unknown as Response
-			);
-
-			render(QuestionCard, {
-				props: {
-					question: mockSubjectiveQuestion,
-					serialNumber: 1,
-					candidate: mockCandidate,
-					totalQuestions: 10,
-					selectedQuestions: []
-				}
-			});
-
-			const textarea = screen.getByPlaceholderText(/type your answer here/i);
-			await fireEvent.input(textarea, { target: { value: 'My answer' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
-
-			await waitFor(() => {
-				expect(screen.getByRole('button', { name: /saved/i })).toBeInTheDocument();
-			});
-
-			await fireEvent.input(textarea, { target: { value: 'My answer' } });
-			expect(screen.getByRole('button', { name: /saved/i })).toBeDisabled();
 		});
 
 		it('should clear a saved subjective answer', async () => {
@@ -1185,6 +1128,7 @@ describe('QuestionCard', () => {
 		});
 
 		it('should keep textarea value after save API failure', async () => {
+			vi.useFakeTimers();
 			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 
 			render(QuestionCard, {
@@ -1199,7 +1143,8 @@ describe('QuestionCard', () => {
 
 			const textarea = screen.getByPlaceholderText(/type your answer here/i);
 			await fireEvent.input(textarea, { target: { value: 'My answer' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
@@ -1238,6 +1183,7 @@ describe('QuestionCard', () => {
 		});
 
 		it('should call API with correct response when updating an existing answer', async () => {
+			vi.useFakeTimers();
 			vi.mocked(fetch).mockResolvedValueOnce(
 				createMockResponse({ success: true }) as unknown as Response
 			);
@@ -1254,7 +1200,8 @@ describe('QuestionCard', () => {
 
 			const textarea = screen.getByPlaceholderText(/type your answer here/i);
 			await fireEvent.input(textarea, { target: { value: 'Updated answer' } });
-			await fireEvent.click(screen.getByRole('button', { name: /update answer/i }));
+
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				expect(fetch).toHaveBeenCalledWith(
@@ -1885,6 +1832,7 @@ describe('QuestionCard', () => {
 		});
 
 		it('should keep input value after save API failure for numerical-integer', async () => {
+			vi.useFakeTimers();
 			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 
 			render(QuestionCard, {
@@ -1899,7 +1847,8 @@ describe('QuestionCard', () => {
 
 			const input = screen.getByPlaceholderText(/type your answer here/i);
 			await fireEvent.input(input, { target: { value: '42' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
@@ -2251,6 +2200,7 @@ describe('QuestionCard', () => {
 		});
 
 		it('should show error message when numerical-decimal save fails', async () => {
+			vi.useFakeTimers();
 			vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
 
 			render(QuestionCard, {
@@ -2265,7 +2215,8 @@ describe('QuestionCard', () => {
 
 			const input = screen.getByPlaceholderText(/type your answer here/i);
 			await fireEvent.input(input, { target: { value: '3.14' } });
-			await fireEvent.click(screen.getByRole('button', { name: /save answer/i }));
+
+			await vi.advanceTimersByTimeAsync(800);
 
 			await waitFor(() => {
 				expect(screen.getByText(/network error|failed to save your answer/i)).toBeInTheDocument();
@@ -3581,7 +3532,7 @@ describe('QuestionCard', () => {
 				});
 			});
 
-			it('should not allow saving when locked', () => {
+			it('should not allow saving when locked', async () => {
 				const selectedQuestions: TSelection[] = [
 					{
 						question_revision_id: mockMatrixInputTextQuestion.id,
@@ -3596,7 +3547,10 @@ describe('QuestionCard', () => {
 					props: { question: mockMatrixInputTextQuestion, ...defaultProps, selectedQuestions }
 				});
 
-				expect(screen.getByRole('button', { name: /saved/i })).toBeDisabled();
+				const inputs = screen.getAllByRole('textbox');
+				await fireEvent.input(inputs[0], { target: { value: 'Berlin' } });
+
+				expect(fetch).not.toHaveBeenCalled();
 			});
 		});
 
