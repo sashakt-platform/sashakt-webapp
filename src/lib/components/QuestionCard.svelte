@@ -7,8 +7,6 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
-	import { Label } from '$lib/components/ui/label/index.js';
-	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { parseJsonRecord, normalizeMatrixInputValues } from '$lib/helpers/matrixHelpers';
@@ -17,7 +15,6 @@
 		type TCandidate,
 		type TMatrixInputOptions,
 		type TMatrixOptions,
-		type TOptions,
 		type TQuestion,
 		type TSelection
 	} from '$lib/types';
@@ -36,6 +33,7 @@
 	import ResultBadge from './ResultBadge.svelte';
 	import BottomSheetModal from './BottomSheetModal.svelte';
 	import MarkingSchemeContent from './MarkingSchemeContent.svelte';
+	import ChoiceAnswer from './answer/ChoiceAnswer.svelte';
 
 	let {
 		question,
@@ -269,30 +267,6 @@
 		setTimeout(() => (saveError = null), 5000);
 	};
 
-	const isSelected = (optionId: number) => {
-		const selected = selectedQuestion(question.id);
-		return Array.isArray(selected?.response) && selected.response.includes(optionId);
-	};
-
-	const optionFeedbackClass = (optionId: number) => {
-		if (!isFeedbackViewed || !correctAnswer) return '';
-		if (Array.isArray(correctAnswer) && correctAnswer.includes(optionId)) {
-			return 'bg-success-subtle border-success';
-		}
-		if (Array.isArray(currentSelection?.response) && currentSelection.response.includes(optionId)) {
-			return 'bg-error-subtle border-error';
-		}
-		return '';
-	};
-
-	const getOptionFeedbackStatus = (optionId: number): 'correct' | 'wrong' | 'none' => {
-		if (!isFeedbackViewed || !correctAnswer) return 'none';
-		if (Array.isArray(correctAnswer) && correctAnswer.includes(optionId)) return 'correct';
-		if (Array.isArray(currentSelection?.response) && currentSelection.response.includes(optionId))
-			return 'wrong';
-		return 'none';
-	};
-
 	const updateStore = () => {
 		sessionStore.current = {
 			...sessionStore.current,
@@ -323,110 +297,6 @@
 			}
 		} catch {
 			// Question stays locked — user already saw the correct answer
-		}
-	};
-
-	const handleSelection = async (questionId: number, optionId: number, isRemoving = false) => {
-		if (isLocked) return;
-
-		const answeredQuestion = selectedQuestion(questionId);
-		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-
-		let newResponse: number[];
-		if (isRemoving) {
-			if (!answeredQuestion || typeof answeredQuestion.response === 'string') return;
-			newResponse = answeredQuestion.response.filter((id) => id !== optionId);
-		} else {
-			if (question.question_type === 'single-choice') {
-				newResponse = [optionId];
-			} else {
-				const existingResponse =
-					answeredQuestion && typeof answeredQuestion.response !== 'string'
-						? answeredQuestion.response
-						: [];
-				newResponse = [...existingResponse, optionId];
-			}
-		}
-
-		if (question.question_type === 'single-choice' && !isRemoving) {
-			if (isSubmitting) {
-				return;
-			}
-			isSubmitting = true;
-			saveError = null;
-			try {
-				await submitAnswer(questionId, newResponse, currentBookmarked);
-				if (answeredQuestion) {
-					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
-					);
-				} else {
-					selectedQuestions = [
-						...selectedQuestions,
-						{
-							question_revision_id: questionId,
-							response: newResponse,
-							visited: true,
-							time_spent: 0,
-							bookmarked: currentBookmarked,
-							is_reviewed: false
-						}
-					];
-				}
-				updateStore();
-			} catch (error) {
-				// force complete remount of RadioGroup
-				radioGroupKey++;
-				setTransientSaveError(error, 'Failed to save your answer. Please try again.');
-			} finally {
-				isSubmitting = false;
-			}
-		} else {
-			if (isSubmitting) {
-				return;
-			}
-			isSubmitting = true;
-			saveError = null;
-			const previousState = JSON.parse(JSON.stringify(selectedQuestions));
-
-			if (isRemoving) {
-				selectedQuestions = selectedQuestions.map((q) =>
-					q.question_revision_id === questionId && typeof q.response !== 'string'
-						? { ...q, response: q.response.filter((id) => id !== optionId) }
-						: q
-				);
-			} else {
-				if (answeredQuestion) {
-					selectedQuestions = selectedQuestions.map((q) =>
-						q.question_revision_id === questionId ? { ...q, response: newResponse } : q
-					);
-				} else {
-					selectedQuestions = [
-						...selectedQuestions,
-						{
-							question_revision_id: questionId,
-							response: newResponse,
-							visited: true,
-							time_spent: 0,
-							bookmarked: currentBookmarked,
-
-							is_reviewed: false
-						}
-					];
-				}
-			}
-			updateStore();
-
-			try {
-				await submitAnswer(questionId, newResponse, currentBookmarked);
-			} catch (error) {
-				// revert on error
-				selectedQuestions = previousState;
-				updateStore();
-				setTransientSaveError(error, 'Failed to save your answer. Please try again.');
-			} finally {
-				isSubmitting = false;
-			}
 		}
 	};
 
@@ -791,69 +661,15 @@
 				{/if}
 			</div>
 		{/if}
-		{#if question.question_type === question_type_enum.SINGLE}
-			{#key radioGroupKey}
-				<RadioGroup.Root
-					onValueChange={async (optionId) => {
-						await handleSelection(question.id, Number(optionId));
-					}}
-					value={(() => {
-						const resp = selectedQuestion(question.id)?.response;
-						return typeof resp !== 'string' ? resp?.[0]?.toString() : undefined;
-					})()}
-					disabled={isLocked}
-					class="flex flex-col gap-3"
-				>
-					{@const typedOptions = options as TOptions[]}
-					{#each typedOptions as option, index (index)}
-						{@const uid = `${question.id}-${option.key}`}
-						{@const feedbackClass = optionFeedbackClass(option.id)}
-						{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
-						<div class="flex items-start gap-3">
-							<span class="text-muted-foreground mt-3 w-5 shrink-0 text-sm font-medium"
-								>{option.key}</span
-							>
-							<Label
-								for={uid}
-								class={cn(
-									'flex flex-1 cursor-pointer flex-col rounded-xl border transition-colors',
-									isFeedbackViewed
-										? feedbackClass || 'border-border bg-card'
-										: isSelected(option.id)
-											? 'border-primary bg-primary/10'
-											: 'border-border bg-card',
-									isLocked && 'cursor-not-allowed'
-								)}
-							>
-								<div class="flex items-center gap-3 px-4 py-3">
-									<RadioGroup.Item
-										value={option.id.toString()}
-										id={uid}
-										disabled={isLocked}
-										class={cn(
-											feedbackStatus === 'correct' && 'border-success text-success',
-											feedbackStatus === 'wrong' && 'border-error text-error'
-										)}
-									/>
-									<span class={cn('text-foreground flex-1 text-sm', feedbackStatus !== 'none')}
-										><RichText content={option.value} class="min-w-0 flex-1" /></span
-									>
-									{#if feedbackStatus === 'correct'}
-										{@render showCorrectWrongMark('correct')}
-									{:else if feedbackStatus === 'wrong'}
-										{@render showCorrectWrongMark('wrong')}
-									{/if}
-								</div>
-								{#if option.media}
-									<div class="px-4 pb-4">
-										<QuestionMedia media={option.media} />
-									</div>
-								{/if}
-							</Label>
-						</div>
-					{/each}
-				</RadioGroup.Root>
-			{/key}
+		{#if question.question_type === question_type_enum.SINGLE || question.question_type === question_type_enum.MULTIPLE}
+			<ChoiceAnswer
+				{question}
+				{candidate}
+				bind:selections={selectedQuestions}
+				variant="card"
+				bind:radioGroupKey
+				bind:isSubmitting
+			/>
 		{:else if question.question_type === question_type_enum.SUBJECTIVE}
 			<div class="flex flex-col gap-2">
 				<textarea
@@ -1014,9 +830,7 @@
 								<tr class="bg-muted">
 									<th class="w-14 px-4 py-3"></th>
 									{#each matrixColumns as col (col.id)}
-										<th
-											class="text-foreground min-w-16 px-4 py-3 text-center font-semibold"
-										>
+										<th class="text-foreground min-w-16 px-4 py-3 text-center font-semibold">
 											{col.key}
 										</th>
 									{/each}
@@ -1025,8 +839,7 @@
 							<tbody>
 								{#each matrixRows as row (row.id)}
 									<tr class="border-border border-b last:border-b-0">
-										<td
-											class="text-foreground px-4 py-3 text-center text-sm font-semibold"
+										<td class="text-foreground px-4 py-3 text-center text-sm font-semibold"
 											>{row.key}
 										</td>
 										{#each matrixColumns as col (col.id)}
@@ -1161,62 +974,6 @@
 					<Check class="size-3" />{$t('Saved')}
 				</span>
 			{/if}
-		{:else}
-			{@const typedOptions = options as TOptions[]}
-			<div class="flex flex-col gap-3">
-				{#each typedOptions as option (option.id)}
-					{@const uid = `${question.id}-${option.key}`}
-					{@const feedbackClass = optionFeedbackClass(option.id)}
-					{@const feedbackStatus = getOptionFeedbackStatus(option.id)}
-					<div class="flex items-start gap-3">
-						<span class="text-muted-foreground mt-3 w-5 shrink-0 text-sm font-medium"
-							>{option.key}</span
-						>
-						<Label
-							for={uid}
-							class={cn(
-								'flex flex-1 cursor-pointer flex-col rounded-xl border transition-colors',
-								isFeedbackViewed
-									? feedbackClass || 'border-border bg-card'
-									: isSelected(option.id)
-										? 'border-primary bg-primary/10'
-										: 'border-border bg-card',
-								isLocked && 'cursor-not-allowed'
-							)}
-						>
-							<div class="flex items-center gap-3 px-4 py-3">
-								<Checkbox
-									id={uid}
-									value={option.id.toString()}
-									checked={isSelected(option.id)}
-									disabled={isLocked}
-									onCheckedChange={async (check) => {
-										await handleSelection(question.id, option.id, check === false);
-									}}
-									class={cn(
-										feedbackStatus === 'correct' &&
-											'border-success data-[state=checked]:bg-success',
-										feedbackStatus === 'wrong' && 'border-error data-[state=checked]:bg-error'
-									)}
-								/>
-								<span class={cn('text-foreground flex-1 text-sm', feedbackStatus !== 'none')}
-									><RichText content={option.value} class="min-w-0 flex-1" /></span
-								>
-								{#if feedbackStatus === 'correct'}
-									{@render showCorrectWrongMark('correct')}
-								{:else if feedbackStatus === 'wrong'}
-									{@render showCorrectWrongMark('wrong')}
-								{/if}
-							</div>
-							{#if option.media}
-								<div class="px-4 pb-4">
-									<QuestionMedia media={option.media} />
-								</div>
-							{/if}
-						</Label>
-					</div>
-				{/each}
-			</div>
 		{/if}
 
 		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== question_type_enum.MATRIXRATING && question.question_type !== question_type_enum.MATRIXINPUT}

@@ -5,8 +5,6 @@
 	import Check from '@lucide/svelte/icons/check';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
@@ -18,12 +16,12 @@
 		type TCandidate,
 		type TMatrixInputOptions,
 		type TMatrixOptions,
-		type TOptions,
 		type TQuestion,
 		type TSelection
 	} from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import RichText from './RichText.svelte';
+	import ChoiceAnswer from './answer/ChoiceAnswer.svelte';
 
 	let {
 		candidate,
@@ -121,12 +119,6 @@
 		)
 	);
 
-	const getSelectedOptionIds = (questionId: number): number[] => {
-		const sel = selections.find((s) => s.question_revision_id === questionId);
-		const resp = sel?.response;
-		return Array.isArray(resp) ? resp : [];
-	};
-
 	const hasAttemptedResponse = (response: number[] | string | undefined): boolean => {
 		if (typeof response === 'string') {
 			return response.trim().length > 0;
@@ -147,10 +139,6 @@
 
 	const isSectionLimitMessage = (message: string | null | undefined) =>
 		message?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false;
-
-	const isSelected = (questionId: number, optionId: number) => {
-		return getSelectedOptionIds(questionId).includes(optionId);
-	};
 
 	const submitAnswer = async (questionId: number, response: number[] | string) => {
 		const hasResponse = Array.isArray(response) ? response.length > 0 : response.trim().length > 0;
@@ -194,43 +182,6 @@
 			];
 		}
 		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
-	};
-
-	const handleSelect = async (question: TQuestion, optionId: number, isRemoving = false) => {
-		if (submittingQuestion === question.id) return;
-
-		const currentIds = getSelectedOptionIds(question.id);
-		let newResponse: number[];
-
-		if (question.question_type === 'single-choice') {
-			if (currentIds[0] === optionId) return;
-			newResponse = [optionId];
-		} else {
-			if (isRemoving) {
-				newResponse = currentIds.filter((id) => id !== optionId);
-			} else {
-				newResponse = currentIds.includes(optionId) ? currentIds : [...currentIds, optionId];
-			}
-		}
-
-		const previousSelections = JSON.parse(JSON.stringify(selections));
-		submittingQuestion = question.id;
-		clearQuestionError(question.id);
-
-		updateSelections(question.id, newResponse);
-
-		try {
-			await submitAnswer(question.id, newResponse);
-		} catch (error) {
-			selections = previousSelections;
-			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to save your answer. Please try again.'
-			);
-		} finally {
-			submittingQuestion = null;
-		}
 	};
 
 	const getMatrixResponseForQuestion = (questionId: number): Record<string, number> =>
@@ -684,91 +635,17 @@
 							</div>
 						</div>
 					</div>
-				{:else if question_type === question_type_enum.MULTIPLE}
-					{@const typedOptions = question.options as TOptions[]}
-					<div class="w-full space-y-3">
-						<div class="grid grid-cols-4 gap-2 sm:gap-3">
-							{#each typedOptions as option (option.id)}
-								{@const uid = `omr-${question.id}-${option.key}`}
-								<Label
-									for={uid}
-									class="flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm sm:px-5 sm:py-4 sm:text-base {isSelected(
-										question.id,
-										option.id
-									)
-										? 'bg-primary text-muted *:border-muted *:text-muted'
-										: ''}"
-								>
-									{option.key}
-									<Checkbox
-										id={uid}
-										value={option.id.toString()}
-										class="ml-2 data-[state=checked]:bg-transparent data-[state=checked]:text-current sm:ml-3"
-										checked={isSelected(question.id, option.id)}
-										onCheckedChange={async (check) => {
-											await handleSelect(question, option.id, check === false);
-										}}
-									/>
-								</Label>
-							{/each}
-						</div>
-						<div class="flex justify-end">
-							<Button
-								size="sm"
-								variant="outline"
-								onclick={() => clearAnswer(question)}
-								disabled={submittingQuestion === question.id ||
-									!hasAttemptedResponse(
-										selections.find((selection) => selection.question_revision_id === question.id)
-											?.response
-									)}
-							>
-								{$t('Clear answer')}
-							</Button>
-						</div>
-					</div>
-				{:else if question_type === question_type_enum.SINGLE}
-					{@const typedOptions = question.options as TOptions[]}
-					<div class="w-full space-y-3">
-						<RadioGroup.Root
-							class="grid grid-cols-4 gap-2 sm:gap-3"
-							orientation="horizontal"
-							onValueChange={async (optionId) => {
-								await handleSelect(question, Number(optionId));
-							}}
-							value={getSelectedOptionIds(question.id)[0]?.toString()}
-						>
-							{#each typedOptions as option (option.id)}
-								{@const uid = `omr-${question.id}-${option.key}`}
-								<Label
-									for={uid}
-									class="flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm sm:px-5 sm:py-4 sm:text-base {isSelected(
-										question.id,
-										option.id
-									)
-										? 'bg-primary text-muted *:border-muted *:text-muted'
-										: ''}"
-								>
-									{option.key}
-									<RadioGroup.Item value={option.id.toString()} id={uid} class="ml-2 sm:ml-3" />
-								</Label>
-							{/each}
-						</RadioGroup.Root>
-						<div class="flex justify-end">
-							<Button
-								size="sm"
-								variant="outline"
-								onclick={() => clearAnswer(question)}
-								disabled={submittingQuestion === question.id ||
-									!hasAttemptedResponse(
-										selections.find((selection) => selection.question_revision_id === question.id)
-											?.response
-									)}
-							>
-								{$t('Clear answer')}
-							</Button>
-						</div>
-					</div>
+				{:else if question_type === question_type_enum.MULTIPLE || question_type === question_type_enum.SINGLE}
+					<ChoiceAnswer
+						{question}
+						{candidate}
+						bind:selections
+						variant="omr"
+						bind:isSubmitting={
+							() => submittingQuestion === question.id,
+							(v) => (submittingQuestion = v ? question.id : null)
+						}
+					/>
 				{:else if question_type === question_type_enum.MATRIXRATING}
 					{@const matrixOpts = question.options as unknown as TMatrixOptions}
 					<div class="w-full space-y-3">
@@ -776,15 +653,11 @@
 							<table class="w-full border-collapse text-xs sm:text-sm">
 								<thead>
 									<tr>
-										<th
-											class="border border-border bg-muted px-3 py-2 text-left font-semibold"
-										>
+										<th class="border border-border bg-muted px-3 py-2 text-left font-semibold">
 											{matrixOpts.rows.label}
 										</th>
 										{#each matrixOpts.columns.items as col (col.id)}
-											<th
-												class="border border-border bg-muted px-3 py-2 text-center font-semibold"
-											>
+											<th class="border border-border bg-muted px-3 py-2 text-center font-semibold">
 												{col.key}
 											</th>
 										{/each}
@@ -937,9 +810,8 @@
 								onclick={() => clearAnswer(question)}
 								disabled={submittingQuestion === question.id ||
 									!hasAttemptedResponse(
-										selections.find(
-											(selection) => selection.question_revision_id === question.id
-										)?.response
+										selections.find((selection) => selection.question_revision_id === question.id)
+											?.response
 									)}
 							>
 								{$t('Clear answer')}
@@ -1002,11 +874,20 @@
 
 					<div class="bg-card flex justify-end gap-3 px-6 pb-6">
 						<Dialog.Close class="flex-1 sm:flex-none">
-							<Button variant="outline" class="w-full border-primary text-primary hover:text-primary" disabled={isSubmittingTest}>
+							<Button
+								variant="outline"
+								class="w-full border-primary text-primary hover:text-primary"
+								disabled={isSubmittingTest}
+							>
 								{$t('Cancel')}
 							</Button>
 						</Dialog.Close>
-						<form class="flex-1 sm:flex-none" action="?/submitTest" method="POST" use:enhance={handleSubmitTestEnhance}>
+						<form
+							class="flex-1 sm:flex-none"
+							action="?/submitTest"
+							method="POST"
+							use:enhance={handleSubmitTestEnhance}
+						>
 							<Button type="submit" class="w-full" disabled={isSubmittingTest}>
 								{#if isSubmittingTest}
 									<Spinner />
@@ -1019,7 +900,9 @@
 			{:else}
 				<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
 					<div class="bg-muted px-6 pt-6 pr-12 pb-4">
-						<Dialog.Title class="text-base font-semibold">{$t('Answer all mandatory questions!')}</Dialog.Title>
+						<Dialog.Title class="text-base font-semibold"
+							>{$t('Answer all mandatory questions!')}</Dialog.Title
+						>
 					</div>
 
 					<div class="border-border border-t"></div>
