@@ -25,6 +25,7 @@
 	import { cn } from '$lib/utils';
 	import { navState } from '$lib/navState.svelte';
 	import ChoiceAnswer from './answer/ChoiceAnswer.svelte';
+	import SubjectiveAnswer from './answer/SubjectiveAnswer.svelte';
 
 	let {
 		candidate,
@@ -40,7 +41,7 @@
 		};
 	});
 
-	const toChoiceSelections = (item: any): TSelection[] => [
+	const toAnswerSelections = (item: any): TSelection[] => [
 		{
 			question_revision_id: item.question.id,
 			response: item.fb.submitted_answer,
@@ -284,21 +285,13 @@
 							</tbody>
 						</table>
 					</div>
-				{:else if item.question.question_type === 'subjective'}
-					<div class="rounded-xl border px-4 py-4">
-						{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
-							<p class="text-sm whitespace-pre-wrap">{item.fb.submitted_answer}</p>
-						{:else}
-							<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
-						{/if}
-					</div>
-					{#if item.question.subjective_answer_limit}
-						<p class="text-muted-foreground mt-2 text-xs">
-							{$t('Up to {max} characters', {
-								values: { max: item.question.subjective_answer_limit }
-							})}
-						</p>
-					{/if}
+				{:else if item.question.question_type === question_type_enum.SUBJECTIVE}
+					<SubjectiveAnswer
+						question={item.question}
+						{candidate}
+						selections={toAnswerSelections(item)}
+						variant="card"
+					/>
 				{:else if item.question.question_type === question_type_enum.NUMERICALINTEGER || item.question.question_type === question_type_enum.NUMERICALDECIMAL}
 					{@const isCorrect = isNumericalAnswerCorrect(
 						item.question.question_type,
@@ -336,7 +329,7 @@
 					<ChoiceAnswer
 						question={item.question}
 						{candidate}
-						selections={toChoiceSelections(item)}
+						selections={toAnswerSelections(item)}
 						variant="card"
 					/>
 				{/if}

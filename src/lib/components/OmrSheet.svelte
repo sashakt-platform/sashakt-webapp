@@ -22,6 +22,7 @@
 	import { t } from 'svelte-i18n';
 	import RichText from './RichText.svelte';
 	import ChoiceAnswer from './answer/ChoiceAnswer.svelte';
+	import SubjectiveAnswer from './answer/SubjectiveAnswer.svelte';
 
 	let {
 		candidate,
@@ -77,7 +78,6 @@
 			questions
 				.filter(
 					(q) =>
-						q.question_type === question_type_enum.SUBJECTIVE ||
 						q.question_type === question_type_enum.NUMERICALINTEGER ||
 						q.question_type === question_type_enum.NUMERICALDECIMAL
 				)
@@ -409,7 +409,6 @@
 		clearQuestionError(question.id);
 
 		const clearedResponse =
-			question.question_type === question_type_enum.SUBJECTIVE ||
 			question.question_type === question_type_enum.NUMERICALINTEGER ||
 			question.question_type === question_type_enum.NUMERICALDECIMAL ||
 			question.question_type === question_type_enum.MATRIXMATCH ||
@@ -432,7 +431,6 @@
 
 		if (typeof clearedResponse === 'string') {
 			if (
-				question.question_type === question_type_enum.SUBJECTIVE ||
 				question.question_type === question_type_enum.NUMERICALINTEGER ||
 				question.question_type === question_type_enum.NUMERICALDECIMAL
 			) {
@@ -462,8 +460,7 @@
 
 			if (
 				typeof clearedResponse === 'string' &&
-				(question.question_type === question_type_enum.SUBJECTIVE ||
-					question.question_type === question_type_enum.NUMERICALINTEGER ||
+				(question.question_type === question_type_enum.NUMERICALINTEGER ||
 					question.question_type === question_type_enum.NUMERICALDECIMAL)
 			) {
 				candidateInput[question.id] = String(
@@ -552,7 +549,18 @@
 					</div>
 				</div>
 
-				{#if question_type === question_type_enum.SUBJECTIVE || question_type === question_type_enum.NUMERICALINTEGER || question_type === question_type_enum.NUMERICALDECIMAL}
+				{#if question_type === question_type_enum.SUBJECTIVE}
+					<SubjectiveAnswer
+						{question}
+						{candidate}
+						bind:selections
+						variant="omr"
+						bind:isSubmitting={
+							() => submittingQuestion === question.id,
+							(v) => (submittingQuestion = v ? question.id : null)
+						}
+					/>
+				{:else if question_type === question_type_enum.NUMERICALINTEGER || question_type === question_type_enum.NUMERICALDECIMAL}
 					{@const currentInput = candidateInput[question.id] ?? ''}
 					<div class="flex w-full flex-col gap-2">
 						{#if questionErrors[question.id]}
@@ -571,31 +579,17 @@
 								{/if}
 							</div>
 						{/if}
-						{#if question_type == question_type_enum.SUBJECTIVE}
-							<textarea
-								style="field-sizing: content;"
-								class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full resize-none overflow-hidden rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-								placeholder={$t('Type your answer here...')}
-								value={candidateInput[question.id]}
-								oninput={(e) => {
-									candidateInput[question.id] = e.currentTarget.value;
-									scheduleSave(question, () => handleSubjectiveSubmit(question));
-								}}
-								maxlength={question.subjective_answer_limit || undefined}
-							></textarea>
-						{:else}
-							<input
-								type="number"
-								step={question_type === question_type_enum.NUMERICALDECIMAL ? 'any' : '1'}
-								class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-								placeholder={$t('Type your answer here...')}
-								value={candidateInput[question.id]}
-								oninput={(e) => {
-									candidateInput[question.id] = e.currentTarget.value;
-									scheduleSave(question, () => handleSubjectiveSubmit(question));
-								}}
-							/>
-						{/if}
+						<input
+							type="number"
+							step={question_type === question_type_enum.NUMERICALDECIMAL ? 'any' : '1'}
+							class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+							placeholder={$t('Type your answer here...')}
+							value={candidateInput[question.id]}
+							oninput={(e) => {
+								candidateInput[question.id] = e.currentTarget.value;
+								scheduleSave(question, () => handleSubjectiveSubmit(question));
+							}}
+						/>
 						<div class="flex items-center justify-between">
 							<div class="flex items-center gap-2">
 								{#if (saveStatuses[question.id] ?? 'idle') === 'saving'}

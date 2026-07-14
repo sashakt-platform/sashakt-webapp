@@ -34,6 +34,7 @@
 	import BottomSheetModal from './BottomSheetModal.svelte';
 	import MarkingSchemeContent from './MarkingSchemeContent.svelte';
 	import ChoiceAnswer from './answer/ChoiceAnswer.svelte';
+	import SubjectiveAnswer from './answer/SubjectiveAnswer.svelte';
 
 	let {
 		question,
@@ -59,6 +60,7 @@
 
 	// key to force remount of RadioGroup on error, this is to prevent radio button from being checked
 	let radioGroupKey = $state(0);
+	let subjectiveAnswerRef: { setInput: (value: string) => void } | undefined = $state();
 	let isSubmitting = $state(false);
 	let saveError = $state<string | null>(null);
 	let markingSchemeOpen = $state(false);
@@ -423,10 +425,14 @@
 		updateStore();
 
 		if (typeof clearedResponse === 'string') {
-			candidateInput = '';
-			clearTimeout(debounceTimer);
-			debounceTimer = undefined;
-			saveStatus = 'idle';
+			if (question.question_type === question_type_enum.SUBJECTIVE) {
+				subjectiveAnswerRef?.setInput('');
+			} else {
+				candidateInput = '';
+				clearTimeout(debounceTimer);
+				debounceTimer = undefined;
+				saveStatus = 'idle';
+			}
 		} else if (question.question_type === question_type_enum.MATRIXMATCH) {
 			matrixSelections = {};
 		} else if (question.question_type === question_type_enum.MATRIXINPUT) {
@@ -449,7 +455,12 @@
 				const previousResponse = previousState.find(
 					(selection: TSelection) => selection.question_revision_id === question.id
 				)?.response;
-				candidateInput = typeof previousResponse === 'string' ? previousResponse : '';
+				const restoredValue = typeof previousResponse === 'string' ? previousResponse : '';
+				if (question.question_type === question_type_enum.SUBJECTIVE) {
+					subjectiveAnswerRef?.setInput(restoredValue);
+				} else {
+					candidateInput = restoredValue;
+				}
 			} else if (question.question_type === question_type_enum.MATRIXMATCH) {
 				matrixSelections = previousMatrixSelections;
 			} else if (question.question_type === question_type_enum.MATRIXINPUT) {
@@ -671,52 +682,14 @@
 				bind:isSubmitting
 			/>
 		{:else if question.question_type === question_type_enum.SUBJECTIVE}
-			<div class="flex flex-col gap-2">
-				<textarea
-					style="field-sizing: content;"
-					class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring min-h-22 w-full resize-none overflow-hidden rounded-[10px] border px-[14px] py-[10px] text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-					placeholder={$t('Type your answer here...')}
-					value={candidateInput}
-					oninput={(e) => {
-						candidateInput = e.currentTarget.value;
-						scheduleSave();
-					}}
-					maxlength={question.subjective_answer_limit || undefined}
-				></textarea>
-				<div class="flex items-center justify-between">
-					{#if saveStatus === 'saving'}
-						<span class="text-muted-foreground flex items-center gap-1 text-xs">
-							<Spinner class="size-3" />{$t('Saving...')}
-						</span>
-					{:else if saveStatus === 'saved'}
-						<span class="text-success flex items-center gap-1 text-xs">
-							<Check class="size-3" />{$t('Saved')}
-						</span>
-					{:else}
-						<span></span>
-					{/if}
-					{#if question.subjective_answer_limit}
-						{@const remaining = question.subjective_answer_limit - candidateInput.length}
-						<div class="flex flex-col">
-							<span
-								class="text-sm {remaining <= 0
-									? 'text-error font-medium'
-									: 'text-muted-foreground'}"
-							>
-								{remaining}
-								{$t('characters remaining')}
-							</span>
-							{#if remaining <= 0}
-								<span class="text-error text-xs">
-									{$t('Character limit reached')}
-								</span>
-							{/if}
-						</div>
-					{:else}
-						<span></span>
-					{/if}
-				</div>
-			</div>
+			<SubjectiveAnswer
+				bind:this={subjectiveAnswerRef}
+				{question}
+				{candidate}
+				bind:selections={selectedQuestions}
+				variant="card"
+				bind:isSubmitting
+			/>
 		{:else if question.question_type === question_type_enum.NUMERICALINTEGER || question.question_type === question_type_enum.NUMERICALDECIMAL}
 			{#if isLocked}
 				{@const isCorrect = checkNumberAnswerCorrect()}
