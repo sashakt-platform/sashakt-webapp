@@ -1,7 +1,5 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
-	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import Check from '@lucide/svelte/icons/check';
 	import X from '@lucide/svelte/icons/x';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
@@ -11,8 +9,7 @@
 		normalizeTestQuestions
 	} from '$lib/helpers/questionSetHelpers';
 	import { t } from 'svelte-i18n';
-	import { question_type_enum } from '$lib/types';
-	import type { TOptions } from '$lib/types';
+	import { question_type_enum, type TCandidate, type TSelection } from '$lib/types';
 	import {
 		isNumericalAnswerCorrect,
 		getQuestionResult,
@@ -25,15 +22,16 @@
 	import type { TMatrixOptions, TMatrixInputOptions } from '$lib/types';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
-	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { cn } from '$lib/utils';
 	import { navState } from '$lib/navState.svelte';
+	import ChoiceAnswer from './answer/ChoiceAnswer.svelte';
 
 	let {
+		candidate,
 		feedback = [],
 		testQuestions,
 		onBack
-	}: { feedback?: any; testQuestions?: any; onBack?: () => void } = $props();
+	}: { candidate: TCandidate; feedback?: any; testQuestions?: any; onBack?: () => void } = $props();
 
 	$effect(() => {
 		navState.onBack = onBack;
@@ -42,23 +40,17 @@
 		};
 	});
 
-	const isCorrect = (optionId: number, correctAnswer: number[]) => correctAnswer.includes(optionId);
-
-	const isSubmitted = (optionId: number, submittedAnswer: number[]) =>
-		submittedAnswer.includes(optionId);
-
-	const getOptionStatus = (optionId: number, submitted: number[], correct: number[]) => {
-		if (isCorrect(optionId, correct)) return 'correct';
-		if (isSubmitted(optionId, submitted)) return 'wrong';
-		return 'none';
-	};
-
-	const getOptionLabelClass = (correct: boolean, submitted: boolean) =>
-		correct
-			? 'bg-success-subtle border-success'
-			: submitted
-				? 'bg-error-subtle border-error border-t-error-bold'
-				: 'border-border bg-card';
+	const toChoiceSelections = (item: any): TSelection[] => [
+		{
+			question_revision_id: item.question.id,
+			response: item.fb.submitted_answer,
+			correct_answer: item.fb.correct_answer,
+			is_reviewed: true,
+			visited: true,
+			time_spent: 0,
+			bookmarked: false
+		}
+	];
 
 	const normalizedTestQuestions = $derived(normalizeTestQuestions(testQuestions));
 
@@ -340,113 +332,13 @@
 							{@render showCorrectWrongMark('correct')}
 						</div>
 					{/if}
-				{:else if item.question.question_type === question_type_enum.SINGLE}
-					<RadioGroup.Root
-						value={item.fb.submitted_answer[0]?.toString()}
-						disabled
-						class="flex flex-col gap-3"
-					>
-						{#each item.question.options as TOptions[] as option (option.id)}
-							{@const uid = `${item.question.id}-${option.key}`}
-							{@const correct = isCorrect(option.id, item.fb.correct_answer)}
-							{@const submitted = isSubmitted(option.id, item.fb.submitted_answer)}
-							{@const status = getOptionStatus(
-								option.id,
-								item.fb.submitted_answer,
-								item.fb.correct_answer
-							)}
-							{@const itemClass = correct
-								? 'border-success text-success disabled:opacity-100'
-								: submitted
-									? 'border-error text-error disabled:opacity-100'
-									: ''}
-							<div class="flex items-start gap-3">
-								<span class="mt-3 w-5 shrink-0 text-sm font-medium">{option.key}</span>
-								<Label
-									for={uid}
-									class={cn(
-										'flex flex-1 cursor-not-allowed flex-col rounded-xl border transition-colors',
-										getOptionLabelClass(correct, submitted)
-									)}
-								>
-									<div class="flex items-center gap-3 px-4 py-3">
-										<RadioGroup.Item
-											value={option.id.toString()}
-											id={uid}
-											disabled
-											class={itemClass}
-										/>
-										<span
-											class={cn(
-												'text-foreground flex-1 text-sm',
-												(correct || submitted) && 'font-semibold'
-											)}
-											><RichText content={option.value} />
-										</span>
-										{#if status === 'correct'}
-											{@render showCorrectWrongMark('correct')}
-										{:else if status === 'wrong'}
-											{@render showCorrectWrongMark('wrong')}
-										{/if}
-									</div>
-									{#if option.media}
-										<div class="px-4 pb-4"><QuestionMedia media={option.media} /></div>
-									{/if}
-								</Label>
-							</div>
-						{/each}
-					</RadioGroup.Root>
-				{:else}
-					<div class="flex flex-col gap-3">
-						{#each item.question.options as TOptions[] as option (option.id)}
-							{@const uid = `${item.question.id}-${option.key}`}
-							{@const correct = isCorrect(option.id, item.fb.correct_answer)}
-							{@const submitted = isSubmitted(option.id, item.fb.submitted_answer)}
-							{@const status = getOptionStatus(
-								option.id,
-								item.fb.submitted_answer,
-								item.fb.correct_answer
-							)}
-							<div class="flex items-start gap-3">
-								<span class="text-muted-foreground mt-3 w-5 shrink-0 text-sm font-medium"
-									>{option.key}</span
-								>
-								<Label
-									for={uid}
-									class={cn(
-										'flex flex-1 cursor-not-allowed flex-col rounded-xl border transition-colors',
-										getOptionLabelClass(correct, submitted)
-									)}
-								>
-									<div class="flex items-center gap-3 px-4 py-3">
-										<Checkbox
-											id={uid}
-											checked={submitted}
-											disabled
-											class={cn(
-												' disabled:opacity-100 ',
-												correct && submitted && 'border-success data-[state=checked]:bg-success',
-												!correct && submitted && 'border-error data-[state=checked]:bg-error',
-												correct && !submitted && 'border-success'
-											)}
-										/>
-										<span
-											class={cn(
-												'text-foreground flex-1 text-sm',
-												(correct || submitted) && 'font-semibold'
-											)}><RichText content={option.value} /></span
-										>
-										{#if status === 'wrong'}
-											{@render showCorrectWrongMark('wrong')}
-										{/if}
-									</div>
-									{#if option.media}
-										<div class="px-4 pb-4"><QuestionMedia media={option.media} /></div>
-									{/if}
-								</Label>
-							</div>
-						{/each}
-					</div>
+				{:else if item.question.question_type === question_type_enum.SINGLE || item.question.question_type === question_type_enum.MULTIPLE}
+					<ChoiceAnswer
+						question={item.question}
+						{candidate}
+						selections={toChoiceSelections(item)}
+						variant="card"
+					/>
 				{/if}
 			</Card.Content>
 		</Card.Root>

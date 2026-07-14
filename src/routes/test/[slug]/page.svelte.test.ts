@@ -271,7 +271,8 @@ describe('Test Page - Feedback flow', () => {
 					submitTest: true,
 					result: mockResultData,
 					feedback: mockFeedback,
-					testQuestions: mockTestQuestionsResponse
+					testQuestions: mockTestQuestionsResponse,
+					candidate: mockCandidate
 				}
 			}
 		});
@@ -295,7 +296,8 @@ describe('Test Page - Feedback flow', () => {
 					submitTest: true,
 					result: mockResultData,
 					feedback: mockFeedback,
-					testQuestions: mockTestQuestionsResponse
+					testQuestions: mockTestQuestionsResponse,
+					candidate: mockCandidate
 				}
 			}
 		});
@@ -316,7 +318,8 @@ describe('Test Page - Feedback flow', () => {
 					submitTest: true,
 					result: mockResultData,
 					feedback: null,
-					testQuestions: null
+					testQuestions: null,
+					candidate: mockCandidate
 				}
 			}
 		});
@@ -337,7 +340,8 @@ describe('Test Page - Feedback flow', () => {
 					submitTest: true,
 					result: mockResultData,
 					feedback: mockFeedback,
-					testQuestions: mockTestQuestionsResponse
+					testQuestions: mockTestQuestionsResponse,
+					candidate: mockCandidate
 				}
 			}
 		});
