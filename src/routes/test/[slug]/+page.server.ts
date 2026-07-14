@@ -4,7 +4,7 @@ import { getCandidate } from '$lib/helpers/getCandidate';
 import { getTestQuestions, getTimeLeft, getStates, type TState } from '$lib/server/test';
 import { validateForm } from '$lib/components/form/validation';
 import type { TTestDetails } from '$lib/types';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect, type Cookies } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
@@ -16,9 +16,68 @@ function hasLocationFields(testData: TTestDetails): boolean {
 	return testData.form.fields.some((field) => locationFieldTypes.includes(field.field_type));
 }
 
-export const load: PageServerLoad = async ({ locals, cookies }) => {
+function setCandidateCookie(cookies: Cookies, testLink: string, candidateData: unknown) {
+	cookies.set('sashakt-candidate', JSON.stringify(candidateData), {
+		expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
+		path: '/test/' + testLink,
+		httpOnly: true,
+		sameSite: 'lax',
+		secure: !dev
+	});
+}
+
+function getExternalCandidateLaunch(url: URL) {
+	const candidateUuid = url.searchParams.get('candidate_uuid');
+	const candidateTestIdRaw = url.searchParams.get('candidate_test_id');
+
+	if (!candidateUuid && !candidateTestIdRaw) return null;
+	if (!candidateUuid || !candidateTestIdRaw) {
+		throw error(400, 'Invalid external candidate launch');
+	}
+
+	const candidateTestId = Number(candidateTestIdRaw);
+	if (!Number.isInteger(candidateTestId) || candidateTestId <= 0) {
+		throw error(400, 'Invalid external candidate launch');
+	}
+
+	return {
+		candidate_uuid: candidateUuid,
+		candidate_test_id: candidateTestId
+	};
+}
+
+export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 	const testData = locals.testData;
 	if (!testData) throw redirect(302, '/');
+
+	const externalLaunch = url ? getExternalCandidateLaunch(url) : null;
+	if (externalLaunch) {
+		const response = await fetch(`${BACKEND_URL}/candidate/external/start_test`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				test_link_uuid: testData.link,
+				candidate_uuid: externalLaunch.candidate_uuid,
+				candidate_test_id: externalLaunch.candidate_test_id
+			})
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json().catch(() => ({}));
+			const errorMessage = errorData?.detail || errorData?.message || 'Failed to start test';
+			throw error(response.status, errorMessage);
+		}
+
+		const startData = await response.json();
+		// If the launched attempt is already submitted (e.g. re-launched from the
+		// portal after finishing), go straight to the result instead of the start
+		// screen so the candidate never re-enters the quiz.
+		const candidateData = startData.is_submitted
+			? { ...startData, external_launch: true, submitted: true }
+			: { ...startData, external_launch: true, pending_start: true };
+		setCandidateCookie(cookies, testData.link, candidateData);
+		throw redirect(303, '/test/' + testData.link);
+	}
 
 	const candidate = getCandidate(cookies);
 
@@ -33,7 +92,39 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 		}
 	}
 
-	if (candidate && candidate.candidate_test_id && candidate.candidate_uuid) {
+	// Already-submitted external launches keep their cookie so a refresh shows
+	// the result instead of resuming the timer / re-rendering the quiz.
+	if (candidate && candidate.candidate_test_id && candidate.candidate_uuid && candidate.submitted) {
+		let result = null;
+		try {
+			const resultResponse = await fetch(
+				`${BACKEND_URL}/candidate/result/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`,
+				{ method: 'GET', headers: { accept: 'application/json' } }
+			);
+			if (resultResponse.ok) {
+				result = await resultResponse.json();
+			}
+		} catch (error) {
+			console.error('Error fetching submitted result:', error);
+		}
+		return {
+			candidate,
+			testData,
+			submitted: true,
+			result,
+			// null (not 0) so the layout TestTimer does not render / auto-submit.
+			timeLeft: null,
+			testQuestions: null,
+			locations
+		};
+	}
+
+	if (
+		candidate &&
+		candidate.candidate_test_id &&
+		candidate.candidate_uuid &&
+		!candidate.pending_start
+	) {
 		try {
 			const timerResponse = await getTimeLeft(
 				candidate.candidate_test_id,
@@ -91,6 +182,14 @@ export const actions = {
 			existingCandidate.candidate_test_id &&
 			existingCandidate.candidate_uuid
 		) {
+			if (existingCandidate.pending_start) {
+				const candidateData = { ...existingCandidate, pending_start: false };
+				setCandidateCookie(cookies, testData.link, candidateData);
+				return {
+					success: true,
+					candidateData
+				};
+			}
 			return {
 				success: true,
 				candidateData: existingCandidate
@@ -155,13 +254,7 @@ export const actions = {
 				candidateData.use_omr = omrMode;
 			}
 
-			cookies.set('sashakt-candidate', JSON.stringify(candidateData), {
-				expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hour
-				path: '/test/' + testData.link,
-				httpOnly: true,
-				sameSite: 'lax',
-				secure: !dev
-			});
+			setCandidateCookie(cookies, testData.link, candidateData);
 			return {
 				success: true,
 				candidateData: candidateData
@@ -180,15 +273,14 @@ export const actions = {
 			return fail(400, { candidate, missing: true });
 		}
 
-		const candidateUrl = (purpose: string) => {
-			return `${BACKEND_URL}/candidate/${purpose}/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`;
-		};
-
 		try {
-			const response = await fetch(candidateUrl('submit_test'), {
-				method: 'POST',
-				headers: { accept: 'application/json' }
-			});
+			const response = await fetch(
+				`${BACKEND_URL}/candidate/submit_test/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`,
+				{
+					method: 'POST',
+					headers: { accept: 'application/json' }
+				}
+			);
 
 			// handle 400 errors from backend and display error message
 			if (response.status === 400) {
@@ -198,10 +290,13 @@ export const actions = {
 			}
 
 			if (response.status === 200) {
-				const result = await fetch(candidateUrl('result'), {
-					method: 'GET',
-					headers: { accept: 'application/json' }
-				});
+				const result = await fetch(
+					`${BACKEND_URL}/candidate/result/${candidate.candidate_test_id}?candidate_uuid=${candidate.candidate_uuid}`,
+					{
+						method: 'GET',
+						headers: { accept: 'application/json' }
+					}
+				);
 
 				if (!result.ok) return fail(400, { result: false, submitTest: true });
 
@@ -249,10 +344,18 @@ export const actions = {
 					}
 				}
 
-				cookies.delete('sashakt-candidate', {
-					path: '/test/' + testData.link,
-					secure: !dev
-				});
+				// For external (portal) launches, keep the cookie and mark it
+				// submitted so a refresh shows the result instead of dropping back to
+				// the landing page (where a new attempt could start) or re-rendering
+				// the quiz with a resuming timer.
+				if (candidate.external_launch) {
+					setCandidateCookie(cookies, testData.link, { ...candidate, submitted: true });
+				} else {
+					cookies.delete('sashakt-candidate', {
+						path: '/test/' + testData.link,
+						secure: !dev
+					});
+				}
 
 				return { result: resultData, feedback, testQuestions, submitTest: true, candidate };
 			}

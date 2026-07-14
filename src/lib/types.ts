@@ -192,6 +192,7 @@ export type TResultData = {
 	marks_maximum: number | null;
 	total_questions: number;
 	certificate_download_url?: string;
+	external_user_id?: string | null;
 };
 
 export type TFeedback = {

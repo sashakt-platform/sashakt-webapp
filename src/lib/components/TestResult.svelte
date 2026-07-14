@@ -144,6 +144,11 @@
 			<h2 class="text-foreground mb-1 text-lg font-bold">
 				"{testDetails.name}" {$t('Submitted')}
 			</h2>
+			{#if resultData?.external_user_id}
+				<p class="text-muted-foreground mb-1 text-sm">
+					{$t('User ID')}: {resultData.external_user_id}
+				</p>
+			{/if}
 			<p class="text-muted-foreground mb-4 text-sm">
 				{#if testDetails.completion_message}
 					<RichText content={testDetails.completion_message} class="text-left" />
