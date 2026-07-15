@@ -34,6 +34,7 @@
 	import ChoiceAnswer from './answer/ChoiceAnswer.svelte';
 	import SubjectiveAnswer from './answer/SubjectiveAnswer.svelte';
 	import NumericalAnswer from './answer/NumericalAnswer.svelte';
+	import MatrixRatingAnswer from './answer/MatrixRatingAnswer.svelte';
 
 	let {
 		question,
@@ -185,48 +186,30 @@
 		isSubmitting = true;
 		saveError = null;
 
-		if (question.question_type === question_type_enum.MATRIXMATCH) {
-			const key = String(rowKey);
-			const current = matrixSelections[key] ?? [];
-			const newSelections = {
-				...matrixSelections,
-				[key]: current.includes(colId) ? current.filter((id) => id !== colId) : [...current, colId]
-			};
-			const serialized = JSON.stringify(newSelections);
-			const prevSelections = { ...matrixSelections };
-			const prevState = JSON.parse(JSON.stringify(selectedQuestions));
+		const key = String(rowKey);
+		const current = matrixSelections[key] ?? [];
+		const newSelections = {
+			...matrixSelections,
+			[key]: current.includes(colId) ? current.filter((id) => id !== colId) : [...current, colId]
+		};
+		const serialized = JSON.stringify(newSelections);
+		const prevSelections = { ...matrixSelections };
+		const prevState = JSON.parse(JSON.stringify(selectedQuestions));
 
-			matrixSelections = newSelections;
-			applyUpdate(serialized);
+		matrixSelections = newSelections;
+		applyUpdate(serialized);
+		updateStore();
+
+		try {
+			await submitAnswer(question.id, serialized, currentBookmarked);
+		} catch {
+			matrixSelections = prevSelections;
+			selectedQuestions = prevState;
 			updateStore();
-
-			try {
-				await submitAnswer(question.id, serialized, currentBookmarked);
-			} catch {
-				matrixSelections = prevSelections;
-				selectedQuestions = prevState;
-				updateStore();
-				saveError = $t('Failed to save your answer. Please try again.');
-				setTimeout(() => (saveError = null), 5000);
-			} finally {
-				isSubmitting = false;
-			}
-		} else {
-			const newResponse = JSON.stringify({
-				...parseJsonRecord<number>(answeredQuestion?.response),
-				[rowKey]: colId
-			});
-
-			try {
-				await submitAnswer(question.id, newResponse, currentBookmarked);
-				applyUpdate(newResponse);
-				updateStore();
-			} catch {
-				saveError = $t('Failed to save your answer. Please try again.');
-				setTimeout(() => (saveError = null), 5000);
-			} finally {
-				isSubmitting = false;
-			}
+			saveError = $t('Failed to save your answer. Please try again.');
+			setTimeout(() => (saveError = null), 5000);
+		} finally {
+			isSubmitting = false;
 		}
 	};
 
@@ -448,10 +431,6 @@
 			isSubmitting = false;
 		}
 	};
-
-	const matrixResponse = $derived(parseJsonRecord<number>(selectedQuestion(question.id)?.response));
-
-	const getMatrixSelection = (rowId: number): number | undefined => matrixResponse[String(rowId)];
 
 	const scheduleSave = (saveFn: () => void) => {
 		saveStatus = 'pending';
@@ -717,46 +696,13 @@
 				</div>
 			</div>
 		{:else if question.question_type === question_type_enum.MATRIXRATING}
-			{@const matrixOpts = question.options as unknown as TMatrixOptions}
-			<div class="overflow-x-auto rounded-lg">
-				<table class="border-border min-w-full border-collapse border text-sm">
-					<thead>
-						<tr class="border-border h-16 border-b">
-							<th class="bg-muted text-muted-foreground min-w-55 px-5 text-left font-bold">
-								{matrixOpts.rows.label}
-							</th>
-							{#each matrixOpts.columns.items as col (col.id)}
-								<th class="bg-muted text-muted-foreground px-5 text-center font-bold">
-									<span class="block">{col.value}</span>
-									<span class="block">({col.key})</span>
-								</th>
-							{/each}
-						</tr>
-					</thead>
-					<tbody>
-						{#each matrixOpts.rows.items as row (row.id)}
-							<tr class="border-border hover:bg-accent border-b">
-								<td class="min-w-55 px-4 py-3 font-medium wrap-break-word whitespace-normal">
-									{row.value}
-								</td>
-								{#each matrixOpts.columns.items as col (col.id)}
-									<td class="px-4 py-3 text-center">
-										<input
-											type="radio"
-											name="matrix-{question.id}-row-{row.id}"
-											value={col.id}
-											checked={getMatrixSelection(row.id) === col.id}
-											disabled={isLocked}
-											class="accent-primary h-4 w-4 cursor-pointer disabled:cursor-not-allowed"
-											onchange={() => handleMatrixInput(row.id, col.id)}
-										/>
-									</td>
-								{/each}
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
+			<MatrixRatingAnswer
+				{question}
+				{candidate}
+				bind:selections={selectedQuestions}
+				variant="card"
+				bind:isSubmitting
+			/>
 		{:else if question.question_type === question_type_enum.MATRIXINPUT}
 			{@const matrixOpts = question.options as TMatrixInputOptions}
 			{@const inputType = matrixOpts.columns.input_type}

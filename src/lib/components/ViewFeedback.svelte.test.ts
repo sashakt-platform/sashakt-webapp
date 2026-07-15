@@ -1349,7 +1349,7 @@ describe('ViewFeedback', () => {
 			});
 
 			const row1Radios = container.querySelectorAll<HTMLInputElement>(
-				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-1"]`
+				`input[name="matrix-${mockMatrixRatingQuestion.id}-row-1"]`
 			);
 			const checked = Array.from(row1Radios).find((r) => r.checked);
 			expect(checked?.value).toBe('2');
@@ -1361,7 +1361,7 @@ describe('ViewFeedback', () => {
 			});
 
 			const row2Radios = container.querySelectorAll<HTMLInputElement>(
-				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-2"]`
+				`input[name="matrix-${mockMatrixRatingQuestion.id}-row-2"]`
 			);
 			const checked = Array.from(row2Radios).find((r) => r.checked);
 			expect(checked?.value).toBe('3');
@@ -1373,7 +1373,7 @@ describe('ViewFeedback', () => {
 			});
 
 			const row3Radios = container.querySelectorAll<HTMLInputElement>(
-				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-3"]`
+				`input[name="matrix-${mockMatrixRatingQuestion.id}-row-3"]`
 			);
 			expect(Array.from(row3Radios).every((r) => !r.checked)).toBe(true);
 		});
