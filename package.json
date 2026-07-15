@@ -52,12 +52,6 @@
 		"vite": "^8.1.4",
 		"vitest": "^4.1.10"
 	},
-	"pnpm": {
-		"onlyBuiltDependencies": [
-			"@sentry/cli",
-			"esbuild"
-		]
-	},
 	"dependencies": {
 		"@fontsource/open-sans": "^5.2.7",
 		"@sentry/sveltekit": "^10.65.0",
