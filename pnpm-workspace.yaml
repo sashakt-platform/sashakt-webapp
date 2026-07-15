@@ -1,0 +1,4 @@
+allowBuilds:
+  '@sentry/cli': false
+  es5-ext: false
+  esbuild: false
