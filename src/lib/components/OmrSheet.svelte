@@ -23,6 +23,7 @@
 	import RichText from './RichText.svelte';
 	import ChoiceAnswer from './answer/ChoiceAnswer.svelte';
 	import SubjectiveAnswer from './answer/SubjectiveAnswer.svelte';
+	import NumericalAnswer from './answer/NumericalAnswer.svelte';
 
 	let {
 		candidate,
@@ -41,7 +42,6 @@
 	let isSubmittingTest = $state(false);
 	let submitDialogOpen = $state(false);
 	let submitError = $state<string | null>(null);
-	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 	let saveStatuses = $state<Record<number, 'idle' | 'pending' | 'saving' | 'saved'>>({});
 	const debounceTimers: Record<number, ReturnType<typeof setTimeout> | undefined> = {};
 	const flushFns: Record<number, (() => void) | undefined> = {};
@@ -67,23 +67,6 @@
 		setError: (error) => (submitError = error),
 		setDialogOpen: (open) => (submitDialogOpen = open)
 	});
-
-	const getExistingText = (questionId: number): string => {
-		const sel = selections.find((s) => s.question_revision_id === questionId);
-		return typeof sel?.response === 'string' ? sel.response : '';
-	};
-
-	let candidateInput = $state<Record<number, string>>(
-		Object.fromEntries(
-			questions
-				.filter(
-					(q) =>
-						q.question_type === question_type_enum.NUMERICALINTEGER ||
-						q.question_type === question_type_enum.NUMERICALDECIMAL
-				)
-				.map((q) => [q.id, getExistingText(q.id)])
-		)
-	);
 
 	const getExistingMatrixSelections = (questionId: number): Record<string, number[]> => {
 		const sel = selections.find((s) => s.question_revision_id === questionId);
@@ -136,9 +119,6 @@
 	const setQuestionError = (questionId: number, message: string) => {
 		questionErrors = { ...questionErrors, [questionId]: message };
 	};
-
-	const isSectionLimitMessage = (message: string | null | undefined) =>
-		message?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false;
 
 	const submitAnswer = async (questionId: number, response: number[] | string) => {
 		const hasResponse = Array.isArray(response) ? response.length > 0 : response.trim().length > 0;
@@ -331,52 +311,6 @@
 		}
 	};
 
-	const handleSubjectiveSubmit = async (question: TQuestion) => {
-		if (submittingQuestion === question.id) return;
-
-		const text = String(candidateInput[question.id] ?? '');
-		const existing = selections.find((s) => s.question_revision_id === question.id);
-
-		const previousSelections = JSON.parse(JSON.stringify(selections));
-		submittingQuestion = question.id;
-		saveStatuses = { ...saveStatuses, [question.id]: 'saving' };
-		clearQuestionError(question.id);
-
-		if (existing) {
-			selections = selections.map((s) =>
-				s.question_revision_id === question.id ? { ...s, response: text } : s
-			);
-		} else {
-			selections = [
-				...selections,
-				{
-					question_revision_id: question.id,
-					response: text,
-					visited: true,
-					time_spent: 0,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			];
-		}
-		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
-
-		try {
-			await submitAnswer(question.id, text);
-			saveStatuses = { ...saveStatuses, [question.id]: 'saved' };
-		} catch (error) {
-			selections = previousSelections;
-			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-			saveStatuses = { ...saveStatuses, [question.id]: 'idle' };
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to save your answer. Please try again.'
-			);
-		} finally {
-			submittingQuestion = null;
-		}
-	};
-
 	const scheduleSave = (question: TQuestion, saveFn: () => void) => {
 		saveStatuses = { ...saveStatuses, [question.id]: 'pending' };
 		flushFns[question.id] = saveFn;
@@ -409,8 +343,6 @@
 		clearQuestionError(question.id);
 
 		const clearedResponse =
-			question.question_type === question_type_enum.NUMERICALINTEGER ||
-			question.question_type === question_type_enum.NUMERICALDECIMAL ||
 			question.question_type === question_type_enum.MATRIXMATCH ||
 			question.question_type === question_type_enum.MATRIXRATING ||
 			question.question_type === question_type_enum.MATRIXINPUT
@@ -429,18 +361,6 @@
 		);
 		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
 
-		if (typeof clearedResponse === 'string') {
-			if (
-				question.question_type === question_type_enum.NUMERICALINTEGER ||
-				question.question_type === question_type_enum.NUMERICALDECIMAL
-			) {
-				candidateInput[question.id] = '';
-				clearTimeout(debounceTimers[question.id]);
-				debounceTimers[question.id] = undefined;
-				saveStatuses = { ...saveStatuses, [question.id]: 'idle' };
-			}
-		}
-
 		if (question.question_type === question_type_enum.MATRIXMATCH) {
 			matrixSelections = { ...matrixSelections, [question.id]: {} };
 		}
@@ -458,17 +378,7 @@
 			selections = previousSelections;
 			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
 
-			if (
-				typeof clearedResponse === 'string' &&
-				(question.question_type === question_type_enum.NUMERICALINTEGER ||
-					question.question_type === question_type_enum.NUMERICALDECIMAL)
-			) {
-				candidateInput[question.id] = String(
-					previousSelections.find(
-						(selection: TSelection) => selection.question_revision_id === question.id
-					)?.response ?? ''
-				);
-			} else if (question.question_type === question_type_enum.MATRIXMATCH) {
+			if (question.question_type === question_type_enum.MATRIXMATCH) {
 				matrixSelections = previousMatrixSelections;
 			}
 
@@ -561,74 +471,16 @@
 						}
 					/>
 				{:else if question_type === question_type_enum.NUMERICALINTEGER || question_type === question_type_enum.NUMERICALDECIMAL}
-					{@const currentInput = candidateInput[question.id] ?? ''}
-					<div class="flex w-full flex-col gap-2">
-						{#if questionErrors[question.id]}
-							<div
-								class={`rounded-lg border p-3 text-sm ${
-									isSectionLimitMessage(questionErrors[question.id])
-										? 'border-warning bg-warning-subtle text-warning'
-										: 'border-destructive bg-destructive/10 text-destructive'
-								}`}
-							>
-								{questionErrors[question.id]}
-								{#if isSectionLimitMessage(questionErrors[question.id])}
-									<p class="mt-2 text-xs text-warning">
-										{$t('Clear another answered question in this section to attempt this one.')}
-									</p>
-								{/if}
-							</div>
-						{/if}
-						<input
-							type="number"
-							step={question_type === question_type_enum.NUMERICALDECIMAL ? 'any' : '1'}
-							class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-							placeholder={$t('Type your answer here...')}
-							value={candidateInput[question.id]}
-							oninput={(e) => {
-								candidateInput[question.id] = e.currentTarget.value;
-								scheduleSave(question, () => handleSubjectiveSubmit(question));
-							}}
-						/>
-						<div class="flex items-center justify-between">
-							<div class="flex items-center gap-2">
-								{#if (saveStatuses[question.id] ?? 'idle') === 'saving'}
-									<span class="text-muted-foreground flex items-center gap-1 text-xs">
-										<Spinner class="size-3" />{$t('Saving...')}
-									</span>
-								{:else if (saveStatuses[question.id] ?? 'idle') === 'saved'}
-									<span class="text-success flex items-center gap-1 text-xs">
-										<Check class="size-3" />{$t('Saved')}
-									</span>
-								{/if}
-							</div>
-							<div class="flex items-center gap-2">
-								{#if question.subjective_answer_limit}
-									{@const remaining = question.subjective_answer_limit - currentInput.length}
-									<span
-										class="text-sm {remaining <= 0
-											? 'text-destructive font-medium'
-											: 'text-muted-foreground'}"
-									>
-										{remaining}
-										{$t('characters remaining')}
-									</span>
-								{/if}
-								<Button
-									size="sm"
-									variant="outline"
-									onclick={() => clearAnswer(question)}
-									disabled={submittingQuestion === question.id ||
-										!hasAttemptedResponse(
-											selections.find((selection) => selection.question_revision_id === question.id)
-												?.response
-										)}
-								>
-									{$t('Clear answer')}
-								</Button>
-							</div>
-						</div>
-					</div>
+					<NumericalAnswer
+						{question}
+						{candidate}
+						bind:selections
+						variant="omr"
+						bind:isSubmitting={
+							() => submittingQuestion === question.id,
+							(v) => (submittingQuestion = v ? question.id : null)
+						}
+					/>
 				{:else if question_type === question_type_enum.MULTIPLE || question_type === question_type_enum.SINGLE}
 					<ChoiceAnswer
 						{question}

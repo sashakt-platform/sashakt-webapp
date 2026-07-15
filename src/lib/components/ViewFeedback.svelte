@@ -1,7 +1,6 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/index.js';
 	import Check from '@lucide/svelte/icons/check';
-	import X from '@lucide/svelte/icons/x';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import {
 		buildQuestionSetGroups,
@@ -11,7 +10,6 @@
 	import { t } from 'svelte-i18n';
 	import { question_type_enum, type TCandidate, type TSelection } from '$lib/types';
 	import {
-		isNumericalAnswerCorrect,
 		getQuestionResult,
 		GRADABLE_QUESTION_TYPES,
 		parseMatrixAnswer,
@@ -26,6 +24,7 @@
 	import { navState } from '$lib/navState.svelte';
 	import ChoiceAnswer from './answer/ChoiceAnswer.svelte';
 	import SubjectiveAnswer from './answer/SubjectiveAnswer.svelte';
+	import NumericalAnswer from './answer/NumericalAnswer.svelte';
 
 	let {
 		candidate,
@@ -77,14 +76,6 @@
 		buildQuestionSetGroups(normalizedTestQuestions.questions, normalizedTestQuestions.questionSets)
 	);
 </script>
-
-{#snippet showCorrectWrongMark(answerStatus: string)}
-	{#if answerStatus === 'correct'}
-		<Check size={18} class="text-success" />
-	{:else if answerStatus === 'wrong'}
-		<X size={18} class="text-error" />
-	{/if}
-{/snippet}
 
 {#snippet feedbackCard_1(item: any, idx: number)}
 	{#if item.question}
@@ -293,38 +284,12 @@
 						variant="card"
 					/>
 				{:else if item.question.question_type === question_type_enum.NUMERICALINTEGER || item.question.question_type === question_type_enum.NUMERICALDECIMAL}
-					{@const isCorrect = isNumericalAnswerCorrect(
-						item.question.question_type,
-						item.fb.submitted_answer,
-						item.fb.correct_answer
-					)}
-					{@const feedbackClass =
-						isCorrect === null
-							? 'border-border bg-card text-card-foreground'
-							: isCorrect
-								? 'border-success bg-success-subtle text-success'
-								: 'border-error bg-error-subtle text-error'}
-
-					<div class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}>
-						{#if typeof item.fb.submitted_answer === 'string' && item.fb.submitted_answer.trim()}
-							<p class="w-full text-sm whitespace-pre-wrap">{item.fb.submitted_answer}</p>
-							{#if isCorrect === true}
-								{@render showCorrectWrongMark('correct')}
-							{:else if isCorrect === false}
-								{@render showCorrectWrongMark('wrong')}
-							{/if}
-						{:else}
-							<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
-						{/if}
-					</div>
-					{#if isCorrect === false}
-						<div
-							class="border-success bg-success-subtle text-success mt-4 flex flex-row rounded-xl border px-4 py-4"
-						>
-							<p class="w-full text-sm whitespace-pre-wrap">{item.fb.correct_answer}</p>
-							{@render showCorrectWrongMark('correct')}
-						</div>
-					{/if}
+					<NumericalAnswer
+						question={item.question}
+						{candidate}
+						selections={toAnswerSelections(item)}
+						variant="card"
+					/>
 				{:else if item.question.question_type === question_type_enum.SINGLE || item.question.question_type === question_type_enum.MULTIPLE}
 					<ChoiceAnswer
 						question={item.question}

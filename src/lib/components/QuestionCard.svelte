@@ -3,7 +3,6 @@
 	import Flag from '@lucide/svelte/icons/flag';
 	import Check from '@lucide/svelte/icons/check';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
-	import X from '@lucide/svelte/icons/x';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -21,7 +20,6 @@
 	import { t } from 'svelte-i18n';
 	import { cn } from '$lib/utils';
 	import {
-		isNumericalAnswerCorrect,
 		getQuestionResult,
 		GRADABLE_QUESTION_TYPES,
 		parseMatrixAnswer,
@@ -35,6 +33,7 @@
 	import MarkingSchemeContent from './MarkingSchemeContent.svelte';
 	import ChoiceAnswer from './answer/ChoiceAnswer.svelte';
 	import SubjectiveAnswer from './answer/SubjectiveAnswer.svelte';
+	import NumericalAnswer from './answer/NumericalAnswer.svelte';
 
 	let {
 		question,
@@ -61,6 +60,7 @@
 	// key to force remount of RadioGroup on error, this is to prevent radio button from being checked
 	let radioGroupKey = $state(0);
 	let subjectiveAnswerRef: { setInput: (value: string) => void } | undefined = $state();
+	let numericalAnswerRef: { setInput: (value: string) => void } | undefined = $state();
 	let isSubmitting = $state(false);
 	let saveError = $state<string | null>(null);
 	let markingSchemeOpen = $state(false);
@@ -80,21 +80,6 @@
 	const isFeedbackViewed = $derived(currentSelection?.is_reviewed === true);
 	const isLocked = $derived(isFeedbackViewed);
 
-	const checkNumberAnswerCorrect = $derived(() => {
-		if (!currentSelection) return null;
-		if (currentSelection.response && typeof currentSelection.response !== 'string') return null;
-		if (
-			(currentSelection.correct_answer && typeof currentSelection.correct_answer !== 'number') ||
-			currentSelection.correct_answer == undefined
-		)
-			return null;
-		return isNumericalAnswerCorrect(
-			question.question_type,
-			currentSelection.response,
-			currentSelection.correct_answer
-		);
-	});
-
 	const feedbackResult = $derived(
 		isLocked && currentSelection?.correct_answer != null
 			? getQuestionResult(
@@ -106,12 +91,6 @@
 	);
 
 	const showMarkForReviewButton = $derived(showMarkForReview && !(showFeedback && isLocked));
-
-	const getExistingInputResponse = () => {
-		const selected = selectedQuestion(question.id);
-		return typeof selected?.response === 'string' ? selected.response : '';
-	};
-	let candidateInput = $state(getExistingInputResponse());
 
 	const getExistingMatrixSelections = (): Record<string, number[]> => {
 		const parsed = parseJsonRecord<number | number[]>(selectedQuestion(question.id)?.response);
@@ -428,10 +407,7 @@
 			if (question.question_type === question_type_enum.SUBJECTIVE) {
 				subjectiveAnswerRef?.setInput('');
 			} else {
-				candidateInput = '';
-				clearTimeout(debounceTimer);
-				debounceTimer = undefined;
-				saveStatus = 'idle';
+				numericalAnswerRef?.setInput('');
 			}
 		} else if (question.question_type === question_type_enum.MATRIXMATCH) {
 			matrixSelections = {};
@@ -459,7 +435,7 @@
 				if (question.question_type === question_type_enum.SUBJECTIVE) {
 					subjectiveAnswerRef?.setInput(restoredValue);
 				} else {
-					candidateInput = restoredValue;
+					numericalAnswerRef?.setInput(restoredValue);
 				}
 			} else if (question.question_type === question_type_enum.MATRIXMATCH) {
 				matrixSelections = previousMatrixSelections;
@@ -477,52 +453,7 @@
 
 	const getMatrixSelection = (rowId: number): number | undefined => matrixResponse[String(rowId)];
 
-	const handleSubjectiveSubmit = async () => {
-		if (isSubmitting) return;
-
-		const answeredQuestion = selectedQuestion(question.id);
-		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
-
-		isSubmitting = true;
-		saveStatus = 'saving';
-		saveError = null;
-
-		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
-
-		const inputValue = String(candidateInput ?? '');
-		if (answeredQuestion) {
-			selectedQuestions = selectedQuestions.map((q) =>
-				q.question_revision_id === question.id ? { ...q, response: inputValue } : q
-			);
-		} else {
-			selectedQuestions = [
-				...selectedQuestions,
-				{
-					question_revision_id: question.id,
-					response: inputValue,
-					visited: true,
-					time_spent: 0,
-					bookmarked: currentBookmarked,
-					is_reviewed: false
-				}
-			];
-		}
-		updateStore();
-
-		try {
-			await submitAnswer(question.id, inputValue, currentBookmarked);
-			saveStatus = 'saved';
-		} catch (error) {
-			selectedQuestions = previousState;
-			updateStore();
-			saveStatus = 'idle';
-			setTransientSaveError(error, 'Failed to save your answer. Please try again.');
-		} finally {
-			isSubmitting = false;
-		}
-	};
-
-	const scheduleSave = (saveFn: () => void = handleSubjectiveSubmit) => {
+	const scheduleSave = (saveFn: () => void) => {
 		saveStatus = 'pending';
 		flushFn = saveFn;
 		clearTimeout(debounceTimer);
@@ -551,26 +482,6 @@
 		{/if}
 		<ChevronDown size={13} class="text-muted-foreground" />
 	</span>
-{/snippet}
-
-{#snippet showCorrectWrongMark(answerStatus: string)}
-	{#if answerStatus === 'correct'}
-		<span
-			data-testid="correct-mark"
-			class="text-success flex shrink-0 items-center"
-			aria-label={$t('Correct')}
-		>
-			<Check size={18} aria-hidden="true" />
-		</span>
-	{:else if answerStatus === 'wrong'}
-		<span
-			data-testid="wrong-mark"
-			class="text-error flex shrink-0 items-center"
-			aria-label={$t('Wrong')}
-		>
-			<X size={18} aria-hidden="true" />
-		</span>
-	{/if}
 {/snippet}
 
 <Card.Root
@@ -691,64 +602,14 @@
 				bind:isSubmitting
 			/>
 		{:else if question.question_type === question_type_enum.NUMERICALINTEGER || question.question_type === question_type_enum.NUMERICALDECIMAL}
-			{#if isLocked}
-				{@const isCorrect = checkNumberAnswerCorrect()}
-				{@const feedbackClass =
-					isCorrect === null
-						? 'border-border bg-card text-foreground'
-						: isCorrect
-							? 'border-success bg-success-subtle text-success'
-							: 'border-error bg-error-subtle text-error'}
-				{@const candidateResponse = currentSelection?.response}
-				{@const correctAnswer = currentSelection?.correct_answer}
-				<div
-					data-testid="numerical-answer-feedback"
-					class={`flex rounded-xl border px-4 py-4 ${feedbackClass}`}
-				>
-					{#if typeof candidateResponse === 'string' && candidateResponse.trim()}
-						<p class="w-full text-sm whitespace-pre-wrap">{candidateResponse}</p>
-						{#if isCorrect === true}
-							{@render showCorrectWrongMark('correct')}
-						{:else if isCorrect === false}
-							{@render showCorrectWrongMark('wrong')}
-						{/if}
-					{:else}
-						<p class="text-muted-foreground text-sm italic">{$t('Not Attempted')}</p>
-					{/if}
-				</div>
-				{#if isCorrect === false}
-					<div
-						data-testid="numerical-correct-answer"
-						class="border-success bg-success-subtle text-success mt-4 flex flex-row rounded-xl border px-4 py-4"
-					>
-						<p class="w-full text-sm whitespace-pre-wrap">{correctAnswer}</p>
-						{@render showCorrectWrongMark('correct')}
-					</div>
-				{/if}
-			{:else}
-				<div class="flex flex-col gap-2">
-					<input
-						type="number"
-						step={question.question_type === question_type_enum.NUMERICALDECIMAL ? 'any' : '1'}
-						class="border-border bg-card placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border border-dashed px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-						placeholder={$t('Type your answer here...')}
-						value={candidateInput}
-						oninput={(e) => {
-							candidateInput = e.currentTarget.value;
-							scheduleSave();
-						}}
-					/>
-					{#if saveStatus === 'saving'}
-						<span class="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
-							<Spinner class="size-3" />{$t('Saving...')}
-						</span>
-					{:else if saveStatus === 'saved'}
-						<span class="text-success mt-1 flex items-center gap-1 text-xs">
-							<Check class="size-3" />{$t('Saved')}
-						</span>
-					{/if}
-				</div>
-			{/if}
+			<NumericalAnswer
+				bind:this={numericalAnswerRef}
+				{question}
+				{candidate}
+				bind:selections={selectedQuestions}
+				variant="card"
+				bind:isSubmitting
+			/>
 		{:else if question.question_type === question_type_enum.MATRIXMATCH}
 			{@const matrix = options as TMatrixOptions}
 			{@const matrixRows = matrix.rows.items}
