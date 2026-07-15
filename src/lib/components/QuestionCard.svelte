@@ -7,6 +7,11 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { parseJsonRecord } from '$lib/helpers/matrixHelpers';
+	import {
+		isSectionLimitError,
+		createTransientSaveError,
+		hasAttemptedResponse
+	} from '$lib/helpers/answerErrorHelpers';
 	import { question_type_enum, type TCandidate, type TQuestion, type TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { getQuestionResult, GRADABLE_QUESTION_TYPES } from '$lib/helpers/feedbackHelpers';
@@ -22,6 +27,7 @@
 	import MatrixRatingAnswer from './answer/MatrixRatingAnswer.svelte';
 	import MatrixMatchAnswer from './answer/MatrixMatchAnswer.svelte';
 	import MatrixInputAnswer from './answer/MatrixInputAnswer.svelte';
+	import SaveErrorBanner from './answer/SaveErrorBanner.svelte';
 
 	let {
 		question,
@@ -55,7 +61,6 @@
 	let isSubmitting = $state(false);
 	let saveError = $state<string | null>(null);
 	let markingSchemeOpen = $state(false);
-	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 
 	const sessionStore = createTestSessionStore(candidate);
 	const selectedQuestion = (questionId: number) => {
@@ -79,23 +84,10 @@
 
 	const showMarkForReviewButton = $derived(showMarkForReview && !(showFeedback && isLocked));
 
-	const hasAttemptedResponse = (response: number[] | string | undefined): boolean => {
-		if (typeof response === 'string') {
-			return response.trim().length > 0;
-		}
-
-		return (response?.length ?? 0) > 0;
-	};
 	const hasClearableAnswer = $derived(hasAttemptedResponse(currentSelection?.response));
-	const isSectionLimitWarning = $derived(saveError?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false);
+	const isSectionLimitWarning = $derived(isSectionLimitError(saveError));
 
-	const getErrorMessage = (error: unknown, fallback: string) =>
-		error instanceof Error && error.message ? error.message : fallback;
-
-	const setTransientSaveError = (error: unknown, fallback: string) => {
-		saveError = getErrorMessage(error, fallback);
-		setTimeout(() => (saveError = null), 5000);
-	};
+	const setTransientSaveError = createTransientSaveError((value) => (saveError = value));
 
 	const updateStore = () => {
 		sessionStore.current = {
@@ -398,22 +390,7 @@
 	</Card.Header>
 
 	<Card.Content class="px-4 pt-0 pb-4 lg:px-6 lg:pb-6">
-		{#if saveError}
-			<div
-				class={`mb-4 rounded-lg border p-3 text-sm ${
-					isSectionLimitWarning
-						? 'border-warning bg-warning-subtle text-warning'
-						: 'border-destructive bg-destructive/10 text-destructive'
-				}`}
-			>
-				{saveError}
-				{#if isSectionLimitWarning}
-					<p class="text-warning mt-2 text-xs">
-						{$t('Clear another answered question in this section to attempt this one.')}
-					</p>
-				{/if}
-			</div>
-		{/if}
+		<SaveErrorBanner message={saveError} {isSectionLimitWarning} class="mb-4" />
 		{#if question.question_type === question_type_enum.SINGLE || question.question_type === question_type_enum.MULTIPLE}
 			<ChoiceAnswer
 				{question}

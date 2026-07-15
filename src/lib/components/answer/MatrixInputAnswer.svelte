@@ -5,8 +5,14 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { parseJsonRecord, normalizeMatrixInputValues } from '$lib/helpers/matrixHelpers';
+	import {
+		isSectionLimitError,
+		createTransientSaveError,
+		hasAttemptedResponse
+	} from '$lib/helpers/answerErrorHelpers';
 	import type { TCandidate, TMatrixInputOptions, TQuestion, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
+	import SaveErrorBanner from './SaveErrorBanner.svelte';
 
 	let {
 		question,
@@ -22,7 +28,6 @@
 		isSubmitting?: boolean;
 	} = $props();
 
-	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 	const sessionStore = createTestSessionStore(candidate);
 	const matrixOpts = question.options as unknown as TMatrixInputOptions;
 	const inputType = matrixOpts.columns.input_type;
@@ -38,7 +43,7 @@
 	// MATRIXINPUT is never gradable/reviewable inline, but ViewFeedback reuses this
 	// component in a permanently-locked, read-only posture via a synthetic selection.
 	const isLocked = $derived(variant === 'card' && currentSelection?.is_reviewed === true);
-	const isSectionLimitWarning = $derived(saveError?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false);
+	const isSectionLimitWarning = $derived(isSectionLimitError(saveError));
 
 	const getExistingMatrixInputValues = () => parseJsonRecord<string>(currentSelection?.response);
 	let matrixInputValues = $state<Record<string, string>>(getExistingMatrixInputValues());
@@ -53,19 +58,9 @@
 		saveStatus = 'idle';
 	}
 
-	const hasAttemptedResponse = (response: string | number[] | undefined | null): boolean => {
-		if (typeof response === 'string') return response.trim().length > 0;
-		return (response?.length ?? 0) > 0;
-	};
 	const hasClearableAnswer = $derived(hasAttemptedResponse(currentSelection?.response));
 
-	const getErrorMessage = (error: unknown, fallback: string) =>
-		error instanceof Error && error.message ? error.message : fallback;
-
-	const setTransientSaveError = (error: unknown, fallback: string) => {
-		saveError = getErrorMessage(error, fallback);
-		setTimeout(() => (saveError = null), 5000);
-	};
+	const setTransientSaveError = createTransientSaveError((value) => (saveError = value));
 
 	const updateStore = () => {
 		sessionStore.current = { ...sessionStore.current, candidate, selections };
@@ -210,22 +205,7 @@
 </script>
 
 {#if variant === 'card'}
-	{#if saveError}
-		<div
-			class={`mb-4 rounded-lg border p-3 text-sm ${
-				isSectionLimitWarning
-					? 'border-warning bg-warning-subtle text-warning'
-					: 'border-destructive bg-destructive/10 text-destructive'
-			}`}
-		>
-			{saveError}
-			{#if isSectionLimitWarning}
-				<p class="text-warning mt-2 text-xs">
-					{$t('Clear another answered question in this section to attempt this one.')}
-				</p>
-			{/if}
-		</div>
-	{/if}
+	<SaveErrorBanner message={saveError} {isSectionLimitWarning} class="mb-4" />
 	<div class="overflow-x-auto">
 		<div class="border-border overflow-hidden rounded-xl border">
 			<div class="px-4">

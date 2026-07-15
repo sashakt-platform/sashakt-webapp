@@ -6,10 +6,16 @@
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { parseJsonRecord } from '$lib/helpers/matrixHelpers';
 	import { getMatrixCellStatus, parseMatrixAnswer } from '$lib/helpers/feedbackHelpers';
+	import {
+		isSectionLimitError,
+		createTransientSaveError,
+		hasAttemptedResponse
+	} from '$lib/helpers/answerErrorHelpers';
 	import type { TCandidate, TMatrixOptions, TQuestion, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import { cn } from '$lib/utils';
 	import QuestionMedia from '../QuestionMedia.svelte';
+	import SaveErrorBanner from './SaveErrorBanner.svelte';
 
 	let {
 		question,
@@ -25,7 +31,6 @@
 		isSubmitting?: boolean;
 	} = $props();
 
-	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 	const sessionStore = createTestSessionStore(candidate);
 	const matrix = question.options as TMatrixOptions;
 
@@ -37,7 +42,7 @@
 	// MATRIXMATCH is gradable, but only ever shown locked via QuestionCard's own
 	// "View Feedback" flow (card variant) or ViewFeedback's synthetic selection.
 	const isLocked = $derived(variant === 'card' && currentSelection?.is_reviewed === true);
-	const isSectionLimitWarning = $derived(saveError?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false);
+	const isSectionLimitWarning = $derived(isSectionLimitError(saveError));
 	const correctMatrix = $derived(
 		isLocked ? parseMatrixAnswer(currentSelection?.correct_answer ?? null) : {}
 	);
@@ -57,19 +62,9 @@
 		matrixSelections = value;
 	}
 
-	const hasAttemptedResponse = (response: string | number[] | undefined | null): boolean => {
-		if (typeof response === 'string') return response.trim().length > 0;
-		return (response?.length ?? 0) > 0;
-	};
 	const hasClearableAnswer = $derived(hasAttemptedResponse(currentSelection?.response));
 
-	const getErrorMessage = (error: unknown, fallback: string) =>
-		error instanceof Error && error.message ? error.message : fallback;
-
-	const setTransientSaveError = (error: unknown, fallback: string) => {
-		saveError = getErrorMessage(error, fallback);
-		setTimeout(() => (saveError = null), 5000);
-	};
+	const setTransientSaveError = createTransientSaveError((value) => (saveError = value));
 
 	const updateStore = () => {
 		sessionStore.current = { ...sessionStore.current, candidate, selections };
@@ -192,22 +187,7 @@
 </script>
 
 {#if variant === 'card'}
-	{#if saveError}
-		<div
-			class={`mb-4 rounded-lg border p-3 text-sm ${
-				isSectionLimitWarning
-					? 'border-warning bg-warning-subtle text-warning'
-					: 'border-destructive bg-destructive/10 text-destructive'
-			}`}
-		>
-			{saveError}
-			{#if isSectionLimitWarning}
-				<p class="text-warning mt-2 text-xs">
-					{$t('Clear another answered question in this section to attempt this one.')}
-				</p>
-			{/if}
-		</div>
-	{/if}
+	<SaveErrorBanner message={saveError} {isSectionLimitWarning} class="mb-4" />
 	<div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
 		<div class="border-border overflow-hidden rounded-xl border">
 			<div

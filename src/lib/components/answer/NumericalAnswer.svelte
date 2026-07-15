@@ -6,8 +6,14 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
+	import {
+		isSectionLimitError,
+		createTransientSaveError,
+		hasAttemptedResponse
+	} from '$lib/helpers/answerErrorHelpers';
 	import { question_type_enum, type TCandidate, type TQuestion, type TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
+	import SaveErrorBanner from './SaveErrorBanner.svelte';
 
 	let {
 		question,
@@ -23,7 +29,6 @@
 		isSubmitting?: boolean;
 	} = $props();
 
-	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 	const sessionStore = createTestSessionStore(candidate);
 
 	let saveError = $state<string | null>(null);
@@ -35,7 +40,7 @@
 		selections.find((item) => item.question_revision_id === question.id)
 	);
 	const isLocked = $derived(variant === 'card' && currentSelection?.is_reviewed === true);
-	const isSectionLimitWarning = $derived(saveError?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false);
+	const isSectionLimitWarning = $derived(isSectionLimitError(saveError));
 
 	const checkNumberAnswerCorrect = $derived(() => {
 		if (!currentSelection) return null;
@@ -52,10 +57,6 @@
 		);
 	});
 
-	const hasAttemptedResponse = (response: string | number[] | undefined | null): boolean => {
-		if (typeof response === 'string') return response.trim().length > 0;
-		return (response?.length ?? 0) > 0;
-	};
 	const hasClearableAnswer = $derived(hasAttemptedResponse(currentSelection?.response));
 
 	const getExistingInputResponse = () =>
@@ -72,13 +73,7 @@
 		saveStatus = 'idle';
 	}
 
-	const getErrorMessage = (error: unknown, fallback: string) =>
-		error instanceof Error && error.message ? error.message : fallback;
-
-	const setTransientSaveError = (error: unknown, fallback: string) => {
-		saveError = getErrorMessage(error, fallback);
-		setTimeout(() => (saveError = null), 5000);
-	};
+	const setTransientSaveError = createTransientSaveError((value) => (saveError = value));
 
 	const updateStore = () => {
 		sessionStore.current = { ...sessionStore.current, candidate, selections };
@@ -233,22 +228,7 @@
 {/snippet}
 
 {#if variant === 'card'}
-	{#if saveError}
-		<div
-			class={`mb-4 rounded-lg border p-3 text-sm ${
-				isSectionLimitWarning
-					? 'border-warning bg-warning-subtle text-warning'
-					: 'border-destructive bg-destructive/10 text-destructive'
-			}`}
-		>
-			{saveError}
-			{#if isSectionLimitWarning}
-				<p class="text-warning mt-2 text-xs">
-					{$t('Clear another answered question in this section to attempt this one.')}
-				</p>
-			{/if}
-		</div>
-	{/if}
+	<SaveErrorBanner message={saveError} {isSectionLimitWarning} class="mb-4" />
 	{#if isLocked}
 		{@const isCorrect = checkNumberAnswerCorrect()}
 		{@const feedbackClass =
@@ -309,22 +289,7 @@
 	{/if}
 {:else}
 	<div class="flex w-full flex-col gap-2">
-		{#if saveError}
-			<div
-				class={`rounded-lg border p-3 text-sm ${
-					isSectionLimitWarning
-						? 'border-warning bg-warning-subtle text-warning'
-						: 'border-destructive bg-destructive/10 text-destructive'
-				}`}
-			>
-				{saveError}
-				{#if isSectionLimitWarning}
-					<p class="mt-2 text-xs text-warning">
-						{$t('Clear another answered question in this section to attempt this one.')}
-					</p>
-				{/if}
-			</div>
-		{/if}
+		<SaveErrorBanner message={saveError} {isSectionLimitWarning} />
 		<input
 			type="number"
 			step={question.question_type === question_type_enum.NUMERICALDECIMAL ? 'any' : '1'}

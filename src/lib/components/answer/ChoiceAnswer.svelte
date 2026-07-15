@@ -8,6 +8,11 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
 	import {
+		isSectionLimitError,
+		createTransientSaveError,
+		hasAttemptedResponse
+	} from '$lib/helpers/answerErrorHelpers';
+	import {
 		question_type_enum,
 		type TCandidate,
 		type TOptions,
@@ -18,6 +23,7 @@
 	import { cn } from '$lib/utils';
 	import RichText from '../RichText.svelte';
 	import QuestionMedia from '../QuestionMedia.svelte';
+	import SaveErrorBanner from './SaveErrorBanner.svelte';
 
 	let {
 		question,
@@ -35,7 +41,6 @@
 		isSubmitting?: boolean;
 	} = $props();
 
-	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
 	const options = question.options as TOptions[];
 	const sessionStore = createTestSessionStore(candidate);
 
@@ -48,12 +53,8 @@
 	// OMR mode never surfaces feedback, so this stays inert there.
 	const isFeedbackViewed = $derived(variant === 'card' && currentSelection?.is_reviewed === true);
 	const isLocked = $derived(isFeedbackViewed);
-	const isSectionLimitWarning = $derived(saveError?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false);
+	const isSectionLimitWarning = $derived(isSectionLimitError(saveError));
 
-	const hasAttemptedResponse = (response: number[] | string | undefined | null): boolean => {
-		if (typeof response === 'string') return response.trim().length > 0;
-		return (response?.length ?? 0) > 0;
-	};
 	const hasClearableAnswer = $derived(hasAttemptedResponse(currentSelection?.response));
 
 	const isSelected = (optionId: number) => {
@@ -81,13 +82,7 @@
 		return 'none';
 	};
 
-	const getErrorMessage = (error: unknown, fallback: string) =>
-		error instanceof Error && error.message ? error.message : fallback;
-
-	const setTransientSaveError = (error: unknown, fallback: string) => {
-		saveError = getErrorMessage(error, fallback);
-		setTimeout(() => (saveError = null), 5000);
-	};
+	const setTransientSaveError = createTransientSaveError((value) => (saveError = value));
 
 	const updateStore = () => {
 		sessionStore.current = { ...sessionStore.current, candidate, selections };
@@ -272,22 +267,7 @@
 {/snippet}
 
 {#if variant === 'card'}
-	{#if saveError}
-		<div
-			class={`mb-4 rounded-lg border p-3 text-sm ${
-				isSectionLimitWarning
-					? 'border-warning bg-warning-subtle text-warning'
-					: 'border-destructive bg-destructive/10 text-destructive'
-			}`}
-		>
-			{saveError}
-			{#if isSectionLimitWarning}
-				<p class="text-warning mt-2 text-xs">
-					{$t('Clear another answered question in this section to attempt this one.')}
-				</p>
-			{/if}
-		</div>
-	{/if}
+	<SaveErrorBanner message={saveError} {isSectionLimitWarning} class="mb-4" />
 	{#if question.question_type === question_type_enum.SINGLE}
 		{#key radioGroupKey}
 			<RadioGroup.Root
