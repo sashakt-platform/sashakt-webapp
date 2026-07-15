@@ -1000,11 +1000,11 @@ describe('ViewFeedback', () => {
 				expect(values).toContain('Tokyo');
 			});
 
-			it('should render inputs as readonly', () => {
+			it('should render inputs as disabled', () => {
 				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
-				expect(inputs.every((i) => i.readOnly)).toBe(true);
+				expect(inputs.every((i) => i.disabled)).toBe(true);
 			});
 
 			it('should show empty inputs when no answer was submitted', () => {
@@ -1076,13 +1076,13 @@ describe('ViewFeedback', () => {
 				expect(values).toContain('15');
 			});
 
-			it('should render number inputs as readonly', () => {
+			it('should render number inputs as disabled', () => {
 				const { container } = render(ViewFeedback, {
 					props: { candidate: mockCandidate, feedback, testQuestions }
 				});
 
 				const inputs = container.querySelectorAll<HTMLInputElement>('input[type="number"]');
-				expect(Array.from(inputs).every((i) => i.readOnly)).toBe(true);
+				expect(Array.from(inputs).every((i) => i.disabled)).toBe(true);
 			});
 		});
 	});
