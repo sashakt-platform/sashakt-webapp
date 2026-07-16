@@ -29,7 +29,7 @@
 			</Dialog.Close>
 		</div>
 
-		<div class="overflow-y-auto">
+		<div class="min-h-0 flex-1 overflow-y-auto">
 			{@render children()}
 		</div>
 	</Dialog.Content>
