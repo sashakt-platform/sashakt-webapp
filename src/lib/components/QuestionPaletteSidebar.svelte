@@ -21,7 +21,7 @@
 </script>
 
 <div
-	class="bg-card border-border flex max-h-full flex-col overflow-hidden rounded-xl border-r shadow-sm"
+	class="bg-card border-border flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border-r shadow-sm"
 >
 	<div class="flex h-16 items-center px-5" style="background: hsl(var(--section-header-bg));">
 		<h2 class="text-foreground text-sm font-semibold tracking-wide uppercase">
@@ -29,7 +29,7 @@
 		</h2>
 	</div>
 
-	<div class="overflow-y-auto">
+	<div class="min-h-0 flex-1 overflow-y-auto">
 		<QuestionPaletteContent
 			{questions}
 			{questionSets}

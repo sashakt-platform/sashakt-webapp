@@ -37,10 +37,10 @@
 	{@const isBookmarked = isQuestionBookmarked(question.id, selections)}
 	{@const isCurrent = index === currentQuestionIndex}
 	<div class="flex items-center justify-center">
-		<div class="relative">
+		<div class="relative pt-1">
 			{#if question.is_mandatory}
 				<span
-					class="text-destructive absolute -top-1 right-0 text-sm leading-none font-bold select-none"
+					class="text-destructive absolute top-0 right-0 text-sm leading-none font-bold select-none"
 					aria-hidden="true">*</span
 				>
 			{/if}
@@ -115,7 +115,7 @@
 		<span class="text-foreground text-sm">{$t('Answered')}</span>
 	</div>
 
-	<div class="flex items-center gap-2">
+	<div class="flex items-center gap-2 pt-1">
 		<div class="relative h-7 w-7 shrink-0">
 			<span
 				class="text-destructive absolute -top-1 right-0 text-sm leading-none font-bold select-none"
