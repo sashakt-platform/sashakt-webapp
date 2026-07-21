@@ -269,13 +269,13 @@ describe('Page Server - load function', () => {
 		).rejects.toMatchObject({ status: 303, location: `/test/${mockTestData.link}` });
 
 		expect(mockFetch).toHaveBeenCalledWith(
-			'http://test-backend.com/candidate/external/start_test',
+			`http://test-backend.com/candidate/start_test?candidate_uuid=${encodeURIComponent(
+				mockCandidate.candidate_uuid
+			)}`,
 			expect.objectContaining({
 				method: 'POST',
 				body: JSON.stringify({
-					test_link_uuid: mockTestData.link,
-					candidate_uuid: mockCandidate.candidate_uuid,
-					candidate_test_id: mockCandidate.candidate_test_id
+					test_link_uuid: mockTestData.link
 				})
 			})
 		);

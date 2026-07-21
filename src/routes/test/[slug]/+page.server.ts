@@ -52,13 +52,14 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 
 	const externalLaunch = url ? getExternalCandidateLaunch(url) : null;
 	if (externalLaunch) {
-		const response = await fetch(`${BACKEND_URL}/candidate/external/start_test`, {
+		const resumeUrl = `${BACKEND_URL}/candidate/start_test?candidate_uuid=${encodeURIComponent(
+			externalLaunch.candidate_uuid
+		)}`;
+		const response = await fetch(resumeUrl, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				test_link_uuid: testData.link,
-				candidate_uuid: externalLaunch.candidate_uuid,
-				candidate_test_id: externalLaunch.candidate_test_id
+				test_link_uuid: testData.link
 			})
 		});
 
