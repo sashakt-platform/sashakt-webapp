@@ -51,8 +51,9 @@
 </script>
 
 <section>
-	{#if showFeedbackView && form?.feedback}
+	{#if showFeedbackView && form?.feedback && form?.candidate}
 		<ViewFeedback
+			candidate={form.candidate}
 			feedback={form.feedback}
 			testQuestions={form.testQuestions}
 			onBack={handleBackToResults}

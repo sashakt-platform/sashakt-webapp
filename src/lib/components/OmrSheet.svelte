@@ -2,28 +2,21 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
-	import Check from '@lucide/svelte/icons/check';
-	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { createTestSessionStore } from '$lib/helpers/testSession';
-	import { parseJsonRecord, normalizeMatrixInputValues } from '$lib/helpers/matrixHelpers';
-	import {
-		question_type_enum,
-		type TCandidate,
-		type TMatrixInputOptions,
-		type TMatrixOptions,
-		type TOptions,
-		type TQuestion,
-		type TSelection
-	} from '$lib/types';
+	import { question_type_enum, type TCandidate, type TQuestion, type TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import RichText from './RichText.svelte';
+	import ChoiceAnswer from './answer/ChoiceAnswer.svelte';
+	import SubjectiveAnswer from './answer/SubjectiveAnswer.svelte';
+	import NumericalAnswer from './answer/NumericalAnswer.svelte';
+	import MatrixRatingAnswer from './answer/MatrixRatingAnswer.svelte';
+	import MatrixMatchAnswer from './answer/MatrixMatchAnswer.svelte';
+	import MatrixInputAnswer from './answer/MatrixInputAnswer.svelte';
 
 	let {
 		candidate,
@@ -37,15 +30,10 @@
 	const sessionStore = createTestSessionStore(candidate);
 	let selections = $state<TSelection[]>(sessionStore.current.selections);
 	let submittingQuestion = $state<number | null>(null);
-	let questionErrors = $state<Record<number, string>>({});
 
 	let isSubmittingTest = $state(false);
 	let submitDialogOpen = $state(false);
 	let submitError = $state<string | null>(null);
-	const SECTION_LIMIT_ERROR_PREFIX = 'Maximum attempt limit reached for section';
-	let saveStatuses = $state<Record<number, 'idle' | 'pending' | 'saving' | 'saved'>>({});
-	const debounceTimers: Record<number, ReturnType<typeof setTimeout> | undefined> = {};
-	const flushFns: Record<number, (() => void) | undefined> = {};
 
 	$effect(() => {
 		if (page.form?.submitTest === false || page.form?.error || submitError) {
@@ -68,474 +56,6 @@
 		setError: (error) => (submitError = error),
 		setDialogOpen: (open) => (submitDialogOpen = open)
 	});
-
-	const getExistingText = (questionId: number): string => {
-		const sel = selections.find((s) => s.question_revision_id === questionId);
-		return typeof sel?.response === 'string' ? sel.response : '';
-	};
-
-	let candidateInput = $state<Record<number, string>>(
-		Object.fromEntries(
-			questions
-				.filter(
-					(q) =>
-						q.question_type === question_type_enum.SUBJECTIVE ||
-						q.question_type === question_type_enum.NUMERICALINTEGER ||
-						q.question_type === question_type_enum.NUMERICALDECIMAL
-				)
-				.map((q) => [q.id, getExistingText(q.id)])
-		)
-	);
-
-	const getExistingMatrixSelections = (questionId: number): Record<string, number[]> => {
-		const sel = selections.find((s) => s.question_revision_id === questionId);
-		if (typeof sel?.response === 'string' && sel.response) {
-			try {
-				const parsed = JSON.parse(sel.response) as Record<string, number | number[]>;
-				return Object.fromEntries(
-					Object.entries(parsed).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
-				);
-			} catch {
-				return {};
-			}
-		}
-		return {};
-	};
-
-	let matrixSelections = $state<Record<number, Record<string, number[]>>>(
-		Object.fromEntries(
-			questions
-				.filter((q) => q.question_type === question_type_enum.MATRIXMATCH)
-				.map((q) => [q.id, getExistingMatrixSelections(q.id)])
-		)
-	);
-
-	let matrixInputValues = $state<Record<number, Record<string, string>>>(
-		Object.fromEntries(
-			questions
-				.filter((q) => q.question_type === question_type_enum.MATRIXINPUT)
-				.map((q) => [
-					q.id,
-					parseJsonRecord<string>(selections.find((s) => s.question_revision_id === q.id)?.response)
-				])
-		)
-	);
-
-	const getSelectedOptionIds = (questionId: number): number[] => {
-		const sel = selections.find((s) => s.question_revision_id === questionId);
-		const resp = sel?.response;
-		return Array.isArray(resp) ? resp : [];
-	};
-
-	const hasAttemptedResponse = (response: number[] | string | undefined): boolean => {
-		if (typeof response === 'string') {
-			return response.trim().length > 0;
-		}
-
-		return (response?.length ?? 0) > 0;
-	};
-
-	const clearQuestionError = (questionId: number) => {
-		if (!(questionId in questionErrors)) return;
-		const { [questionId]: __removed, ...rest } = questionErrors;
-		questionErrors = rest;
-	};
-
-	const setQuestionError = (questionId: number, message: string) => {
-		questionErrors = { ...questionErrors, [questionId]: message };
-	};
-
-	const isSectionLimitMessage = (message: string | null | undefined) =>
-		message?.includes(SECTION_LIMIT_ERROR_PREFIX) ?? false;
-
-	const isSelected = (questionId: number, optionId: number) => {
-		return getSelectedOptionIds(questionId).includes(optionId);
-	};
-
-	const submitAnswer = async (questionId: number, response: number[] | string) => {
-		const hasResponse = Array.isArray(response) ? response.length > 0 : response.trim().length > 0;
-		const data = {
-			question_revision_id: questionId,
-			response: hasResponse ? response : null,
-			candidate
-		};
-
-		const res = await fetch(`/test/${page.params.slug}/api/submit-answer`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(data)
-		});
-
-		if (!res.ok) {
-			const errorData = await res.json();
-			throw new Error(errorData.error || 'Failed to submit answer');
-		}
-
-		return await res.json();
-	};
-
-	const updateSelections = (questionId: number, newResponse: number[] | string) => {
-		const existing = selections.find((s) => s.question_revision_id === questionId);
-		if (existing) {
-			selections = selections.map((s) =>
-				s.question_revision_id === questionId ? { ...s, response: newResponse } : s
-			);
-		} else {
-			selections = [
-				...selections,
-				{
-					question_revision_id: questionId,
-					response: newResponse,
-					visited: true,
-					time_spent: 0,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			];
-		}
-		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
-	};
-
-	const handleSelect = async (question: TQuestion, optionId: number, isRemoving = false) => {
-		if (submittingQuestion === question.id) return;
-
-		const currentIds = getSelectedOptionIds(question.id);
-		let newResponse: number[];
-
-		if (question.question_type === 'single-choice') {
-			if (currentIds[0] === optionId) return;
-			newResponse = [optionId];
-		} else {
-			if (isRemoving) {
-				newResponse = currentIds.filter((id) => id !== optionId);
-			} else {
-				newResponse = currentIds.includes(optionId) ? currentIds : [...currentIds, optionId];
-			}
-		}
-
-		const previousSelections = JSON.parse(JSON.stringify(selections));
-		submittingQuestion = question.id;
-		clearQuestionError(question.id);
-
-		updateSelections(question.id, newResponse);
-
-		try {
-			await submitAnswer(question.id, newResponse);
-		} catch (error) {
-			selections = previousSelections;
-			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to save your answer. Please try again.'
-			);
-		} finally {
-			submittingQuestion = null;
-		}
-	};
-
-	const getMatrixResponseForQuestion = (questionId: number): Record<string, number> =>
-		parseJsonRecord<number>(
-			selections.find((s) => s.question_revision_id === questionId)?.response
-		);
-
-	const getMatrixSelection = (questionId: number, rowId: number): number | undefined =>
-		getMatrixResponseForQuestion(questionId)[String(rowId)];
-
-	const handleMatrixSelection = async (question: TQuestion, rowId: number, columnId: number) => {
-		if (submittingQuestion === question.id) return;
-
-		const current = getMatrixResponseForQuestion(question.id);
-		const newResponse = JSON.stringify({ ...current, [rowId]: columnId });
-
-		const previousSelections = JSON.parse(JSON.stringify(selections));
-		submittingQuestion = question.id;
-		clearQuestionError(question.id);
-
-		const existing = selections.find((s) => s.question_revision_id === question.id);
-		if (existing) {
-			selections = selections.map((s) =>
-				s.question_revision_id === question.id ? { ...s, response: newResponse } : s
-			);
-		} else {
-			selections = [
-				...selections,
-				{
-					question_revision_id: question.id,
-					response: newResponse,
-					visited: true,
-					time_spent: 0,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			];
-		}
-		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
-
-		try {
-			await submitAnswer(question.id, newResponse);
-		} catch (error) {
-			selections = previousSelections;
-			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to save your answer. Please try again.'
-			);
-		} finally {
-			submittingQuestion = null;
-		}
-	};
-
-	const handleMatrixSelect = async (question: TQuestion, rowKey: string, colId: number) => {
-		if (submittingQuestion === question.id) return;
-
-		const current = matrixSelections[question.id]?.[rowKey] ?? [];
-		const newRowSelections = current.includes(colId)
-			? current.filter((id) => id !== colId)
-			: [...current, colId];
-
-		const newQuestionSelections = {
-			...matrixSelections[question.id],
-			[rowKey]: newRowSelections
-		};
-		const serialized = JSON.stringify(newQuestionSelections);
-
-		const previousMatrixSelections = JSON.parse(JSON.stringify(matrixSelections));
-		const previousSelections = JSON.parse(JSON.stringify(selections));
-		clearQuestionError(question.id);
-
-		matrixSelections = { ...matrixSelections, [question.id]: newQuestionSelections };
-
-		const existing = selections.find((s) => s.question_revision_id === question.id);
-		if (existing) {
-			selections = selections.map((s) =>
-				s.question_revision_id === question.id ? { ...s, response: serialized } : s
-			);
-		} else {
-			selections = [
-				...selections,
-				{
-					question_revision_id: question.id,
-					response: serialized,
-					visited: true,
-					time_spent: 0,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			];
-		}
-		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
-
-		submittingQuestion = question.id;
-		try {
-			await submitAnswer(question.id, serialized);
-		} catch (error) {
-			matrixSelections = previousMatrixSelections;
-			selections = previousSelections;
-			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to save your answer. Please try again.'
-			);
-		} finally {
-			submittingQuestion = null;
-		}
-	};
-
-	const handleMatrixInputChange = (questionId: number, rowId: number, value: string) => {
-		if (submittingQuestion === questionId) return;
-		matrixInputValues = {
-			...matrixInputValues,
-			[questionId]: { ...(matrixInputValues[questionId] ?? {}), [String(rowId)]: value }
-		};
-		const q = questions.find((q) => q.id === questionId);
-		if (q) scheduleSave(q, () => handleMatrixInputSave(q));
-	};
-
-	const handleMatrixInputSave = async (question: TQuestion) => {
-		if (submittingQuestion === question.id) return;
-
-		const values = matrixInputValues[question.id] ?? {};
-		const normalized = normalizeMatrixInputValues(values);
-		const serialized = Object.keys(normalized).length > 0 ? JSON.stringify(normalized) : '';
-
-		const previousSelections = JSON.parse(JSON.stringify(selections));
-		submittingQuestion = question.id;
-		saveStatuses = { ...saveStatuses, [question.id]: 'saving' };
-
-		updateSelections(question.id, serialized);
-
-		try {
-			await submitAnswer(question.id, serialized);
-			saveStatuses = { ...saveStatuses, [question.id]: 'saved' };
-		} catch (error) {
-			selections = previousSelections;
-			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-			saveStatuses = { ...saveStatuses, [question.id]: 'idle' };
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to save your answer. Please try again.'
-			);
-		} finally {
-			submittingQuestion = null;
-		}
-	};
-
-	const handleSubjectiveSubmit = async (question: TQuestion) => {
-		if (submittingQuestion === question.id) return;
-
-		const text = String(candidateInput[question.id] ?? '');
-		const existing = selections.find((s) => s.question_revision_id === question.id);
-
-		const previousSelections = JSON.parse(JSON.stringify(selections));
-		submittingQuestion = question.id;
-		saveStatuses = { ...saveStatuses, [question.id]: 'saving' };
-		clearQuestionError(question.id);
-
-		if (existing) {
-			selections = selections.map((s) =>
-				s.question_revision_id === question.id ? { ...s, response: text } : s
-			);
-		} else {
-			selections = [
-				...selections,
-				{
-					question_revision_id: question.id,
-					response: text,
-					visited: true,
-					time_spent: 0,
-					bookmarked: false,
-					is_reviewed: false
-				}
-			];
-		}
-		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
-
-		try {
-			await submitAnswer(question.id, text);
-			saveStatuses = { ...saveStatuses, [question.id]: 'saved' };
-		} catch (error) {
-			selections = previousSelections;
-			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-			saveStatuses = { ...saveStatuses, [question.id]: 'idle' };
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to save your answer. Please try again.'
-			);
-		} finally {
-			submittingQuestion = null;
-		}
-	};
-
-	const scheduleSave = (question: TQuestion, saveFn: () => void) => {
-		saveStatuses = { ...saveStatuses, [question.id]: 'pending' };
-		flushFns[question.id] = saveFn;
-		clearTimeout(debounceTimers[question.id]);
-		debounceTimers[question.id] = setTimeout(() => saveFn(), 800);
-	};
-
-	$effect(() => {
-		return () => {
-			for (const [id, timer] of Object.entries(debounceTimers)) {
-				const questionId = Number(id);
-				if (timer !== undefined && saveStatuses[questionId] === 'pending') {
-					clearTimeout(timer);
-					flushFns[questionId]?.();
-				}
-			}
-		};
-	});
-
-	const clearAnswer = async (question: TQuestion) => {
-		if (submittingQuestion === question.id) return;
-
-		const existing = selections.find((s) => s.question_revision_id === question.id);
-		if (!existing || !hasAttemptedResponse(existing.response)) return;
-
-		const previousSelections = JSON.parse(JSON.stringify(selections));
-		const previousMatrixSelections = JSON.parse(JSON.stringify(matrixSelections));
-		const previousMatrixInputValues = JSON.parse(JSON.stringify(matrixInputValues));
-		submittingQuestion = question.id;
-		clearQuestionError(question.id);
-
-		const clearedResponse =
-			question.question_type === question_type_enum.SUBJECTIVE ||
-			question.question_type === question_type_enum.NUMERICALINTEGER ||
-			question.question_type === question_type_enum.NUMERICALDECIMAL ||
-			question.question_type === question_type_enum.MATRIXMATCH ||
-			question.question_type === question_type_enum.MATRIXRATING ||
-			question.question_type === question_type_enum.MATRIXINPUT
-				? ''
-				: [];
-
-		selections = selections.map((selection) =>
-			selection.question_revision_id === question.id
-				? {
-						...selection,
-						response: clearedResponse,
-						visited: true,
-						is_reviewed: false
-					}
-				: selection
-		);
-		sessionStore.current = { ...sessionStore.current, selections: [...selections] };
-
-		if (typeof clearedResponse === 'string') {
-			if (
-				question.question_type === question_type_enum.SUBJECTIVE ||
-				question.question_type === question_type_enum.NUMERICALINTEGER ||
-				question.question_type === question_type_enum.NUMERICALDECIMAL
-			) {
-				candidateInput[question.id] = '';
-				clearTimeout(debounceTimers[question.id]);
-				debounceTimers[question.id] = undefined;
-				saveStatuses = { ...saveStatuses, [question.id]: 'idle' };
-			}
-		}
-
-		if (question.question_type === question_type_enum.MATRIXMATCH) {
-			matrixSelections = { ...matrixSelections, [question.id]: {} };
-		}
-
-		if (question.question_type === question_type_enum.MATRIXINPUT) {
-			matrixInputValues = { ...matrixInputValues, [question.id]: {} };
-			clearTimeout(debounceTimers[question.id]);
-			debounceTimers[question.id] = undefined;
-			saveStatuses = { ...saveStatuses, [question.id]: 'idle' };
-		}
-
-		try {
-			await submitAnswer(question.id, clearedResponse);
-		} catch (error) {
-			selections = previousSelections;
-			sessionStore.current = { ...sessionStore.current, selections: [...previousSelections] };
-
-			if (
-				typeof clearedResponse === 'string' &&
-				(question.question_type === question_type_enum.SUBJECTIVE ||
-					question.question_type === question_type_enum.NUMERICALINTEGER ||
-					question.question_type === question_type_enum.NUMERICALDECIMAL)
-			) {
-				candidateInput[question.id] = String(
-					previousSelections.find(
-						(selection: TSelection) => selection.question_revision_id === question.id
-					)?.response ?? ''
-				);
-			} else if (question.question_type === question_type_enum.MATRIXMATCH) {
-				matrixSelections = previousMatrixSelections;
-			}
-
-			if (question.question_type === question_type_enum.MATRIXINPUT) {
-				matrixInputValues = previousMatrixInputValues;
-			}
-
-			setQuestionError(
-				question.id,
-				error instanceof Error ? error.message : 'Failed to clear your answer. Please try again.'
-			);
-		} finally {
-			submittingQuestion = null;
-		}
-	};
 </script>
 
 <div class="min-h-screen bg-muted p-4 pb-20 lg:p-6 lg:pb-20">
@@ -601,351 +121,72 @@
 					</div>
 				</div>
 
-				{#if question_type === question_type_enum.SUBJECTIVE || question_type === question_type_enum.NUMERICALINTEGER || question_type === question_type_enum.NUMERICALDECIMAL}
-					{@const currentInput = candidateInput[question.id] ?? ''}
-					<div class="flex w-full flex-col gap-2">
-						{#if questionErrors[question.id]}
-							<div
-								class={`rounded-lg border p-3 text-sm ${
-									isSectionLimitMessage(questionErrors[question.id])
-										? 'border-warning bg-warning-subtle text-warning'
-										: 'border-destructive bg-destructive/10 text-destructive'
-								}`}
-							>
-								{questionErrors[question.id]}
-								{#if isSectionLimitMessage(questionErrors[question.id])}
-									<p class="mt-2 text-xs text-warning">
-										{$t('Clear another answered question in this section to attempt this one.')}
-									</p>
-								{/if}
-							</div>
-						{/if}
-						{#if question_type == question_type_enum.SUBJECTIVE}
-							<textarea
-								style="field-sizing: content;"
-								class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-30 w-full resize-none overflow-hidden rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-								placeholder={$t('Type your answer here...')}
-								value={candidateInput[question.id]}
-								oninput={(e) => {
-									candidateInput[question.id] = e.currentTarget.value;
-									scheduleSave(question, () => handleSubjectiveSubmit(question));
-								}}
-								maxlength={question.subjective_answer_limit || undefined}
-							></textarea>
-						{:else}
-							<input
-								type="number"
-								step={question_type === question_type_enum.NUMERICALDECIMAL ? 'any' : '1'}
-								class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-xl border px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-								placeholder={$t('Type your answer here...')}
-								value={candidateInput[question.id]}
-								oninput={(e) => {
-									candidateInput[question.id] = e.currentTarget.value;
-									scheduleSave(question, () => handleSubjectiveSubmit(question));
-								}}
-							/>
-						{/if}
-						<div class="flex items-center justify-between">
-							<div class="flex items-center gap-2">
-								{#if (saveStatuses[question.id] ?? 'idle') === 'saving'}
-									<span class="text-muted-foreground flex items-center gap-1 text-xs">
-										<Spinner class="size-3" />{$t('Saving...')}
-									</span>
-								{:else if (saveStatuses[question.id] ?? 'idle') === 'saved'}
-									<span class="text-success flex items-center gap-1 text-xs">
-										<Check class="size-3" />{$t('Saved')}
-									</span>
-								{/if}
-							</div>
-							<div class="flex items-center gap-2">
-								{#if question.subjective_answer_limit}
-									{@const remaining = question.subjective_answer_limit - currentInput.length}
-									<span
-										class="text-sm {remaining <= 0
-											? 'text-destructive font-medium'
-											: 'text-muted-foreground'}"
-									>
-										{remaining}
-										{$t('characters remaining')}
-									</span>
-								{/if}
-								<Button
-									size="sm"
-									variant="outline"
-									onclick={() => clearAnswer(question)}
-									disabled={submittingQuestion === question.id ||
-										!hasAttemptedResponse(
-											selections.find((selection) => selection.question_revision_id === question.id)
-												?.response
-										)}
-								>
-									{$t('Clear answer')}
-								</Button>
-							</div>
-						</div>
-					</div>
-				{:else if question_type === question_type_enum.MULTIPLE}
-					{@const typedOptions = question.options as TOptions[]}
-					<div class="w-full space-y-3">
-						<div class="grid grid-cols-4 gap-2 sm:gap-3">
-							{#each typedOptions as option (option.id)}
-								{@const uid = `omr-${question.id}-${option.key}`}
-								<Label
-									for={uid}
-									class="flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm sm:px-5 sm:py-4 sm:text-base {isSelected(
-										question.id,
-										option.id
-									)
-										? 'bg-primary text-muted *:border-muted *:text-muted'
-										: ''}"
-								>
-									{option.key}
-									<Checkbox
-										id={uid}
-										value={option.id.toString()}
-										class="ml-2 data-[state=checked]:bg-transparent data-[state=checked]:text-current sm:ml-3"
-										checked={isSelected(question.id, option.id)}
-										onCheckedChange={async (check) => {
-											await handleSelect(question, option.id, check === false);
-										}}
-									/>
-								</Label>
-							{/each}
-						</div>
-						<div class="flex justify-end">
-							<Button
-								size="sm"
-								variant="outline"
-								onclick={() => clearAnswer(question)}
-								disabled={submittingQuestion === question.id ||
-									!hasAttemptedResponse(
-										selections.find((selection) => selection.question_revision_id === question.id)
-											?.response
-									)}
-							>
-								{$t('Clear answer')}
-							</Button>
-						</div>
-					</div>
-				{:else if question_type === question_type_enum.SINGLE}
-					{@const typedOptions = question.options as TOptions[]}
-					<div class="w-full space-y-3">
-						<RadioGroup.Root
-							class="grid grid-cols-4 gap-2 sm:gap-3"
-							orientation="horizontal"
-							onValueChange={async (optionId) => {
-								await handleSelect(question, Number(optionId));
-							}}
-							value={getSelectedOptionIds(question.id)[0]?.toString()}
-						>
-							{#each typedOptions as option (option.id)}
-								{@const uid = `omr-${question.id}-${option.key}`}
-								<Label
-									for={uid}
-									class="flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm sm:px-5 sm:py-4 sm:text-base {isSelected(
-										question.id,
-										option.id
-									)
-										? 'bg-primary text-muted *:border-muted *:text-muted'
-										: ''}"
-								>
-									{option.key}
-									<RadioGroup.Item value={option.id.toString()} id={uid} class="ml-2 sm:ml-3" />
-								</Label>
-							{/each}
-						</RadioGroup.Root>
-						<div class="flex justify-end">
-							<Button
-								size="sm"
-								variant="outline"
-								onclick={() => clearAnswer(question)}
-								disabled={submittingQuestion === question.id ||
-									!hasAttemptedResponse(
-										selections.find((selection) => selection.question_revision_id === question.id)
-											?.response
-									)}
-							>
-								{$t('Clear answer')}
-							</Button>
-						</div>
-					</div>
+				{#if question_type === question_type_enum.SUBJECTIVE}
+					<SubjectiveAnswer
+						{question}
+						{candidate}
+						bind:selections
+						variant="omr"
+						bind:isSubmitting={
+							() => submittingQuestion === question.id,
+							(v) => (submittingQuestion = v ? question.id : null)
+						}
+					/>
+				{:else if question_type === question_type_enum.NUMERICALINTEGER || question_type === question_type_enum.NUMERICALDECIMAL}
+					<NumericalAnswer
+						{question}
+						{candidate}
+						bind:selections
+						variant="omr"
+						bind:isSubmitting={
+							() => submittingQuestion === question.id,
+							(v) => (submittingQuestion = v ? question.id : null)
+						}
+					/>
+				{:else if question_type === question_type_enum.MULTIPLE || question_type === question_type_enum.SINGLE}
+					<ChoiceAnswer
+						{question}
+						{candidate}
+						bind:selections
+						variant="omr"
+						bind:isSubmitting={
+							() => submittingQuestion === question.id,
+							(v) => (submittingQuestion = v ? question.id : null)
+						}
+					/>
 				{:else if question_type === question_type_enum.MATRIXRATING}
-					{@const matrixOpts = question.options as unknown as TMatrixOptions}
-					<div class="w-full space-y-3">
-						<div class="overflow-x-auto">
-							<table class="w-full border-collapse text-xs sm:text-sm">
-								<thead>
-									<tr>
-										<th
-											class="border border-border bg-muted px-3 py-2 text-left font-semibold"
-										>
-											{matrixOpts.rows.label}
-										</th>
-										{#each matrixOpts.columns.items as col (col.id)}
-											<th
-												class="border border-border bg-muted px-3 py-2 text-center font-semibold"
-											>
-												{col.key}
-											</th>
-										{/each}
-									</tr>
-								</thead>
-								<tbody>
-									{#each matrixOpts.rows.items as row (row.id)}
-										<tr class="hover:bg-muted/50">
-											<td class="border border-border px-3 py-2 font-medium">{row.value}</td>
-											{#each matrixOpts.columns.items as col (col.id)}
-												<td class="border border-border px-3 py-2 text-center">
-													<input
-														type="radio"
-														name="omr-matrix-{question.id}-row-{row.id}"
-														value={col.id}
-														checked={getMatrixSelection(question.id, row.id) === col.id}
-														class="accent-primary h-4 w-4 cursor-pointer"
-														aria-label="{row.value} – {col.key}"
-														onchange={() => handleMatrixSelection(question, row.id, col.id)}
-													/>
-												</td>
-											{/each}
-										</tr>
-									{/each}
-								</tbody>
-							</table>
-						</div>
-						<div class="flex justify-end">
-							<Button
-								size="sm"
-								variant="outline"
-								onclick={() => clearAnswer(question)}
-								disabled={submittingQuestion === question.id ||
-									!hasAttemptedResponse(
-										selections.find((selection) => selection.question_revision_id === question.id)
-											?.response
-									)}
-							>
-								{$t('Clear answer')}
-							</Button>
-						</div>
-					</div>
+					<MatrixRatingAnswer
+						{question}
+						{candidate}
+						bind:selections
+						variant="omr"
+						bind:isSubmitting={
+							() => submittingQuestion === question.id,
+							(v) => (submittingQuestion = v ? question.id : null)
+						}
+					/>
 				{:else if question_type === question_type_enum.MATRIXMATCH}
-					{@const matrix = question.options as TMatrixOptions}
-					{@const matrixRows = matrix.rows.items}
-					{@const matrixColumns = matrix.columns.items}
-					<div class="flex w-full flex-col gap-3">
-						<div class="overflow-x-auto">
-							<table class="border-collapse text-sm">
-								<thead>
-									<tr>
-										<th class="w-10 px-3 py-2"></th>
-										{#each matrixColumns as col (col.id)}
-											<th class="px-5 py-2 text-center font-semibold text-foreground">{col.key}</th>
-										{/each}
-									</tr>
-								</thead>
-								<tbody>
-									{#each matrixRows as row (row.id)}
-										<tr>
-											<td class="px-3 py-3 font-semibold text-foreground">{row.key}</td>
-											{#each matrixColumns as col (col.id)}
-												{@const isChecked = (
-													matrixSelections[question.id]?.[String(row.id)] ?? []
-												).includes(col.id)}
-												<td class="px-5 py-3 text-center">
-													<Checkbox
-														checked={isChecked}
-														onCheckedChange={async () => {
-															await handleMatrixSelect(question, String(row.id), col.id);
-														}}
-													/>
-												</td>
-											{/each}
-										</tr>
-									{/each}
-								</tbody>
-							</table>
-						</div>
-						<div class="flex justify-end">
-							<Button
-								size="sm"
-								variant="outline"
-								onclick={() => clearAnswer(question)}
-								disabled={submittingQuestion === question.id ||
-									!hasAttemptedResponse(
-										selections.find((selection) => selection.question_revision_id === question.id)
-											?.response
-									)}
-							>
-								{$t('Clear answer')}
-							</Button>
-						</div>
-					</div>
+					<MatrixMatchAnswer
+						{question}
+						{candidate}
+						bind:selections
+						variant="omr"
+						bind:isSubmitting={
+							() => submittingQuestion === question.id,
+							(v) => (submittingQuestion = v ? question.id : null)
+						}
+					/>
 				{:else if question_type === question_type_enum.MATRIXINPUT}
-					{@const matrixOpts = question.options as TMatrixInputOptions}
-					{@const inputType = matrixOpts.columns.input_type}
-					{@const currentValues = matrixInputValues[question.id] ?? {}}
-					{@const thClass = 'border border-border bg-muted px-3 py-2 text-left font-semibold'}
-					{@const tdClass = 'border border-border px-3 py-2'}
-					<div class="flex w-full flex-col gap-2">
-						<div class="overflow-x-auto">
-							<table class="w-full border-collapse text-xs sm:text-sm">
-								<thead>
-									<tr>
-										<th class={thClass}>{matrixOpts.rows.label}</th>
-										<th class={thClass}>{matrixOpts.columns.label}</th>
-									</tr>
-								</thead>
-								<tbody>
-									{#each matrixOpts.rows.items as row (row.id)}
-										<tr class="hover:bg-muted/50">
-											<td class="{tdClass} font-medium">
-												<span class="font-semibold">{row.key}.</span>
-											</td>
-											<td class={tdClass}>
-												<input
-													type={inputType}
-													class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-													value={currentValues[String(row.id)] ?? ''}
-													disabled={submittingQuestion === question.id}
-													oninput={(e) =>
-														handleMatrixInputChange(
-															question.id,
-															row.id,
-															(e.target as HTMLInputElement).value
-														)}
-												/>
-											</td>
-										</tr>
-									{/each}
-								</tbody>
-							</table>
-						</div>
-						<div class="flex items-center justify-between">
-							<div class="flex items-center gap-2">
-								{#if (saveStatuses[question.id] ?? 'idle') === 'saving'}
-									<span class="text-muted-foreground flex items-center gap-1 text-xs">
-										<Spinner class="size-3" />{$t('Saving...')}
-									</span>
-								{:else if (saveStatuses[question.id] ?? 'idle') === 'saved'}
-									<span class="text-success flex items-center gap-1 text-xs">
-										<Check class="size-3" />{$t('Saved')}
-									</span>
-								{/if}
-							</div>
-							<Button
-								size="sm"
-								variant="outline"
-								onclick={() => clearAnswer(question)}
-								disabled={submittingQuestion === question.id ||
-									!hasAttemptedResponse(
-										selections.find(
-											(selection) => selection.question_revision_id === question.id
-										)?.response
-									)}
-							>
-								{$t('Clear answer')}
-							</Button>
-						</div>
-					</div>
+					<MatrixInputAnswer
+						{question}
+						{candidate}
+						bind:selections
+						variant="omr"
+						bind:isSubmitting={
+							() => submittingQuestion === question.id,
+							(v) => (submittingQuestion = v ? question.id : null)
+						}
+					/>
 				{/if}
 			</div>
 		{/each}
@@ -1002,11 +243,20 @@
 
 					<div class="bg-card flex justify-end gap-3 px-6 pb-6">
 						<Dialog.Close class="flex-1 sm:flex-none">
-							<Button variant="outline" class="w-full border-primary text-primary hover:text-primary" disabled={isSubmittingTest}>
+							<Button
+								variant="outline"
+								class="w-full border-primary text-primary hover:text-primary"
+								disabled={isSubmittingTest}
+							>
 								{$t('Cancel')}
 							</Button>
 						</Dialog.Close>
-						<form class="flex-1 sm:flex-none" action="?/submitTest" method="POST" use:enhance={handleSubmitTestEnhance}>
+						<form
+							class="flex-1 sm:flex-none"
+							action="?/submitTest"
+							method="POST"
+							use:enhance={handleSubmitTestEnhance}
+						>
 							<Button type="submit" class="w-full" disabled={isSubmittingTest}>
 								{#if isSubmittingTest}
 									<Spinner />
@@ -1019,7 +269,9 @@
 			{:else}
 				<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
 					<div class="bg-muted px-6 pt-6 pr-12 pb-4">
-						<Dialog.Title class="text-base font-semibold">{$t('Answer all mandatory questions!')}</Dialog.Title>
+						<Dialog.Title class="text-base font-semibold"
+							>{$t('Answer all mandatory questions!')}</Dialog.Title
+						>
 					</div>
 
 					<div class="border-border border-t"></div>

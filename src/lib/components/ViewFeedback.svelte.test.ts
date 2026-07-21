@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/svelte';
 import ViewFeedback from './ViewFeedback.svelte';
 import {
+	mockCandidate,
 	mockSingleChoiceQuestion,
 	mockMultipleChoiceQuestion,
 	mockSubjectiveQuestion,
@@ -33,7 +34,7 @@ describe('ViewFeedback', () => {
 	describe('Answer Review heading', () => {
 		it('should display the Answer Review heading', () => {
 			render(ViewFeedback, {
-				props: { feedback: [], testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback: [], testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(screen.getByRole('heading', { name: 'Answer Review' })).toBeInTheDocument();
@@ -43,7 +44,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [102], [102])];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(screen.getByRole('heading', { name: 'Answer Review' })).toBeInTheDocument();
@@ -55,7 +56,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [102], [102]), createFeedback(2, [201, 203], [201, 202])];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
@@ -66,7 +67,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [102], [102]), createFeedback(2, [201], [201, 202])];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(screen.getByText('Q1')).toBeInTheDocument();
@@ -78,7 +79,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [102], [102])];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(screen.getAllByText(/\d+ marks?/i)).toHaveLength(3);
@@ -88,7 +89,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [102], [102])];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.instructions)).toBeInTheDocument();
@@ -98,7 +99,11 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [102], [102]), createFeedback(2, [201], [201, 202])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: mockSectionedTestQuestionsResponse }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: mockSectionedTestQuestionsResponse
+				}
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
@@ -111,6 +116,7 @@ describe('ViewFeedback', () => {
 
 			const { container } = render(ViewFeedback, {
 				props: {
+					candidate: mockCandidate,
 					feedback,
 					testQuestions: {
 						...mockTestQuestionsResponse,
@@ -144,7 +150,11 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [102], [102]), createFeedback(2, [201], [201, 202])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: mockSectionedTestQuestionsResponse }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: mockSectionedTestQuestionsResponse
+				}
 			});
 
 			expect(screen.getByText('Physics')).toBeInTheDocument();
@@ -157,7 +167,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [102], [102])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(container.querySelector('label[for="1-A"]')).toBeInTheDocument();
@@ -170,7 +180,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [101], [102])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			const optionBLabel = container.querySelector('label[for="1-B"]');
@@ -182,7 +192,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [101], [102])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			const optionALabel = container.querySelector('label[for="1-A"]');
@@ -194,7 +204,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [101], [102])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			const optionCLabel = container.querySelector('label[for="1-C"]');
@@ -206,7 +216,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [102], [102])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			const optionBLabel = container.querySelector('label[for="1-B"]');
@@ -220,7 +230,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(2, [201, 202], [201, 202])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(container.querySelector('label[for="2-A"]')).toBeInTheDocument();
@@ -233,7 +243,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(2, [201, 203], [201, 202])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			const optionA = container.querySelector('label[for="2-A"]');
@@ -254,7 +264,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(2, [201], [201, 202])];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
@@ -266,7 +276,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(999, [1], [2])];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
@@ -275,7 +285,7 @@ describe('ViewFeedback', () => {
 
 		it('should show all questions with empty feedback (unattempted)', () => {
 			const { container } = render(ViewFeedback, {
-				props: { feedback: [], testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback: [], testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(container.querySelectorAll('[class*="shadow-none"]')).toHaveLength(3);
@@ -285,7 +295,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [], [102])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			const optionB = container.querySelector('label[for="1-B"]');
@@ -299,7 +309,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [101], [102]), createFeedback(2, [201, 202], [201, 202])];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: mockTestQuestionsResponse }
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
@@ -312,7 +322,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(1, [102], [102])];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: null }
+				props: { candidate: mockCandidate, feedback, testQuestions: null }
 			});
 
 			expect(
@@ -331,7 +341,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalInteger
+				}
 			});
 
 			expect(screen.getByText(mockNumericalIntegerQuestion.question_text)).toBeInTheDocument();
@@ -341,7 +355,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalInteger
+				}
 			});
 
 			expect(screen.getByText('8')).toBeInTheDocument();
@@ -351,7 +369,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 6, submitted_answer: '8', correct_answer: 8 }];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalInteger
+				}
 			});
 
 			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
@@ -363,7 +385,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 6, submitted_answer: '5', correct_answer: 8 }];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalInteger
+				}
 			});
 
 			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
@@ -374,7 +400,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 6, submitted_answer: '5', correct_answer: 8 }];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalInteger
+				}
 			});
 
 			// '5' (submitted) and '8' (correct answer in the panel) should both appear
@@ -386,7 +416,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 6, submitted_answer: '', correct_answer: 8 }];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalInteger
+				}
 			});
 
 			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
@@ -394,7 +428,11 @@ describe('ViewFeedback', () => {
 
 		it('should show Not Attempted when numerical-integer question has no feedback entry', () => {
 			render(ViewFeedback, {
-				props: { feedback: [], testQuestions: testQuestionsWithNumericalInteger }
+				props: {
+					candidate: mockCandidate,
+					feedback: [],
+					testQuestions: testQuestionsWithNumericalInteger
+				}
 			});
 
 			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
@@ -404,7 +442,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 6, submitted_answer: '8', correct_answer: null }];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalInteger
+				}
 			});
 
 			expect(container.querySelector('.border-border.bg-card')).toBeInTheDocument();
@@ -414,7 +456,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 6, submitted_answer: '8', correct_answer: null }];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalInteger
+				}
 			});
 
 			// isNumericalAnswerCorrect returns null → no Wrong indicator on the response.
@@ -428,7 +474,11 @@ describe('ViewFeedback', () => {
 				const feedback = [{ question_revision_id: 6, submitted_answer: '0', correct_answer: 0 }];
 
 				render(ViewFeedback, {
-					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+					props: {
+						candidate: mockCandidate,
+						feedback,
+						testQuestions: testQuestionsWithNumericalInteger
+					}
 				});
 
 				expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
@@ -439,7 +489,11 @@ describe('ViewFeedback', () => {
 				const feedback = [{ question_revision_id: 6, submitted_answer: '0', correct_answer: 0 }];
 
 				const { container } = render(ViewFeedback, {
-					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+					props: {
+						candidate: mockCandidate,
+						feedback,
+						testQuestions: testQuestionsWithNumericalInteger
+					}
 				});
 
 				expect(container.querySelector('.bg-success-subtle.border-success')).toBeInTheDocument();
@@ -449,7 +503,11 @@ describe('ViewFeedback', () => {
 				const feedback = [{ question_revision_id: 6, submitted_answer: '5', correct_answer: 0 }];
 
 				render(ViewFeedback, {
-					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+					props: {
+						candidate: mockCandidate,
+						feedback,
+						testQuestions: testQuestionsWithNumericalInteger
+					}
 				});
 
 				expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
@@ -459,7 +517,11 @@ describe('ViewFeedback', () => {
 				const feedback = [{ question_revision_id: 6, submitted_answer: '5', correct_answer: 0 }];
 
 				render(ViewFeedback, {
-					props: { feedback, testQuestions: testQuestionsWithNumericalInteger }
+					props: {
+						candidate: mockCandidate,
+						feedback,
+						testQuestions: testQuestionsWithNumericalInteger
+					}
 				});
 
 				// '5' is the submitted wrong answer, '0' is the correct answer in the panel
@@ -481,7 +543,11 @@ describe('ViewFeedback', () => {
 			];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalDecimal
+				}
 			});
 
 			expect(screen.getByText(mockNumericalDecimalQuestion.question_text)).toBeInTheDocument();
@@ -493,7 +559,11 @@ describe('ViewFeedback', () => {
 			];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalDecimal
+				}
 			});
 
 			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
@@ -507,7 +577,11 @@ describe('ViewFeedback', () => {
 			];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalDecimal
+				}
 			});
 
 			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
@@ -518,7 +592,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalDecimal
+				}
 			});
 
 			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
@@ -530,7 +608,11 @@ describe('ViewFeedback', () => {
 			];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalDecimal
+				}
 			});
 
 			expect(container.querySelector('.bg-success-subtle.border-success')).toBeInTheDocument();
@@ -540,7 +622,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalDecimal
+				}
 			});
 
 			expect(container.querySelector('.bg-error-subtle.border-error')).toBeInTheDocument();
@@ -550,7 +636,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 7, submitted_answer: '2.5', correct_answer: 3.14 }];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalDecimal
+				}
 			});
 
 			expect(screen.getByText('2.5')).toBeInTheDocument();
@@ -561,7 +651,11 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 7, submitted_answer: '', correct_answer: 3.14 }];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+				props: {
+					candidate: mockCandidate,
+					feedback,
+					testQuestions: testQuestionsWithNumericalDecimal
+				}
 			});
 
 			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
@@ -569,7 +663,11 @@ describe('ViewFeedback', () => {
 
 		it('should show Not Attempted when numerical-decimal question has no feedback entry', () => {
 			render(ViewFeedback, {
-				props: { feedback: [], testQuestions: testQuestionsWithNumericalDecimal }
+				props: {
+					candidate: mockCandidate,
+					feedback: [],
+					testQuestions: testQuestionsWithNumericalDecimal
+				}
 			});
 
 			expect(screen.getByText('Not Attempted')).toBeInTheDocument();
@@ -580,7 +678,11 @@ describe('ViewFeedback', () => {
 				const feedback = [{ question_revision_id: 7, submitted_answer: '0', correct_answer: 0 }];
 
 				render(ViewFeedback, {
-					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+					props: {
+						candidate: mockCandidate,
+						feedback,
+						testQuestions: testQuestionsWithNumericalDecimal
+					}
 				});
 
 				// |0 - 0| = 0 <= 0.5
@@ -592,7 +694,11 @@ describe('ViewFeedback', () => {
 				const feedback = [{ question_revision_id: 7, submitted_answer: '0.03', correct_answer: 0 }];
 
 				render(ViewFeedback, {
-					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+					props: {
+						candidate: mockCandidate,
+						feedback,
+						testQuestions: testQuestionsWithNumericalDecimal
+					}
 				});
 
 				// |0.03 - 0| = 0.03 <= 0.05
@@ -603,7 +709,11 @@ describe('ViewFeedback', () => {
 				const feedback = [{ question_revision_id: 7, submitted_answer: '0.6', correct_answer: 0 }];
 
 				render(ViewFeedback, {
-					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+					props: {
+						candidate: mockCandidate,
+						feedback,
+						testQuestions: testQuestionsWithNumericalDecimal
+					}
 				});
 
 				// |0.6 - 0| = 0.6 > 0.05
@@ -614,7 +724,11 @@ describe('ViewFeedback', () => {
 				const feedback = [{ question_revision_id: 7, submitted_answer: '0', correct_answer: 0 }];
 
 				const { container } = render(ViewFeedback, {
-					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+					props: {
+						candidate: mockCandidate,
+						feedback,
+						testQuestions: testQuestionsWithNumericalDecimal
+					}
 				});
 
 				expect(container.querySelector('.bg-success-subtle.border-success')).toBeInTheDocument();
@@ -624,7 +738,11 @@ describe('ViewFeedback', () => {
 				const feedback = [{ question_revision_id: 7, submitted_answer: '0.6', correct_answer: 0 }];
 
 				render(ViewFeedback, {
-					props: { feedback, testQuestions: testQuestionsWithNumericalDecimal }
+					props: {
+						candidate: mockCandidate,
+						feedback,
+						testQuestions: testQuestionsWithNumericalDecimal
+					}
 				});
 
 				expect(screen.getByText('0.6')).toBeInTheDocument();
@@ -645,7 +763,7 @@ describe('ViewFeedback', () => {
 			];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithBoth }
+				props: { candidate: mockCandidate, feedback, testQuestions: testQuestionsWithBoth }
 			});
 
 			expect(screen.getByText(mockNumericalIntegerQuestion.question_text)).toBeInTheDocument();
@@ -664,7 +782,7 @@ describe('ViewFeedback', () => {
 			];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithBoth }
+				props: { candidate: mockCandidate, feedback, testQuestions: testQuestionsWithBoth }
 			});
 
 			// Integer correct: header badge shows "Correct: ..."
@@ -684,7 +802,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(10, [1001], [1002])];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithMedia }
+				props: { candidate: mockCandidate, feedback, testQuestions: testQuestionsWithMedia }
 			});
 
 			const images = screen.getAllByRole('img');
@@ -699,7 +817,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(10, [1001], [1002])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithMedia }
+				props: { candidate: mockCandidate, feedback, testQuestions: testQuestionsWithMedia }
 			});
 
 			// Option B has YouTube embed media
@@ -723,7 +841,7 @@ describe('ViewFeedback', () => {
 			const feedback = [createFeedback(11, [1001], [1002])];
 
 			const { container } = render(ViewFeedback, {
-				props: { feedback, testQuestions }
+				props: { candidate: mockCandidate, feedback, testQuestions }
 			});
 
 			// Option B has YouTube embed media
@@ -752,7 +870,7 @@ describe('ViewFeedback', () => {
 			];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: testQuestionsWithSubjective }
+				props: { candidate: mockCandidate, feedback, testQuestions: testQuestionsWithSubjective }
 			});
 
 			expect(screen.getByText(mockSingleChoiceQuestion.question_text)).toBeInTheDocument();
@@ -769,7 +887,7 @@ describe('ViewFeedback', () => {
 			const feedback = [{ question_revision_id: 4, submitted_answer: '', correct_answer: [] }];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: subjectiveOnlyQuestions }
+				props: { candidate: mockCandidate, feedback, testQuestions: subjectiveOnlyQuestions }
 			});
 
 			expect(screen.getByText(mockSubjectiveQuestion.question_text)).toBeInTheDocument();
@@ -786,7 +904,7 @@ describe('ViewFeedback', () => {
 			];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: subjectiveOnlyQuestions }
+				props: { candidate: mockCandidate, feedback, testQuestions: subjectiveOnlyQuestions }
 			});
 
 			expect(screen.queryByText(/^Correct:/)).not.toBeInTheDocument();
@@ -804,7 +922,7 @@ describe('ViewFeedback', () => {
 			];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: subjectiveOnlyQuestions }
+				props: { candidate: mockCandidate, feedback, testQuestions: subjectiveOnlyQuestions }
 			});
 
 			expect(screen.getByText(/500/)).toBeInTheDocument();
@@ -821,7 +939,7 @@ describe('ViewFeedback', () => {
 			];
 
 			render(ViewFeedback, {
-				props: { feedback, testQuestions: subjectiveNoLimitQuestions }
+				props: { candidate: mockCandidate, feedback, testQuestions: subjectiveNoLimitQuestions }
 			});
 
 			expect(screen.queryByText(/characters/i)).not.toBeInTheDocument();
@@ -843,38 +961,38 @@ describe('ViewFeedback', () => {
 			];
 
 			it('should render question text', () => {
-				render(ViewFeedback, { props: { feedback, testQuestions } });
+				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				expect(screen.getByText(mockMatrixInputTextQuestion.question_text)).toBeInTheDocument();
 			});
 
 			it('should render the rows label as a column header', () => {
-				render(ViewFeedback, { props: { feedback, testQuestions } });
+				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				expect(screen.getByText('Country')).toBeInTheDocument();
 			});
 
 			it('should render the columns label as a column header', () => {
-				render(ViewFeedback, { props: { feedback, testQuestions } });
+				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				expect(screen.getByText('Capital City')).toBeInTheDocument();
 			});
 
 			it('should render row values', () => {
-				render(ViewFeedback, { props: { feedback, testQuestions } });
+				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				expect(screen.getByText('France')).toBeInTheDocument();
 				expect(screen.getByText('Japan')).toBeInTheDocument();
 			});
 
 			it('should render one text input per row (2 rows = 2 inputs)', () => {
-				render(ViewFeedback, { props: { feedback, testQuestions } });
+				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				expect(screen.getAllByRole('textbox')).toHaveLength(2);
 			});
 
 			it('should display submitted values inside the inputs', () => {
-				render(ViewFeedback, { props: { feedback, testQuestions } });
+				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
 				const values = inputs.map((i) => i.value);
@@ -882,11 +1000,11 @@ describe('ViewFeedback', () => {
 				expect(values).toContain('Tokyo');
 			});
 
-			it('should render inputs as readonly', () => {
-				render(ViewFeedback, { props: { feedback, testQuestions } });
+			it('should render inputs as disabled', () => {
+				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
-				expect(inputs.every((i) => i.readOnly)).toBe(true);
+				expect(inputs.every((i) => i.disabled)).toBe(true);
 			});
 
 			it('should show empty inputs when no answer was submitted', () => {
@@ -897,20 +1015,22 @@ describe('ViewFeedback', () => {
 						correct_answer: []
 					}
 				];
-				render(ViewFeedback, { props: { feedback: unattemptedFeedback, testQuestions } });
+				render(ViewFeedback, {
+					props: { candidate: mockCandidate, feedback: unattemptedFeedback, testQuestions }
+				});
 
 				const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
 				expect(inputs.every((i) => i.value === '')).toBe(true);
 			});
 
 			it('should not show Not Applicable text', () => {
-				render(ViewFeedback, { props: { feedback, testQuestions } });
+				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				expect(screen.queryByText('Not Applicable')).not.toBeInTheDocument();
 			});
 
 			it('should not render radio buttons or checkboxes', () => {
-				render(ViewFeedback, { props: { feedback, testQuestions } });
+				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				expect(screen.queryAllByRole('radio')).toHaveLength(0);
 				expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
@@ -932,21 +1052,23 @@ describe('ViewFeedback', () => {
 			];
 
 			it('should render the rows and columns labels', () => {
-				render(ViewFeedback, { props: { feedback, testQuestions } });
+				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				expect(screen.getByText('Item')).toBeInTheDocument();
 				expect(screen.getByText('Quantity')).toBeInTheDocument();
 			});
 
 			it('should render row values', () => {
-				render(ViewFeedback, { props: { feedback, testQuestions } });
+				render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 				expect(screen.getByText('Apples')).toBeInTheDocument();
 				expect(screen.getByText('Oranges')).toBeInTheDocument();
 			});
 
 			it('should render number inputs with submitted values', () => {
-				const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+				const { container } = render(ViewFeedback, {
+					props: { candidate: mockCandidate, feedback, testQuestions }
+				});
 
 				const inputs = container.querySelectorAll<HTMLInputElement>('input[type="number"]');
 				const values = Array.from(inputs).map((i) => i.value);
@@ -954,11 +1076,13 @@ describe('ViewFeedback', () => {
 				expect(values).toContain('15');
 			});
 
-			it('should render number inputs as readonly', () => {
-				const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			it('should render number inputs as disabled', () => {
+				const { container } = render(ViewFeedback, {
+					props: { candidate: mockCandidate, feedback, testQuestions }
+				});
 
 				const inputs = container.querySelectorAll<HTMLInputElement>('input[type="number"]');
-				expect(Array.from(inputs).every((i) => i.readOnly)).toBe(true);
+				expect(Array.from(inputs).every((i) => i.disabled)).toBe(true);
 			});
 		});
 	});
@@ -981,34 +1105,34 @@ describe('ViewFeedback', () => {
 		];
 
 		it('should render question text', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.getByText(mockMatrixMatchQuestion.question_text)).toBeInTheDocument();
 		});
 
 		it('should render row label and column label', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.getByText('Column A')).toBeInTheDocument();
 			expect(screen.getByText('Column B')).toBeInTheDocument();
 		});
 
 		it('should render row values', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.getByText('Apple')).toBeInTheDocument();
 			expect(screen.getByText('Banana')).toBeInTheDocument();
 		});
 
 		it('should render column values', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.getByText('Red fruit')).toBeInTheDocument();
 			expect(screen.getByText('Yellow fruit')).toBeInTheDocument();
 		});
 
 		it('should render column keys as table headers', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			const headers = screen.getAllByRole('columnheader');
 			const headerTexts = headers.map((h) => h.textContent?.trim()).filter(Boolean);
@@ -1017,7 +1141,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should render row keys in the table body', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			const table = screen.getByRole('table');
 			expect(within(table).getByText('A')).toBeInTheDocument();
@@ -1025,35 +1149,45 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should show correct styling for a cell that is submitted and correct', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const table = container.querySelector('table');
 			expect(table?.querySelector('.bg-success.border-success')).toBeInTheDocument();
 		});
 
 		it('should show wrong styling for a cell that is submitted but not correct', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const table = container.querySelector('table');
 			expect(table?.querySelector('.bg-error.border-error')).toBeInTheDocument();
 		});
 
 		it('should show missed styling for a cell that is correct but not submitted', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const table = container.querySelector('table');
 			expect(table?.querySelector('.border-success:not(.bg-success)')).toBeInTheDocument();
 		});
 
 		it('should show none styling for a cell that is neither submitted nor correct', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const table = container.querySelector('table');
 			expect(table?.querySelector('.bg-card.border-border')).toBeInTheDocument();
 		});
 
 		it('should render a check icon inside correct cells', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const table = container.querySelector('table');
 			const correctBox = table?.querySelector('.bg-success.border-success');
@@ -1061,7 +1195,9 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should render a check icon inside wrong cells', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const table = container.querySelector('table');
 			const wrongBox = table?.querySelector('.bg-error.border-error');
@@ -1069,7 +1205,9 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should not render a check icon inside missed cells', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const table = container.querySelector('table');
 			const missedBox = table?.querySelector('.border-success:not(.bg-success)');
@@ -1077,7 +1215,9 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should not render a check icon inside none cells', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const table = container.querySelector('table');
 			const noneBox = table?.querySelector('.bg-card.border-border');
@@ -1085,7 +1225,9 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should render 4 status indicator boxes for 2×2 matrix', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const table = container.querySelector('table');
 			expect(table?.querySelectorAll('.h-5.w-5')).toHaveLength(4);
@@ -1100,25 +1242,27 @@ describe('ViewFeedback', () => {
 				}
 			];
 
-			render(ViewFeedback, { props: { feedback: allCorrectFeedback, testQuestions } });
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback: allCorrectFeedback, testQuestions }
+			});
 
 			expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
 		});
 
 		it('should show Incorrect result badge when rows do not fully match', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.getByText(/^Incorrect:/)).toBeInTheDocument();
 		});
 
 		it('should not show Not Applicable text', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.queryByText('Not Applicable')).not.toBeInTheDocument();
 		});
 
 		it('should not render checkboxes or radio buttons', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
 			expect(screen.queryAllByRole('radio')).toHaveLength(0);
@@ -1133,7 +1277,9 @@ describe('ViewFeedback', () => {
 				}
 			];
 
-			render(ViewFeedback, { props: { feedback: unattemptedFeedback, testQuestions } });
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback: unattemptedFeedback, testQuestions }
+			});
 
 			expect(screen.getByText(/^Not Attempted:/)).toBeInTheDocument();
 		});
@@ -1156,19 +1302,19 @@ describe('ViewFeedback', () => {
 		];
 
 		it('should render question text', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.getByText(mockMatrixRatingQuestion.question_text)).toBeInTheDocument();
 		});
 
 		it('should render the rows label', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.getByText('Subjects')).toBeInTheDocument();
 		});
 
 		it('should render all column values as headers', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.getByText('Very difficult')).toBeInTheDocument();
 			expect(screen.getByText('A little difficult')).toBeInTheDocument();
@@ -1176,7 +1322,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should render column keys in parentheses', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.getByText('(1)')).toBeInTheDocument();
 			expect(screen.getByText('(2)')).toBeInTheDocument();
@@ -1184,7 +1330,7 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should render all row values', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.getByText('Math')).toBeInTheDocument();
 			expect(screen.getByText('Physics')).toBeInTheDocument();
@@ -1192,36 +1338,42 @@ describe('ViewFeedback', () => {
 		});
 
 		it('should render one radio button per row-column combination (3 rows × 3 cols = 9)', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.getAllByRole('radio')).toHaveLength(9);
 		});
 
 		it('should check the submitted radio for row 1 (Math → A little difficult)', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const row1Radios = container.querySelectorAll<HTMLInputElement>(
-				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-1"]`
+				`input[name="matrix-${mockMatrixRatingQuestion.id}-row-1"]`
 			);
 			const checked = Array.from(row1Radios).find((r) => r.checked);
 			expect(checked?.value).toBe('2');
 		});
 
 		it('should check the submitted radio for row 2 (Physics → Okay / manageable)', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const row2Radios = container.querySelectorAll<HTMLInputElement>(
-				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-2"]`
+				`input[name="matrix-${mockMatrixRatingQuestion.id}-row-2"]`
 			);
 			const checked = Array.from(row2Radios).find((r) => r.checked);
 			expect(checked?.value).toBe('3');
 		});
 
 		it('should leave all radios unchecked for an unanswered row', () => {
-			const { container } = render(ViewFeedback, { props: { feedback, testQuestions } });
+			const { container } = render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions }
+			});
 
 			const row3Radios = container.querySelectorAll<HTMLInputElement>(
-				`input[name="feedback-matrix-${mockMatrixRatingQuestion.id}-row-3"]`
+				`input[name="matrix-${mockMatrixRatingQuestion.id}-row-3"]`
 			);
 			expect(Array.from(row3Radios).every((r) => !r.checked)).toBe(true);
 		});
@@ -1234,34 +1386,36 @@ describe('ViewFeedback', () => {
 					correct_answer: []
 				}
 			];
-			render(ViewFeedback, { props: { feedback: unattemptedFeedback, testQuestions } });
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback: unattemptedFeedback, testQuestions }
+			});
 
 			const radios = screen.getAllByRole('radio') as HTMLInputElement[];
 			expect(radios.every((r) => !r.checked)).toBe(true);
 		});
 
 		it('should render all radios unchecked when no feedback entry exists', () => {
-			render(ViewFeedback, { props: { feedback: [], testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback: [], testQuestions } });
 
 			const radios = screen.getAllByRole('radio') as HTMLInputElement[];
 			expect(radios.every((r) => !r.checked)).toBe(true);
 		});
 
 		it('should have disabled attribute on all radio buttons', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			const radios = screen.getAllByRole('radio') as HTMLInputElement[];
 			expect(radios.every((r) => r.disabled)).toBe(true);
 		});
 
 		it('should not show Not Applicable text', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.queryByText('Not Applicable')).not.toBeInTheDocument();
 		});
 
 		it('should not show a result badge for matrix-rating questions', () => {
-			render(ViewFeedback, { props: { feedback, testQuestions } });
+			render(ViewFeedback, { props: { candidate: mockCandidate, feedback, testQuestions } });
 
 			expect(screen.queryByText(/^Correct:/)).not.toBeInTheDocument();
 			expect(screen.queryByText(/^Incorrect:/)).not.toBeInTheDocument();

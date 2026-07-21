@@ -254,7 +254,7 @@ export const actions = {
 					secure: !dev
 				});
 
-				return { result: resultData, feedback, testQuestions, submitTest: true };
+				return { result: resultData, feedback, testQuestions, submitTest: true, candidate };
 			}
 
 			return { submitTest: false };
