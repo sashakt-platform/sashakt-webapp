@@ -27,23 +27,10 @@ function setCandidateCookie(cookies: Cookies, testLink: string, candidateData: u
 }
 
 function getExternalCandidateLaunch(url: URL) {
+	// The candidate uuid is all a launch needs: start_test creates or resolves
+	// the attempt for it and returns the candidate_test_id.
 	const candidateUuid = url.searchParams.get('candidate_uuid');
-	const candidateTestIdRaw = url.searchParams.get('candidate_test_id');
-
-	if (!candidateUuid && !candidateTestIdRaw) return null;
-	if (!candidateUuid || !candidateTestIdRaw) {
-		throw error(400, 'Invalid external candidate launch');
-	}
-
-	const candidateTestId = Number(candidateTestIdRaw);
-	if (!Number.isInteger(candidateTestId) || candidateTestId <= 0) {
-		throw error(400, 'Invalid external candidate launch');
-	}
-
-	return {
-		candidate_uuid: candidateUuid,
-		candidate_test_id: candidateTestId
-	};
+	return candidateUuid ? { candidate_uuid: candidateUuid } : null;
 }
 
 export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {

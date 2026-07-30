@@ -349,36 +349,6 @@ describe('Page Server - load function', () => {
 		);
 	});
 
-	it('should reject an invalid external launch', async () => {
-		const mockCookies = createMockCookies();
-
-		await expect(
-			load({
-				locals: { testData: mockTestData, timeToBegin: 300 },
-				cookies: mockCookies,
-				fetch: vi.fn(),
-				url: new URL(
-					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}`
-				)
-			} as any)
-		).rejects.toMatchObject({ status: 400 });
-	});
-
-	it('should reject an external launch with a non-numeric candidate_test_id', async () => {
-		const mockCookies = createMockCookies();
-
-		await expect(
-			load({
-				locals: { testData: mockTestData, timeToBegin: 300 },
-				cookies: mockCookies,
-				fetch: vi.fn(),
-				url: new URL(
-					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=abc`
-				)
-			} as any)
-		).rejects.toMatchObject({ status: 400 });
-	});
-
 	it('should ignore external launch handling when no launch params are present', async () => {
 		vi.mocked(getCandidate).mockReturnValue(null);
 		const mockCookies = createMockCookies();
