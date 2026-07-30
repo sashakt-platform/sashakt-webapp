@@ -108,12 +108,15 @@
 	// another device. Fire-and-forget, mirroring the answer sync.
 	function syncCurrentPosition(questionIndex: number) {
 		const currentQuestion = questions[questionIndex];
-		if (!currentQuestion) return;
-		fetch(`/test/${page.params.slug}/api/current-position`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ question_revision_id: currentQuestion.id, candidate })
-		}).catch((error) => console.error('Failed to sync current position:', error));
+		const slug = page.params?.slug;
+		if (!currentQuestion || !slug) return;
+		Promise.resolve(
+			fetch(`/test/${slug}/api/current-position`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ question_revision_id: currentQuestion.id, candidate })
+			})
+		).catch((error) => console.error('Failed to sync current position:', error));
 	}
 
 	// scroll a specific question into view after the page renders
