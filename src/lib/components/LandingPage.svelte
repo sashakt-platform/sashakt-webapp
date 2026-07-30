@@ -16,10 +16,17 @@
 	import RichText from './RichText.svelte';
 	import { t } from 'svelte-i18n';
 
-	let { testDetails, showProfileForm = $bindable() } = $props();
+	let { testDetails, isResumed = false, showProfileForm = $bindable() } = $props();
 
 	let isStarting = $state(false);
 	let createError = $state<string | null>(null);
+
+	// On resume the pre-test form/OMR choice was already completed, so the button
+	// starts the attempt directly (like a test with no form) and reads "Resume".
+	const usesStartFlow = $derived(
+		!isResumed && (testDetails.omr === 'OPTIONAL' || !!testDetails.form)
+	);
+	const startLabel = $derived(isResumed ? $t('Resume Test') : $t('Start Test'));
 
 	function handleStart() {
 		if (page.data?.timeToBegin === 0) {
@@ -163,9 +170,9 @@
 		</p>
 		<div class="lg:shrink-0">
 			{#if page.data?.timeToBegin === 0}
-				{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
+				{#if usesStartFlow}
 					<Button onclick={handleStart} class="w-full lg:w-auto">
-						{$t('Start Test')} →
+						{startLabel} →
 					</Button>
 				{:else}
 					<form method="POST" action="?/createCandidate" use:enhance={handleCreateCandidateEnhance}>
@@ -180,16 +187,16 @@
 							{#if isStarting}
 								<Spinner />
 							{/if}
-							{$t('Start Test')} →
+							{startLabel} →
 						</Button>
 					</form>
 				{/if}
 			{:else}
 				<Dialog.Root>
 					<Dialog.Trigger class={`w-full lg:w-auto ${buttonVariants({ variant: 'default' })}`}>
-						{$t('Start Test')} →
+						{startLabel} →
 					</Dialog.Trigger>
-					{#if testDetails.omr === 'OPTIONAL' || testDetails.form}
+					{#if usesStartFlow}
 						<PreTestTimer timeLeft={page.data?.timeToBegin} bind:showProfileForm />
 					{:else}
 						<PreTestTimer timeLeft={page.data?.timeToBegin} />

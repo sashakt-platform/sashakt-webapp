@@ -75,7 +75,14 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 		// screen so the candidate never re-enters the quiz.
 		const candidateData = startData.is_submitted
 			? { ...startData, external_launch: true, submitted: true }
-			: { ...startData, external_launch: true, pending_start: true };
+			: {
+					...startData,
+					external_launch: true,
+					pending_start: true,
+					// A resumed attempt already has its form response; the landing screen
+					// shows "Resume" and the form is skipped (see +page.svelte).
+					is_resumed: startData.is_resumed === true
+				};
 		setCandidateCookie(cookies, testData.link, candidateData);
 		throw redirect(303, '/test/' + testData.link);
 	}
@@ -168,7 +175,10 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 		timeToBegin: locals.timeToBegin,
 		testData,
 		testQuestions: null,
-		locations
+		locations,
+		// True for an external launch resuming an already-started attempt: the
+		// landing screen shows "Resume" and the pre-test form is skipped.
+		isResumed: candidate?.is_resumed === true
 	};
 };
 

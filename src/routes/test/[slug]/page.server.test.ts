@@ -281,11 +281,41 @@ describe('Page Server - load function', () => {
 		);
 		expect(mockCookies.set).toHaveBeenCalledWith(
 			'sashakt-candidate',
-			JSON.stringify({ ...mockCandidate, external_launch: true, pending_start: true }),
+			JSON.stringify({
+				...mockCandidate,
+				external_launch: true,
+				pending_start: true,
+				is_resumed: false
+			}),
 			expect.objectContaining({
 				path: `/test/${mockTestData.link}`,
 				httpOnly: true
 			})
+		);
+	});
+
+	it('marks the cookie is_resumed when the launch resolves a started attempt', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValue(await createMockResponse({ ...mockCandidate, is_resumed: true }));
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: mockFetch,
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=${mockCandidate.candidate_test_id}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 303, location: `/test/${mockTestData.link}` });
+
+		expect(mockCookies.set).toHaveBeenCalledWith(
+			'sashakt-candidate',
+			expect.stringContaining('"is_resumed":true'),
+			expect.objectContaining({ path: `/test/${mockTestData.link}`, httpOnly: true })
 		);
 	});
 
