@@ -165,7 +165,8 @@
 	<div class="mx-auto max-w-xl lg:flex lg:items-center lg:gap-4">
 		<p class="text-muted-foreground mb-2 text-center text-sm leading-[1.4] lg:mb-0 lg:text-left">
 			{$t(
-				'By clicking "Start Test," you confirm that you have read and understood all instructions.'
+				'By clicking "{action}," you confirm that you have read and understood all instructions.',
+				{ values: { action: startLabel } }
 			)}
 		</p>
 		<div class="lg:shrink-0">

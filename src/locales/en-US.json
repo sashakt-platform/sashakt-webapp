@@ -16,7 +16,7 @@
 	"Test Instructions": "Test Instructions",
 	"Test duration": "Test duration",
 	"Total marks": "Total marks",
-	"By clicking \"Start Test,\" you confirm that you have read and understood all instructions.": "By clicking \"Start Test,\" you confirm that you have read and understood all instructions.",
+	"By clicking \"{action},\" you confirm that you have read and understood all instructions.": "By clicking \"{action},\" you confirm that you have read and understood all instructions.",
 	"General Instructions": "General Instructions",
 	"I have read and understood the instructions as given": "I have read and understood the instructions as given",
 	"Start": "Start",
