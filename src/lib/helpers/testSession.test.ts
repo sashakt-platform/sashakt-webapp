@@ -94,4 +94,16 @@ describe('resolveInitialQuestionIndex', () => {
 	it('defaults to the first question when there is no stored page', () => {
 		expect(resolveInitialQuestionIndex(null, ids, 5, undefined)).toBe(0);
 	});
+
+	it('clamps a stored page that points past the end of the test', () => {
+		expect(resolveInitialQuestionIndex(null, ids, 5, 99)).toBe(ids.length - 1);
+	});
+
+	it('clamps a negative stored page', () => {
+		expect(resolveInitialQuestionIndex(null, ids, 5, -3)).toBe(0);
+	});
+
+	it('stays at zero when there are no questions', () => {
+		expect(resolveInitialQuestionIndex(null, [], 5, 4)).toBe(0);
+	});
 });

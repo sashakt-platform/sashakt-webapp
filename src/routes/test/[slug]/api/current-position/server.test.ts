@@ -54,6 +54,19 @@ describe('POST /test/[slug]/api/current-position', () => {
 		);
 	});
 
+	it('should return 400 when the body is not valid JSON', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+
+		const mockCookies = createMockCookies();
+		const request = { json: () => Promise.reject(new SyntaxError('bad json')) };
+		const response = await POST({ request, cookies: mockCookies } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(400);
+		expect(data.error).toBe('Invalid JSON body');
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
 	it('should return 401 when cookie candidate is missing', async () => {
 		vi.mocked(getCandidate).mockReturnValue(null);
 

@@ -12,13 +12,16 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		);
 	}
 
-	const {
-		question_revision_id,
-		candidate
-	}: {
-		question_revision_id: number;
-		candidate: TCandidate;
-	} = await request.json();
+	let body: { question_revision_id: number; candidate: TCandidate };
+	try {
+		body = await request.json();
+	} catch {
+		return new Response(JSON.stringify({ success: false, error: 'Invalid JSON body' }), {
+			status: 400,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
+	const { question_revision_id, candidate } = body;
 
 	if (
 		cookieCandidate.candidate_test_id !== candidate?.candidate_test_id ||
@@ -43,7 +46,10 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			{
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ current_question_revision_id: question_revision_id })
+				body: JSON.stringify({ current_question_revision_id: question_revision_id }),
+				// Fires on every navigation, so a stalled backend must not keep the
+				// request (and the position it carries) hanging around.
+				signal: AbortSignal.timeout(10_000)
 			}
 		);
 

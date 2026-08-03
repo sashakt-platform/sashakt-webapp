@@ -78,5 +78,8 @@ export const resolveInitialQuestionIndex = (
 		const index = questionIds.indexOf(savedRevisionId);
 		if (index >= 0) return index;
 	}
-	return ((storedPage || 1) - 1) * perPage;
+	// The stored page comes from localStorage, so a stale or edited value could
+	// point past the end of the test; keep the fallback inside the real range.
+	const fallback = ((storedPage || 1) - 1) * perPage;
+	return Math.min(Math.max(fallback, 0), Math.max(questionIds.length - 1, 0));
 };

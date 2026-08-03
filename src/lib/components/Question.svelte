@@ -116,7 +116,15 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ question_revision_id: currentQuestion.id, candidate })
 			})
-		).catch((error) => console.error('Failed to sync current position:', error));
+		)
+			.then((response) => {
+				// fetch only rejects on network failure, so a 4xx/5xx would otherwise
+				// pass silently and leave the resume position stale.
+				if (!response.ok) {
+					console.error('Failed to sync current position:', response.status);
+				}
+			})
+			.catch((error) => console.error('Failed to sync current position:', error));
 	}
 
 	// scroll a specific question into view after the page renders
