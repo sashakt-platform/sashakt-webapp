@@ -296,4 +296,36 @@ describe('Support for Localization', () => {
 			).toBeInTheDocument();
 		});
 	});
+
+	it('should disable the start button when the org blocks anonymous starts', async () => {
+		render(LandingPage, {
+			props: {
+				testDetails: { ...defaultTestDetails, blocks_anonymous_start: true }
+			}
+		});
+
+		await waitFor(() => {
+			expect(
+				screen.getByText('Please open this test from your student portal.')
+			).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: /Start Test/ })).toBeDisabled();
+		});
+	});
+
+	it('should still allow an external launch when anonymous starts are blocked', async () => {
+		// The candidate came from the portal, so the block must not apply to them.
+		render(LandingPage, {
+			props: {
+				testDetails: { ...defaultTestDetails, blocks_anonymous_start: true },
+				isExternalLaunch: true
+			}
+		});
+
+		await waitFor(() => {
+			expect(
+				screen.queryByText('Please open this test from your student portal.')
+			).not.toBeInTheDocument();
+			expect(screen.getByRole('button', { name: /Start Test/ })).not.toBeDisabled();
+		});
+	});
 });

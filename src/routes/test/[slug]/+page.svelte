@@ -74,7 +74,12 @@
 			<p>{$t('You have already submitted this test.')}</p>
 		{/if}
 	{:else if !data.candidate && !showProfileForm}
-		<LandingPage testDetails={data.testData} isResumed={data.isResumed} bind:showProfileForm />
+		<LandingPage
+			testDetails={data.testData}
+			isResumed={data.isResumed}
+			isExternalLaunch={data.isExternalLaunch}
+			bind:showProfileForm
+		/>
 	{:else if !data.candidate && !data.isResumed && hasDynamicForm && !showOmrChoice && data.testData.form}
 		<DynamicForm
 			form={data.testData.form}

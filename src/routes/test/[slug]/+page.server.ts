@@ -165,7 +165,11 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 		locations,
 		// True for an external launch resuming an already-started attempt: the
 		// landing screen shows "Resume" and the pre-test form is skipped.
-		isResumed: candidate?.is_resumed === true
+		isResumed: candidate?.is_resumed === true,
+		// An external launch reaches the landing screen with the cookie already
+		// set, so it must not be treated as an anonymous visitor even though
+		// `candidate` is deliberately null here.
+		isExternalLaunch: candidate?.external_launch === true
 	};
 };
 

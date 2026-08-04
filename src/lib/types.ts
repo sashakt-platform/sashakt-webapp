@@ -221,4 +221,7 @@ export type TTestDetails = {
 	bookmark: boolean;
 	show_feedback_immediately: boolean;
 	show_feedback_on_completion: boolean;
+	// The org requires candidates to arrive from their student portal, so the
+	// landing page says so instead of offering a start it would have to reject.
+	blocks_anonymous_start?: boolean;
 };
