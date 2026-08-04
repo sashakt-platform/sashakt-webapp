@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { getQuestionResult, parseMatrixAnswer, getMatrixCellStatus } from './feedbackHelpers';
+import {
+	getQuestionResult,
+	parseMatrixAnswer,
+	getMatrixCellStatus,
+	normalizeFeedbackEntry
+} from './feedbackHelpers';
 import { question_type_enum } from '$lib/types';
 
 describe('getQuestionResult', () => {
@@ -129,7 +134,9 @@ describe('getQuestionResult', () => {
 
 	describe('non-gradable types (fallback)', () => {
 		it('returns unattempted for subjective questions', () => {
-			expect(getQuestionResult(question_type_enum.SUBJECTIVE, 'some answer', [])).toBe('unattempted');
+			expect(getQuestionResult(question_type_enum.SUBJECTIVE, 'some answer', [])).toBe(
+				'unattempted'
+			);
 		});
 	});
 
@@ -140,32 +147,46 @@ describe('getQuestionResult', () => {
 		const wrongSubmitted = JSON.stringify({ '1': [11], '2': [13] });
 
 		it('returns correct when all rows match exactly', () => {
-			expect(getQuestionResult(question_type_enum.MATRIXMATCH, correctSubmitted, correctAnswer)).toBe('correct');
+			expect(
+				getQuestionResult(question_type_enum.MATRIXMATCH, correctSubmitted, correctAnswer)
+			).toBe('correct');
 		});
 
 		it('returns correct regardless of column order within a row', () => {
 			const reordered = JSON.stringify({ '1': [11, 10], '2': [12] });
-			expect(getQuestionResult(question_type_enum.MATRIXMATCH, reordered, correctAnswer)).toBe('correct');
+			expect(getQuestionResult(question_type_enum.MATRIXMATCH, reordered, correctAnswer)).toBe(
+				'correct'
+			);
 		});
 
 		it('returns incorrect when a row has missing columns', () => {
-			expect(getQuestionResult(question_type_enum.MATRIXMATCH, partialSubmitted, correctAnswer)).toBe('incorrect');
+			expect(
+				getQuestionResult(question_type_enum.MATRIXMATCH, partialSubmitted, correctAnswer)
+			).toBe('incorrect');
 		});
 
 		it('returns incorrect when a row has wrong columns', () => {
-			expect(getQuestionResult(question_type_enum.MATRIXMATCH, wrongSubmitted, correctAnswer)).toBe('incorrect');
+			expect(getQuestionResult(question_type_enum.MATRIXMATCH, wrongSubmitted, correctAnswer)).toBe(
+				'incorrect'
+			);
 		});
 
 		it('returns unattempted when submitted is empty JSON object string', () => {
-			expect(getQuestionResult(question_type_enum.MATRIXMATCH, '{}', correctAnswer)).toBe('unattempted');
+			expect(getQuestionResult(question_type_enum.MATRIXMATCH, '{}', correctAnswer)).toBe(
+				'unattempted'
+			);
 		});
 
 		it('returns unattempted when correct answer is empty JSON object string', () => {
-			expect(getQuestionResult(question_type_enum.MATRIXMATCH, correctSubmitted, '{}')).toBe('unattempted');
+			expect(getQuestionResult(question_type_enum.MATRIXMATCH, correctSubmitted, '{}')).toBe(
+				'unattempted'
+			);
 		});
 
 		it('returns unattempted when submitted is empty array (not attempted at all)', () => {
-			expect(getQuestionResult(question_type_enum.MATRIXMATCH, [], correctAnswer)).toBe('unattempted');
+			expect(getQuestionResult(question_type_enum.MATRIXMATCH, [], correctAnswer)).toBe(
+				'unattempted'
+			);
 		});
 	});
 });
@@ -228,5 +249,61 @@ describe('getMatrixCellStatus', () => {
 
 	it('returns missed when submitted map is empty for that row', () => {
 		expect(getMatrixCellStatus(2, 13, {}, correct)).toBe('missed');
+	});
+});
+
+describe('normalizeFeedbackEntry', () => {
+	it('parses a JSON array answer into numbers', () => {
+		expect(
+			normalizeFeedbackEntry({
+				question_revision_id: 1,
+				submitted_answer: '[102]',
+				correct_answer: [102]
+			})
+		).toEqual({ question_revision_id: 1, submitted_answer: [102], correct_answer: [102] });
+	});
+
+	it('parses a multi-choice answer', () => {
+		expect(
+			normalizeFeedbackEntry({
+				question_revision_id: 2,
+				submitted_answer: '[201, 203]',
+				correct_answer: [201, 202]
+			})
+		).toEqual({
+			question_revision_id: 2,
+			submitted_answer: [201, 203],
+			correct_answer: [201, 202]
+		});
+	});
+
+	it('returns an empty array when nothing was submitted', () => {
+		expect(
+			normalizeFeedbackEntry({
+				question_revision_id: 3,
+				submitted_answer: null,
+				correct_answer: [301]
+			}).submitted_answer
+		).toEqual([]);
+	});
+
+	it('keeps a subjective answer as its raw string', () => {
+		expect(
+			normalizeFeedbackEntry({
+				question_revision_id: 4,
+				submitted_answer: 'Because the reaction is exothermic',
+				correct_answer: []
+			}).submitted_answer
+		).toBe('Because the reaction is exothermic');
+	});
+
+	it('keeps a non-array JSON value as its raw string', () => {
+		expect(
+			normalizeFeedbackEntry({
+				question_revision_id: 5,
+				submitted_answer: '42',
+				correct_answer: []
+			}).submitted_answer
+		).toBe('42');
 	});
 });

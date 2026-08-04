@@ -8,6 +8,39 @@ export const GRADABLE_QUESTION_TYPES = new Set([
 	question_type_enum.MATRIXMATCH
 ]);
 
+export type TFeedbackEntry = {
+	question_revision_id: number;
+	submitted_answer: number[] | string;
+	correct_answer: number[];
+};
+
+/**
+ * Shape a review-feedback row for the UI.
+ *
+ * The stored answer is a JSON string, so hand over the parsed array where it is
+ * one and the raw string otherwise (subjective answers are plain text).
+ */
+export const normalizeFeedbackEntry = (item: {
+	question_revision_id: number;
+	submitted_answer: string | null;
+	correct_answer: number[];
+}): TFeedbackEntry => {
+	let submitted: number[] | string = [];
+	if (item.submitted_answer) {
+		try {
+			const parsed = JSON.parse(item.submitted_answer);
+			submitted = Array.isArray(parsed) ? parsed : item.submitted_answer;
+		} catch {
+			submitted = item.submitted_answer;
+		}
+	}
+	return {
+		question_revision_id: item.question_revision_id,
+		submitted_answer: submitted,
+		correct_answer: item.correct_answer
+	};
+};
+
 export const parseMatrixAnswer = (
 	raw: string | number[] | null | undefined
 ): Record<string, number[]> => {
