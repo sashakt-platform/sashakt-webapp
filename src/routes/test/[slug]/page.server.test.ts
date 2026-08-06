@@ -6,7 +6,7 @@ import {
 	mockTestData
 } from '$lib/test-utils';
 import { getCandidate } from '$lib/helpers/getCandidate';
-import { getTestQuestions, getTimeLeft } from '$lib/server/test';
+import { getSubmittedResultExtras, getTestQuestions, getTimeLeft } from '$lib/server/test';
 import { load, actions } from './+page.server';
 
 // Mock environment variables
@@ -26,7 +26,8 @@ vi.mock('$lib/helpers/getCandidate', () => ({
 vi.mock('$lib/server/test', () => ({
 	getTestQuestions: vi.fn(),
 	getTimeLeft: vi.fn(),
-	getStates: vi.fn().mockResolvedValue([])
+	getStates: vi.fn().mockResolvedValue([]),
+	getSubmittedResultExtras: vi.fn()
 }));
 
 // Mock SvelteKit functions
@@ -50,6 +51,8 @@ describe('Page Server - load function', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', vi.fn());
 		vi.clearAllMocks();
+		// Tests that care about the review payload override this.
+		vi.mocked(getSubmittedResultExtras).mockResolvedValue({ feedback: null, testQuestions: null });
 	});
 
 	afterEach(() => {
@@ -281,11 +284,41 @@ describe('Page Server - load function', () => {
 		);
 		expect(mockCookies.set).toHaveBeenCalledWith(
 			'sashakt-candidate',
-			JSON.stringify({ ...mockCandidate, external_launch: true, pending_start: true }),
+			JSON.stringify({
+				...mockCandidate,
+				external_launch: true,
+				pending_start: true,
+				is_resumed: false
+			}),
 			expect.objectContaining({
 				path: `/test/${mockTestData.link}`,
 				httpOnly: true
 			})
+		);
+	});
+
+	it('marks the cookie is_resumed when the launch resolves a started attempt', async () => {
+		vi.mocked(getCandidate).mockReturnValue(null);
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValue(await createMockResponse({ ...mockCandidate, is_resumed: true }));
+		const mockCookies = createMockCookies();
+
+		await expect(
+			load({
+				locals: { testData: mockTestData, timeToBegin: 300 },
+				cookies: mockCookies,
+				fetch: mockFetch,
+				url: new URL(
+					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=${mockCandidate.candidate_test_id}`
+				)
+			} as any)
+		).rejects.toMatchObject({ status: 303, location: `/test/${mockTestData.link}` });
+
+		expect(mockCookies.set).toHaveBeenCalledWith(
+			'sashakt-candidate',
+			expect.stringContaining('"is_resumed":true'),
+			expect.objectContaining({ path: `/test/${mockTestData.link}`, httpOnly: true })
 		);
 	});
 
@@ -317,36 +350,6 @@ describe('Page Server - load function', () => {
 			}),
 			expect.objectContaining({ path: `/test/${mockTestData.link}` })
 		);
-	});
-
-	it('should reject an invalid external launch', async () => {
-		const mockCookies = createMockCookies();
-
-		await expect(
-			load({
-				locals: { testData: mockTestData, timeToBegin: 300 },
-				cookies: mockCookies,
-				fetch: vi.fn(),
-				url: new URL(
-					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}`
-				)
-			} as any)
-		).rejects.toMatchObject({ status: 400 });
-	});
-
-	it('should reject an external launch with a non-numeric candidate_test_id', async () => {
-		const mockCookies = createMockCookies();
-
-		await expect(
-			load({
-				locals: { testData: mockTestData, timeToBegin: 300 },
-				cookies: mockCookies,
-				fetch: vi.fn(),
-				url: new URL(
-					`http://localhost/test/${mockTestData.link}?candidate_uuid=${mockCandidate.candidate_uuid}&candidate_test_id=abc`
-				)
-			} as any)
-		).rejects.toMatchObject({ status: 400 });
 	});
 
 	it('should ignore external launch handling when no launch params are present', async () => {
@@ -679,37 +682,32 @@ describe('Page Server - submitTest action', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', vi.fn());
 		vi.clearAllMocks();
+		// Tests that care about the review payload override this.
+		vi.mocked(getSubmittedResultExtras).mockResolvedValue({ feedback: null, testQuestions: null });
 	});
 
 	afterEach(() => {
 		vi.unstubAllGlobals();
 	});
 
-	it('should submit test and return result with feedback and testQuestions', async () => {
+	it('should pass the review payload through to the result page', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 
 		const mockResult = { score: 85, passed: true };
-		const mockFeedbackData = [
-			{
-				question_revision_id: 1,
-				submitted_answer: '[102]',
-				correct_answer: [102]
-			},
-			{
-				question_revision_id: 2,
-				submitted_answer: '[201, 203]',
-				correct_answer: [201, 202]
-			}
-		];
 		const mockQuestionData = { question_revisions: [], question_pagination: 5 };
+		const mockFeedback = [
+			{ question_revision_id: 1, submitted_answer: [102], correct_answer: [102] }
+		];
 
-		vi.mocked(getTestQuestions).mockResolvedValue(mockQuestionData);
+		vi.mocked(getSubmittedResultExtras).mockResolvedValue({
+			feedback: mockFeedback,
+			testQuestions: mockQuestionData
+		});
 
 		const mockFetch = vi
 			.fn()
 			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
-			.mockResolvedValueOnce(createMockResponse(mockResult))
-			.mockResolvedValueOnce(createMockResponse(mockFeedbackData));
+			.mockResolvedValueOnce(createMockResponse(mockResult));
 
 		const mockCookies = createMockCookies();
 
@@ -721,22 +719,12 @@ describe('Page Server - submitTest action', () => {
 
 		expect(result.submitTest).toBe(true);
 		expect(result.result).toEqual(mockResult);
-		expect(result.feedback).toEqual([
-			{
-				question_revision_id: 1,
-				submitted_answer: [102],
-				correct_answer: [102]
-			},
-			{
-				question_revision_id: 2,
-				submitted_answer: [201, 203],
-				correct_answer: [201, 202]
-			}
-		]);
+		expect(result.feedback).toEqual(mockFeedback);
 		expect(result.testQuestions).toEqual(mockQuestionData);
-		expect(getTestQuestions).toHaveBeenCalledWith(
+		expect(getSubmittedResultExtras).toHaveBeenCalledWith(
 			mockCandidate.candidate_test_id,
-			mockCandidate.candidate_uuid
+			mockCandidate.candidate_uuid,
+			mockFetch
 		);
 		expect(mockCookies.delete).toHaveBeenCalledWith('sashakt-candidate', expect.any(Object));
 	});
@@ -762,109 +750,6 @@ describe('Page Server - submitTest action', () => {
 		expect(result.submitTest).toBe(true);
 		expect(result.result).toEqual(mockResult);
 		expect(mockCookies.delete).not.toHaveBeenCalled();
-	});
-
-	it('should handle empty feedback from review-feedback API', async () => {
-		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
-
-		const mockResult = { score: 0, passed: false };
-		vi.mocked(getTestQuestions).mockResolvedValue({
-			question_revisions: [],
-			question_pagination: 5
-		});
-
-		const mockFetch = vi
-			.fn()
-			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
-			.mockResolvedValueOnce(createMockResponse(mockResult))
-			.mockResolvedValueOnce(createMockResponse([]));
-
-		const mockCookies = createMockCookies();
-
-		const result = await actions.submitTest({
-			cookies: mockCookies,
-			fetch: mockFetch,
-			locals: { testData: mockTestData }
-		} as any);
-
-		expect(result.submitTest).toBe(true);
-		expect(result.feedback).toEqual([]);
-	});
-
-	it('should handle null submitted_answer in feedback', async () => {
-		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
-
-		const mockResult = { score: 0, passed: false };
-		const mockFeedbackData = [
-			{
-				question_revision_id: 1,
-				submitted_answer: null,
-				correct_answer: [102]
-			}
-		];
-		vi.mocked(getTestQuestions).mockResolvedValue({
-			question_revisions: [],
-			question_pagination: 5
-		});
-
-		const mockFetch = vi
-			.fn()
-			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
-			.mockResolvedValueOnce(createMockResponse(mockResult))
-			.mockResolvedValueOnce(createMockResponse(mockFeedbackData));
-
-		const mockCookies = createMockCookies();
-
-		const result = await actions.submitTest({
-			cookies: mockCookies,
-			fetch: mockFetch,
-			locals: { testData: mockTestData }
-		} as any);
-
-		expect(result.feedback[0].submitted_answer).toEqual([]);
-		expect(result.feedback[0].correct_answer).toEqual([102]);
-	});
-
-	it('should handle subjective answer string in feedback without crashing', async () => {
-		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
-
-		const mockResult = { score: 85, passed: true };
-		const mockFeedbackData = [
-			{
-				question_revision_id: 1,
-				submitted_answer: '[102]',
-				correct_answer: [102]
-			},
-			{
-				question_revision_id: 4,
-				submitted_answer: 'This is a subjective text answer',
-				correct_answer: []
-			}
-		];
-		vi.mocked(getTestQuestions).mockResolvedValue({
-			question_revisions: [],
-			question_pagination: 5
-		});
-
-		const mockFetch = vi
-			.fn()
-			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
-			.mockResolvedValueOnce(createMockResponse(mockResult))
-			.mockResolvedValueOnce(createMockResponse(mockFeedbackData));
-
-		const mockCookies = createMockCookies();
-
-		const result = await actions.submitTest({
-			cookies: mockCookies,
-			fetch: mockFetch,
-			locals: { testData: mockTestData }
-		} as any);
-
-		expect(result.submitTest).toBe(true);
-		expect(result.feedback).toHaveLength(2);
-		expect(result.feedback[0].submitted_answer).toEqual([102]);
-		expect(result.feedback[1].submitted_answer).toEqual('This is a subjective text answer');
-		expect(result.feedback[1].correct_answer).toEqual([]);
 	});
 
 	it('should not fetch feedback when show_feedback_on_completion is false', async () => {

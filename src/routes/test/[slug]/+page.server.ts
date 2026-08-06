@@ -1,7 +1,13 @@
 import { BACKEND_URL } from '$env/static/private';
 import { dev } from '$app/environment';
 import { getCandidate } from '$lib/helpers/getCandidate';
-import { getTestQuestions, getTimeLeft, getStates, type TState } from '$lib/server/test';
+import {
+	getSubmittedResultExtras,
+	getTestQuestions,
+	getTimeLeft,
+	getStates,
+	type TState
+} from '$lib/server/test';
 import { validateForm } from '$lib/components/form/validation';
 import type { TTestDetails } from '$lib/types';
 import { error, fail, redirect, type Cookies } from '@sveltejs/kit';
@@ -27,23 +33,10 @@ function setCandidateCookie(cookies: Cookies, testLink: string, candidateData: u
 }
 
 function getExternalCandidateLaunch(url: URL) {
+	// The candidate uuid is all a launch needs: start_test creates or resolves
+	// the attempt for it and returns the candidate_test_id.
 	const candidateUuid = url.searchParams.get('candidate_uuid');
-	const candidateTestIdRaw = url.searchParams.get('candidate_test_id');
-
-	if (!candidateUuid && !candidateTestIdRaw) return null;
-	if (!candidateUuid || !candidateTestIdRaw) {
-		throw error(400, 'Invalid external candidate launch');
-	}
-
-	const candidateTestId = Number(candidateTestIdRaw);
-	if (!Number.isInteger(candidateTestId) || candidateTestId <= 0) {
-		throw error(400, 'Invalid external candidate launch');
-	}
-
-	return {
-		candidate_uuid: candidateUuid,
-		candidate_test_id: candidateTestId
-	};
+	return candidateUuid ? { candidate_uuid: candidateUuid } : null;
 }
 
 export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
@@ -75,7 +68,14 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 		// screen so the candidate never re-enters the quiz.
 		const candidateData = startData.is_submitted
 			? { ...startData, external_launch: true, submitted: true }
-			: { ...startData, external_launch: true, pending_start: true };
+			: {
+					...startData,
+					external_launch: true,
+					pending_start: true,
+					// A resumed attempt already has its form response; the landing screen
+					// shows "Resume" and the form is skipped (see +page.svelte).
+					is_resumed: startData.is_resumed === true
+				};
 		setCandidateCookie(cookies, testData.link, candidateData);
 		throw redirect(303, '/test/' + testData.link);
 	}
@@ -108,14 +108,28 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 		} catch (error) {
 			console.error('Error fetching submitted result:', error);
 		}
+		// Reloading an already-submitted test must show the same page as the
+		// moment of submission, so fetch the review payload the result page needs
+		// instead of dropping "View All Answers" and the section breakdown.
+		let feedback = null;
+		let testQuestions = null;
+		if (result && (testData.show_feedback_on_completion || testData.question_sets?.length)) {
+			({ feedback, testQuestions } = await getSubmittedResultExtras(
+				candidate.candidate_test_id,
+				candidate.candidate_uuid,
+				fetch
+			));
+		}
+
 		return {
 			candidate,
 			testData,
 			submitted: true,
 			result,
+			feedback,
 			// null (not 0) so the layout TestTimer does not render / auto-submit.
 			timeLeft: null,
-			testQuestions: null,
+			testQuestions,
 			locations
 		};
 	}
@@ -168,7 +182,14 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 		timeToBegin: locals.timeToBegin,
 		testData,
 		testQuestions: null,
-		locations
+		locations,
+		// True for an external launch resuming an already-started attempt: the
+		// landing screen shows "Resume" and the pre-test form is skipped.
+		isResumed: candidate?.is_resumed === true,
+		// An external launch reaches the landing screen with the cookie already
+		// set, so it must not be treated as an anonymous visitor even though
+		// `candidate` is deliberately null here.
+		isExternalLaunch: candidate?.external_launch === true
 	};
 };
 
@@ -306,43 +327,11 @@ export const actions = {
 				let testQuestions = null;
 
 				if (testData.show_feedback_on_completion || testData.question_sets?.length) {
-					try {
-						const [feedbackResponse, testQuestionsData] = await Promise.all([
-							fetch(
-								`${BACKEND_URL}/candidate/${candidate.candidate_test_id}/review-feedback?candidate_uuid=${candidate.candidate_uuid}`,
-								{ method: 'GET', headers: { accept: 'application/json' } }
-							),
-							getTestQuestions(candidate.candidate_test_id, candidate.candidate_uuid)
-						]);
-						testQuestions = testQuestionsData;
-						if (feedbackResponse.ok) {
-							const feedbackData = await feedbackResponse.json();
-							feedback = feedbackData.map(
-								(item: {
-									question_revision_id: number;
-									submitted_answer: string | null;
-									correct_answer: number[];
-								}) => {
-									let submitted: number[] | string = [];
-									if (item.submitted_answer) {
-										try {
-											const parsed = JSON.parse(item.submitted_answer);
-											submitted = Array.isArray(parsed) ? parsed : item.submitted_answer;
-										} catch {
-											submitted = item.submitted_answer;
-										}
-									}
-									return {
-										question_revision_id: item.question_revision_id,
-										submitted_answer: submitted,
-										correct_answer: item.correct_answer
-									};
-								}
-							);
-						}
-					} catch (error) {
-						console.error('Error fetching feedback:', error);
-					}
+					({ feedback, testQuestions } = await getSubmittedResultExtras(
+						candidate.candidate_test_id,
+						candidate.candidate_uuid,
+						fetch
+					));
 				}
 
 				// For external (portal) launches, keep the cookie and mark it

@@ -1,4 +1,5 @@
 import { BACKEND_URL } from '$env/static/private';
+import { normalizeFeedbackEntry, type TFeedbackEntry } from '$lib/helpers/feedbackHelpers';
 
 export type TState = {
 	id: number;
@@ -95,6 +96,39 @@ export const getTestQuestions = async (
 	const testQuestions = await response.json();
 
 	return testQuestions;
+};
+
+/**
+ * The answer review and question data a submitted result page needs.
+ *
+ * Needed by the submit action and by a plain reload of an already-submitted
+ * test, so both show the same page. Returns nulls rather than throwing: the
+ * result is still worth showing if the review payload cannot be fetched.
+ */
+export const getSubmittedResultExtras = async (
+	candidate_test_id: number,
+	candidate_uuid: string,
+	// The caller's event fetch, so this keeps using the same fetch the inline
+	// version did rather than silently switching to the global one.
+	eventFetch: typeof fetch = fetch
+): Promise<{ feedback: TFeedbackEntry[] | null; testQuestions: unknown | null }> => {
+	try {
+		const [feedbackResponse, testQuestions] = await Promise.all([
+			eventFetch(
+				`${BACKEND_URL}/candidate/${candidate_test_id}/review-feedback?candidate_uuid=${candidate_uuid}`,
+				{ method: 'GET', headers: { accept: 'application/json' } }
+			),
+			getTestQuestions(candidate_test_id, candidate_uuid)
+		]);
+
+		if (!feedbackResponse.ok) return { feedback: null, testQuestions };
+
+		const feedbackData = await feedbackResponse.json();
+		return { feedback: feedbackData.map(normalizeFeedbackEntry), testQuestions };
+	} catch (error) {
+		console.error('Error fetching feedback:', error);
+		return { feedback: null, testQuestions: null };
+	}
 };
 
 export const getTimeLeft = async (candidate_test_id: number, candidate_uuid: string) => {

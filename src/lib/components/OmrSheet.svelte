@@ -7,7 +7,7 @@
 	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { answeredAllMandatory } from '$lib/helpers/testFunctionalities';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
-	import { createTestSessionStore } from '$lib/helpers/testSession';
+	import { createTestSessionStore, getInitialSelections } from '$lib/helpers/testSession';
 	import { question_type_enum, type TCandidate, type TQuestion, type TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
 	import RichText from './RichText.svelte';
@@ -28,7 +28,10 @@
 	const questions: TQuestion[] = $derived(normalizedQuestionData.questions);
 	const sectionByQuestionId = $derived(normalizedQuestionData.sectionByQuestionId);
 	const sessionStore = createTestSessionStore(candidate);
-	let selections = $state<TSelection[]>(sessionStore.current.selections);
+	// Seed from the server when this device has no local cache (cross-device resume).
+	let selections = $state<TSelection[]>(
+		getInitialSelections(sessionStore.current.selections, testQuestions?.saved_answers)
+	);
 	let submittingQuestion = $state<number | null>(null);
 
 	let isSubmittingTest = $state(false);
@@ -58,10 +61,10 @@
 	});
 </script>
 
-<div class="min-h-screen bg-muted p-4 pb-20 lg:p-6 lg:pb-20">
-	<h1 class="mb-6 text-center text-xl font-semibold text-foreground">{$t('OMR Sheet')}</h1>
+<div class="bg-muted min-h-screen p-4 pb-20 lg:p-6 lg:pb-20">
+	<h1 class="text-foreground mb-6 text-center text-xl font-semibold">{$t('OMR Sheet')}</h1>
 
-	<div class="mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl bg-card p-4 shadow-sm sm:p-6">
+	<div class="bg-card mx-auto flex max-w-4xl flex-col gap-5 rounded-2xl p-4 shadow-sm sm:p-6">
 		{#each questions as question, i (question.id)}
 			{@const section = sectionByQuestionId.get(question.id) ?? null}
 			{#if section && i === 0}
@@ -245,7 +248,7 @@
 						<Dialog.Close class="flex-1 sm:flex-none">
 							<Button
 								variant="outline"
-								class="w-full border-primary text-primary hover:text-primary"
+								class="border-primary text-primary hover:text-primary w-full"
 								disabled={isSubmittingTest}
 							>
 								{$t('Cancel')}

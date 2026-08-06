@@ -35,6 +35,15 @@
 		showFeedbackView = false;
 	});
 
+	// Review is reachable straight after submitting (form data) and on a reload of
+	// an already-submitted test (load data), so take whichever is present.
+	const feedbackView = $derived.by(() => {
+		const candidate = form?.candidate ?? data.candidate;
+		const feedback = form?.feedback ?? data.feedback;
+		if (!candidate || !feedback) return null;
+		return { candidate, feedback, testQuestions: form?.testQuestions ?? data.testQuestions };
+	});
+
 	function handleViewFeedback() {
 		showFeedbackView = true;
 	}
@@ -50,11 +59,11 @@
 </script>
 
 <section>
-	{#if showFeedbackView && form?.feedback && form?.candidate}
+	{#if showFeedbackView && feedbackView}
 		<ViewFeedback
-			candidate={form.candidate}
-			feedback={form.feedback}
-			testQuestions={form.testQuestions}
+			candidate={feedbackView.candidate}
+			feedback={feedbackView.feedback}
+			testQuestions={feedbackView.testQuestions}
 			onBack={handleBackToResults}
 		/>
 	{:else if data.candidate === undefined}
@@ -69,20 +78,31 @@
 		/>
 	{:else if data.submitted}
 		{#if data.result}
-			<TestResult resultData={data.result} testDetails={data.testData} />
+			<TestResult
+				resultData={data.result}
+				testDetails={data.testData}
+				feedback={data.feedback}
+				testQuestions={data.testQuestions}
+				onViewFeedback={handleViewFeedback}
+			/>
 		{:else}
 			<p>{$t('You have already submitted this test.')}</p>
 		{/if}
 	{:else if !data.candidate && !showProfileForm}
-		<LandingPage testDetails={data.testData} bind:showProfileForm />
-	{:else if !data.candidate && hasDynamicForm && !showOmrChoice && data.testData.form}
+		<LandingPage
+			testDetails={data.testData}
+			isResumed={data.isResumed}
+			isExternalLaunch={data.isExternalLaunch}
+			bind:showProfileForm
+		/>
+	{:else if !data.candidate && !data.isResumed && hasDynamicForm && !showOmrChoice && data.testData.form}
 		<DynamicForm
 			form={data.testData.form}
 			testDetails={data.testData}
 			locations={data.locations || {}}
 			onContinue={hasOmrChoice ? handleFormContinue : undefined}
 		/>
-	{:else if !data.candidate && hasOmrChoice}
+	{:else if !data.candidate && !data.isResumed && hasOmrChoice}
 		<CandidateProfile testDetails={data.testData} formResponses={candidateFormResponses} />
 	{:else if hasRenderableQuestions}
 		{#if data.testData?.omr !== 'NEVER' && (data.candidate.use_omr === 'true' || data.testData?.omr === 'ALWAYS')}
