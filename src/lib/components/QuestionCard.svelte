@@ -37,7 +37,9 @@
 		selectedQuestions = $bindable(),
 		showFeedback = false,
 		showMarkForReview = true,
-		showMarks = true
+		showMarks = true,
+		trackTime = false,
+		pauseTimerWhenInactive = false
 	}: {
 		question: TQuestion;
 		candidate: TCandidate;
@@ -47,6 +49,8 @@
 		showFeedback?: boolean;
 		showMarkForReview?: boolean;
 		showMarks?: boolean;
+		trackTime?: boolean;
+		pauseTimerWhenInactive?: boolean;
 	} = $props();
 
 	// key to force remount of RadioGroup on error, this is to prevent radio button from being checked
@@ -98,6 +102,8 @@
 	};
 
 	const confirmViewFeedback = async () => {
+		flushTime();
+
 		const answeredQuestion = selectedQuestion(question.id);
 		const currentResponse = answeredQuestion?.response ?? [];
 		const currentBookmarked = answeredQuestion?.bookmarked ?? false;
@@ -122,18 +128,131 @@
 		}
 	};
 
+	export function flushTime() {
+		if (!trackTime) return;
+
+		const timerKey = `sashakt-timer-${candidate.candidate_test_id}`;
+		const current = localStorage.getItem(timerKey);
+		localStorage.removeItem(timerKey);
+
+		if (!current) return;
+
+		const { questionId, questionType, startTime, accumulated } = JSON.parse(current);
+		const activePeriod = startTime !== null ? Date.now() - startTime : 0;
+		const elapsed = Math.round(((accumulated ?? 0) + activePeriod) / 1000);
+		if (elapsed <= 0) return;
+
+		const existing = selectedQuestions.find((q) => q.question_revision_id === questionId);
+		const previousState = JSON.parse(JSON.stringify(selectedQuestions));
+		const updatedTime = (existing?.time_spent ?? 0) + elapsed;
+
+		if (existing) {
+			selectedQuestions = selectedQuestions.map((q) =>
+				q.question_revision_id === questionId ? { ...q, time_spent: updatedTime } : q
+			);
+		} else {
+			const defaultResponse = questionType === question_type_enum.SUBJECTIVE ? '' : [];
+			selectedQuestions = [
+				...selectedQuestions,
+				{
+					question_revision_id: questionId,
+					response: defaultResponse,
+					visited: true,
+					time_spent: updatedTime,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+		}
+		updateStore();
+
+		(async () => {
+			try {
+				await submitAnswer(questionId, undefined, undefined, undefined, updatedTime);
+			} catch {
+				selectedQuestions = previousState;
+				updateStore();
+			}
+		})();
+	}
+
+	$effect(() => {
+		if (!trackTime || isFeedbackViewed) return;
+
+		const questionId = question.id;
+		const questionType = question.question_type;
+		const timerKey = `sashakt-timer-${candidate.candidate_test_id}`;
+
+		const stored = localStorage.getItem(timerKey);
+		const storedData = stored ? JSON.parse(stored) : null;
+		const sameQuestion = storedData?.questionId === questionId;
+
+		// Restore accumulated time from before tab close, but always start a fresh startTime.
+		// Never restore the old startTime — that would count the gap while the tab was closed.
+		const accumulated = sameQuestion ? (storedData.accumulated ?? 0) : 0;
+		const startTime = Date.now();
+
+		localStorage.setItem(timerKey, JSON.stringify({ questionId, questionType, startTime, accumulated }));
+
+		// Synchronously bank elapsed into accumulated and null out startTime.
+		// Used on tab hide (pauseTimerWhenInactive) and always on pagehide (tab close).
+		const bankTime = () => {
+			const current = localStorage.getItem(timerKey);
+			if (!current) return;
+			const data = JSON.parse(current);
+			if (data.startTime !== null) {
+				data.accumulated = (data.accumulated ?? 0) + (Date.now() - data.startTime);
+				data.startTime = null;
+				localStorage.setItem(timerKey, JSON.stringify(data));
+			}
+		};
+
+		const onVisibilityChange = () => {
+			if (!pauseTimerWhenInactive) return;
+			if (document.hidden) {
+				bankTime();
+			} else {
+				const current = localStorage.getItem(timerKey);
+				if (!current) return;
+				const data = JSON.parse(current);
+				if (data.startTime === null) {
+					data.startTime = Date.now();
+					localStorage.setItem(timerKey, JSON.stringify(data));
+				}
+			}
+		};
+
+		// pagehide fires just before the tab closes — bank time so it survives in localStorage.
+		const onPageHide = () => bankTime();
+
+		document.addEventListener('visibilitychange', onVisibilityChange);
+		window.addEventListener('pagehide', onPageHide);
+
+		return () => {
+			document.removeEventListener('visibilitychange', onVisibilityChange);
+			window.removeEventListener('pagehide', onPageHide);
+			flushTime();
+		};
+	});
+
 	const submitAnswer = async (
 		questionId: number,
-		response: number[] | string | null,
+		response?: number[] | string | null,
 		bookmarked?: boolean,
-		is_reviewed?: boolean
+		is_reviewed?: boolean,
+		time_spent?: number
 	) => {
 		const data = {
 			question_revision_id: questionId,
-			response: response == null ? null : response.length > 0 ? response : null,
 			candidate,
-			bookmarked,
-			is_reviewed
+			...(response !== undefined
+				? {
+						response: response == null ? null : response.length > 0 ? response : null,
+						...(bookmarked !== undefined ? { bookmarked } : {}),
+						...(is_reviewed !== undefined ? { is_reviewed } : {})
+					}
+				: {}),
+			...(time_spent !== undefined ? { time_spent } : {})
 		};
 
 		try {

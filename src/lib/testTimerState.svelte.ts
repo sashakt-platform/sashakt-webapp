@@ -145,6 +145,7 @@ class TestTimerState {
 		this.open = true;
 		this.clearCountdownInterval();
 		this.clearHeartbeatInterval();
+		window.dispatchEvent(new Event('sashakt-time-up'));
 		this.triggerAutoSubmit();
 	}
 
