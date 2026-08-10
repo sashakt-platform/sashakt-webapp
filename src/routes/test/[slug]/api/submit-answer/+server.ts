@@ -53,6 +53,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					question_revision_id,
+					visited: true,
 					...(response !== undefined
 						? {
 								response: response
