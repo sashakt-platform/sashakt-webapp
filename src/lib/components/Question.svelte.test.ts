@@ -260,6 +260,45 @@ describe('Question', () => {
 		});
 	});
 
+	it('should not render a section banner when the test has no question sets', async () => {
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions,
+				testDetails
+			}
+		});
+
+		await vi.waitFor(() => {
+			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+		});
+
+		expect(document.querySelector('.bg-section-header')).not.toBeInTheDocument();
+	});
+
+	it('should tag the section banner with an id matching its first question for scroll targeting', async () => {
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: {
+					...mockSectionedTestQuestionsResponse,
+					question_pagination: 2
+				},
+				testDetails
+			}
+		});
+
+		await vi.waitFor(() => {
+			expect(screen.getAllByText('Section A').length).toBeGreaterThan(0);
+		});
+
+		// scrollToQuestion() prefers `question-{index}-banner` over `question-{index}`
+		// so the whole section banner (not just the question card) scrolls into view
+		const banner = document.getElementById('question-0-banner');
+		expect(banner).toBeInTheDocument();
+		expect(banner).toHaveClass('bg-section-header');
+	});
+
 	describe('bottom navigation bar', () => {
 		it('should show page info text', async () => {
 			render(Question, {
