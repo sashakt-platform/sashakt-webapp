@@ -90,6 +90,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		}
 
 		let correct_answer = null;
+		let solution = null;
 
 		if (is_reviewed && response && response.length > 0) {
 			try {
@@ -101,12 +102,13 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 					const feedbackData = await feedbackRes.json();
 					if (feedbackData.length > 0) {
 						correct_answer = feedbackData[0].correct_answer;
+						solution = feedbackData[0].solution ?? null;
 					}
 				}
 			} catch {}
 		}
 
-		return new Response(JSON.stringify({ success: true, correct_answer }), {
+		return new Response(JSON.stringify({ success: true, correct_answer, solution }), {
 			status: 200,
 			headers: { 'Content-Type': 'application/json' }
 		});

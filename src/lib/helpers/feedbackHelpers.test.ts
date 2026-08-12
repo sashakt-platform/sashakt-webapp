@@ -260,7 +260,12 @@ describe('normalizeFeedbackEntry', () => {
 				submitted_answer: '[102]',
 				correct_answer: [102]
 			})
-		).toEqual({ question_revision_id: 1, submitted_answer: [102], correct_answer: [102] });
+		).toEqual({
+			question_revision_id: 1,
+			submitted_answer: [102],
+			correct_answer: [102],
+			solution: null
+		});
 	});
 
 	it('parses a multi-choice answer', () => {
@@ -273,7 +278,8 @@ describe('normalizeFeedbackEntry', () => {
 		).toEqual({
 			question_revision_id: 2,
 			submitted_answer: [201, 203],
-			correct_answer: [201, 202]
+			correct_answer: [201, 202],
+			solution: null
 		});
 	});
 

@@ -58,8 +58,7 @@
 	let subjectiveAnswerRef: { setInput: (value: string) => void } | undefined = $state();
 	let numericalAnswerRef: { setInput: (value: string) => void } | undefined = $state();
 	let matrixMatchAnswerRef:
-		| { setSelections: (value: Record<string, number[]>) => void }
-		| undefined = $state();
+		{ setSelections: (value: Record<string, number[]>) => void } | undefined = $state();
 	let matrixInputAnswerRef: { setValues: (value: Record<string, string>) => void } | undefined =
 		$state();
 	let isSubmitting = $state(false);
@@ -118,7 +117,7 @@
 			if (result?.correct_answer != null) {
 				selectedQuestions = selectedQuestions.map((q) =>
 					q.question_revision_id === question.id
-						? { ...q, correct_answer: result.correct_answer }
+						? { ...q, correct_answer: result.correct_answer, solution: result.solution }
 						: q
 				);
 				updateStore();
@@ -192,7 +191,10 @@
 		const accumulated = sameQuestion ? (storedData.accumulated ?? 0) : 0;
 		const startTime = Date.now();
 
-		localStorage.setItem(timerKey, JSON.stringify({ questionId, questionType, startTime, accumulated }));
+		localStorage.setItem(
+			timerKey,
+			JSON.stringify({ questionId, questionType, startTime, accumulated })
+		);
 
 		// Synchronously bank elapsed into accumulated and null out startTime.
 		// Used on tab hide (pauseTimerWhenInactive) and always on pagehide (tab close).
@@ -573,6 +575,13 @@
 			>
 				{$t('View Feedback')}
 			</Button>
+		{/if}
+
+		{#if showFeedback && isLocked && currentSelection?.solution}
+			<div class="bg-muted mt-4 rounded-lg p-4">
+				<p class="text-foreground mb-1 text-sm font-semibold">{$t('Solution')}</p>
+				<RichText content={currentSelection.solution} class="text-muted-foreground text-sm" />
+			</div>
 		{/if}
 
 		<div class="mt-4 flex flex-col gap-3 sm:flex-row">
