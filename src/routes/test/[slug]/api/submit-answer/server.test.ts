@@ -45,6 +45,7 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
 		expect(data.correct_answer).toBeNull();
+		expect(data.solution).toBeNull();
 		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(fetch).toHaveBeenCalledWith(
 			`http://test-backend.com/candidate/submit_answer/${mockCandidate.candidate_test_id}?candidate_uuid=${mockCandidate.candidate_uuid}`,
@@ -80,6 +81,79 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		expect(data.success).toBe(true);
 		expect(data.correct_answer).toEqual([101]);
 		expect(fetch).toHaveBeenCalledTimes(2);
+	});
+
+	it('should return the solution when the review-feedback entry has one', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch)
+			.mockResolvedValueOnce(createMockResponse({ success: true }) as unknown as Response)
+			.mockResolvedValueOnce(
+				createMockResponse([
+					{
+						question_revision_id: 1,
+						submitted_answer: '[101]',
+						correct_answer: [101],
+						solution: 'Because option A satisfies the condition.'
+					}
+				]) as unknown as Response
+			);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest({
+			question_revision_id: 1,
+			response: [101],
+			candidate: mockCandidate,
+			is_reviewed: true
+		});
+		const response = await POST({ request, cookies: mockCookies } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(data.solution).toBe('Because option A satisfies the condition.');
+	});
+
+	it('should return solution as null when the review-feedback entry has none', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch)
+			.mockResolvedValueOnce(createMockResponse({ success: true }) as unknown as Response)
+			.mockResolvedValueOnce(
+				createMockResponse([
+					{ question_revision_id: 1, submitted_answer: '[101]', correct_answer: [101] }
+				]) as unknown as Response
+			);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest({
+			question_revision_id: 1,
+			response: [101],
+			candidate: mockCandidate,
+			is_reviewed: true
+		});
+		const response = await POST({ request, cookies: mockCookies } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(data.solution).toBeNull();
+	});
+
+	it('should return solution as null when feedback is not fetched (is_reviewed is not true)', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch).mockResolvedValueOnce(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest({
+			question_revision_id: 1,
+			response: [101],
+			candidate: mockCandidate
+		});
+		const response = await POST({ request, cookies: mockCookies } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(data.solution).toBeNull();
+		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
 	it('should return 401 when cookie candidate is missing', async () => {
@@ -330,7 +404,12 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 
 	describe('time_spent validation', () => {
 		const validRequest = (time_spent: unknown) =>
-			createMockRequest({ question_revision_id: 1, response: [101], candidate: mockCandidate, time_spent });
+			createMockRequest({
+				question_revision_id: 1,
+				response: [101],
+				candidate: mockCandidate,
+				time_spent
+			});
 
 		beforeEach(() => {
 			vi.mocked(getCandidate).mockReturnValue(mockCandidate);
@@ -340,7 +419,10 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		});
 
 		it('forwards a valid positive integer time_spent to the backend', async () => {
-			const response = await POST({ request: validRequest(30), cookies: createMockCookies() } as any);
+			const response = await POST({
+				request: validRequest(30),
+				cookies: createMockCookies()
+			} as any);
 			expect(response.status).toBe(200);
 			expect(fetch).toHaveBeenCalledWith(
 				expect.any(String),
@@ -349,7 +431,10 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		});
 
 		it('forwards time_spent of 0', async () => {
-			const response = await POST({ request: validRequest(0), cookies: createMockCookies() } as any);
+			const response = await POST({
+				request: validRequest(0),
+				cookies: createMockCookies()
+			} as any);
 			expect(response.status).toBe(200);
 			expect(fetch).toHaveBeenCalledWith(
 				expect.any(String),
@@ -388,13 +473,19 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		});
 
 		it('omits time_spent when value is an unsafe large number', async () => {
-			await POST({ request: validRequest(Number.MAX_SAFE_INTEGER + 1), cookies: createMockCookies() } as any);
+			await POST({
+				request: validRequest(Number.MAX_SAFE_INTEGER + 1),
+				cookies: createMockCookies()
+			} as any);
 			const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
 			expect(body).not.toHaveProperty('time_spent');
 		});
 
 		it('still saves the answer successfully when time_spent is invalid', async () => {
-			const response = await POST({ request: validRequest('bad'), cookies: createMockCookies() } as any);
+			const response = await POST({
+				request: validRequest('bad'),
+				cookies: createMockCookies()
+			} as any);
 			const data = await response.json();
 			expect(response.status).toBe(200);
 			expect(data.success).toBe(true);

@@ -283,6 +283,17 @@ describe('normalizeFeedbackEntry', () => {
 		});
 	});
 
+	it('passes through a solution when the row has one', () => {
+		expect(
+			normalizeFeedbackEntry({
+				question_revision_id: 1,
+				submitted_answer: '[102]',
+				correct_answer: [102],
+				solution: 'Option B satisfies the equation.'
+			}).solution
+		).toBe('Option B satisfies the equation.');
+	});
+
 	it('returns an empty array when nothing was submitted', () => {
 		expect(
 			normalizeFeedbackEntry({
