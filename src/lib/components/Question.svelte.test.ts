@@ -3,8 +3,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import Question from './Question.svelte';
 import {
 	mockCandidate,
+	mockMultipleChoiceQuestion,
+	mockOptionalQuestion,
 	mockQuestions,
+	mockQuestionSets,
 	mockSectionedTestQuestionsResponse,
+	mockSingleChoiceQuestion,
+	mockSubjectiveQuestion,
 	mockTestData,
 	setLocaleForTests
 } from '$lib/test-utils';
@@ -246,9 +251,11 @@ describe('Question', () => {
 		render(Question, {
 			props: {
 				candidate: mockCandidate,
+				// all 3 questions on one page, so Chemistry's banner renders mid-page
+				// (not as the page's first question) with its default attempt-all limit
 				testQuestions: {
 					...mockSectionedTestQuestionsResponse,
-					question_pagination: 2
+					question_pagination: 3
 				},
 				testDetails
 			}
@@ -257,6 +264,8 @@ describe('Question', () => {
 		await vi.waitFor(() => {
 			expect(screen.getAllByText('Physics').length).toBeGreaterThan(0);
 			expect(screen.getAllByText('Section A').length).toBeGreaterThan(0);
+			expect(screen.getAllByText('Chemistry').length).toBeGreaterThan(0);
+			expect(screen.getAllByText(/You may attempt all questions/i).length).toBeGreaterThan(0);
 		});
 	});
 
@@ -297,6 +306,56 @@ describe('Question', () => {
 		const banner = document.getElementById('question-0-banner');
 		expect(banner).toBeInTheDocument();
 		expect(banner).toHaveClass('bg-section-header');
+	});
+
+	it('should render a new section banner mid-page, with its own attempt limit, when a section changes without starting the page', async () => {
+		const restrictedSections = [
+			{
+				...mockQuestionSets[0],
+				max_questions_allowed_to_attempt: 1, // fewer than its 2 questions
+				question_revisions: [mockSingleChoiceQuestion, mockMultipleChoiceQuestion]
+			},
+			{
+				...mockQuestionSets[1],
+				id: 13,
+				title: 'Biology',
+				description: 'Section C',
+				max_questions_allowed_to_attempt: 1, // fewer than its 2 questions
+				question_revisions: [mockOptionalQuestion, mockSubjectiveQuestion]
+			}
+		];
+
+		render(Question, {
+			props: {
+				candidate: mockCandidate,
+				testQuestions: {
+					question_revisions: [
+						mockSingleChoiceQuestion,
+						mockMultipleChoiceQuestion,
+						mockOptionalQuestion,
+						mockSubjectiveQuestion
+					],
+					question_sets: restrictedSections,
+					question_pagination: 4 // all four questions share one page
+				},
+				testDetails
+			}
+		});
+
+		await vi.waitFor(() => {
+			expect(screen.getAllByText('Biology').length).toBeGreaterThan(0);
+		});
+
+		// Biology starts at absolute index 2, mid-page rather than at the page's
+		// first question — exercises the previousSection?.id !== section.id branch
+		expect(document.getElementById('question-2-banner')).toBeInTheDocument();
+
+		// both sections restrict attempts below their question count, so the
+		// "attempt up to N" text renders instead of "attempt all"
+		expect(screen.queryAllByText(/You may attempt all questions/i)).toHaveLength(0);
+		expect(
+			screen.getAllByText((text) => text.includes('You may attempt up to 1 questions')).length
+		).toBeGreaterThanOrEqual(2);
 	});
 
 	describe('bottom navigation bar', () => {
