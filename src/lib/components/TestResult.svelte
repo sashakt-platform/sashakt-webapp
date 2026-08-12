@@ -144,9 +144,9 @@
 			<h2 class="text-foreground mb-1 text-lg font-bold">
 				"{testDetails.name}" {$t('Submitted')}
 			</h2>
-			{#if resultData?.external_user_id}
+			{#if resultData?.external_identifier}
 				<p class="text-muted-foreground mb-1 text-sm">
-					{$t('User ID')}: {resultData.external_user_id}
+					{$t('User ID')}: {resultData.external_identifier}
 				</p>
 			{/if}
 			<p class="text-muted-foreground mb-4 text-sm">

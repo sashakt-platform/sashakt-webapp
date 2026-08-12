@@ -92,6 +92,28 @@ describe('TestResult', () => {
 		expect(screen.queryByText('Unanswered')).not.toBeInTheDocument();
 	});
 
+	it('should display external identifier when present', () => {
+		render(TestResult, {
+			props: {
+				resultData: { ...mockResultData, external_identifier: '123456' },
+				testDetails: mockTestData
+			}
+		});
+
+		expect(screen.getByText('User ID: 123456')).toBeInTheDocument();
+	});
+
+	it('should not display external identifier when absent', () => {
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails: mockTestData
+			}
+		});
+
+		expect(screen.queryByText(/User ID:/)).not.toBeInTheDocument();
+	});
+
 	it('should display custom completion message when provided', () => {
 		const testDetailsWithMessage = {
 			...mockTestData,
