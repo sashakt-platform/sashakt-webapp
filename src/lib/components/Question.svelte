@@ -129,9 +129,13 @@
 	}
 
 	// scroll a specific question into view after the page renders
+	// prefer the section banner (if this question starts a section) so it
+	// isn't left hidden above the fold
 	function scrollToQuestion(questionIndex: number) {
 		setTimeout(() => {
-			const element = document.getElementById(`question-${questionIndex}`);
+			const element =
+				document.getElementById(`question-${questionIndex}-banner`) ??
+				document.getElementById(`question-${questionIndex}`);
 			if (element) {
 				const offset = 120; // account for top banner and padding
 				const elementPosition = element.getBoundingClientRect().top + window.scrollY;
@@ -245,7 +249,10 @@
 							{@const absoluteIndex = (currentPage - 1) * perPage + index}
 							{@const section = sectionByQuestionId.get(question.id) ?? null}
 							{#if section && index === 0}
-								<div class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm">
+								<div
+									id="question-{absoluteIndex}-banner"
+									class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm"
+								>
 									<p class="text-card-foreground text-sm font-semibold">{section.title}</p>
 									{#if section.description}
 										<RichText
@@ -269,7 +276,10 @@
 									? (sectionByQuestionId.get(previousQuestion.id) ?? null)
 									: null}
 								{#if previousSection?.id !== section.id}
-									<div class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm">
+									<div
+										id="question-{absoluteIndex}-banner"
+										class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm"
+									>
 										<p class="text-card-foreground text-sm font-semibold">{section.title}</p>
 										{#if section.description}
 											<RichText
@@ -402,8 +412,12 @@
 													method="POST"
 													use:enhance={handleSubmitTestEnhance}
 												>
-													<Button type="submit" disabled={isSubmittingTest} class="w-full"
-														onclick={() => questionCardRef?.flushTime?.()}>
+													<Button
+														type="submit"
+														disabled={isSubmittingTest}
+														class="w-full"
+														onclick={() => questionCardRef?.flushTime?.()}
+													>
 														{#if isSubmittingTest}
 															<Spinner />
 														{/if}
