@@ -264,7 +264,8 @@ describe('normalizeFeedbackEntry', () => {
 			question_revision_id: 1,
 			submitted_answer: [102],
 			correct_answer: [102],
-			solution: null
+			solution: null,
+			tags: []
 		});
 	});
 
@@ -279,8 +280,20 @@ describe('normalizeFeedbackEntry', () => {
 			question_revision_id: 2,
 			submitted_answer: [201, 203],
 			correct_answer: [201, 202],
-			solution: null
+			solution: null,
+			tags: []
 		});
+	});
+
+	it('passes through tags when the row has them', () => {
+		expect(
+			normalizeFeedbackEntry({
+				question_revision_id: 1,
+				submitted_answer: '[102]',
+				correct_answer: [102],
+				tags: [{ tag_type: 'Difficulty', tag: ['Easy'] }]
+			}).tags
+		).toEqual([{ tag_type: 'Difficulty', tag: ['Easy'] }]);
 	});
 
 	it('passes through a solution when the row has one', () => {
