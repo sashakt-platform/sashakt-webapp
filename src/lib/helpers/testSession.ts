@@ -22,6 +22,7 @@ export type TSavedAnswer = {
 	bookmarked?: boolean;
 	is_reviewed?: boolean;
 	correct_answer?: number[] | number | null | string;
+	solution?: string | null;
 };
 
 const parseSavedResponse = (raw: string | null): number[] | string => {
@@ -49,7 +50,8 @@ export const mapSavedAnswersToSelections = (
 		time_spent: answer.time_spent ?? 0,
 		bookmarked: answer.bookmarked ?? false,
 		is_reviewed: answer.is_reviewed ?? false,
-		correct_answer: answer.correct_answer ?? undefined
+		correct_answer: answer.correct_answer ?? undefined,
+		solution: answer.solution ?? null
 	}));
 };
 

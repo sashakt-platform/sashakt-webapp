@@ -162,6 +162,55 @@ describe('ViewFeedback', () => {
 		});
 	});
 
+	describe('solution panel', () => {
+		it('should display the solution when the feedback entry has one', () => {
+			const feedback = [
+				{ ...createFeedback(1, [102], [102]), solution: 'Option B is correct because 2 + 2 = 4.' }
+			];
+
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.getByText('Solution')).toBeInTheDocument();
+			expect(screen.getByText('Option B is correct because 2 + 2 = 4.')).toBeInTheDocument();
+		});
+
+		it('should not display a solution panel when the feedback entry has no solution', () => {
+			const feedback = [createFeedback(1, [102], [102])];
+
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.queryByText('Solution')).not.toBeInTheDocument();
+		});
+
+		it('should not display a solution panel when solution is explicitly null', () => {
+			const feedback = [{ ...createFeedback(1, [102], [102]), solution: null }];
+
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.queryByText('Solution')).not.toBeInTheDocument();
+		});
+
+		it('should only display a solution panel for the question that has one', () => {
+			const feedback = [
+				{ ...createFeedback(1, [102], [102]), solution: 'Solution for question 1 only.' },
+				createFeedback(2, [201], [201, 202])
+			];
+
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.getAllByText('Solution')).toHaveLength(1);
+			expect(screen.getByText('Solution for question 1 only.')).toBeInTheDocument();
+		});
+	});
+
 	describe('single-choice questions', () => {
 		it('should render all options for a single-choice question', () => {
 			const feedback = [createFeedback(1, [102], [102])];

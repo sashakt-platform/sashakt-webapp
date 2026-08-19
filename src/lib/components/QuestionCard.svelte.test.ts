@@ -3902,6 +3902,192 @@ describe('QuestionCard', () => {
 		});
 	});
 
+	describe('Solution panel', () => {
+		const singleOptions = mockSingleChoiceQuestion.options as TOptions[];
+
+		const lockedWithSolution = [
+			{
+				question_revision_id: mockSingleChoiceQuestion.id,
+				response: [singleOptions[1].id],
+				visited: true,
+				time_spent: 10,
+				bookmarked: false,
+				is_reviewed: true,
+				correct_answer: [singleOptions[1].id],
+				solution: 'Option B is correct because it satisfies the equation.'
+			}
+		];
+
+		const lockedWithoutSolution = [
+			{
+				question_revision_id: mockSingleChoiceQuestion.id,
+				response: [singleOptions[1].id],
+				visited: true,
+				time_spent: 10,
+				bookmarked: false,
+				is_reviewed: true,
+				correct_answer: [singleOptions[1].id]
+			}
+		];
+
+		it('shows the solution text when feedback is locked and a solution is present', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedWithSolution,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByText('Solution')).toBeInTheDocument();
+			expect(
+				screen.getByText('Option B is correct because it satisfies the equation.')
+			).toBeInTheDocument();
+		});
+
+		it('does not show the solution panel when the question has no solution', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedWithoutSolution,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.queryByText('Solution')).not.toBeInTheDocument();
+		});
+
+		it('does not show the solution panel when showFeedback is false, even with a solution present', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedWithSolution,
+					showFeedback: false
+				}
+			});
+
+			expect(screen.queryByText('Solution')).not.toBeInTheDocument();
+			expect(
+				screen.queryByText('Option B is correct because it satisfies the equation.')
+			).not.toBeInTheDocument();
+		});
+
+		it('does not show the solution panel before feedback has been viewed, even with a solution present', () => {
+			const answeredNotViewedWithSolution = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [singleOptions[1].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false,
+					solution: 'Option B is correct because it satisfies the equation.'
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredNotViewedWithSolution,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.queryByText('Solution')).not.toBeInTheDocument();
+		});
+
+		it('renders the solution returned by the API after clicking "View Result"', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({
+					success: true,
+					correct_answer: [singleOptions[1].id],
+					solution: 'Option B is correct because it satisfies the equation.'
+				}) as unknown as Response
+			);
+
+			const answeredNotViewed = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [singleOptions[1].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredNotViewed,
+					showFeedback: true
+				}
+			});
+
+			await screen.getByRole('button', { name: /view result/i }).click();
+
+			await waitFor(() => {
+				expect(
+					screen.getByText('Option B is correct because it satisfies the equation.')
+				).toBeInTheDocument();
+			});
+		});
+
+		it('does not render a solution panel when the API response has no solution', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({
+					success: true,
+					correct_answer: [singleOptions[1].id],
+					solution: null
+				}) as unknown as Response
+			);
+
+			const answeredNotViewed = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [singleOptions[1].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredNotViewed,
+					showFeedback: true
+				}
+			});
+
+			await screen.getByRole('button', { name: /view result/i }).click();
+
+			await waitFor(() => {
+				expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
+			});
+			expect(screen.queryByText('Solution')).not.toBeInTheDocument();
+		});
+	});
+
 	describe('Marking scheme modal (mobile) vs dropdown (desktop)', () => {
 		const defaultProps = {
 			serialNumber: 1,

@@ -12,6 +12,7 @@ export type TFeedbackEntry = {
 	question_revision_id: number;
 	submitted_answer: number[] | string;
 	correct_answer: number[];
+	solution?: string | null;
 };
 
 /**
@@ -24,6 +25,7 @@ export const normalizeFeedbackEntry = (item: {
 	question_revision_id: number;
 	submitted_answer: string | null;
 	correct_answer: number[];
+	solution?: string | null;
 }): TFeedbackEntry => {
 	let submitted: number[] | string = [];
 	if (item.submitted_answer) {
@@ -37,7 +39,8 @@ export const normalizeFeedbackEntry = (item: {
 	return {
 		question_revision_id: item.question_revision_id,
 		submitted_answer: submitted,
-		correct_answer: item.correct_answer
+		correct_answer: item.correct_answer,
+		solution: item.solution ?? null
 	};
 };
 

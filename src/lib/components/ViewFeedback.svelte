@@ -149,6 +149,13 @@
 						variant="card"
 					/>
 				{/if}
+
+				{#if item.fb.solution}
+					<div class="bg-muted mt-4 rounded-lg p-4">
+						<p class="text-foreground mb-1 text-sm font-semibold">{$t('Solution')}</p>
+						<RichText content={item.fb.solution} class="text-muted-foreground text-sm" />
+					</div>
+				{/if}
 			</Card.Content>
 		</Card.Root>
 	{:else}
