@@ -27,7 +27,9 @@ describe('mapSavedAnswersToSelections', () => {
 			visited: true,
 			time_spent: 42,
 			bookmarked: true,
-			is_reviewed: false
+			is_reviewed: false,
+			correct_answer: undefined,
+			solution: null
 		});
 	});
 
