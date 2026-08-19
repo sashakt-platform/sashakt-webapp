@@ -51,7 +51,7 @@ export const mapSavedAnswersToSelections = (
 		bookmarked: answer.bookmarked ?? false,
 		is_reviewed: answer.is_reviewed ?? false,
 		correct_answer: answer.correct_answer ?? undefined,
-		solution: answer.solution ?? undefined
+		solution: answer.solution ?? null
 	}));
 };
 
