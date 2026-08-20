@@ -150,6 +150,23 @@
 					/>
 				{/if}
 
+				{#if item.fb.tags?.length}
+					<div class="mt-4 flex flex-col gap-2">
+						{#each item.fb.tags as tagGroup (tagGroup.tag_type)}
+							<div class="flex flex-wrap items-center gap-2">
+								<span class="text-foreground text-sm font-semibold">{tagGroup.tag_type}:</span>
+								{#each tagGroup.tag as tagValue (tagValue)}
+									<span
+										class="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-xs font-medium"
+									>
+										{tagValue}
+									</span>
+								{/each}
+							</div>
+						{/each}
+					</div>
+				{/if}
+
 				{#if item.fb.solution}
 					<div class="bg-muted mt-4 rounded-lg p-4">
 						<p class="text-foreground mb-1 text-sm font-semibold">{$t('Solution')}</p>

@@ -1,4 +1,4 @@
-import { question_type_enum } from '$lib/types';
+import { question_type_enum, type TFeedbackTag } from '$lib/types';
 
 export const GRADABLE_QUESTION_TYPES = new Set([
 	question_type_enum.SINGLE,
@@ -13,6 +13,7 @@ export type TFeedbackEntry = {
 	submitted_answer: number[] | string;
 	correct_answer: number[];
 	solution?: string | null;
+	tags?: TFeedbackTag[];
 };
 
 /**
@@ -26,6 +27,7 @@ export const normalizeFeedbackEntry = (item: {
 	submitted_answer: string | null;
 	correct_answer: number[];
 	solution?: string | null;
+	tags?: TFeedbackTag[];
 }): TFeedbackEntry => {
 	let submitted: number[] | string = [];
 	if (item.submitted_answer) {
@@ -40,7 +42,8 @@ export const normalizeFeedbackEntry = (item: {
 		question_revision_id: item.question_revision_id,
 		submitted_answer: submitted,
 		correct_answer: item.correct_answer,
-		solution: item.solution ?? null
+		solution: item.solution ?? null,
+		tags: item.tags ?? []
 	};
 };
 

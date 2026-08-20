@@ -4088,6 +4088,187 @@ describe('QuestionCard', () => {
 		});
 	});
 
+	describe('Tags panel', () => {
+		const singleOptions = mockSingleChoiceQuestion.options as TOptions[];
+
+		const lockedWithTags = [
+			{
+				question_revision_id: mockSingleChoiceQuestion.id,
+				response: [singleOptions[1].id],
+				visited: true,
+				time_spent: 10,
+				bookmarked: false,
+				is_reviewed: true,
+				correct_answer: [singleOptions[1].id],
+				tags: [{ tag_type: 'Difficulty', tag: ['Medium'] }]
+			}
+		];
+
+		const lockedWithoutTags = [
+			{
+				question_revision_id: mockSingleChoiceQuestion.id,
+				response: [singleOptions[1].id],
+				visited: true,
+				time_spent: 10,
+				bookmarked: false,
+				is_reviewed: true,
+				correct_answer: [singleOptions[1].id]
+			}
+		];
+
+		it('shows the tag_type label and value when feedback is locked and tags are present', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedWithTags,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.getByText('Difficulty:')).toBeInTheDocument();
+			expect(screen.getByText('Medium')).toBeInTheDocument();
+		});
+
+		it('does not show the tags panel when the question has no tags', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedWithoutTags,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.queryByText('Difficulty:')).not.toBeInTheDocument();
+		});
+
+		it('does not show the tags panel when showFeedback is false, even with tags present', () => {
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: lockedWithTags,
+					showFeedback: false
+				}
+			});
+
+			expect(screen.queryByText('Difficulty:')).not.toBeInTheDocument();
+			expect(screen.queryByText('Medium')).not.toBeInTheDocument();
+		});
+
+		it('does not show the tags panel before feedback has been viewed, even with tags present', () => {
+			const answeredNotViewedWithTags = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [singleOptions[1].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false,
+					tags: [{ tag_type: 'Difficulty', tag: ['Medium'] }]
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredNotViewedWithTags,
+					showFeedback: true
+				}
+			});
+
+			expect(screen.queryByText('Difficulty:')).not.toBeInTheDocument();
+		});
+
+		it('renders the tags returned by the API after clicking "View Result"', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({
+					success: true,
+					correct_answer: [singleOptions[1].id],
+					tags: [{ tag_type: 'Difficulty', tag: ['Medium'] }]
+				}) as unknown as Response
+			);
+
+			const answeredNotViewed = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [singleOptions[1].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredNotViewed,
+					showFeedback: true
+				}
+			});
+
+			await screen.getByRole('button', { name: /view result/i }).click();
+
+			await waitFor(() => {
+				expect(screen.getByText('Difficulty:')).toBeInTheDocument();
+				expect(screen.getByText('Medium')).toBeInTheDocument();
+			});
+		});
+
+		it('does not render a tags panel when the API response has no tags', async () => {
+			vi.mocked(fetch).mockResolvedValueOnce(
+				createMockResponse({
+					success: true,
+					correct_answer: [singleOptions[1].id],
+					tags: null
+				}) as unknown as Response
+			);
+
+			const answeredNotViewed = [
+				{
+					question_revision_id: mockSingleChoiceQuestion.id,
+					response: [singleOptions[1].id],
+					visited: true,
+					time_spent: 10,
+					bookmarked: false,
+					is_reviewed: false
+				}
+			];
+
+			render(QuestionCard, {
+				props: {
+					question: mockSingleChoiceQuestion,
+					serialNumber: 1,
+					candidate: mockCandidate,
+					totalQuestions: 10,
+					selectedQuestions: answeredNotViewed,
+					showFeedback: true
+				}
+			});
+
+			await screen.getByRole('button', { name: /view result/i }).click();
+
+			await waitFor(() => {
+				expect(screen.getByText(/^Correct:/)).toBeInTheDocument();
+			});
+			expect(screen.queryByText('Difficulty:')).not.toBeInTheDocument();
+		});
+	});
+
 	describe('Marking scheme modal (mobile) vs dropdown (desktop)', () => {
 		const defaultProps = {
 			serialNumber: 1,

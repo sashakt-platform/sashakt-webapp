@@ -3,6 +3,11 @@ export type TCandidate = {
 	candidate_test_id: number;
 };
 
+export type TFeedbackTag = {
+	tag_type: string;
+	tag: string[];
+};
+
 export type TSelection = {
 	question_revision_id: number;
 	response: number[] | string;
@@ -12,6 +17,7 @@ export type TSelection = {
 	is_reviewed?: boolean;
 	correct_answer?: number[] | number | null | string;
 	solution?: string | null;
+	tags?: TFeedbackTag[] | null;
 };
 
 export type TTestSession = {
@@ -201,6 +207,7 @@ export type TFeedback = {
 	submitted_answer: number[] | string;
 	correct_answer: number[] | number;
 	solution?: string | null;
+	tags?: TFeedbackTag[];
 };
 
 export type TOmrMode = 'NEVER' | 'ALWAYS' | 'OPTIONAL';

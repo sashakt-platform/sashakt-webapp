@@ -211,6 +211,90 @@ describe('ViewFeedback', () => {
 		});
 	});
 
+	describe('tags panel', () => {
+		it('should display a tag_type label and its value', () => {
+			const feedback = [
+				{ ...createFeedback(1, [102], [102]), tags: [{ tag_type: 'Difficulty', tag: ['Easy'] }] }
+			];
+
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.getByText('Difficulty:')).toBeInTheDocument();
+			expect(screen.getByText('Easy')).toBeInTheDocument();
+		});
+
+		it('should display multiple values for a single tag_type', () => {
+			const feedback = [
+				{
+					...createFeedback(1, [102], [102]),
+					tags: [{ tag_type: 'Subject', tag: ['Math', 'Algebra'] }]
+				}
+			];
+
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.getByText('Subject:')).toBeInTheDocument();
+			expect(screen.getByText('Math')).toBeInTheDocument();
+			expect(screen.getByText('Algebra')).toBeInTheDocument();
+		});
+
+		it('should display multiple tag_type groups', () => {
+			const feedback = [
+				{
+					...createFeedback(1, [102], [102]),
+					tags: [
+						{ tag_type: 'Difficulty', tag: ['Easy'] },
+						{ tag_type: 'Subject', tag: ['Math'] }
+					]
+				}
+			];
+
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.getByText('Difficulty:')).toBeInTheDocument();
+			expect(screen.getByText('Subject:')).toBeInTheDocument();
+		});
+
+		it('should not display a tags panel when the feedback entry has no tags', () => {
+			const feedback = [createFeedback(1, [102], [102])];
+
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.queryByText('Difficulty:')).not.toBeInTheDocument();
+		});
+
+		it('should not display a tags panel when tags is an empty array', () => {
+			const feedback = [{ ...createFeedback(1, [102], [102]), tags: [] }];
+
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.queryByText(/:$/)).not.toBeInTheDocument();
+		});
+
+		it('should only display a tags panel for the question that has tags', () => {
+			const feedback = [
+				{ ...createFeedback(1, [102], [102]), tags: [{ tag_type: 'Difficulty', tag: ['Easy'] }] },
+				createFeedback(2, [201], [201, 202])
+			];
+
+			render(ViewFeedback, {
+				props: { candidate: mockCandidate, feedback, testQuestions: mockTestQuestionsResponse }
+			});
+
+			expect(screen.getAllByText('Difficulty:')).toHaveLength(1);
+		});
+	});
+
 	describe('single-choice questions', () => {
 		it('should render all options for a single-choice question', () => {
 			const feedback = [createFeedback(1, [102], [102])];
