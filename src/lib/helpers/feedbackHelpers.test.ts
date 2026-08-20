@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
 	getQuestionResult,
+	getCorrectSelectedCount,
+	getPartialMarks,
 	parseMatrixAnswer,
 	getMatrixCellStatus,
 	normalizeFeedbackEntry
@@ -322,5 +324,82 @@ describe('normalizeFeedbackEntry', () => {
 				correct_answer: []
 			}).submitted_answer
 		).toBe('42');
+	});
+});
+
+describe('partial credit', () => {
+	// The JEE Advanced shape: all four correct earns +4, any wrong option loses
+	// 2, and picking only correct options earns a rung of the ladder.
+	const ladderScheme = {
+		correct: 4,
+		wrong: -2,
+		skipped: 0,
+		partial: {
+			correct_answers: [
+				{ num_correct_selected: 1, marks: 1 },
+				{ num_correct_selected: 2, marks: 2 },
+				{ num_correct_selected: 3, marks: 3 }
+			]
+		}
+	};
+
+	it('reports partially correct when only some correct options are selected', () => {
+		expect(getQuestionResult(question_type_enum.MULTIPLE, [1], [1, 2], ladderScheme)).toBe(
+			'partially-correct'
+		);
+	});
+
+	it('still reports correct when every correct option is selected', () => {
+		expect(getQuestionResult(question_type_enum.MULTIPLE, [1, 2], [1, 2], ladderScheme)).toBe(
+			'correct'
+		);
+	});
+
+	it('reports incorrect when a wrong option is also selected', () => {
+		// Partial credit requires that nothing wrong was picked, so this scores
+		// the full negative mark rather than a rung of the ladder.
+		expect(getQuestionResult(question_type_enum.MULTIPLE, [1, 3], [1, 2], ladderScheme)).toBe(
+			'incorrect'
+		);
+	});
+
+	it('reports incorrect without a scheme, since partial credit cannot be known', () => {
+		expect(getQuestionResult(question_type_enum.MULTIPLE, [1], [1, 2])).toBe('incorrect');
+	});
+
+	it('reports incorrect when the scheme has no rung for that many correct', () => {
+		const sparse = {
+			correct: 4,
+			wrong: -2,
+			skipped: 0,
+			partial: { correct_answers: [{ num_correct_selected: 3, marks: 3 }] }
+		};
+		expect(getQuestionResult(question_type_enum.MULTIPLE, [1], [1, 2, 3, 4], sparse)).toBe(
+			'incorrect'
+		);
+	});
+
+	it('does not award partial credit to a single-choice answer', () => {
+		expect(getQuestionResult(question_type_enum.SINGLE, [2], [1], ladderScheme)).toBe('incorrect');
+	});
+
+	it('looks up the marks for the number of correct selections', () => {
+		expect(getPartialMarks(ladderScheme, 2)).toBe(2);
+		expect(getPartialMarks(ladderScheme, 4)).toBeNull();
+		expect(getPartialMarks({ correct: 4, wrong: -1, skipped: 0 }, 1)).toBeNull();
+	});
+
+	it('counts the correct selections behind a partial award', () => {
+		expect(getCorrectSelectedCount(question_type_enum.MULTIPLE, [1, 3], [1, 2, 3])).toBe(2);
+	});
+
+	it('counts fully matched rows for matrix-match', () => {
+		// Matrix-match scores per row, so its ladder is keyed on matched rows.
+		const submitted = JSON.stringify({ '1': [10], '2': [99] });
+		const correct = JSON.stringify({ '1': [10], '2': [20] });
+		expect(getCorrectSelectedCount(question_type_enum.MATRIXMATCH, submitted, correct)).toBe(1);
+		expect(
+			getQuestionResult(question_type_enum.MATRIXMATCH, submitted, correct, ladderScheme)
+		).toBe('partially-correct');
 	});
 });

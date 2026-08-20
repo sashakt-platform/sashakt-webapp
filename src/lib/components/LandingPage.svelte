@@ -14,6 +14,7 @@
 	import type { TQuestionSetSummary } from '$lib/types';
 	import PreTestTimer from './PreTestTimer.svelte';
 	import RichText from './RichText.svelte';
+	import SectionBanner from './SectionBanner.svelte';
 	import { t } from 'svelte-i18n';
 
 	let {
@@ -75,7 +76,9 @@
 	);
 </script>
 
-<section class="bg-muted min-h-screen px-4 py-6">
+<!-- pb-32 clears the fixed start bar below; without it the last section card
+     sits underneath it and cannot be scrolled into view. -->
+<section class="bg-muted min-h-screen px-4 pt-6 pb-32">
 	<div class="mx-auto max-w-xl">
 		<div class="mb-6 text-center">
 			<h1 class="text-foreground mb-2 text-2xl leading-tight font-semibold">{testDetails.name}</h1>
@@ -124,38 +127,23 @@
 		{/if}
 	</div>
 	{#if questionSets.length > 0}
-		<div class="align-center mt-8 border-t pt-4">
+		<div class="align-center mx-auto mt-8 max-w-xl border-t pt-4 lg:max-w-4xl">
 			<h2 class="text-foreground mb-4 text-center text-sm font-bold uppercase">
 				{$t('Sections')}
 			</h2>
 			<div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
 				{#each questionSets as questionSet (`${questionSet.id ?? questionSet.title}-${questionSet.display_order}`)}
-					<div class="bg-card mx-auto w-full rounded-2xl border p-4 lg:w-2/3">
-						<div class="flex items-start justify-between gap-4">
-							<div>
-								<h3 class="text-sm font-semibold">{questionSet.title}</h3>
-								{#if questionSet.description}
-									<RichText
-										content={questionSet.description}
-										class="text-muted-foreground mt-1 text-sm"
-									/>
-								{/if}
-							</div>
-							<p class="text-muted-foreground shrink-0 text-xs">
-								{getQuestionSetQuestionCount(questionSet)}
-								{$t('questions')}
-							</p>
-						</div>
-						<p class="text-muted-foreground mt-3 text-sm">
-							{#if canAttemptAllQuestions(questionSet.max_questions_allowed_to_attempt, getQuestionSetQuestionCount(questionSet))}
-								{$t('You may attempt all questions in this section.')}
-							{:else}
-								{$t('You may attempt up to {count} questions in this section.', {
-									values: { count: questionSet.max_questions_allowed_to_attempt }
-								})}
-							{/if}
-						</p>
-					</div>
+					<SectionBanner
+						title={questionSet.title}
+						description={questionSet.description}
+						maxQuestionsAllowedToAttempt={questionSet.max_questions_allowed_to_attempt}
+						questionCount={getQuestionSetQuestionCount(questionSet)}
+						questions={questionSet.question_revisions ?? []}
+						markingScheme={questionSet.marking_scheme}
+						showMarkingScheme={testDetails?.show_marks ?? true}
+						showQuestionCount
+						class="bg-card h-full w-full rounded-2xl border p-4"
+					/>
 				{/each}
 			</div>
 		</div>

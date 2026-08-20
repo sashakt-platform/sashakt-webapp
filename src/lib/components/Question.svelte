@@ -4,13 +4,13 @@
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import QuestionPaletteModal from '$lib/components/QuestionPaletteModal.svelte';
 	import QuestionPaletteSidebar from '$lib/components/QuestionPaletteSidebar.svelte';
-	import RichText from '$lib/components/RichText.svelte';
+	import SectionBanner from '$lib/components/SectionBanner.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
-	import { canAttemptAllQuestions, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
+	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { countQuestionStatuses } from '$lib/helpers/questionPaletteHelpers';
 	import { answeredAllMandatory, answeredCurrentMandatory } from '$lib/helpers/testFunctionalities';
 	import {
@@ -249,54 +249,34 @@
 							{@const absoluteIndex = (currentPage - 1) * perPage + index}
 							{@const section = sectionByQuestionId.get(question.id) ?? null}
 							{#if section && index === 0}
-								<div
+								<SectionBanner
 									id="question-{absoluteIndex}-banner"
-									class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm"
-								>
-									<p class="text-card-foreground text-sm font-semibold">{section.title}</p>
-									{#if section.description}
-										<RichText
-											content={section.description}
-											class="text-muted-foreground mt-1 text-sm"
-										/>
-									{/if}
-									<p class="text-muted-foreground mt-2 text-sm">
-										{#if canAttemptAllQuestions(section.max_questions_allowed_to_attempt, section.question_revisions.length)}
-											{$t('You may attempt all questions in this section.')}
-										{:else}
-											{$t('You may attempt up to {count} questions in this section.', {
-												values: { count: section.max_questions_allowed_to_attempt }
-											})}
-										{/if}
-									</p>
-								</div>
+									title={section.title}
+									description={section.description}
+									maxQuestionsAllowedToAttempt={section.max_questions_allowed_to_attempt}
+									questionCount={section.question_revisions.length}
+									questions={section.question_revisions}
+									markingScheme={section.marking_scheme}
+									showMarkingScheme={testDetails?.show_marks ?? true}
+									class="bg-section-header mb-3 rounded-xl border px-4 py-3 shadow-sm"
+								/>
 							{:else if section}
 								{@const previousQuestion = questions[absoluteIndex - 1]}
 								{@const previousSection = previousQuestion
 									? (sectionByQuestionId.get(previousQuestion.id) ?? null)
 									: null}
 								{#if previousSection?.id !== section.id}
-									<div
+									<SectionBanner
 										id="question-{absoluteIndex}-banner"
-										class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm"
-									>
-										<p class="text-card-foreground text-sm font-semibold">{section.title}</p>
-										{#if section.description}
-											<RichText
-												content={section.description}
-												class="text-muted-foreground mt-1 text-sm"
-											/>
-										{/if}
-										<p class="text-muted-foreground mt-2 text-sm">
-											{#if canAttemptAllQuestions(section.max_questions_allowed_to_attempt, section.question_revisions.length)}
-												{$t('You may attempt all questions in this section.')}
-											{:else}
-												{$t('You may attempt up to {count} questions in this section.', {
-													values: { count: section.max_questions_allowed_to_attempt }
-												})}
-											{/if}
-										</p>
-									</div>
+										title={section.title}
+										description={section.description}
+										maxQuestionsAllowedToAttempt={section.max_questions_allowed_to_attempt}
+										questionCount={section.question_revisions.length}
+										questions={section.question_revisions}
+										markingScheme={section.marking_scheme}
+										showMarkingScheme={testDetails?.show_marks ?? true}
+										class="bg-section-header mb-3 rounded-xl border px-4 py-3 shadow-sm"
+									/>
 								{/if}
 							{/if}
 							<div id="question-{(currentPage - 1) * perPage + index}">

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SectionBanner from './SectionBanner.svelte';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import {
@@ -8,7 +9,11 @@
 	} from '$lib/helpers/questionSetHelpers';
 	import { t } from 'svelte-i18n';
 	import { question_type_enum, type TCandidate, type TSelection } from '$lib/types';
-	import { getQuestionResult, GRADABLE_QUESTION_TYPES } from '$lib/helpers/feedbackHelpers';
+	import {
+		getCorrectSelectedCount,
+		getQuestionResult,
+		GRADABLE_QUESTION_TYPES
+	} from '$lib/helpers/feedbackHelpers';
 	import RichText from './RichText.svelte';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
@@ -87,9 +92,15 @@
 							result={getQuestionResult(
 								item.question.question_type,
 								item.fb.submitted_answer,
-								item.fb.correct_answer
+								item.fb.correct_answer,
+								item.question.marking_scheme
 							)}
 							scheme={item.question.marking_scheme}
+							correctSelected={getCorrectSelectedCount(
+								item.question.question_type,
+								item.fb.submitted_answer,
+								item.fb.correct_answer
+							)}
 						/>
 					{/if}
 				</Card.Title>
@@ -175,24 +186,13 @@
 		{/if}
 		{#if feedbackQuestionSetGroups.length > 0}
 			{#each feedbackQuestionSetGroups as group (`${group.section.id ?? group.section.title}-${group.startIndex}`)}
-				<div class="mb-4 w-full max-w-sm rounded-2xl border bg-slate-50 p-4">
-					<p class="text-sm font-semibold text-slate-800">{group.section.title}</p>
-					{#if group.section.description}
-						<RichText
-							content={group.section.description}
-							class="text-muted-foreground mt-1 text-sm"
-						/>
-					{/if}
-					<p class="text-muted-foreground mt-2 text-sm">
-						{#if canAttemptAllQuestions(group.section.max_questions_allowed_to_attempt, group.questions.length)}
-							{$t('You may attempt all questions in this section.')}
-						{:else}
-							{$t('You may attempt up to {count} questions in this section.', {
-								values: { count: group.section.max_questions_allowed_to_attempt }
-							})}
-						{/if}
-					</p>
-				</div>
+				<SectionBanner
+					title={group.section.title}
+					description={group.section.description}
+					maxQuestionsAllowedToAttempt={group.section.max_questions_allowed_to_attempt}
+					questionCount={group.questions.length}
+					class="mb-3 w-full max-w-2xl rounded-xl border bg-slate-50 px-4 py-3 md:max-w-250"
+				/>
 				{#each group.questions as question, sectionIndex (question.id)}
 					{@const item = feedbackItemByQuestionId.get(question.id)}
 					{#if item}

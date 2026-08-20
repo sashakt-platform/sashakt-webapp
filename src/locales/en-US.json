@@ -69,7 +69,6 @@
 	"Go to question {number}": "Go to question {number}",
 	"Question Palette": "Question Palette",
 	"Sections": "Sections",
-	"Questions": "Questions",
 	"Attempted": "Attempted",
 	"Allowed": "Allowed",
 	"Accuracy": "Accuracy",
@@ -141,5 +140,16 @@
 	"Up to {max} characters": "Up to {max} characters",
 	"At least {min} character": "At least {min} character",
 	"At least {min} characters": "At least {min} characters",
-	"Open date picker": "Open date picker"
+	"Open date picker": "Open date picker",
+	"Partially Correct": "Partially Correct",
+	"Partial": "Partial",
+	"if no wrong option is selected": "if no wrong option is selected",
+	"Choose ONE correct option": "Choose ONE correct option",
+	"Choose ONE or MORE correct options": "Choose ONE or MORE correct options",
+	"Enter an integer answer": "Enter an integer answer",
+	"Enter a numerical answer": "Enter a numerical answer",
+	"Write your answer": "Write your answer",
+	"Match each row to its column": "Match each row to its column",
+	"Rate each row": "Rate each row",
+	"Enter a value for each row": "Enter a value for each row"
 }
