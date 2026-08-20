@@ -3,6 +3,7 @@
 	import RichText from '$lib/components/RichText.svelte';
 	import { canAttemptAllQuestions } from '$lib/helpers/questionSetHelpers';
 	import { GRADABLE_QUESTION_TYPES } from '$lib/helpers/feedbackHelpers';
+	import { getQuestionTypeInstruction } from '$lib/helpers/questionTypeLabels';
 	import type { TMarks, TQuestion, question_type_enum } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
@@ -58,6 +59,13 @@
 			: undefined
 	);
 
+	// Only stated when the type is actually known -- the landing page's section
+	// summary may carry no question list, and guessing would be worse than
+	// silence.
+	const typeInstruction = $derived(
+		getQuestionTypeInstruction(sectionQuestionType ?? inferredQuestionType)
+	);
+
 	const canShowMarkingScheme = $derived(
 		showMarkingScheme &&
 			!!markingScheme &&
@@ -69,6 +77,9 @@
 	<div class="flex items-start justify-between gap-4">
 		<div>
 			<p class="text-card-foreground text-sm font-semibold">{title}</p>
+			{#if typeInstruction}
+				<p class="text-muted-foreground mt-0.5 text-xs">{$t(typeInstruction)}</p>
+			{/if}
 			{#if description}
 				<RichText content={description} class="text-muted-foreground mt-1 text-sm" />
 			{/if}

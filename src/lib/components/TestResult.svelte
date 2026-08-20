@@ -6,7 +6,7 @@
 		getQuestionSetQuestionCount,
 		normalizeTestQuestions
 	} from '$lib/helpers/questionSetHelpers';
-	import { isNumericalAnswerCorrect } from '$lib/helpers/feedbackHelpers';
+	import { getQuestionResult } from '$lib/helpers/feedbackHelpers';
 	import { t } from 'svelte-i18n';
 	import type { TResultData, TFeedback, TTestQuestionsResponse } from '$lib/types';
 	import { CircleCheck, CircleX, CircleMinus } from '@lucide/svelte';
@@ -40,31 +40,18 @@
 	const feedbackByQuestionId = $derived(
 		new Map((feedback ?? []).map((entry) => [entry.question_revision_id, entry]))
 	);
-	const isFeedbackEntryCorrect = (
-		question: (typeof normalizedTestQuestions.questions)[number]
-	): boolean => {
+	/**
+	 * Classify a question's answer using the same helper the per-question badges
+	 * use, so the section tallies cannot drift from what the candidate is shown.
+	 */
+	const resultFor = (question: (typeof normalizedTestQuestions.questions)[number]) => {
 		const entry = feedbackByQuestionId.get(question.id);
-		if (!entry) return false;
-		if (typeof entry.correct_answer === 'number') {
-			if (typeof entry.submitted_answer !== 'string') {
-				return false;
-			}
-			return (
-				isNumericalAnswerCorrect(
-					question.question_type,
-					entry.submitted_answer,
-					entry.correct_answer
-				) === true
-			);
-		}
-		if (!Array.isArray(entry.submitted_answer) || !Array.isArray(entry.correct_answer)) {
-			return false;
-		}
-		const submittedAnswer = entry.submitted_answer;
-		const correctAnswer = entry.correct_answer;
-		return (
-			submittedAnswer.length === correctAnswer.length &&
-			submittedAnswer.every((answer) => correctAnswer.includes(answer))
+		if (!entry) return 'unattempted';
+		return getQuestionResult(
+			question.question_type,
+			entry.submitted_answer,
+			entry.correct_answer,
+			question.marking_scheme
 		);
 	};
 	const sectionSummaries = $derived(
@@ -80,17 +67,24 @@
 				}
 				return entry.submitted_answer.length > 0;
 			}).length;
-			const correctCount = group.questions.filter((question) =>
-				isFeedbackEntryCorrect(question)
-			).length;
+			const results = group.questions.map((question) => resultFor(question));
+			const correctCount = results.filter((r) => r === 'correct').length;
+			const partialCount = results.filter((r) => r === 'partially-correct').length;
 
 			return {
 				title: group.section.title,
 				questionCount: getQuestionSetQuestionCount(group.section),
 				attemptedCount,
 				correctCount,
+				partialCount,
 				allowedCount: group.section.max_questions_allowed_to_attempt,
-				accuracy: attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : null
+				// Partial credit counts as credited (the backend tallies it under
+				// `correct`), so accuracy must include it or a section scored entirely
+				// on partial credit reads as 0%.
+				accuracy:
+					attemptedCount > 0
+						? Math.round(((correctCount + partialCount) / attemptedCount) * 100)
+						: null
 			};
 		})
 	);
@@ -245,7 +239,11 @@
 							</div>
 						</div>
 
-						<div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+						<div
+							class="mt-4 grid grid-cols-2 gap-3 {section.partialCount > 0
+								? 'sm:grid-cols-2'
+								: 'sm:grid-cols-3'}"
+						>
 							<div class="bg-muted rounded-xl p-3">
 								<p class="text-muted-foreground text-xs font-semibold uppercase">
 									{$t('Questions')}
@@ -258,12 +256,26 @@
 								</p>
 								<p class="text-foreground mt-1 text-xl font-semibold">{section.attemptedCount}</p>
 							</div>
-							<div class="bg-muted col-span-2 rounded-xl p-3 sm:col-span-1">
+							<div
+								class="bg-muted rounded-xl p-3 {section.partialCount > 0
+									? ''
+									: 'col-span-2 sm:col-span-1'}"
+							>
 								<p class="text-muted-foreground text-xs font-semibold uppercase">
 									{$t('Correct')}
 								</p>
 								<p class="text-foreground mt-1 text-xl font-semibold">{section.correctCount}</p>
 							</div>
+							<!-- Only shown where the section awards partial credit, so sections
+							     that cannot earn it are not given an always-zero tile. -->
+							{#if section.partialCount > 0}
+								<div class="bg-muted rounded-xl p-3">
+									<p class="text-muted-foreground text-xs font-semibold uppercase">
+										{$t('Partially Correct')}
+									</p>
+									<p class="text-foreground mt-1 text-xl font-semibold">{section.partialCount}</p>
+								</div>
+							{/if}
 						</div>
 					</div>
 				{/each}

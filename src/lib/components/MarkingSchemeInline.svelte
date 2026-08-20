@@ -35,16 +35,16 @@
 
 <p class="text-muted-foreground mt-2 text-xs">
 	<span class="text-success font-medium">+{scheme.correct}</span>
-	{$t('correct')}
+	{$t('Correct')}
 	<span class="mx-1 opacity-40">·</span>
 	<span class="text-error font-medium">{wrong}</span>
-	{$t('wrong')}
+	{$t('Incorrect')}
 	<span class="mx-1 opacity-40">·</span>
 	<span class="font-medium">{scheme.skipped}</span>
-	{$t('skipped')}
+	{$t('Unanswered')}
 	{#if showPartial && partialSummary}
 		<span class="mx-1 opacity-40">·</span>
-		{$t('partial')}
+		{$t('Partial')}
 		<span class="text-success font-medium">{partialSummary}</span>
 		{$t('if no wrong option is selected')}
 	{/if}

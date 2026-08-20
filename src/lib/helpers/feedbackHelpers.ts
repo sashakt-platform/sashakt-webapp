@@ -1,4 +1,4 @@
-import { question_type_enum } from '$lib/types';
+import { question_type_enum, type TMarks } from '$lib/types';
 
 export const GRADABLE_QUESTION_TYPES = new Set([
 	question_type_enum.SINGLE,
@@ -93,11 +93,60 @@ export const isNumericalAnswerCorrect = (
 	return null;
 };
 
+export type TQuestionResult = 'correct' | 'partially-correct' | 'incorrect' | 'unattempted';
+
+/**
+ * How many of the correct answers the candidate picked, and whether they also
+ * picked anything wrong.
+ *
+ * Partial credit only applies when nothing wrong was selected -- see the
+ * scoring rule in the backend's submit_test.
+ */
+const countCorrectSelected = (
+	submitted: number[],
+	correctAnswer: number[]
+): { correctSelected: number; hasWrong: boolean } => {
+	const correctSet = new Set(correctAnswer);
+	let correctSelected = 0;
+	let hasWrong = false;
+	for (const id of new Set(submitted)) {
+		if (correctSet.has(id)) correctSelected++;
+		else hasWrong = true;
+	}
+	return { correctSelected, hasWrong };
+};
+
+/**
+ * The marks a partially correct answer earns, or null when the scheme awards
+ * none for that many correct selections.
+ *
+ * The backend looks for the rung matching the exact count and awards 0 when
+ * there is none, so an unmatched count is not the same as a wrong answer.
+ */
+export const getPartialMarks = (
+	scheme: TMarks | null | undefined,
+	correctSelected: number
+): number | null => {
+	const rungs = scheme?.partial?.correct_answers;
+	if (!rungs?.length) return null;
+	const rung = rungs.find((r) => r.num_correct_selected === correctSelected);
+	return rung ? rung.marks : null;
+};
+
+/**
+ * Classify an answer for display.
+ *
+ * `scheme` is optional: without it a partially correct answer cannot be
+ * distinguished from a wrong one, so callers that show marks should pass it.
+ * Note the backend counts a partially correct answer in its `correct` tally,
+ * so summaries must treat 'partially-correct' as attempted-and-credited.
+ */
 export const getQuestionResult = (
 	questionType: question_type_enum,
 	submitted: number[] | string | null | undefined,
-	correctAnswer: number[] | number | null | undefined
-): 'correct' | 'incorrect' | 'unattempted' => {
+	correctAnswer: number[] | number | null | undefined,
+	scheme?: TMarks | null
+): TQuestionResult => {
 	if (
 		questionType === question_type_enum.NUMERICALINTEGER ||
 		questionType === question_type_enum.NUMERICALDECIMAL
@@ -118,13 +167,10 @@ export const getQuestionResult = (
 	if (questionType === question_type_enum.SINGLE || questionType === question_type_enum.MULTIPLE) {
 		if (!Array.isArray(submitted) || submitted.length === 0) return 'unattempted';
 		if (!Array.isArray(correctAnswer) || correctAnswer.length === 0) return 'unattempted';
-		const correctSet = new Set(correctAnswer);
-		const submittedSet = new Set(submitted);
-		if (
-			submittedSet.size === correctSet.size &&
-			[...submittedSet].every((id) => correctSet.has(id))
-		) {
-			return 'correct';
+		const { correctSelected, hasWrong } = countCorrectSelected(submitted, correctAnswer);
+		if (!hasWrong && correctSelected === correctAnswer.length) return 'correct';
+		if (!hasWrong && correctSelected > 0 && getPartialMarks(scheme, correctSelected) !== null) {
+			return 'partially-correct';
 		}
 		return 'incorrect';
 	}
@@ -134,16 +180,48 @@ export const getQuestionResult = (
 		const cor = parseMatrixAnswer(correctAnswer as string);
 		if (Object.keys(cor).length === 0) return 'unattempted';
 		if (Object.keys(sub).length === 0) return 'unattempted';
-		const allCorrect = Object.entries(cor).every(([rowId, correctCols]) => {
+		const rows = Object.entries(cor);
+		const matchedRows = rows.filter(([rowId, correctCols]) => {
 			const submittedCols = sub[rowId] ?? [];
 			return (
 				correctCols.length === submittedCols.length &&
 				correctCols.every((id) => submittedCols.includes(id))
 			);
-		});
-		if (allCorrect) return 'correct';
+		}).length;
+		if (matchedRows === rows.length) return 'correct';
+		// Matrix-match scores per fully-matched row, so its partial ladder is
+		// keyed on the number of matched rows rather than selected options.
+		if (matchedRows > 0 && getPartialMarks(scheme, matchedRows) !== null) {
+			return 'partially-correct';
+		}
 		return 'incorrect';
 	}
 
 	return 'unattempted';
+};
+
+/**
+ * How many correct answers were selected, for reporting partial marks.
+ *
+ * Matrix-match counts fully-matched rows; the option-based types count correct
+ * options. Returns null when the answer type carries no such count.
+ */
+export const getCorrectSelectedCount = (
+	questionType: question_type_enum,
+	submitted: number[] | string | null | undefined,
+	correctAnswer: number[] | number | null | undefined
+): number | null => {
+	if (questionType === question_type_enum.MATRIXMATCH) {
+		const sub = parseMatrixAnswer(submitted as string);
+		const cor = parseMatrixAnswer(correctAnswer as string);
+		return Object.entries(cor).filter(([rowId, correctCols]) => {
+			const submittedCols = sub[rowId] ?? [];
+			return (
+				correctCols.length === submittedCols.length &&
+				correctCols.every((id) => submittedCols.includes(id))
+			);
+		}).length;
+	}
+	if (!Array.isArray(submitted) || !Array.isArray(correctAnswer)) return null;
+	return countCorrectSelected(submitted, correctAnswer).correctSelected;
 };
