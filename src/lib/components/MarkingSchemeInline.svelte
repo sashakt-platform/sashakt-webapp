@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { TMarks, question_type_enum } from '$lib/types';
+	import { question_type_enum, type TMarks } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
 	/**
@@ -18,9 +18,11 @@
 		questionType?: question_type_enum;
 	} = $props();
 
+	// The ladder applies to multi-choice; an undefined type means the caller
+	// could not tell, so show it rather than hide a scheme that exists.
 	const showPartial = $derived(
 		!!scheme.partial?.correct_answers?.length &&
-			(questionType === undefined || questionType === 'multi-choice')
+			(questionType === undefined || questionType === question_type_enum.MULTIPLE)
 	);
 
 	const wrong = $derived(scheme.wrong > 0 ? `+${scheme.wrong}` : `${scheme.wrong}`);

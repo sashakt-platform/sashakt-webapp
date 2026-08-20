@@ -99,7 +99,7 @@ export type TQuestionResult = 'correct' | 'partially-correct' | 'incorrect' | 'u
  * How many of the correct answers the candidate picked, and whether they also
  * picked anything wrong.
  *
- * Partial credit only applies when nothing wrong was selected -- see the
+ * Partial credit only applies when nothing wrong was selected — see the
  * scoring rule in the backend's submit_test.
  */
 const countCorrectSelected = (

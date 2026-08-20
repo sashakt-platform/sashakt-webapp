@@ -47,25 +47,23 @@
 		questions[0]?.question_type as question_type_enum | undefined
 	);
 
-	// Show the scheme where marks are meaningful. The question type is only
-	// needed to gate the partial-marks block, and the landing page's section
-	// summary carries no question list — so an unknown type still shows the
-	// scheme, it just cannot claim the set is multi-choice.
-	// A partial-marks ladder only exists on a multi-choice set, so its presence
-	// identifies the type when the payload does not carry one.
+	// The landing page's section summary carries no question list, so fall back
+	// to the scheme: a partial-marks ladder only exists on a multi-choice set,
+	// so its presence identifies the type.
 	const inferredQuestionType = $derived(
 		markingScheme?.partial?.correct_answers?.length
 			? ('multi-choice' as question_type_enum)
 			: undefined
 	);
 
-	// Only stated when the type is actually known -- the landing page's section
-	// summary may carry no question list, and guessing would be worse than
-	// silence.
+	// Null for an unknown type, so nothing is stated rather than something
+	// guessed.
 	const typeInstruction = $derived(
 		getQuestionTypeInstruction(sectionQuestionType ?? inferredQuestionType)
 	);
 
+	// Marks are only meaningful for gradable types. An unknown type still shows
+	// the scheme, since the landing page cannot tell what it is.
 	const canShowMarkingScheme = $derived(
 		showMarkingScheme &&
 			!!markingScheme &&

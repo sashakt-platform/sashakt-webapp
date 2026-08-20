@@ -29,7 +29,7 @@
 		result === 'correct'
 			? 'bg-success-subtle text-success'
 			: result === 'partially-correct'
-				? // Partial credit is still credit, so it reads as success -- the ring
+				? // Partial credit is still credit, so it reads as success — the ring
 					// and the label distinguish it from a fully correct answer. (Adding a
 					// fourth semantic colour would be a design decision; the palette
 					// currently defines only success, error and warning.)

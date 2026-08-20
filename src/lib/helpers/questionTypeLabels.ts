@@ -8,7 +8,7 @@ import { question_type_enum } from '$lib/types';
  * does not have to ship the same sentence as prose in the section description
  * (and cannot word it inconsistently between sections).
  *
- * Keep these phrasings answer-shape only -- how many options to pick, what kind
+ * Keep these phrasings answer-shape only — how many options to pick, what kind
  * of value to enter. Marks belong to the marking scheme, which is rendered
  * separately, and anything exam-specific belongs in the section description.
  */
