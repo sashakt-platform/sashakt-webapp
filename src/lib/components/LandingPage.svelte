@@ -127,7 +127,7 @@
 		{/if}
 	</div>
 	{#if questionSets.length > 0}
-		<div class="align-center mt-8 border-t pt-4">
+		<div class="align-center mx-auto mt-8 max-w-xl border-t pt-4 lg:max-w-4xl">
 			<h2 class="text-foreground mb-4 text-center text-sm font-bold uppercase">
 				{$t('Sections')}
 			</h2>
