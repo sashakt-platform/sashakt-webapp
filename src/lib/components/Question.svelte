@@ -258,7 +258,7 @@
 									questions={section.question_revisions}
 									markingScheme={section.marking_scheme}
 									showMarkingScheme={testDetails?.show_marks ?? true}
-									class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm"
+									class="bg-section-header mb-3 rounded-xl border px-4 py-3 shadow-sm"
 								/>
 							{:else if section}
 								{@const previousQuestion = questions[absoluteIndex - 1]}
@@ -275,7 +275,7 @@
 										questions={section.question_revisions}
 										markingScheme={section.marking_scheme}
 										showMarkingScheme={testDetails?.show_marks ?? true}
-										class="bg-section-header mb-4 rounded-2xl border p-4 shadow-sm"
+										class="bg-section-header mb-3 rounded-xl border px-4 py-3 shadow-sm"
 									/>
 								{/if}
 							{/if}

@@ -76,7 +76,9 @@
 	);
 </script>
 
-<section class="bg-muted min-h-screen px-4 py-6">
+<!-- pb-32 clears the fixed start bar below; without it the last section card
+     sits underneath it and cannot be scrolled into view. -->
+<section class="bg-muted min-h-screen px-4 pt-6 pb-32">
 	<div class="mx-auto max-w-xl">
 		<div class="mb-6 text-center">
 			<h1 class="text-foreground mb-2 text-2xl leading-tight font-semibold">{testDetails.name}</h1>
@@ -140,7 +142,7 @@
 						markingScheme={questionSet.marking_scheme}
 						showMarkingScheme={testDetails?.show_marks ?? true}
 						showQuestionCount
-						class="bg-card mx-auto w-full rounded-2xl border p-4 lg:w-2/3"
+						class="bg-card h-full w-full rounded-2xl border p-4"
 					/>
 				{/each}
 			</div>

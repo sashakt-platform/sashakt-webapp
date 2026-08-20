@@ -1,5 +1,5 @@
 <script lang="ts">
-	import MarkingSchemeContent from '$lib/components/MarkingSchemeContent.svelte';
+	import MarkingSchemeInline from '$lib/components/MarkingSchemeInline.svelte';
 	import RichText from '$lib/components/RichText.svelte';
 	import { canAttemptAllQuestions } from '$lib/helpers/questionSetHelpers';
 	import { GRADABLE_QUESTION_TYPES } from '$lib/helpers/feedbackHelpers';
@@ -39,7 +39,7 @@
 
 	const attemptsAll = $derived(canAttemptAllQuestions(maxQuestionsAllowedToAttempt, questionCount));
 
-	// MarkingSchemeContent renders type-specific wording (the partial-marks ladder
+	// The marking scheme's wording is type-specific (the partial-marks ladder
 	// only applies to multi-choice), so it needs a question type. A section is
 	// homogeneous by construction, so the first question represents the set.
 	const sectionQuestionType = $derived(
@@ -84,7 +84,7 @@
 	<!-- Only state the attempt rule when it restricts the candidate. Saying "you
 	     may attempt all questions" adds a line without adding information. -->
 	{#if !attemptsAll}
-		<p class="text-muted-foreground mt-3 text-sm">
+		<p class="text-muted-foreground mt-2 text-sm">
 			{$t('You may attempt up to {count} questions in this section.', {
 				values: { count: maxQuestionsAllowedToAttempt }
 			})}
@@ -92,15 +92,9 @@
 	{/if}
 
 	{#if canShowMarkingScheme && markingScheme}
-		<!-- MarkingSchemeContent is sized for the per-question popover, where it is
-		     the only thing on screen. In a section header it sits above the question
-		     it describes, so scale it down and cap the width to keep the question
-		     itself dominant. -->
-		<div class="mt-2 max-w-xs text-xs [&_*]:font-normal [&>div]:space-y-1">
-			<MarkingSchemeContent
-				scheme={markingScheme}
-				questionType={sectionQuestionType ?? inferredQuestionType}
-			/>
-		</div>
+		<MarkingSchemeInline
+			scheme={markingScheme}
+			questionType={sectionQuestionType ?? inferredQuestionType}
+		/>
 	{/if}
 </div>
