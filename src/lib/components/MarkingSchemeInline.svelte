@@ -3,12 +3,10 @@
 	import { t } from 'svelte-i18n';
 
 	/**
-	 * A one-line summary of a marking scheme, for section headers.
-	 *
-	 * MarkingSchemeContent is a stacked key/value list sized for the per-question
-	 * popover, where it is the only thing on screen. In a header that stretches
-	 * the full content width it reads badly — `justify-between` pushes each value
-	 * far from its label, and the partial ladder turns two lines into eight.
+	 * A one-line marking scheme, for section headers. MarkingSchemeContent is a
+	 * stacked list sized for the per-question popover; stretched across a header
+	 * its values sit far from their labels and the partial ladder runs to eight
+	 * lines.
 	 */
 	let {
 		scheme,
@@ -18,8 +16,8 @@
 		questionType?: question_type_enum;
 	} = $props();
 
-	// The ladder applies to multi-choice; an undefined type means the caller
-	// could not tell, so show it rather than hide a scheme that exists.
+	// An undefined type means the caller could not tell, so show the ladder
+	// rather than hide a scheme that exists.
 	const showPartial = $derived(
 		!!scheme.partial?.correct_answers?.length &&
 			(questionType === undefined || questionType === question_type_enum.MULTIPLE)
@@ -27,9 +25,7 @@
 
 	const wrong = $derived(scheme.wrong > 0 ? `+${scheme.wrong}` : `${scheme.wrong}`);
 
-	// "+1 / +2 / +3" — the ladder in reading order, without naming each count.
-	// The per-question popover spells out "N correct selected" for anyone who
-	// wants the detail; this is the at-a-glance version.
+	// "+1 / +2 / +3" — the popover spells out which count earns which.
 	const partialSummary = $derived(
 		(scheme.partial?.correct_answers ?? []).map((rule) => `+${rule.marks}`).join(' / ')
 	);

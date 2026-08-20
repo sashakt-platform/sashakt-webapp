@@ -1,16 +1,12 @@
 import { question_type_enum } from '$lib/types';
 
 /**
- * What a question type asks of the candidate, in one short phrase.
+ * What a question type asks of the candidate, so a section header can state it
+ * once instead of an importer writing the same sentence into every section's
+ * description by hand.
  *
- * Sections are homogeneous, so a section header can state this once instead of
- * repeating it on every question. Deriving it from the type means an importer
- * does not have to ship the same sentence as prose in the section description
- * (and cannot word it inconsistently between sections).
- *
- * Keep these phrasings answer-shape only — how many options to pick, what kind
- * of value to enter. Marks belong to the marking scheme, which is rendered
- * separately, and anything exam-specific belongs in the section description.
+ * Answer shape only — marks come from the marking scheme, and anything
+ * exam-specific belongs in the section description.
  */
 const QUESTION_TYPE_INSTRUCTIONS: Record<question_type_enum, string> = {
 	[question_type_enum.SINGLE]: 'Choose ONE correct option',
@@ -23,15 +19,7 @@ const QUESTION_TYPE_INSTRUCTIONS: Record<question_type_enum, string> = {
 	[question_type_enum.MATRIXINPUT]: 'Enter a value for each row'
 };
 
-/**
- * The instruction for a question type, or null for an unknown one.
- *
- * Returns null rather than a fallback so a type added to the backend without a
- * phrasing here shows nothing instead of something misleading.
- */
+/** Null for an unknown type, so nothing is shown rather than a wrong guess. */
 export const getQuestionTypeInstruction = (
 	questionType: question_type_enum | null | undefined
-): string | null => {
-	if (!questionType) return null;
-	return QUESTION_TYPE_INSTRUCTIONS[questionType] ?? null;
-};
+): string | null => (questionType ? (QUESTION_TYPE_INSTRUCTIONS[questionType] ?? null) : null);

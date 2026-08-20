@@ -8,11 +8,9 @@
 	import { t } from 'svelte-i18n';
 
 	/**
-	 * The header shown above a section, on the landing page, above the questions
-	 * themselves, and in answer review.
-	 *
-	 * Previously this markup was repeated in each of those places, so a change to
-	 * one left the others behind and the marking scheme was shown in none of them.
+	 * The header shown above a section — on the landing page, above the questions,
+	 * and in answer review. This markup was previously duplicated in each place,
+	 * so the marking scheme was shown in none of them.
 	 */
 	let {
 		title,
@@ -40,16 +38,13 @@
 
 	const attemptsAll = $derived(canAttemptAllQuestions(maxQuestionsAllowedToAttempt, questionCount));
 
-	// The marking scheme's wording is type-specific (the partial-marks ladder
-	// only applies to multi-choice), so it needs a question type. A section is
-	// homogeneous by construction, so the first question represents the set.
+	// A section is homogeneous, so the first question gives its type.
 	const sectionQuestionType = $derived(
 		questions[0]?.question_type as question_type_enum | undefined
 	);
 
-	// The landing page's section summary carries no question list, so fall back
-	// to the scheme: a partial-marks ladder only exists on a multi-choice set,
-	// so its presence identifies the type.
+	// The landing page carries no question list, so fall back to the scheme: a
+	// partial ladder only exists on a multi-choice set.
 	const inferredQuestionType = $derived(
 		markingScheme?.partial?.correct_answers?.length
 			? ('multi-choice' as question_type_enum)
@@ -62,8 +57,7 @@
 		getQuestionTypeInstruction(sectionQuestionType ?? inferredQuestionType)
 	);
 
-	// Marks are only meaningful for gradable types. An unknown type still shows
-	// the scheme, since the landing page cannot tell what it is.
+	// An unknown type still shows the scheme; the landing page cannot tell.
 	const canShowMarkingScheme = $derived(
 		showMarkingScheme &&
 			!!markingScheme &&
@@ -90,8 +84,8 @@
 		{/if}
 	</div>
 
-	<!-- Only state the attempt rule when it restricts the candidate. Saying "you
-	     may attempt all questions" adds a line without adding information. -->
+	<!-- Only stated when it restricts the candidate; "you may attempt all
+	     questions" is a line without information. -->
 	{#if !attemptsAll}
 		<p class="text-muted-foreground mt-2 text-sm">
 			{$t('You may attempt up to {count} questions in this section.', {
