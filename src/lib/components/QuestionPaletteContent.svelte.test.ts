@@ -279,6 +279,7 @@ describe('QuestionPaletteContent', () => {
 
 		expect(screen.getByText('Physics')).toBeInTheDocument();
 		expect(screen.getByText('Chemistry')).toBeInTheDocument();
-		expect(screen.getAllByText('You may attempt all questions in this section.')).toHaveLength(2);
+		// Uncapped sections state no attempt rule; only a real cap is worth a line.
+		expect(screen.queryAllByText(/You may attempt/i)).toHaveLength(0);
 	});
 });
