@@ -274,18 +274,18 @@
 				<table class="w-full text-sm">
 					<thead class="bg-section-header">
 						<tr class="text-muted-foreground text-left text-xs font-semibold uppercase">
-							<th class="px-4 py-3 font-semibold">{$t('Section')}</th>
+							<th class="w-full px-4 py-3 font-semibold">{$t('Section')}</th>
 							{#if anySectionHasMarks}
-								<th class="px-4 py-3 text-right font-semibold">{$t('Marks')}</th>
+								<th class="py-3 pr-4 pl-2 text-right font-semibold">{$t('Marks')}</th>
 							{/if}
-							<th class="px-4 py-3 text-right font-semibold">{$t('Questions')}</th>
-							<th class="px-4 py-3 text-right font-semibold">{$t('Attempted')}</th>
-							<th class="px-4 py-3 text-right font-semibold">{$t('Correct')}</th>
+							<th class="py-3 pr-4 pl-2 text-right font-semibold">{$t('Questions')}</th>
+							<th class="py-3 pr-4 pl-2 text-right font-semibold">{$t('Attempted')}</th>
+							<th class="py-3 pr-4 pl-2 text-right font-semibold">{$t('Correct')}</th>
 							{#if anySectionHasPartial}
-								<th class="px-4 py-3 text-right font-semibold">{$t('Partially Correct')}</th>
+								<th class="py-3 pr-4 pl-2 text-right font-semibold">{$t('Partially Correct')}</th>
 							{/if}
-							<th class="px-4 py-3 text-right font-semibold">{$t('Attempt Rate')}</th>
-							<th class="px-4 py-3 text-right font-semibold">{$t('Accuracy')}</th>
+							<th class="py-3 pr-4 pl-2 text-right font-semibold">{$t('Attempt Rate')}</th>
+							<th class="py-3 pr-4 pl-2 text-right font-semibold">{$t('Accuracy')}</th>
 						</tr>
 					</thead>
 					<tbody class="divide-border divide-y">
@@ -293,20 +293,20 @@
 							<tr>
 								<td class="text-card-foreground px-4 py-3 font-medium">{section.title}</td>
 								{#if anySectionHasMarks}
-									<td class="text-foreground px-4 py-3 text-right font-semibold">
+									<td class="text-foreground py-3 pr-4 pl-2 text-right font-semibold">
 										{section.marksScored ?? '--'}
 									</td>
 								{/if}
-								<td class="text-foreground px-4 py-3 text-right">{section.questionCount}</td>
-								<td class="text-foreground px-4 py-3 text-right">{section.attemptedCount}</td>
-								<td class="text-foreground px-4 py-3 text-right">{section.correctCount}</td>
+								<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.questionCount}</td>
+								<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.attemptedCount}</td>
+								<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.correctCount}</td>
 								{#if anySectionHasPartial}
-									<td class="text-foreground px-4 py-3 text-right">{section.partialCount}</td>
+									<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.partialCount}</td>
 								{/if}
-								<td class="text-muted-foreground px-4 py-3 text-right">
+								<td class="text-muted-foreground py-3 pr-4 pl-2 text-right">
 									{section.attemptRate === null ? '--' : `${section.attemptRate}%`}
 								</td>
-								<td class="text-muted-foreground px-4 py-3 text-right">
+								<td class="text-muted-foreground py-3 pr-4 pl-2 text-right">
 									{section.accuracy === null ? '--' : `${section.accuracy}%`}
 								</td>
 							</tr>
