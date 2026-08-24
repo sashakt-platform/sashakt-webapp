@@ -245,8 +245,23 @@ describe('TestResult - Section summary', () => {
 		expect(screen.getByText('Chemistry')).toBeInTheDocument();
 		expect(screen.getAllByText('Questions').length).toBeGreaterThan(0);
 		expect(screen.getAllByText('Attempted').length).toBeGreaterThan(0);
-		expect(screen.getAllByText(/Allowed:/).length).toBeGreaterThan(0);
-		expect(screen.getAllByText(/Accuracy:/).length).toBeGreaterThan(0);
+		expect(screen.getAllByText('Attempt Rate').length).toBeGreaterThan(0);
+		expect(screen.getAllByText('Accuracy').length).toBeGreaterThan(0);
+	});
+
+	it('counts a partially correct answer as half when scoring accuracy', () => {
+		// Question 2 selects 1 of 2 correct options with nothing wrong, so with a
+		// partial ladder it is neither correct nor wrong. One attempt, half credit.
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails: mockTestData,
+				testQuestions: mockSectionedTestQuestionsResponse,
+				feedback: [{ question_revision_id: 2, submitted_answer: [201], correct_answer: [201, 202] }]
+			}
+		});
+
+		expect(screen.getAllByText('50%').length).toBeGreaterThan(0);
 	});
 });
 
