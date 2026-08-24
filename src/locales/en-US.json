@@ -150,5 +150,7 @@
 	"Write your answer": "Write your answer",
 	"Match each row to its column": "Match each row to its column",
 	"Rate each row": "Rate each row",
-	"Enter a value for each row": "Enter a value for each row"
+	"Enter a value for each row": "Enter a value for each row",
+	"Section": "Section",
+	"Attempt any {count} of {total}": "Attempt any {count} of {total}"
 }

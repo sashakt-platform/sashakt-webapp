@@ -143,7 +143,7 @@ describe('LandingPage', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('states the attempt rule only when a section caps attempts', () => {
+	it('states the attempt cap under the section name when it restricts the candidate', () => {
 		render(LandingPage, {
 			props: {
 				testDetails: {
@@ -161,9 +161,30 @@ describe('LandingPage', () => {
 			}
 		});
 
-		expect(
-			screen.getByText('You may attempt up to 5 questions in this section.')
-		).toBeInTheDocument();
+		// Stated only on the row it applies to; a column reading "All" everywhere
+		// else would carry no information.
+		expect(screen.getByText('Attempt any 5 of 10')).toBeInTheDocument();
+	});
+
+	it('says nothing about the cap when a section allows all questions', () => {
+		render(LandingPage, {
+			props: {
+				testDetails: {
+					...defaultTestDetails,
+					question_sets: [
+						{
+							id: 1,
+							title: 'Physics',
+							display_order: 1,
+							question_count: 10,
+							max_questions_allowed_to_attempt: 10
+						}
+					]
+				}
+			}
+		});
+
+		expect(screen.queryByText(/Attempt any/)).not.toBeInTheDocument();
 	});
 
 	it('should render question set descriptions as html', () => {

@@ -14,7 +14,8 @@
 	import type { TQuestionSetSummary } from '$lib/types';
 	import PreTestTimer from './PreTestTimer.svelte';
 	import RichText from './RichText.svelte';
-	import SectionBanner from './SectionBanner.svelte';
+	import MarkingSchemeCompact from './MarkingSchemeCompact.svelte';
+	import { getQuestionTypeInstruction } from '$lib/helpers/questionTypeLabels';
 	import { t } from 'svelte-i18n';
 
 	let {
@@ -23,6 +24,25 @@
 		isExternalLaunch = false,
 		showProfileForm = $bindable()
 	} = $props();
+
+	const showMarkingScheme = $derived(testDetails?.show_marks ?? true);
+
+	const sectionRows = $derived(
+		questionSets.map((set) => {
+			const questionCount = getQuestionSetQuestionCount(set);
+			const scheme = set.marking_scheme ?? null;
+			return {
+				typeInstruction: getQuestionTypeInstruction(set.question_type),
+				key: `${set.id ?? set.title}-${set.display_order}`,
+				title: set.title,
+				description: set.description,
+				questionCount,
+				maxQuestionsAllowedToAttempt: set.max_questions_allowed_to_attempt,
+				attemptsAll: canAttemptAllQuestions(set.max_questions_allowed_to_attempt, questionCount),
+				markingScheme: scheme
+			};
+		})
+	);
 
 	let isStarting = $state(false);
 	let createError = $state<string | null>(null);
@@ -127,24 +147,74 @@
 		{/if}
 	</div>
 	{#if questionSets.length > 0}
-		<div class="align-center mx-auto mt-8 max-w-xl border-t pt-4 lg:max-w-4xl">
+		<div class="align-center mx-auto mt-8 max-w-xl border-t pt-4">
 			<h2 class="text-foreground mb-4 text-center text-sm font-bold uppercase">
 				{$t('Sections')}
 			</h2>
-			<div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
-				{#each questionSets as questionSet (`${questionSet.id ?? questionSet.title}-${questionSet.display_order}`)}
-					<SectionBanner
-						title={questionSet.title}
-						description={questionSet.description}
-						maxQuestionsAllowedToAttempt={questionSet.max_questions_allowed_to_attempt}
-						questionCount={getQuestionSetQuestionCount(questionSet)}
-						questions={questionSet.question_revisions ?? []}
-						markingScheme={questionSet.marking_scheme}
-						showMarkingScheme={testDetails?.show_marks ?? true}
-						showQuestionCount
-						class="bg-card h-full w-full rounded-2xl border p-4"
-					/>
-				{/each}
+			<!-- A table, not a card each: a paper can carry eight or more sections,
+			     and this screen exists to compare them. -->
+			<div class="overflow-x-auto">
+				<div class="bg-card w-full rounded-2xl border">
+					<table class="w-full text-sm">
+						<thead class="bg-section-header">
+							<tr class="text-muted-foreground text-left text-xs font-semibold uppercase">
+								<th class="w-full px-3 py-2.5 font-semibold">{$t('Section')}</th>
+								<th class="py-2.5 pr-3 pl-2 text-right font-semibold whitespace-nowrap"
+									>{$t('Questions')}</th
+								>
+								{#if showMarkingScheme}
+									<th class="py-2.5 pr-3 pl-2 text-right font-semibold whitespace-nowrap">
+										{$t('Correct')} / {$t('Incorrect')}
+									</th>
+								{/if}
+							</tr>
+						</thead>
+						<tbody class="divide-border divide-y">
+							{#each sectionRows as row (row.key)}
+								<tr>
+									<td class="px-3 py-2.5">
+										<p class="text-card-foreground font-medium">{row.title}</p>
+										{#if row.typeInstruction}
+											<p class="text-muted-foreground mt-0.5 text-xs">{$t(row.typeInstruction)}</p>
+										{/if}
+										<!-- Only where it restricts: a column reading "All" everywhere
+										     else says nothing. -->
+										{#if !row.attemptsAll}
+											<p class="text-warning mt-0.5 text-xs">
+												{$t('Attempt any {count} of {total}', {
+													values: {
+														count: row.maxQuestionsAllowedToAttempt,
+														total: row.questionCount
+													}
+												})}
+											</p>
+										{/if}
+										{#if row.description}
+											<RichText
+												content={row.description}
+												class="text-muted-foreground mt-1 text-xs"
+											/>
+										{/if}
+									</td>
+									<td
+										class="text-foreground py-2.5 pr-3 pl-2 text-right align-top whitespace-nowrap"
+									>
+										{row.questionCount}
+									</td>
+									{#if showMarkingScheme}
+										<td class="py-2.5 pr-3 pl-2 text-right align-top">
+											{#if row.markingScheme}
+												<MarkingSchemeCompact scheme={row.markingScheme} />
+											{:else}
+												<span class="text-muted-foreground">--</span>
+											{/if}
+										</td>
+									{/if}
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
 			</div>
 		</div>
 	{/if}
