@@ -265,7 +265,9 @@ describe('Question', () => {
 			expect(screen.getAllByText('Physics').length).toBeGreaterThan(0);
 			expect(screen.getAllByText('Section A').length).toBeGreaterThan(0);
 			expect(screen.getAllByText('Chemistry').length).toBeGreaterThan(0);
-			expect(screen.getAllByText(/You may attempt all questions/i).length).toBeGreaterThan(0);
+			// The attempt rule is stated only when it restricts the candidate, so an
+			// uncapped section deliberately shows no such line.
+			expect(screen.queryAllByText(/You may attempt/i)).toHaveLength(0);
 		});
 	});
 
