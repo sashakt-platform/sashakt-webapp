@@ -152,5 +152,7 @@
 	"Write your answer": "अपना उत्तर लिखें",
 	"Match each row to its column": "प्रत्येक पंक्ति को उसके स्तंभ से मिलाएँ",
 	"Rate each row": "प्रत्येक पंक्ति को रेट करें",
-	"Enter a value for each row": "प्रत्येक पंक्ति के लिए मान दर्ज करें"
+	"Enter a value for each row": "प्रत्येक पंक्ति के लिए मान दर्ज करें",
+	"Section": "अनुभाग",
+	"Attempt any {count} of {total}": "{total} में से किसी {count} का प्रयास करें"
 }
