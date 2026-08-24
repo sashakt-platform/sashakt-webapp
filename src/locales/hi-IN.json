@@ -62,7 +62,6 @@
 	"Go to question {number}": "प्रश्न {number} पर जाएं",
 	"Question Palette": "प्रश्न पैलेट",
 	"Sections": "सेक्शन",
-	"Questions": "प्रश्न",
 	"Attempted": "प्रयास किया",
 	"Allowed": "अनुमत",
 	"Accuracy": "सटीकता",
@@ -143,5 +142,15 @@
 	"Up to {max} characters": "अधिकतम {max} अक्षर",
 	"At least {min} character": "कम से कम {min} अक्षर",
 	"At least {min} characters": "कम से कम {min} अक्षर",
-	"Open date picker": "दिनांक चुनें"
+	"Open date picker": "दिनांक चुनें",
+	"Partial": "आंशिक",
+	"if no wrong option is selected": "यदि कोई गलत विकल्प चयनित नहीं है",
+	"Choose ONE correct option": "एक सही विकल्प चुनें",
+	"Choose ONE or MORE correct options": "एक या अधिक सही विकल्प चुनें",
+	"Enter an integer answer": "पूर्णांक उत्तर दर्ज करें",
+	"Enter a numerical answer": "संख्यात्मक उत्तर दर्ज करें",
+	"Write your answer": "अपना उत्तर लिखें",
+	"Match each row to its column": "प्रत्येक पंक्ति को उसके स्तंभ से मिलाएँ",
+	"Rate each row": "प्रत्येक पंक्ति को रेट करें",
+	"Enter a value for each row": "प्रत्येक पंक्ति के लिए मान दर्ज करें"
 }

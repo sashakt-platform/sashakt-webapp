@@ -136,7 +136,34 @@ describe('LandingPage', () => {
 		expect(screen.getByText('Sections')).toBeInTheDocument();
 		expect(screen.getByText('Physics')).toBeInTheDocument();
 		expect(screen.getByText('Chemistry')).toBeInTheDocument();
-		expect(screen.getAllByText('You may attempt all questions in this section.')).toHaveLength(2);
+		// The attempt rule is only stated when it restricts the candidate; these
+		// sections let them attempt everything, so the line is deliberately absent.
+		expect(
+			screen.queryByText('You may attempt all questions in this section.')
+		).not.toBeInTheDocument();
+	});
+
+	it('states the attempt rule only when a section caps attempts', () => {
+		render(LandingPage, {
+			props: {
+				testDetails: {
+					...defaultTestDetails,
+					question_sets: [
+						{
+							id: 1,
+							title: 'Physics',
+							display_order: 1,
+							question_count: 10,
+							max_questions_allowed_to_attempt: 5
+						}
+					]
+				}
+			}
+		});
+
+		expect(
+			screen.getByText('You may attempt up to 5 questions in this section.')
+		).toBeInTheDocument();
 	});
 
 	it('should render question set descriptions as html', () => {
@@ -156,8 +183,12 @@ describe('LandingPage', () => {
 
 		expect(screen.getByText('Single correct option')).toBeInTheDocument();
 		expect(screen.getByText('Correct:')).toBeInTheDocument();
-		expect(screen.getByText('+4')).toBeInTheDocument();
 		expect(screen.queryByText(/<u>Single correct option<\/u>/)).not.toBeInTheDocument();
+		// This description is the marking-scheme HTML an external ingest used to
+		// inject. Sashakt now renders the scheme itself, so such a description
+		// duplicates it — hence "+4" legitimately appears twice here. The fix is
+		// upstream (stop sending it), not in this assertion.
+		expect(screen.getAllByText('+4').length).toBeGreaterThan(0);
 	});
 
 	it('should not render instructions section when no instructions', () => {
