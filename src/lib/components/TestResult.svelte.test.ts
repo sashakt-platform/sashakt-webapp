@@ -263,6 +263,21 @@ describe('TestResult - Section summary', () => {
 
 		expect(screen.getAllByText('50%').length).toBeGreaterThan(0);
 	});
+
+	it('says nothing about partial credit when none was earned', () => {
+		// An org whose tests award no partial credit should never see the concept:
+		// no top-line row and no column of zeroes.
+		render(TestResult, {
+			props: {
+				resultData: mockResultData,
+				testDetails: mockTestData,
+				testQuestions: mockSectionedTestQuestionsResponse,
+				feedback: [{ question_revision_id: 1, submitted_answer: [101], correct_answer: [101] }]
+			}
+		});
+
+		expect(screen.queryByText('Partially Correct')).not.toBeInTheDocument();
+	});
 });
 
 describe('support for localization', () => {
