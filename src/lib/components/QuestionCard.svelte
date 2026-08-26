@@ -117,7 +117,12 @@
 			if (result?.correct_answer != null) {
 				selectedQuestions = selectedQuestions.map((q) =>
 					q.question_revision_id === question.id
-						? { ...q, correct_answer: result.correct_answer, solution: result.solution }
+						? {
+								...q,
+								correct_answer: result.correct_answer,
+								solution: result.solution,
+								tags: result.tags
+							}
 						: q
 				);
 				updateStore();
@@ -575,6 +580,23 @@
 			>
 				{$t('View Feedback')}
 			</Button>
+		{/if}
+
+		{#if showFeedback && isLocked && currentSelection?.tags?.length}
+			<div class="mt-4 flex flex-col gap-2">
+				{#each currentSelection.tags as tagGroup (tagGroup.tag_type)}
+					<div class="flex flex-wrap items-center gap-2">
+						<span class="text-foreground text-sm font-semibold">{tagGroup.tag_type}:</span>
+						{#each tagGroup.tag as tagValue (tagValue)}
+							<span
+								class="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-xs font-medium"
+							>
+								{tagValue}
+							</span>
+						{/each}
+					</div>
+				{/each}
+			</div>
 		{/if}
 
 		{#if showFeedback && isLocked && currentSelection?.solution}

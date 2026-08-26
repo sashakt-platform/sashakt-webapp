@@ -156,6 +156,79 @@ describe('POST /test/[slug]/api/submit-answer', () => {
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
+	it('should return the tags when the review-feedback entry has them', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch)
+			.mockResolvedValueOnce(createMockResponse({ success: true }) as unknown as Response)
+			.mockResolvedValueOnce(
+				createMockResponse([
+					{
+						question_revision_id: 1,
+						submitted_answer: '[101]',
+						correct_answer: [101],
+						tags: [{ tag_type: 'Difficulty', tag: ['Easy'] }]
+					}
+				]) as unknown as Response
+			);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest({
+			question_revision_id: 1,
+			response: [101],
+			candidate: mockCandidate,
+			is_reviewed: true
+		});
+		const response = await POST({ request, cookies: mockCookies } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(data.tags).toEqual([{ tag_type: 'Difficulty', tag: ['Easy'] }]);
+	});
+
+	it('should return tags as null when the review-feedback entry has none', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch)
+			.mockResolvedValueOnce(createMockResponse({ success: true }) as unknown as Response)
+			.mockResolvedValueOnce(
+				createMockResponse([
+					{ question_revision_id: 1, submitted_answer: '[101]', correct_answer: [101] }
+				]) as unknown as Response
+			);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest({
+			question_revision_id: 1,
+			response: [101],
+			candidate: mockCandidate,
+			is_reviewed: true
+		});
+		const response = await POST({ request, cookies: mockCookies } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(data.tags).toBeNull();
+	});
+
+	it('should return tags as null when feedback is not fetched (is_reviewed is not true)', async () => {
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+		vi.mocked(fetch).mockResolvedValueOnce(
+			createMockResponse({ success: true }) as unknown as Response
+		);
+
+		const mockCookies = createMockCookies();
+		const request = createMockRequest({
+			question_revision_id: 1,
+			response: [101],
+			candidate: mockCandidate
+		});
+		const response = await POST({ request, cookies: mockCookies } as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(data.tags).toBeNull();
+		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
 	it('should return 401 when cookie candidate is missing', async () => {
 		vi.mocked(getCandidate).mockReturnValue(null);
 
