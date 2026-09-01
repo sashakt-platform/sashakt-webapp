@@ -125,6 +125,8 @@ export type TQuestionSetCandidate = TQuestionSetBase & {
 
 export type TQuestionSetSummary = TQuestionSetBase & {
 	question_count: number;
+	// The type shared by the set's questions; null when the set mixes types.
+	question_type?: question_type_enum | null;
 };
 
 export type TTestQuestionsResponse = {
