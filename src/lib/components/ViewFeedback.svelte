@@ -5,7 +5,11 @@
 	import { buildQuestionSetGroups, normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
 	import { t } from 'svelte-i18n';
 	import { question_type_enum, type TCandidate, type TSelection } from '$lib/types';
-	import { getQuestionResult, GRADABLE_QUESTION_TYPES } from '$lib/helpers/feedbackHelpers';
+	import {
+		getCorrectSelectedCount,
+		getQuestionResult,
+		GRADABLE_QUESTION_TYPES
+	} from '$lib/helpers/feedbackHelpers';
 	import RichText from './RichText.svelte';
 	import QuestionMedia from './QuestionMedia.svelte';
 	import ResultBadge from './ResultBadge.svelte';
@@ -84,9 +88,15 @@
 							result={getQuestionResult(
 								item.question.question_type,
 								item.fb.submitted_answer,
-								item.fb.correct_answer
+								item.fb.correct_answer,
+								item.question.marking_scheme
 							)}
 							scheme={item.question.marking_scheme}
+							correctSelected={getCorrectSelectedCount(
+								item.question.question_type,
+								item.fb.submitted_answer,
+								item.fb.correct_answer
+							)}
 						/>
 					{/if}
 				</Card.Title>

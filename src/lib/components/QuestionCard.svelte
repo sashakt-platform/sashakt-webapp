@@ -14,7 +14,11 @@
 	} from '$lib/helpers/answerErrorHelpers';
 	import { question_type_enum, type TCandidate, type TQuestion, type TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
-	import { getQuestionResult, GRADABLE_QUESTION_TYPES } from '$lib/helpers/feedbackHelpers';
+	import {
+		getCorrectSelectedCount,
+		getQuestionResult,
+		GRADABLE_QUESTION_TYPES
+	} from '$lib/helpers/feedbackHelpers';
 	import RichText from './RichText.svelte';
 
 	import QuestionMedia from './QuestionMedia.svelte';
@@ -78,6 +82,17 @@
 	const feedbackResult = $derived(
 		isLocked && currentSelection?.correct_answer != null
 			? getQuestionResult(
+					question.question_type,
+					currentSelection?.response,
+					currentSelection?.correct_answer,
+					question.marking_scheme
+				)
+			: null
+	);
+
+	const feedbackCorrectSelected = $derived(
+		feedbackResult === 'partially-correct'
+			? getCorrectSelectedCount(
 					question.question_type,
 					currentSelection?.response,
 					currentSelection?.correct_answer
@@ -483,7 +498,11 @@
 				{/if}
 
 				{#if showFeedback && isLocked && question?.marking_scheme && GRADABLE_QUESTION_TYPES.has(question.question_type)}
-					<ResultBadge result={feedbackResult} scheme={question.marking_scheme} />
+					<ResultBadge
+						result={feedbackResult}
+						scheme={question.marking_scheme}
+						correctSelected={feedbackCorrectSelected}
+					/>
 				{/if}
 
 				{#if showMarkForReviewButton}
