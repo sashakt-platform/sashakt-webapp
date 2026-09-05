@@ -1,8 +1,14 @@
-name: Deploy to EC2  (Staging)
+name: Deploy Sashakt webapp to staging
 
 on:
   push:
     branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: deploy-staging-webapp
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -10,40 +16,66 @@ jobs:
     environment: staging
 
     steps:
-      - name: Checkout main branch
-        uses: actions/checkout@v4
-
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@master
+        env:
+          BACKEND_URL: ${{ vars.BACKEND_URL }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: BACKEND_URL,SENTRY_AUTH_TOKEN
+          script_stop: true
           script: |
-            cd /home/ubuntu
-            rm -rf sashakt-webapp
+            set -euo pipefail
 
-            git clone https://github.com/sashakt-platform/sashakt-webapp.git
+            APP_DIR=/home/ubuntu/src/sashakt-webapp
+            PM2_CONFIG=/home/ubuntu/src/sashakt-pm2.config.cjs
 
-            cd sashakt-webapp
-
-            echo "BACKEND_URL=${{ vars.BACKEND_URL }}" > .env
-            echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN}}" >> .env
-            echo "PUBLIC_APP_ENV=staging" >> .env
-
-            corepack enable
-            sudo corepack prepare pnpm@latest --activate
-
-            pnpm install
-            pnpm run build
-
-            if ! command -v pm2 &> /dev/null; then
-              sudo npm install -g pm2
-            fi
-
-            if [ -f "build/index.js" ]; then
-              pm2 restart sashakt-webapp --update-env || pm2 start build/index.js --name sashakt-webapp
-            else
-              echo "Build output not found: build/index.js"
+            # --- guard rails -------------------------------------------------
+            if [ -z "$BACKEND_URL" ]; then
+              echo "::error::BACKEND_URL is not defined in the staging environment"
               exit 1
             fi
+            if [ ! -f "$PM2_CONFIG" ]; then
+              echo "::error::$PM2_CONFIG not found — runtime config lives there"
+              exit 1
+            fi
+
+            # --- sync source -------------------------------------------------
+            if [ ! -d "$APP_DIR/.git" ]; then
+              git clone https://github.com/sashakt-platform/sashakt-webapp.git "$APP_DIR"
+            fi
+
+            cd "$APP_DIR"
+            git fetch --prune origin main
+            git reset --hard origin/main
+            git clean -fdx
+            echo "Deploying $(git rev-parse --short HEAD)"
+
+            # --- build-time env (Vite reads this at build only) --------------
+            {
+              echo "BACKEND_URL=$BACKEND_URL"
+              echo "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN"
+              echo "PUBLIC_APP_ENV=staging"
+            } > .env
+
+            corepack enable
+            sudo corepack prepare pnpm@11.25.0 --activate
+
+            # --- build -------------------------------------------------------
+            pnpm install --frozen-lockfile
+            pnpm run build
+
+            if [ ! -f build/index.js ]; then
+              echo "::error::Build output not found: build/index.js"
+              exit 1
+            fi
+
+            # --- run ---------------------------------------------------------
+            pm2 startOrReload "$PM2_CONFIG" --only sashakt-webapp --update-env
+            pm2 save
+
+            sleep 3
+            curl -fsS --connect-timeout 5 --max-time 15 -o /dev/null -w 'health: %{http_code}\n' http://127.0.0.1:3001/
