@@ -598,25 +598,31 @@
 			</div>
 		{/if}
 
-		<div class="mt-4 flex gap-3">
-			<Button
-				variant="outline"
-				class="flex-1"
-				onclick={handleClearAnswer}
-				disabled={isLocked || !hasClearableAnswer}
-			>
-				{$t('Clear answer')}
-			</Button>
-
-			{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== question_type_enum.MATRIXRATING && question.question_type !== question_type_enum.MATRIXINPUT}
-				<Button
-					variant="outline"
-					class="border-primary bg-primary/10 text-primary hover:bg-primary/20 flex-1"
-					onclick={confirmViewFeedback}
-				>
-					{$t('View Feedback')}
-				</Button>
-			{/if}
-		</div>
+		{@const showClear = !isLocked && hasClearableAnswer}
+		{@const showViewFeedback =
+			showFeedback &&
+			hasFeedbackAvailable &&
+			!isFeedbackViewed &&
+			question.question_type !== 'subjective' &&
+			question.question_type !== question_type_enum.MATRIXRATING &&
+			question.question_type !== question_type_enum.MATRIXINPUT}
+		{#if showClear || showViewFeedback}
+			<div class="mt-4 flex gap-3">
+				{#if showClear}
+					<Button variant="outline" class="flex-1" onclick={handleClearAnswer}>
+						{$t('Clear answer')}
+					</Button>
+				{/if}
+				{#if showViewFeedback}
+					<Button
+						variant="outline"
+						class="border-primary bg-primary/10 text-primary hover:bg-primary/20 flex-1"
+						onclick={confirmViewFeedback}
+					>
+						{$t('View Feedback')}
+					</Button>
+				{/if}
+			</div>
+		{/if}
 	</Card.Content>
 </Card.Root>
