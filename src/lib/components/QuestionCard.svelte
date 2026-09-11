@@ -489,7 +489,7 @@
 				{#if showMarkForReviewButton}
 					<button
 						type="button"
-						class="hidden items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors lg:flex
+						class="flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors
 							{isQuestionBookmarked
 							? 'border-warning bg-warning-subtle text-warning'
 							: 'border-border text-muted-foreground'}"
@@ -497,7 +497,9 @@
 						disabled={isLocked}
 					>
 						<Flag class="h-4 w-4 {isQuestionBookmarked ? 'fill-current' : ''}" />
-						{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
+						<span class="hidden sm:inline"
+							>{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}</span
+						>
 					</button>
 				{/if}
 			</div>
@@ -572,16 +574,6 @@
 			/>
 		{/if}
 
-		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== question_type_enum.MATRIXRATING && question.question_type !== question_type_enum.MATRIXINPUT}
-			<Button
-				variant="outline"
-				class="border-primary bg-primary/10 text-primary hover:bg-primary/20 mt-4 w-full"
-				onclick={confirmViewFeedback}
-			>
-				{$t('View Feedback')}
-			</Button>
-		{/if}
-
 		{#if showFeedback && isLocked && currentSelection?.tags?.length}
 			<div class="mt-4 flex flex-col gap-2">
 				{#each currentSelection.tags as tagGroup (tagGroup.tag_type)}
@@ -606,27 +598,24 @@
 			</div>
 		{/if}
 
-		<div class="mt-4 flex flex-col gap-3 sm:flex-row">
+		<div class="mt-4 flex gap-3">
 			<Button
 				variant="outline"
-				class="w-full sm:flex-1"
+				class="flex-1"
 				onclick={handleClearAnswer}
 				disabled={isLocked || !hasClearableAnswer}
 			>
 				{$t('Clear answer')}
 			</Button>
 
-			{#if showMarkForReviewButton}
-				<button
-					type="button"
-					class="mt-4 flex w-full items-center justify-center gap-1.5 text-sm font-medium transition-colors lg:hidden
-					{isQuestionBookmarked ? 'text-warning' : 'text-muted-foreground'}"
-					onclick={handleBookmark}
-					disabled={isLocked}
+			{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== question_type_enum.MATRIXRATING && question.question_type !== question_type_enum.MATRIXINPUT}
+				<Button
+					variant="outline"
+					class="border-primary bg-primary/10 text-primary hover:bg-primary/20 flex-1"
+					onclick={confirmViewFeedback}
 				>
-					<Flag class="h-4 w-4 {isQuestionBookmarked ? 'fill-current' : ''}" />
-					{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
-				</button>
+					{$t('View Feedback')}
+				</Button>
 			{/if}
 		</div>
 	</Card.Content>
