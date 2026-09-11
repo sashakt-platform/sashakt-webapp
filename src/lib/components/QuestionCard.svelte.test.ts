@@ -1103,7 +1103,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getByRole('button', { name: /clear answer/i })).toBeDisabled();
+			expect(screen.queryByRole('button', { name: /clear answer/i })).not.toBeInTheDocument();
 		});
 
 		it('should revert textarea on clear answer API failure', async () => {
@@ -2776,12 +2776,12 @@ describe('QuestionCard', () => {
 			});
 		});
 
-		it('should disable Clear answer button when matrix rating has no saved answer', () => {
+		it('should not show Clear answer button when matrix rating has no saved answer', () => {
 			render(QuestionCard, {
 				props: { question: mockMatrixRatingQuestion, ...defaultProps }
 			});
 
-			expect(screen.getByRole('button', { name: /clear answer/i })).toBeDisabled();
+			expect(screen.queryByRole('button', { name: /clear answer/i })).not.toBeInTheDocument();
 		});
 
 		it('should revert radios on clear answer API failure for matrix rating', async () => {
@@ -3272,12 +3272,12 @@ describe('QuestionCard', () => {
 			expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
 		});
 
-		it('should disable Clear answer button when matrix match has no saved answer', () => {
+		it('should not show Clear answer button when matrix match has no saved answer', () => {
 			render(QuestionCard, {
 				props: { question: mockMatrixMatchQuestion, ...defaultProps }
 			});
 
-			expect(screen.getByRole('button', { name: /clear answer/i })).toBeDisabled();
+			expect(screen.queryByRole('button', { name: /clear answer/i })).not.toBeInTheDocument();
 		});
 	});
 
@@ -3555,12 +3555,12 @@ describe('QuestionCard', () => {
 		});
 
 		describe('clear answer', () => {
-			it('should disable Clear answer button when matrix input has no saved answer', () => {
+			it('should not show Clear answer button when matrix input has no saved answer', () => {
 				render(QuestionCard, {
 					props: { question: mockMatrixInputTextQuestion, ...defaultProps }
 				});
 
-				expect(screen.getByRole('button', { name: /clear answer/i })).toBeDisabled();
+				expect(screen.queryByRole('button', { name: /clear answer/i })).not.toBeInTheDocument();
 			});
 
 			it('should revert input values on clear answer API failure', async () => {
@@ -3882,7 +3882,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getAllByRole('button', { name: /mark for review/i })).toHaveLength(2);
+			expect(screen.getAllByRole('button', { name: /mark for review/i })).toHaveLength(1);
 		});
 
 		it('shows Mark for Review button normally when showFeedback is false even if locked', () => {
@@ -3898,7 +3898,7 @@ describe('QuestionCard', () => {
 				}
 			});
 
-			expect(screen.getAllByRole('button', { name: /mark for review/i })).toHaveLength(2);
+			expect(screen.getAllByRole('button', { name: /mark for review/i })).toHaveLength(1);
 		});
 	});
 
