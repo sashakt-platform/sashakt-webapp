@@ -2,6 +2,8 @@
 	import { page } from '$app/state';
 	import Flag from '@lucide/svelte/icons/flag';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+	import Eye from '@lucide/svelte/icons/eye';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -609,16 +611,18 @@
 		{#if showClear || showViewFeedback}
 			<div class="mt-4 flex gap-3">
 				{#if showClear}
-					<Button variant="outline" class="flex-1" onclick={handleClearAnswer}>
+					<Button variant="outline" class="flex-1 gap-2" onclick={handleClearAnswer}>
+						<RotateCcw class="h-4 w-4" />
 						{$t('Clear answer')}
 					</Button>
 				{/if}
 				{#if showViewFeedback}
 					<Button
 						variant="outline"
-						class="border-primary bg-primary/10 text-primary hover:bg-primary/20 flex-1"
+						class="border-primary bg-primary/10 text-primary hover:bg-primary/20 flex-1 gap-2"
 						onclick={confirmViewFeedback}
 					>
+						<Eye class="h-4 w-4" />
 						{$t('View Feedback')}
 					</Button>
 				{/if}
