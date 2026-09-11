@@ -495,6 +495,7 @@
 							{isQuestionBookmarked
 							? 'border-warning bg-warning-subtle text-warning'
 							: 'border-border text-muted-foreground'}"
+						aria-label={isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
 						onclick={handleBookmark}
 						disabled={isLocked}
 					>
