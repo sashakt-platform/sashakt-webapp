@@ -2,6 +2,8 @@
 	import { page } from '$app/state';
 	import Flag from '@lucide/svelte/icons/flag';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+	import Eye from '@lucide/svelte/icons/eye';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -489,15 +491,18 @@
 				{#if showMarkForReviewButton}
 					<button
 						type="button"
-						class="hidden items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors lg:flex
+						class="flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors
 							{isQuestionBookmarked
 							? 'border-warning bg-warning-subtle text-warning'
 							: 'border-border text-muted-foreground'}"
+						aria-label={isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
 						onclick={handleBookmark}
 						disabled={isLocked}
 					>
 						<Flag class="h-4 w-4 {isQuestionBookmarked ? 'fill-current' : ''}" />
-						{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
+						<span class="hidden sm:inline"
+							>{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}</span
+						>
 					</button>
 				{/if}
 			</div>
@@ -572,16 +577,6 @@
 			/>
 		{/if}
 
-		{#if showFeedback && hasFeedbackAvailable && !isFeedbackViewed && question.question_type !== 'subjective' && question.question_type !== question_type_enum.MATRIXRATING && question.question_type !== question_type_enum.MATRIXINPUT}
-			<Button
-				variant="outline"
-				class="border-primary bg-primary/10 text-primary hover:bg-primary/20 mt-4 w-full"
-				onclick={confirmViewFeedback}
-			>
-				{$t('View Feedback')}
-			</Button>
-		{/if}
-
 		{#if showFeedback && isLocked && currentSelection?.tags?.length}
 			<div class="mt-4 flex flex-col gap-2">
 				{#each currentSelection.tags as tagGroup (tagGroup.tag_type)}
@@ -606,28 +601,33 @@
 			</div>
 		{/if}
 
-		<div class="mt-4 flex flex-col gap-3 sm:flex-row">
-			<Button
-				variant="outline"
-				class="w-full sm:flex-1"
-				onclick={handleClearAnswer}
-				disabled={isLocked || !hasClearableAnswer}
-			>
-				{$t('Clear answer')}
-			</Button>
-
-			{#if showMarkForReviewButton}
-				<button
-					type="button"
-					class="mt-4 flex w-full items-center justify-center gap-1.5 text-sm font-medium transition-colors lg:hidden
-					{isQuestionBookmarked ? 'text-warning' : 'text-muted-foreground'}"
-					onclick={handleBookmark}
-					disabled={isLocked}
-				>
-					<Flag class="h-4 w-4 {isQuestionBookmarked ? 'fill-current' : ''}" />
-					{isQuestionBookmarked ? $t('Unmark for review') : $t('Mark for review')}
-				</button>
-			{/if}
-		</div>
+		{@const showClear = !isLocked && hasClearableAnswer}
+		{@const showViewFeedback =
+			showFeedback &&
+			hasFeedbackAvailable &&
+			!isFeedbackViewed &&
+			question.question_type !== 'subjective' &&
+			question.question_type !== question_type_enum.MATRIXRATING &&
+			question.question_type !== question_type_enum.MATRIXINPUT}
+		{#if showClear || showViewFeedback}
+			<div class="mt-4 flex gap-3">
+				{#if showClear}
+					<Button variant="outline" class="flex-1 gap-2" onclick={handleClearAnswer}>
+						<RotateCcw class="h-4 w-4" />
+						{$t('Clear answer')}
+					</Button>
+				{/if}
+				{#if showViewFeedback}
+					<Button
+						variant="outline"
+						class="border-primary bg-primary/10 text-primary hover:bg-primary/20 flex-1 gap-2"
+						onclick={confirmViewFeedback}
+					>
+						<Eye class="h-4 w-4" />
+						{$t('View Feedback')}
+					</Button>
+				{/if}
+			</div>
+		{/if}
 	</Card.Content>
 </Card.Root>
