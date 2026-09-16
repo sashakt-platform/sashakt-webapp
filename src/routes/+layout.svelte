@@ -6,6 +6,7 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import { Button } from '$lib/components/ui/button';
 	import { navState } from '$lib/navState.svelte';
+	import { submitDialogState } from '$lib/submitDialogState.svelte';
 	import '../app.css';
 	import { register, init, isLoading } from 'svelte-i18n';
 	import { languages, DEFAULT_LANGUAGE } from '$lib/utils';
@@ -49,6 +50,15 @@
 
 		<div class="flex items-center justify-end gap-2">
 			{#if navState.active}
+				{#if showTimer}
+					<Button
+						size="sm"
+						class="text-xs"
+						onclick={() => (submitDialogState.open = true)}
+					>
+						{$t('Submit')}
+					</Button>
+				{/if}
 				<InstructionsDialog instructions={navState.instructions} iconOnly />
 				{#if navState.showPalette && navState.onPaletteOpen}
 					<div class="relative">
@@ -83,6 +93,9 @@
 						candidate={page.data.candidate}
 						{pauseTimerWhenInactive}
 					/>
+					<Button onclick={() => (submitDialogState.open = true)} class="text-sm">
+						{$t('Submit Test')}
+					</Button>
 					<div class="bg-border h-8 w-px"></div>
 				{/if}
 				<InstructionsDialog instructions={navState.instructions} />

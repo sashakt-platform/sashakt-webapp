@@ -20,15 +20,13 @@
 	} from '$lib/helpers/testSession';
 	import { createFormEnhanceHandler } from '$lib/helpers/formErrorHandler';
 	import { navState } from '$lib/navState.svelte';
+	import { submitDialogState } from '$lib/submitDialogState.svelte';
 	import type { TQuestion, TSelection, TQuestionSetCandidate } from '$lib/types';
 	import { t } from 'svelte-i18n';
 
 	let { candidate, testQuestions, testDetails = null } = $props();
 	let isSubmittingTest = $state(false);
 	let questionCardRef = $state<{ flushTime: () => void } | undefined>();
-
-	// for controlling confirmation dialog display
-	let submitDialogOpen = $state(false);
 
 	// question palette state
 	let paletteOpen = $state(false);
@@ -39,13 +37,13 @@
 	// let's keep dialog open when we get a submission error (from server or network)
 	$effect(() => {
 		if (page.form?.submitTest === false || page.form?.error || submitError) {
-			submitDialogOpen = true;
+			submitDialogState.open = true;
 		}
 	});
 
 	// let's clear the error when dialog is closed or canceled
 	$effect(() => {
-		if (!submitDialogOpen) {
+		if (!submitDialogState.open) {
 			submitError = null;
 		}
 	});
@@ -199,7 +197,7 @@
 	const handleSubmitTestEnhance = createFormEnhanceHandler({
 		setLoading: (loading) => (isSubmittingTest = loading),
 		setError: (error) => (submitError = error),
-		setDialogOpen: (open) => (submitDialogOpen = open)
+		setDialogOpen: (open) => (submitDialogState.open = open)
 	});
 </script>
 
@@ -341,95 +339,13 @@
 
 						<div class="flex justify-end">
 							{#if currentPage === Math.ceil(totalQuestions / perPage)}
-								<Dialog.Root bind:open={submitDialogOpen}>
-									<Dialog.Trigger>
-										<Button class="gap-1 pr-2.5">
-											{$t('Submit Test')}
-											<ArrowRight class="size-4" />
-										</Button>
-									</Dialog.Trigger>
-									{#if answeredAllMandatory(selectedQuestions, questions)}
-										<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
-											<div class="bg-muted px-6 pt-6 pr-12 pb-4">
-												<Dialog.Title class="text-normal">
-													{#if submitError || page.form?.submitTest === false || page.form?.error}
-														{$t('Submission Failed')}
-													{:else}
-														{$t('Submit Test?')}
-													{/if}
-												</Dialog.Title>
-											</div>
-
-											<div class="border-border border-t"></div>
-
-											<div class="bg-card px-6 py-6">
-												{#if submitError || page.form?.submitTest === false || page.form?.error}
-													<Dialog.Description class="space-y-2">
-														<p class="text-destructive text-sm font-medium">
-															{#if submitError}
-																{submitError}
-															{:else if page.form?.error}
-																{page.form.error}
-															{:else}
-																{$t('There was an issue with your previous submission.')}
-															{/if}
-														</p>
-														<p class="text-muted-foreground text-sm">
-															{$t('Please click Submit again to retry.')}
-														</p>
-													</Dialog.Description>
-												{:else}
-													<Dialog.Description class="space-y-3">
-														{#if markedForReviewCount > 0}
-															<p class="text-warning font-semibold">
-																{$t('You have {count} questions marked for review.', {
-																	values: { count: markedForReviewCount }
-																})}
-															</p>
-														{/if}
-														<p class="text-muted-foreground text-sm">
-															{$t(
-																'No changes will be allowed once you submit the test. Are you sure you want to submit?'
-															)}
-														</p>
-													</Dialog.Description>
-												{/if}
-											</div>
-
-											<div class="bg-card flex justify-end gap-3 px-6 pb-6">
-												<Dialog.Close class="flex-1 sm:flex-none">
-													<Button
-														variant="outline"
-														disabled={isSubmittingTest}
-														class="border-primary text-primary hover:text-primary w-full"
-													>
-														{$t('Cancel')}
-													</Button>
-												</Dialog.Close>
-												<form
-													class="flex-1 sm:flex-none"
-													action="?/submitTest"
-													method="POST"
-													use:enhance={handleSubmitTestEnhance}
-												>
-													<Button
-														type="submit"
-														disabled={isSubmittingTest}
-														class="w-full"
-														onclick={() => questionCardRef?.flushTime?.()}
-													>
-														{#if isSubmittingTest}
-															<Spinner />
-														{/if}
-														{$t('Submit')}
-													</Button>
-												</form>
-											</div>
-										</Dialog.Content>
-									{:else}
-										{@render mandatoryQuestionDialog(true)}
-									{/if}
-								</Dialog.Root>
+								<Button
+									class="gap-1 pr-2.5"
+									onclick={() => (submitDialogState.open = true)}
+								>
+									{$t('Submit Test')}
+									<ArrowRight class="size-4" />
+								</Button>
 							{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
 								<Dialog.Root>
 									<Dialog.Trigger>
@@ -475,4 +391,89 @@
 			showMarkForReview={testDetails.bookmark}
 		/>
 	{/if}
+
+	<!-- Submit dialog - always rendered so it can be triggered from the navbar button on any page -->
+	<Dialog.Root bind:open={submitDialogState.open}>
+		{#if answeredAllMandatory(selectedQuestions, questions)}
+			<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
+				<div class="bg-muted px-6 pt-6 pr-12 pb-4">
+					<Dialog.Title class="text-normal">
+						{#if submitError || page.form?.submitTest === false || page.form?.error}
+							{$t('Submission Failed')}
+						{:else}
+							{$t('Submit Test?')}
+						{/if}
+					</Dialog.Title>
+				</div>
+
+				<div class="border-border border-t"></div>
+
+				<div class="bg-card px-6 py-6">
+					{#if submitError || page.form?.submitTest === false || page.form?.error}
+						<Dialog.Description class="space-y-2">
+							<p class="text-destructive text-sm font-medium">
+								{#if submitError}
+									{submitError}
+								{:else if page.form?.error}
+									{page.form.error}
+								{:else}
+									{$t('There was an issue with your previous submission.')}
+								{/if}
+							</p>
+							<p class="text-muted-foreground text-sm">
+								{$t('Please click Submit again to retry.')}
+							</p>
+						</Dialog.Description>
+					{:else}
+						<Dialog.Description class="space-y-3">
+							{#if markedForReviewCount > 0}
+								<p class="text-warning font-semibold">
+									{$t('You have {count} questions marked for review.', {
+										values: { count: markedForReviewCount }
+									})}
+								</p>
+							{/if}
+							<p class="text-muted-foreground text-sm">
+								{$t(
+									'No changes will be allowed once you submit the test. Are you sure you want to submit?'
+								)}
+							</p>
+						</Dialog.Description>
+					{/if}
+				</div>
+
+				<div class="bg-card flex justify-end gap-3 px-6 pb-6">
+					<Dialog.Close class="flex-1 sm:flex-none">
+						<Button
+							variant="outline"
+							disabled={isSubmittingTest}
+							class="border-primary text-primary hover:text-primary w-full"
+						>
+							{$t('Cancel')}
+						</Button>
+					</Dialog.Close>
+					<form
+						class="flex-1 sm:flex-none"
+						action="?/submitTest"
+						method="POST"
+						use:enhance={handleSubmitTestEnhance}
+					>
+						<Button
+							type="submit"
+							disabled={isSubmittingTest}
+							class="w-full"
+							onclick={() => questionCardRef?.flushTime?.()}
+						>
+							{#if isSubmittingTest}
+								<Spinner />
+							{/if}
+							{$t('Submit')}
+						</Button>
+					</form>
+				</div>
+			</Dialog.Content>
+		{:else}
+			{@render mandatoryQuestionDialog(true)}
+		{/if}
+	</Dialog.Root>
 {/if}
