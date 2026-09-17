@@ -75,15 +75,13 @@
 							class="text-muted-foreground mt-1 text-xs leading-relaxed"
 						/>
 					{/if}
-					<p class="text-muted-foreground mt-2 text-xs leading-relaxed">
-						{#if canAttemptAllQuestions(group.section.max_questions_allowed_to_attempt, group.questions.length)}
-							{$t('You may attempt all questions in this section.')}
-						{:else}
+					{#if !canAttemptAllQuestions(group.section.max_questions_allowed_to_attempt, group.questions.length)}
+						<p class="text-muted-foreground mt-2 text-xs leading-relaxed">
 							{$t('You may attempt up to {count} questions in this section.', {
 								values: { count: group.section.max_questions_allowed_to_attempt }
 							})}
-						{/if}
-					</p>
+						</p>
+					{/if}
 					<div class="mt-3 grid gap-2" style:grid-template-columns="repeat({cols}, minmax(0, 1fr))">
 						{#each group.questions as question (question.id)}
 							{@const index = questionIndexById.get(question.id) ?? 0}
