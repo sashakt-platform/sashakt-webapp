@@ -51,12 +51,8 @@
 		<div class="flex items-center justify-end gap-2">
 			{#if navState.active}
 				{#if showTimer}
-					<Button
-						size="sm"
-						class="text-xs"
-						onclick={() => (submitDialogState.open = true)}
-					>
-						{$t('Submit')}
+					<Button size="sm" class="text-xs" onclick={() => (submitDialogState.open = true)}>
+						{$t('Submit Test')}
 					</Button>
 				{/if}
 				{#if !navState.showPalette}
