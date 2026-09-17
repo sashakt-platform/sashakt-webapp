@@ -339,12 +339,8 @@
 
 						<div class="flex justify-end">
 							{#if currentPage === Math.ceil(totalQuestions / perPage)}
-								<Button
-									class="gap-1 pr-2.5"
-									onclick={() => (submitDialogState.open = true)}
-								>
+								<Button onclick={() => (submitDialogState.open = true)}>
 									{$t('Submit Test')}
-									<ArrowRight class="size-4" />
 								</Button>
 							{:else if !answeredCurrentMandatory(paginationPage, perPage, selectedQuestions, questions)}
 								<Dialog.Root>
