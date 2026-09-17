@@ -59,7 +59,9 @@
 						{$t('Submit')}
 					</Button>
 				{/if}
-				<InstructionsDialog instructions={navState.instructions} iconOnly />
+				{#if !navState.showPalette}
+					<InstructionsDialog instructions={navState.instructions} iconOnly />
+				{/if}
 				{#if navState.showPalette && navState.onPaletteOpen}
 					<div class="relative">
 						<button

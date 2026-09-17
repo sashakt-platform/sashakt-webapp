@@ -1,5 +1,6 @@
 <script lang="ts">
 	import BottomSheetModal from './BottomSheetModal.svelte';
+	import InstructionsDialog from './InstructionsDialog.svelte';
 	import QuestionPaletteContent from './QuestionPaletteContent.svelte';
 	import type { TQuestion, TQuestionSetCandidate, TSelection } from '$lib/types';
 	import { t } from 'svelte-i18n';
@@ -11,7 +12,8 @@
 		selections,
 		currentQuestionIndex,
 		onNavigate,
-		showMarkForReview = true
+		showMarkForReview = true,
+		instructions = undefined
 	}: {
 		open: boolean;
 		questions: TQuestion[];
@@ -20,6 +22,7 @@
 		currentQuestionIndex: number;
 		onNavigate: (questionIndex: number) => void;
 		showMarkForReview?: boolean;
+		instructions?: string;
 	} = $props();
 
 	function handleQuestionClick(index: number) {
@@ -29,6 +32,9 @@
 </script>
 
 <BottomSheetModal bind:open title={$t('Question Palette')}>
+	{#snippet headerActions()}
+		<InstructionsDialog {instructions} iconOnly />
+	{/snippet}
 	<QuestionPaletteContent
 		{questions}
 		{questionSets}

@@ -7,10 +7,12 @@
 	let {
 		open = $bindable(false),
 		title,
+		headerActions,
 		children
 	}: {
 		open: boolean;
 		title: string;
+		headerActions?: Snippet;
 		children: Snippet;
 	} = $props();
 </script>
@@ -24,9 +26,14 @@
 
 		<div class="bg-muted flex items-center justify-between rounded-t-2xl px-4 py-5">
 			<h2 class="text-foreground text-base font-semibold">{title}</h2>
-			<Dialog.Close class="text-muted-foreground hover:text-foreground" aria-label={$t('Close')}>
-				<X class="size-5" />
-			</Dialog.Close>
+			<div class="flex items-center gap-2">
+				{#if headerActions}
+					{@render headerActions()}
+				{/if}
+				<Dialog.Close class="text-muted-foreground hover:text-foreground" aria-label={$t('Close')}>
+					<X class="size-5" />
+				</Dialog.Close>
+			</div>
 		</div>
 
 		<div class="min-h-0 flex-1 overflow-y-auto">

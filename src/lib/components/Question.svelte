@@ -389,6 +389,7 @@
 			{currentQuestionIndex}
 			onNavigate={navigateToQuestion}
 			showMarkForReview={testDetails.bookmark}
+			instructions={testDetails?.start_instructions}
 		/>
 	{/if}
 
