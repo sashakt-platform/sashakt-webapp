@@ -48,6 +48,13 @@
 		}
 	});
 
+	// reset shared singleton state on unmount
+	$effect(() => {
+		return () => {
+			submitDialogState.open = false;
+		};
+	});
+
 	const normalizedQuestionData = $derived(normalizeTestQuestions(testQuestions));
 	const questions: TQuestion[] = $derived(normalizedQuestionData.questions);
 	const questionSets: TQuestionSetCandidate[] = $derived(normalizedQuestionData.questionSets);
@@ -391,86 +398,88 @@
 
 	<!-- Submit dialog - always rendered so it can be triggered from the navbar button on any page -->
 	<Dialog.Root bind:open={submitDialogState.open}>
-		{#if answeredAllMandatory(selectedQuestions, questions)}
-			<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
-				<div class="bg-muted px-6 pt-6 pr-12 pb-4">
-					<Dialog.Title class="text-normal">
+		{#if submitDialogState.open}
+			{#if answeredAllMandatory(selectedQuestions, questions)}
+				<Dialog.Content class="gap-0 overflow-hidden p-0 sm:max-w-100">
+					<div class="bg-muted px-6 pt-6 pr-12 pb-4">
+						<Dialog.Title class="text-normal">
+							{#if submitError || page.form?.submitTest === false || page.form?.error}
+								{$t('Submission Failed')}
+							{:else}
+								{$t('Submit Test?')}
+							{/if}
+						</Dialog.Title>
+					</div>
+
+					<div class="border-border border-t"></div>
+
+					<div class="bg-card px-6 py-6">
 						{#if submitError || page.form?.submitTest === false || page.form?.error}
-							{$t('Submission Failed')}
-						{:else}
-							{$t('Submit Test?')}
-						{/if}
-					</Dialog.Title>
-				</div>
-
-				<div class="border-border border-t"></div>
-
-				<div class="bg-card px-6 py-6">
-					{#if submitError || page.form?.submitTest === false || page.form?.error}
-						<Dialog.Description class="space-y-2">
-							<p class="text-destructive text-sm font-medium">
-								{#if submitError}
-									{submitError}
-								{:else if page.form?.error}
-									{page.form.error}
-								{:else}
-									{$t('There was an issue with your previous submission.')}
-								{/if}
-							</p>
-							<p class="text-muted-foreground text-sm">
-								{$t('Please click Submit again to retry.')}
-							</p>
-						</Dialog.Description>
-					{:else}
-						<Dialog.Description class="space-y-3">
-							{#if markedForReviewCount > 0}
-								<p class="text-warning font-semibold">
-									{$t('You have {count} questions marked for review.', {
-										values: { count: markedForReviewCount }
-									})}
+							<Dialog.Description class="space-y-2">
+								<p class="text-destructive text-sm font-medium">
+									{#if submitError}
+										{submitError}
+									{:else if page.form?.error}
+										{page.form.error}
+									{:else}
+										{$t('There was an issue with your previous submission.')}
+									{/if}
 								</p>
-							{/if}
-							<p class="text-muted-foreground text-sm">
-								{$t(
-									'No changes will be allowed once you submit the test. Are you sure you want to submit?'
-								)}
-							</p>
-						</Dialog.Description>
-					{/if}
-				</div>
+								<p class="text-muted-foreground text-sm">
+									{$t('Please click Submit again to retry.')}
+								</p>
+							</Dialog.Description>
+						{:else}
+							<Dialog.Description class="space-y-3">
+								{#if markedForReviewCount > 0}
+									<p class="text-warning font-semibold">
+										{$t('You have {count} questions marked for review.', {
+											values: { count: markedForReviewCount }
+										})}
+									</p>
+								{/if}
+								<p class="text-muted-foreground text-sm">
+									{$t(
+										'No changes will be allowed once you submit the test. Are you sure you want to submit?'
+									)}
+								</p>
+							</Dialog.Description>
+						{/if}
+					</div>
 
-				<div class="bg-card flex justify-end gap-3 px-6 pb-6">
-					<Dialog.Close class="flex-1 sm:flex-none">
-						<Button
-							variant="outline"
-							disabled={isSubmittingTest}
-							class="border-primary text-primary hover:text-primary w-full"
+					<div class="bg-card flex justify-end gap-3 px-6 pb-6">
+						<Dialog.Close class="flex-1 sm:flex-none">
+							<Button
+								variant="outline"
+								disabled={isSubmittingTest}
+								class="border-primary text-primary hover:text-primary w-full"
+							>
+								{$t('Cancel')}
+							</Button>
+						</Dialog.Close>
+						<form
+							class="flex-1 sm:flex-none"
+							action="?/submitTest"
+							method="POST"
+							use:enhance={handleSubmitTestEnhance}
 						>
-							{$t('Cancel')}
-						</Button>
-					</Dialog.Close>
-					<form
-						class="flex-1 sm:flex-none"
-						action="?/submitTest"
-						method="POST"
-						use:enhance={handleSubmitTestEnhance}
-					>
-						<Button
-							type="submit"
-							disabled={isSubmittingTest}
-							class="w-full"
-							onclick={() => questionCardRef?.flushTime?.()}
-						>
-							{#if isSubmittingTest}
-								<Spinner />
-							{/if}
-							{$t('Submit')}
-						</Button>
-					</form>
-				</div>
-			</Dialog.Content>
-		{:else}
-			{@render mandatoryQuestionDialog(true)}
+							<Button
+								type="submit"
+								disabled={isSubmittingTest}
+								class="w-full"
+								onclick={() => questionCardRef?.flushTime?.()}
+							>
+								{#if isSubmittingTest}
+									<Spinner />
+								{/if}
+								{$t('Submit')}
+							</Button>
+						</form>
+					</div>
+				</Dialog.Content>
+			{:else}
+				{@render mandatoryQuestionDialog(true)}
+			{/if}
 		{/if}
 	</Dialog.Root>
 {/if}
