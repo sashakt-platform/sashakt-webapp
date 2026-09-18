@@ -50,11 +50,9 @@
 
 		<div class="flex items-center justify-end gap-2">
 			{#if navState.active}
-				{#if showTimer}
-					<Button size="sm" class="text-xs" onclick={() => (submitDialogState.open = true)}>
-						{$t('Submit Test')}
-					</Button>
-				{/if}
+				<Button size="sm" class="text-xs" onclick={() => (submitDialogState.open = true)}>
+					{$t('Submit Test')}
+				</Button>
 				{#if !navState.showPalette}
 					<InstructionsDialog instructions={navState.instructions} iconOnly />
 				{/if}
@@ -91,11 +89,11 @@
 						candidate={page.data.candidate}
 						{pauseTimerWhenInactive}
 					/>
-					<Button onclick={() => (submitDialogState.open = true)} class="text-sm">
-						{$t('Submit Test')}
-					</Button>
-					<div class="bg-border h-8 w-px"></div>
 				{/if}
+				<Button onclick={() => (submitDialogState.open = true)} class="text-sm">
+					{$t('Submit Test')}
+				</Button>
+				<div class="bg-border h-8 w-px"></div>
 				<InstructionsDialog instructions={navState.instructions} />
 			</div>
 		</div>
