@@ -34,17 +34,28 @@
 	// track network/submission errors
 	let submitError = $state<string | null>(null);
 
-	// let's keep dialog open when we get a submission error (from server or network)
+	// track which page.form failure has already been seen, so closing the dialog
+	// doesn't cause it to immediately reopen from stale form data
+	let seenFormResultKey = $state<string | null>(null);
+
+	// open for a new page.form failure (not yet dismissed) or a fresh client-side error
 	$effect(() => {
-		if (page.form?.submitTest === false || page.form?.error || submitError) {
+		const formKey =
+			page.form?.submitTest === false || page.form?.error ? JSON.stringify(page.form) : null;
+		if ((formKey !== null && formKey !== seenFormResultKey) || submitError) {
 			submitDialogState.open = true;
 		}
 	});
 
-	// let's clear the error when dialog is closed or canceled
+	// clear errors on close. record the dismissed page.form key so it doesn't reopen
+	// on the next effect run triggered by submitError being cleared
+	// this is important especially when we get network errors
 	$effect(() => {
 		if (!submitDialogState.open) {
 			submitError = null;
+			if (page.form?.submitTest === false || page.form?.error) {
+				seenFormResultKey = JSON.stringify(page.form);
+			}
 		}
 	});
 
