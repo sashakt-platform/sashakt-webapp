@@ -154,5 +154,7 @@
 	"Rate each row": "प्रत्येक पंक्ति को रेट करें",
 	"Enter a value for each row": "प्रत्येक पंक्ति के लिए मान दर्ज करें",
 	"Section": "अनुभाग",
-	"Attempt any {count} of {total}": "{total} में से किसी {count} का प्रयास करें"
+	"Attempt any {count} of {total}": "{total} में से किसी {count} का प्रयास करें",
+	"Partially Correct": "आंशिक रूप से सही",
+	"Attempt Rate": "प्रयास दर"
 }

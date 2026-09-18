@@ -1,34 +1,61 @@
 <script lang="ts">
 	import { t } from 'svelte-i18n';
 	import { cn } from '$lib/utils';
+	import { getPartialMarks, type TQuestionResult } from '$lib/helpers/feedbackHelpers';
 	import type { TMarks } from '$lib/types';
 
 	let {
 		result,
-		scheme
+		scheme,
+		correctSelected = null
 	}: {
-		result: 'correct' | 'incorrect' | 'unattempted' | null | undefined;
+		result: TQuestionResult | null | undefined;
 		scheme: TMarks;
+		/**
+		 * How many correct answers were selected. Required to report the marks a
+		 * partially correct answer earned, since the scheme awards a different
+		 * amount per count.
+		 */
+		correctSelected?: number | null;
 	} = $props();
+
+	const partialMarks = $derived(
+		result === 'partially-correct' && correctSelected != null
+			? getPartialMarks(scheme, correctSelected)
+			: null
+	);
 
 	const variantClass = $derived(
 		result === 'correct'
 			? 'bg-success-subtle text-success'
-			: result === 'incorrect'
-				? 'bg-error-subtle text-error'
-				: result === 'unattempted'
-					? 'bg-muted text-muted-foreground'
-					: null
+			: result === 'partially-correct'
+				? // Amber, not green: partial credit is not a correct answer, and green
+					// reads as one. `warning` already means "neither right nor wrong" here.
+					'bg-warning-subtle text-warning'
+				: result === 'incorrect'
+					? 'bg-error-subtle text-error'
+					: result === 'unattempted'
+						? 'bg-muted text-muted-foreground'
+						: null
 	);
+
+	const marks = (value: number) =>
+		`${value > 0 ? '+' : ''}${value} ${Math.abs(value) === 1 ? $t('mark') : $t('marks')}`;
 
 	const label = $derived(
 		result === 'correct'
-			? `${$t('Correct')}: +${scheme.correct} ${scheme.correct === 1 ? $t('mark') : $t('marks')}`
-			: result === 'incorrect'
-				? `${$t('Incorrect')}: ${scheme.wrong} ${Math.abs(scheme.wrong) === 1 ? $t('mark') : $t('marks')}`
-				: result === 'unattempted'
-					? `${$t('Not Attempted')}: ${scheme.skipped} ${scheme.skipped === 1 ? $t('mark') : $t('marks')}`
-					: null
+			? `${$t('Correct')}: ${marks(scheme.correct)}`
+			: result === 'partially-correct'
+				? // Fall back to the plain label when the caller did not say how many
+					// were correct, rather than showing marks that may be wrong.
+					partialMarks !== null
+					? `${$t('Partially Correct')}: ${marks(partialMarks)}`
+					: $t('Partially Correct')
+				: result === 'incorrect'
+					? `${$t('Incorrect')}: ${marks(scheme.wrong)}`
+					: result === 'unattempted'
+						? `${$t('Not Attempted')}: ${marks(scheme.skipped)}`
+						: null
 	);
 </script>
 
