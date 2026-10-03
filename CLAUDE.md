@@ -23,16 +23,24 @@ pnpm run i18n:extract     # Extract i18n strings from Svelte files into locale J
 
 ## Tech Stack
 
-- **SvelteKit 5** (Svelte 5 with `$state`/`$derived`/`$effect` runes) + TypeScript
+- **SvelteKit 3** on **Svelte 5** (`$state`/`$derived`/`$effect` runes) + TypeScript, built with **Vite 8**
 - **Tailwind CSS v4** (via `@tailwindcss/vite` plugin, not PostCSS)
 - **bits-ui** for UI primitives (Dialog, Combobox, Select, etc.)
 - **svelte-i18n** for internationalization (en-US, hi-IN)
 - **@sentry/sveltekit** for error tracking
 - **pnpm** as package manager
-- **Vitest** for unit tests, **Playwright** for e2e
+- **Vitest 5** for unit tests, **Playwright** for e2e
 - **@sveltejs/adapter-node** for production deployment
 
+TypeScript is pinned to `~6.0.x` on purpose. TypeScript 7 is the native rewrite and its JS API exposes only `version` — no `ts.sys`, no `parseJsonConfigFileContent` — which crashes SvelteKit's tsconfig handling. SvelteKit 3, svelte-check, and typescript-eslint all declare `typescript: ^6.0.0`. Don't let a dependency bump pull in 7.
+
 ## Architecture
+
+### Build Configuration
+
+There is **no `svelte.config.js`** — SvelteKit 3 removed it. Preprocessor, adapter, `alias`, and `tracing` all live in the `sveltekit({ ... })` call in `vite.config.ts`.
+
+`$lib` and `$locales` work only because they are declared in that `alias` map. SvelteKit 3 dropped the built-in `$lib` in favour of `#lib` subpath imports, so the build prints a `config_option_deprecated_alias` warning on every run. Leave it — removing it means rewriting ~350 import sites.
 
 ### API Proxy Pattern
 
@@ -74,6 +82,8 @@ Vitest uses two test projects configured in `vite.config.ts`:
 - **client**: `*.svelte.test.ts` files, jsdom environment, setup in `vitest-setup-client.ts`
 - **server**: `*.test.ts` files (excluding `.svelte.`), node environment
 
+When two timers land on the same fake timestamp (e.g. the 1s countdown and the 15s heartbeat in `TestTimer`), don't assert on a value that depends on which one runs first — Vitest has changed that ordering across versions. Assert the invariant the test is actually about instead.
+
 ### i18n
 
 Locale files are in `src/locales/`. Use `$t('key')` for translations. For tests, use `initializeI18nForTests()` and `setLocaleForTests()` from `src/lib/test-utils.ts`. The `$locales` path alias points to `src/locales`.
@@ -92,8 +102,14 @@ Core types are in `src/lib/types.ts`:
 
 ## Environment Variables
 
-- `BACKEND_URL` (private, server-only) - FastAPI backend URL
-- `PUBLIC_APP_ENV` (public) - Environment name (development/staging/production)
+Every env var must be declared in **`src/env.ts`** via `defineEnvVars`. SvelteKit 3 no longer infers them from the `PUBLIC_` prefix — an undeclared var simply isn't exported, and the build fails with `"FOO" is not exported by ... $env/static/private`. Adding a var means editing `src/env.ts` _and_ `.env`.
+
+- `BACKEND_URL` (`static: true`, server-only) - FastAPI backend URL
+- `PUBLIC_APP_ENV` (`public: true, static: true`) - Environment name (development/staging/production)
+
+Both are `static`, so they are inlined at build time and must be set when `pnpm run build` runs, not just at boot.
+
+Existing code imports these from `$env/static/private` / `$env/static/public`. Those paths still work but are deprecated aliases for `$app/env/private` / `$app/env/public`, and warn in dev.
 
 ## Svelte 5 Gotchas
 
@@ -103,7 +119,10 @@ Core types are in `src/lib/types.ts`:
 
 ## Known Issues
 
-Pre-existing type errors in `vite.config.ts`, `select-label.svelte`, `CandidateProfile.svelte` — these can be ignored.
+Neither `pnpm run check` nor `pnpm run lint` is currently clean, and neither gates CI — `.github/workflows/test-run.yml` only runs `vitest run --coverage`, and deploys only run `pnpm run build`. Keep **tests and build** green; treat the two below as background noise unless you're deliberately cleaning them up.
+
+- **`pnpm run check`**: ~205 errors, concentrated in `*.test.ts` files (loose mock object literals vs. generated `PageData`/`ActionData` types). Also long-standing errors in `vite.config.ts`, `select-label.svelte`, `CandidateProfile.svelte`. Note `$app/tsconfig` sets `"types": ["$app/types"]`, so root config files (`playwright.config.ts`, `eslint.config.js`) have no Node globals and report `Cannot find name 'process'`.
+- **`pnpm run lint`**: ~217 `@typescript-eslint/no-explicit-any` errors, all in test files.
 
 ## Conventions
 

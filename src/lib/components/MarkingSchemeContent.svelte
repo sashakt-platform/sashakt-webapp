@@ -18,7 +18,9 @@
 	</div>
 	<div class="flex justify-between gap-4">
 		<span class="text-error font-semibold">{$t('Incorrect')}</span>
-		<span class="text-error font-semibold">{scheme.wrong > 0 ? `+${scheme.wrong}` : scheme.wrong}</span>
+		<span class="text-error font-semibold"
+			>{scheme.wrong > 0 ? `+${scheme.wrong}` : scheme.wrong}</span
+		>
 	</div>
 	<div class="flex justify-between gap-4">
 		<span class="text-warning font-semibold">{$t('Unanswered')}</span>

@@ -260,10 +260,10 @@
 			<table class="w-full border-collapse text-xs sm:text-sm">
 				<thead>
 					<tr>
-						<th class="border border-border bg-muted px-3 py-2 text-left font-semibold">
+						<th class="border-border bg-muted border px-3 py-2 text-left font-semibold">
 							{matrixOpts.rows.label}
 						</th>
-						<th class="border border-border bg-muted px-3 py-2 text-left font-semibold">
+						<th class="border-border bg-muted border px-3 py-2 text-left font-semibold">
 							{matrixOpts.columns.label}
 						</th>
 					</tr>
@@ -271,10 +271,10 @@
 				<tbody>
 					{#each matrixOpts.rows.items as row (row.id)}
 						<tr class="hover:bg-muted/50">
-							<td class="border border-border px-3 py-2 font-medium">
+							<td class="border-border border px-3 py-2 font-medium">
 								<span class="font-semibold">{row.key}.</span>
 							</td>
-							<td class="border border-border px-3 py-2">
+							<td class="border-border border px-3 py-2">
 								<input
 									type={inputType}
 									class="border-input bg-background focus-visible:ring-ring w-full rounded-lg border px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"

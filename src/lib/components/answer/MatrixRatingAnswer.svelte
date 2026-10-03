@@ -229,11 +229,11 @@
 			<table class="w-full border-collapse text-xs sm:text-sm">
 				<thead>
 					<tr>
-						<th class="border border-border bg-muted px-3 py-2 text-left font-semibold">
+						<th class="border-border bg-muted border px-3 py-2 text-left font-semibold">
 							{matrixOpts.rows.label}
 						</th>
 						{#each matrixOpts.columns.items as col (col.id)}
-							<th class="border border-border bg-muted px-3 py-2 text-center font-semibold">
+							<th class="border-border bg-muted border px-3 py-2 text-center font-semibold">
 								{col.key}
 							</th>
 						{/each}
@@ -242,9 +242,9 @@
 				<tbody>
 					{#each matrixOpts.rows.items as row (row.id)}
 						<tr class="hover:bg-muted/50">
-							<td class="border border-border px-3 py-2 font-medium">{row.value}</td>
+							<td class="border-border border px-3 py-2 font-medium">{row.value}</td>
 							{#each matrixOpts.columns.items as col (col.id)}
-								<td class="border border-border px-3 py-2 text-center">
+								<td class="border-border border px-3 py-2 text-center">
 									<input
 										type="radio"
 										name="omr-matrix-{question.id}-row-{row.id}"

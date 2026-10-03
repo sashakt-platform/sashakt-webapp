@@ -296,14 +296,14 @@
 					<tr>
 						<th class="w-10 px-3 py-2"></th>
 						{#each matrix.columns.items as col (col.id)}
-							<th class="px-5 py-2 text-center font-semibold text-foreground">{col.key}</th>
+							<th class="text-foreground px-5 py-2 text-center font-semibold">{col.key}</th>
 						{/each}
 					</tr>
 				</thead>
 				<tbody>
 					{#each matrix.rows.items as row (row.id)}
 						<tr>
-							<td class="px-3 py-3 font-semibold text-foreground">{row.key}</td>
+							<td class="text-foreground px-3 py-3 font-semibold">{row.key}</td>
 							{#each matrix.columns.items as col (col.id)}
 								{@const isChecked = (matrixSelections[String(row.id)] ?? []).includes(col.id)}
 								<td class="px-5 py-3 text-center">

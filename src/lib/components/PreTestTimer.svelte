@@ -50,7 +50,10 @@
 
 		<div class="bg-card flex flex-col gap-6 p-8">
 			<Dialog.Description class="text-muted-foreground text-sm">
-				{$t('test_begin_prefix')}<strong class="text-foreground font-semibold">{formattedDate}</strong>{$t('test_begin_mid')}<strong class="text-foreground font-semibold">{formattedTime}</strong>{$t('test_begin_suffix')}
+				{$t('test_begin_prefix')}<strong class="text-foreground font-semibold"
+					>{formattedDate}</strong
+				>{$t('test_begin_mid')}<strong class="text-foreground font-semibold">{formattedTime}</strong
+				>{$t('test_begin_suffix')}
 			</Dialog.Description>
 
 			<Dialog.Close>
