@@ -23,7 +23,7 @@ pnpm run i18n:extract     # Extract i18n strings from Svelte files into locale J
 
 ## Tech Stack
 
-- **SvelteKit 3** on **Svelte 5** (`$state`/`$derived`/`$effect` runes) + TypeScript, built with **Vite 8**
+- **SvelteKit 2** on **Svelte 5** (`$state`/`$derived`/`$effect` runes) + TypeScript, built with **Vite 8**
 - **Tailwind CSS v4** (via `@tailwindcss/vite` plugin, not PostCSS)
 - **bits-ui** for UI primitives (Dialog, Combobox, Select, etc.)
 - **svelte-i18n** for internationalization (en-US, hi-IN)
@@ -32,15 +32,11 @@ pnpm run i18n:extract     # Extract i18n strings from Svelte files into locale J
 - **Vitest 5** for unit tests, **Playwright** for e2e
 - **@sveltejs/adapter-node** for production deployment
 
-TypeScript is pinned to `~6.0.x` on purpose. TypeScript 7 is the native rewrite and its JS API exposes only `version` — no `ts.sys`, no `parseJsonConfigFileContent` — which crashes SvelteKit's tsconfig handling. SvelteKit 3, svelte-check, and typescript-eslint all declare `typescript: ^6.0.0`. Don't let a dependency bump pull in 7.
+SvelteKit is deliberately held at 2.x. Version 3 removes `svelte.config.js`, drops the built-in `$lib`, and requires every env var to be declared in `src/env.ts`. Upgrade it on its own, not as part of a routine dependency bump. `sashakt-portal` is held at the same versions.
+
+`typescript` is held at `~7.0.2`, matching `sashakt-portal`. See Known Issues for what that costs.
 
 ## Architecture
-
-### Build Configuration
-
-There is **no `svelte.config.js`** — SvelteKit 3 removed it. Preprocessor, adapter, `alias`, and `tracing` all live in the `sveltekit({ ... })` call in `vite.config.ts`.
-
-`$lib` and `$locales` work only because they are declared in that `alias` map. SvelteKit 3 dropped the built-in `$lib` in favour of `#lib` subpath imports, so the build prints a `config_option_deprecated_alias` warning on every run. Leave it — removing it means rewriting ~350 import sites.
 
 ### API Proxy Pattern
 
@@ -82,7 +78,7 @@ Vitest uses two test projects configured in `vite.config.ts`:
 - **client**: `*.svelte.test.ts` files, jsdom environment, setup in `vitest-setup-client.ts`
 - **server**: `*.test.ts` files (excluding `.svelte.`), node environment
 
-When two timers land on the same fake timestamp (e.g. the 1s countdown and the 15s heartbeat in `TestTimer`), don't assert on a value that depends on which one runs first — Vitest has changed that ordering across versions. Assert the invariant the test is actually about instead.
+When two timers land on the same fake timestamp (e.g. the 1s countdown and the 15s heartbeat in `TestTimer`), don't assert on a value that depends on which one runs first. Vitest has changed that ordering across versions. Assert the invariant the test is actually about instead.
 
 ### i18n
 
@@ -102,16 +98,8 @@ Core types are in `src/lib/types.ts`:
 
 ## Environment Variables
 
-Every env var must be declared in **`src/env.ts`** via `defineEnvVars`. SvelteKit 3 no longer infers them from the `PUBLIC_` prefix — an undeclared var simply isn't exported, and the build fails with `"FOO" is not exported by ... $env/static/private`. Adding a var means editing `src/env.ts` _and_ `.env`.
-
-- `BACKEND_URL` (`static: true`, server-only) - FastAPI backend URL
-- `PUBLIC_APP_ENV` (`public: true, static: true`) - Environment name (development/staging/production)
-
-Both are `static`, so they are inlined at build time and must be set when `pnpm run build` runs, not just at boot.
-
-SvelteKit 3 validates every declared variable at startup, so **Vitest refuses to start without them** even though tests mock `$env/static/private`. Committed placeholders live in **`.env.test`**, which Vite loads only for `mode=test` — that keeps `vitest` working in CI and on a fresh clone with no `.env`, while a production build still reads `.env` and still fails loudly on a missing `BACKEND_URL`. Declare a new var in all three places: `src/env.ts`, `.env.example`, and `.env.test`.
-
-Existing code imports these from `$env/static/private` / `$env/static/public`. Those paths still work but are deprecated aliases for `$app/env/private` / `$app/env/public`, and warn in dev.
+- `BACKEND_URL` (private, server-only) - FastAPI backend URL
+- `PUBLIC_APP_ENV` (public) - Environment name (development/staging/production)
 
 ## Svelte 5 Gotchas
 
@@ -121,10 +109,18 @@ Existing code imports these from `$env/static/private` / `$env/static/public`. T
 
 ## Known Issues
 
-Neither `pnpm run check` nor `pnpm run lint` is currently clean, and neither gates CI — `.github/workflows/test-run.yml` only runs `vitest run --coverage`, and deploys only run `pnpm run build`. Keep **tests and build** green; treat the two below as background noise unless you're deliberately cleaning them up.
+`pnpm run check` and `pnpm run lint` both crash on startup, and have since `typescript` moved to `~7.0.2` in `76e3422`. TypeScript 7 is the native (Go) compiler and its npm package exposes only `version`, no JS API, so svelte-check rejects it:
 
-- **`pnpm run check`**: ~205 errors, concentrated in `*.test.ts` files (loose mock object literals vs. generated `PageData`/`ActionData` types). Also long-standing errors in `vite.config.ts`, `select-label.svelte`, `CandidateProfile.svelte`. Note `$app/tsconfig` sets `"types": ["$app/types"]`, so root config files (`playwright.config.ts`, `eslint.config.js`) have no Node globals and report `Cannot find name 'process'`.
-- **`pnpm run lint`**: ~217 `@typescript-eslint/no-explicit-any` errors, all in test files.
+```
+Error: TypeScript 7 support currently requires both TypeScript 7 and TypeScript 6
+installed in your project, and requires using the --tsgo or --tsgo-experimental-api flag.
+```
+
+Making them run again needs `typescript` back at `~6` for the JS API that svelte-check and typescript-eslint load, `@typescript/native` as an npm alias for `typescript@7`, and `--tsgo` on the `check` script. `sashakt-portal` is in the same state, so fix both together or neither.
+
+Neither command gates CI. `.github/workflows/test-run.yml` runs only `vitest run --coverage`, and deploys run only `pnpm run build`. Keep tests and build green.
+
+Behind the crash, when the commands were briefly made to run, there were ~175 `check` errors and ~219 `lint` errors, almost all in `*.test.ts` files: mock object literals measured against generated `PageData`/`ActionData`/`PageProps` types, and `@typescript-eslint/no-explicit-any`. Also long-standing errors in `vite.config.ts`, `select-label.svelte`, `CandidateProfile.svelte`.
 
 ## Conventions
 
