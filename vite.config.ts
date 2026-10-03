@@ -7,10 +7,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [
 		sentrySvelteKit({
-			sourceMapsUploadOptions: {
-				org: 'project-tech4dev',
-				project: 'sashakt-webapp'
-			}
+			org: 'project-tech4dev',
+			project: 'sashakt-webapp'
 		}),
 		tailwindcss(),
 		sveltekit()
