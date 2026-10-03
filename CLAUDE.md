@@ -109,6 +109,8 @@ Every env var must be declared in **`src/env.ts`** via `defineEnvVars`. SvelteKi
 
 Both are `static`, so they are inlined at build time and must be set when `pnpm run build` runs, not just at boot.
 
+SvelteKit 3 validates every declared variable at startup, so **Vitest refuses to start without them** even though tests mock `$env/static/private`. Committed placeholders live in **`.env.test`**, which Vite loads only for `mode=test` — that keeps `vitest` working in CI and on a fresh clone with no `.env`, while a production build still reads `.env` and still fails loudly on a missing `BACKEND_URL`. Declare a new var in all three places: `src/env.ts`, `.env.example`, and `.env.test`.
+
 Existing code imports these from `$env/static/private` / `$env/static/public`. Those paths still work but are deprecated aliases for `$app/env/private` / `$app/env/public`, and warn in dev.
 
 ## Svelte 5 Gotchas
