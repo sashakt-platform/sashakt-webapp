@@ -1,4 +1,4 @@
-import { sentrySvelteKit } from '@sentry/sveltekit';
+import { sentrySvelteKit } from '@sentry/sveltekit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { svelteTesting } from '@testing-library/svelte/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
@@ -7,10 +7,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [
 		sentrySvelteKit({
-			sourceMapsUploadOptions: {
-				org: 'project-tech4dev',
-				project: 'sashakt-webapp'
-			}
+			org: 'project-tech4dev',
+			project: 'sashakt-webapp'
 		}),
 		tailwindcss(),
 		sveltekit()

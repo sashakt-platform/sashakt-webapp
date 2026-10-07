@@ -146,11 +146,7 @@
 <div class="bg-card fixed bottom-0 z-20 w-screen border-t px-4 py-4">
 	<div class="mx-auto max-w-xl lg:flex lg:justify-end">
 		{#if onContinue}
-			<Button
-				onclick={handleContinue}
-				disabled={!allRequiredFieldsFilled}
-				class="w-full lg:w-auto"
-			>
+			<Button onclick={handleContinue} disabled={!allRequiredFieldsFilled} class="w-full lg:w-auto">
 				{$t('Continue to Test')} →
 			</Button>
 		{:else}

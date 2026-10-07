@@ -246,7 +246,7 @@ describe('TestTimer', () => {
 			)
 			.mockResolvedValueOnce(createMockResponse({ time_left: 90 }) as unknown as Response);
 
-		render(TestTimer, {
+		const { container } = render(TestTimer, {
 			props: {
 				timeLeft: 120,
 				candidate: mockCandidate,
@@ -254,18 +254,25 @@ describe('TestTimer', () => {
 			}
 		});
 
+		const readTimer = () => container.textContent?.match(/\d{2}:\d{2}:\d{2}/)?.[0];
+
 		await Promise.resolve();
 		await vi.advanceTimersByTimeAsync(15000);
 		await Promise.resolve();
 		await Promise.resolve();
 
-		expect(screen.getByText('00:01:30')).toBeInTheDocument();
+		// The heartbeat sync clamps the countdown to 90s. The 15s countdown tick
+		// fires at that same timestamp, so whether it lands just before or just
+		// after the response resolves shifts the display by one second.
+		const afterFreshSync = readTimer();
+		expect(afterFreshSync).toMatch(/^00:01:(29|30)$/);
 
 		resolveFirstRequest?.(createMockResponse({ time_left: 110 }) as unknown as Response);
 		await Promise.resolve();
 		await Promise.resolve();
 
-		expect(screen.getByText('00:01:30')).toBeInTheDocument();
+		// the stale response must not roll the countdown back up to 110s
+		expect(readTimer()).toBe(afterFreshSync);
 	});
 
 	it('does not sync timer when pauseTimerWhenInactive is enabled without a candidate', async () => {

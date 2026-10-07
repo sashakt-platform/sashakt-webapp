@@ -23,14 +23,18 @@ pnpm run i18n:extract     # Extract i18n strings from Svelte files into locale J
 
 ## Tech Stack
 
-- **SvelteKit 5** (Svelte 5 with `$state`/`$derived`/`$effect` runes) + TypeScript
+- **SvelteKit 2** on **Svelte 5** (`$state`/`$derived`/`$effect` runes) + TypeScript, built with **Vite 8**
 - **Tailwind CSS v4** (via `@tailwindcss/vite` plugin, not PostCSS)
 - **bits-ui** for UI primitives (Dialog, Combobox, Select, etc.)
 - **svelte-i18n** for internationalization (en-US, hi-IN)
 - **@sentry/sveltekit** for error tracking
 - **pnpm** as package manager
-- **Vitest** for unit tests, **Playwright** for e2e
+- **Vitest 5** for unit tests, **Playwright** for e2e
 - **@sveltejs/adapter-node** for production deployment
+
+SvelteKit is deliberately held at 2.x. Version 3 removes `svelte.config.js`, drops the built-in `$lib`, and requires every env var to be declared in `src/env.ts`. Upgrade it on its own, not as part of a routine dependency bump. `sashakt-portal` is held at the same versions.
+
+`typescript` is held at `~7.0.2`, matching `sashakt-portal`. See Known Issues for what that costs.
 
 ## Architecture
 
@@ -74,6 +78,8 @@ Vitest uses two test projects configured in `vite.config.ts`:
 - **client**: `*.svelte.test.ts` files, jsdom environment, setup in `vitest-setup-client.ts`
 - **server**: `*.test.ts` files (excluding `.svelte.`), node environment
 
+When two timers land on the same fake timestamp (e.g. the 1s countdown and the 15s heartbeat in `TestTimer`), don't assert on a value that depends on which one runs first. Vitest has changed that ordering across versions. Assert the invariant the test is actually about instead.
+
 ### i18n
 
 Locale files are in `src/locales/`. Use `$t('key')` for translations. For tests, use `initializeI18nForTests()` and `setLocaleForTests()` from `src/lib/test-utils.ts`. The `$locales` path alias points to `src/locales`.
@@ -103,7 +109,18 @@ Core types are in `src/lib/types.ts`:
 
 ## Known Issues
 
-Pre-existing type errors in `vite.config.ts`, `select-label.svelte`, `CandidateProfile.svelte` — these can be ignored.
+`pnpm run check` and `pnpm run lint` both crash on startup, and have since `typescript` moved to `~7.0.2` in `76e3422`. TypeScript 7 is the native (Go) compiler and its npm package exposes only `version`, no JS API, so svelte-check rejects it:
+
+```
+Error: TypeScript 7 support currently requires both TypeScript 7 and TypeScript 6
+installed in your project, and requires using the --tsgo or --tsgo-experimental-api flag.
+```
+
+Making them run again needs `typescript` back at `~6` for the JS API that svelte-check and typescript-eslint load, `@typescript/native` as an npm alias for `typescript@7`, and `--tsgo` on the `check` script. `sashakt-portal` is in the same state, so fix both together or neither.
+
+Neither command gates CI. `.github/workflows/test-run.yml` runs only `vitest run --coverage`, and deploys run only `pnpm run build`. Keep tests and build green.
+
+Behind the crash, when the commands were briefly made to run, there were ~175 `check` errors and ~219 `lint` errors, almost all in `*.test.ts` files: mock object literals measured against generated `PageData`/`ActionData`/`PageProps` types, and `@typescript-eslint/no-explicit-any`. Also long-standing errors in `vite.config.ts`, `select-label.svelte`, `CandidateProfile.svelte`.
 
 ## Conventions
 

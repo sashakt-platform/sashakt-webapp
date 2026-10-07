@@ -218,8 +218,7 @@
 					candidateInput = e.currentTarget.value;
 					scheduleSave();
 				}}
-				maxlength={question.subjective_answer_limit || undefined}
-			></textarea>
+				maxlength={question.subjective_answer_limit || undefined}></textarea>
 			<div class="flex items-center justify-between">
 				{#if saveStatus === 'saving'}
 					<span class="text-muted-foreground flex items-center gap-1 text-xs">
@@ -265,8 +264,7 @@
 				candidateInput = e.currentTarget.value;
 				scheduleSave();
 			}}
-			maxlength={question.subjective_answer_limit || undefined}
-		></textarea>
+			maxlength={question.subjective_answer_limit || undefined}></textarea>
 		<div class="flex items-center justify-between">
 			<div class="flex items-center gap-2">
 				{#if saveStatus === 'saving'}
