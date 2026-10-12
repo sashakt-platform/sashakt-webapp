@@ -156,5 +156,6 @@
 	"Section": "अनुभाग",
 	"Attempt any {count} of {total}": "{total} में से किसी {count} का प्रयास करें",
 	"Partially Correct": "आंशिक रूप से सही",
-	"Attempt Rate": "प्रयास दर"
+	"Attempt Rate": "प्रयास दर",
+	"Section summary": "अनुभाग सारांश"
 }

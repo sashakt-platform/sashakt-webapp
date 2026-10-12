@@ -73,7 +73,6 @@
 			resultData={form.result}
 			testDetails={data.testData}
 			feedback={form.feedback}
-			testQuestions={form.testQuestions}
 			onViewFeedback={handleViewFeedback}
 		/>
 	{:else if data.submitted}
@@ -82,7 +81,6 @@
 				resultData={data.result}
 				testDetails={data.testData}
 				feedback={data.feedback}
-				testQuestions={data.testQuestions}
 				onViewFeedback={handleViewFeedback}
 			/>
 		{:else}

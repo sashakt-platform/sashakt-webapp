@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/svelte';
 import TestResult from './TestResult.svelte';
 import {
 	mockResultData,
 	mockResultDataWithCertificate,
-	mockSectionedTestQuestionsResponse,
+	mockSectionedResultData,
 	mockTestData,
 	setLocaleForTests
 } from '$lib/test-utils';
@@ -226,57 +226,140 @@ describe('TestResult - View Feedback button', () => {
 	});
 });
 
-describe('TestResult - Section summary', () => {
-	it('should render section-wise summary on final result page for sectioned tests', () => {
+describe('TestResult - Partial credit', () => {
+	it('shows the API partially correct count and leaves Correct untouched', () => {
 		render(TestResult, {
 			props: {
-				resultData: mockResultData,
-				testDetails: mockTestData,
-				testQuestions: mockSectionedTestQuestionsResponse,
-				feedback: [
-					{ question_revision_id: 1, submitted_answer: [101], correct_answer: [102] },
-					{ question_revision_id: 2, submitted_answer: [201], correct_answer: [201, 202] }
-				]
+				resultData: { ...mockResultData, correct_answer: 4, partially_correct: 7 },
+				testDetails: mockTestData
 			}
+		});
+
+		expect(screen.getByText('Partially Correct')).toBeInTheDocument();
+		expect(screen.getByText('07')).toBeInTheDocument();
+		expect(screen.getByText('04')).toBeInTheDocument();
+	});
+
+	it('says nothing about partial credit when none was earned', () => {
+		render(TestResult, {
+			props: { resultData: mockResultData, testDetails: mockTestData }
+		});
+
+		expect(screen.queryByText('Partially Correct')).not.toBeInTheDocument();
+	});
+
+	it('sums mandatory and optional skips into Unanswered', () => {
+		render(TestResult, {
+			props: {
+				resultData: {
+					...mockResultData,
+					correct_answer: 0,
+					incorrect_answer: 0,
+					mandatory_not_attempted: 3,
+					optional_not_attempted: 4
+				},
+				testDetails: mockTestData
+			}
+		});
+
+		expect(screen.getByText('07')).toBeInTheDocument();
+	});
+});
+
+describe('TestResult - Section summary', () => {
+	it('renders one row per section from the result API', () => {
+		render(TestResult, {
+			props: { resultData: mockSectionedResultData, testDetails: mockTestData }
 		});
 
 		expect(screen.getByText('Section summary')).toBeInTheDocument();
 		expect(screen.getByText('Physics')).toBeInTheDocument();
 		expect(screen.getByText('Chemistry')).toBeInTheDocument();
-		expect(screen.getAllByText('Questions').length).toBeGreaterThan(0);
-		expect(screen.getAllByText('Attempted').length).toBeGreaterThan(0);
-		expect(screen.getAllByText('Attempt Rate').length).toBeGreaterThan(0);
-		expect(screen.getAllByText('Accuracy').length).toBeGreaterThan(0);
+		for (const heading of [
+			'Marks',
+			'Questions',
+			'Attempted',
+			'Incorrect',
+			'Attempt Rate',
+			'Accuracy'
+		]) {
+			expect(screen.getAllByText(heading).length).toBeGreaterThan(0);
+		}
+		expect(screen.getByText('4/8')).toBeInTheDocument();
+		expect(screen.getByText('75%')).toBeInTheDocument();
+		expect(screen.getByText('100%')).toBeInTheDocument();
 	});
 
-	it('counts a partially correct answer as half when scoring accuracy', () => {
-		// Question 2 selects 1 of 2 correct options with nothing wrong, so with a
-		// partial ladder it is neither correct nor wrong. One attempt, half credit.
+	it('needs no review payload to render the section table', () => {
 		render(TestResult, {
 			props: {
-				resultData: mockResultData,
+				resultData: mockSectionedResultData,
 				testDetails: mockTestData,
-				testQuestions: mockSectionedTestQuestionsResponse,
-				feedback: [{ question_revision_id: 2, submitted_answer: [201], correct_answer: [201, 202] }]
+				feedback: null
 			}
 		});
 
-		expect(screen.getAllByText('50%').length).toBeGreaterThan(0);
+		expect(screen.getByText('Physics')).toBeInTheDocument();
 	});
 
-	it('says nothing about partial credit when none was earned', () => {
-		// An org whose tests award no partial credit should never see the concept:
-		// no top-line row and no column of zeroes.
+	it('shows the partial column when any section earned partial credit', () => {
+		render(TestResult, {
+			props: { resultData: mockSectionedResultData, testDetails: mockTestData }
+		});
+
+		// Once in the overall rows and once as a column heading.
+		expect(screen.getAllByText('Partially Correct')).toHaveLength(2);
+	});
+
+	it('hides the partial column when no section earned partial credit', () => {
+		const sections = mockSectionedResultData.sections!.map((s) => ({
+			...s,
+			partially_correct: 0
+		}));
+
 		render(TestResult, {
 			props: {
-				resultData: mockResultData,
-				testDetails: mockTestData,
-				testQuestions: mockSectionedTestQuestionsResponse,
-				feedback: [{ question_revision_id: 1, submitted_answer: [101], correct_answer: [101] }]
+				resultData: { ...mockSectionedResultData, partially_correct: 0, sections },
+				testDetails: mockTestData
 			}
 		});
 
 		expect(screen.queryByText('Partially Correct')).not.toBeInTheDocument();
+	});
+
+	it('hides the Marks column when no section has marks', () => {
+		const sections = mockSectionedResultData.sections!.map((s) => ({
+			...s,
+			marks_obtained: null,
+			marks_maximum: null
+		}));
+
+		render(TestResult, {
+			props: {
+				resultData: { ...mockSectionedResultData, sections },
+				testDetails: mockTestData
+			}
+		});
+
+		expect(screen.queryByRole('columnheader', { name: 'Marks' })).not.toBeInTheDocument();
+	});
+
+	it('shows a dash for accuracy when nothing was attempted in a section', () => {
+		render(TestResult, {
+			props: { resultData: mockSectionedResultData, testDetails: mockTestData }
+		});
+
+		const chemistryRow = screen.getByText('Chemistry').closest('tr')!;
+		const cells = within(chemistryRow).getAllByRole('cell');
+		expect(cells[cells.length - 1]).toHaveTextContent('--');
+	});
+
+	it('renders no section table for an unsectioned test', () => {
+		render(TestResult, {
+			props: { resultData: { ...mockResultData, sections: null }, testDetails: mockTestData }
+		});
+
+		expect(screen.queryByText('Section summary')).not.toBeInTheDocument();
 	});
 });
 

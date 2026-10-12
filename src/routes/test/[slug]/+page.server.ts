@@ -110,10 +110,10 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 		}
 		// Reloading an already-submitted test must show the same page as the
 		// moment of submission, so fetch the review payload the result page needs
-		// instead of dropping "View All Answers" and the section breakdown.
+		// instead of dropping "View All Answers".
 		let feedback = null;
 		let testQuestions = null;
-		if (result && (testData.show_feedback_on_completion || testData.question_sets?.length)) {
+		if (result && testData.show_feedback_on_completion) {
 			({ feedback, testQuestions } = await getSubmittedResultExtras(
 				candidate.candidate_test_id,
 				candidate.candidate_uuid,
@@ -326,7 +326,7 @@ export const actions = {
 				let feedback = null;
 				let testQuestions = null;
 
-				if (testData.show_feedback_on_completion || testData.question_sets?.length) {
+				if (testData.show_feedback_on_completion) {
 					({ feedback, testQuestions } = await getSubmittedResultExtras(
 						candidate.candidate_test_id,
 						candidate.candidate_uuid,

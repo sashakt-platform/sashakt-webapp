@@ -487,12 +487,55 @@ export const mockSectionedTestQuestionsResponse = {
 // Mock result data
 export const mockResultData: TResultData = {
 	correct_answer: 5,
+	partially_correct: 0,
 	incorrect_answer: 3,
 	mandatory_not_attempted: 0,
 	optional_not_attempted: 2,
 	marks_obtained: 8,
 	marks_maximum: 10,
 	total_questions: 10
+};
+
+// Mock result data for a sectioned test, as the result API returns it
+export const mockSectionedResultData: TResultData = {
+	correct_answer: 1,
+	partially_correct: 1,
+	incorrect_answer: 0,
+	mandatory_not_attempted: 0,
+	optional_not_attempted: 1,
+	marks_obtained: 5,
+	marks_maximum: 9,
+	total_questions: 3,
+	sections: [
+		{
+			question_set_id: 11,
+			title: 'Physics',
+			display_order: 1,
+			marks_obtained: 4,
+			marks_maximum: 8,
+			total_questions: 2,
+			attempted: 2,
+			correct_answer: 1,
+			partially_correct: 1,
+			incorrect_answer: 0,
+			attempt_rate: 100,
+			accuracy: 75
+		},
+		{
+			question_set_id: 12,
+			title: 'Chemistry',
+			display_order: 2,
+			marks_obtained: 0,
+			marks_maximum: 1,
+			total_questions: 1,
+			attempted: 0,
+			correct_answer: 0,
+			partially_correct: 0,
+			incorrect_answer: 0,
+			attempt_rate: 0,
+			accuracy: 0
+		}
+	]
 };
 
 // Mock result data with certificate

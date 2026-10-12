@@ -778,6 +778,33 @@ describe('Page Server - submitTest action', () => {
 		expect(getTestQuestions).not.toHaveBeenCalled();
 	});
 
+	it('should not fetch the review payload for a sectioned test without feedback', async () => {
+		// The section summary comes from the result API, so sections alone no
+		// longer justify the review-feedback and question fetches.
+		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
+
+		const mockResult = { correct_answer: 1, sections: [{ question_set_id: 11, title: 'Physics' }] };
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
+			.mockResolvedValueOnce(createMockResponse(mockResult));
+
+		const result = await actions.submitTest({
+			cookies: createMockCookies(),
+			fetch: mockFetch,
+			locals: {
+				testData: {
+					...mockTestData,
+					show_feedback_on_completion: false,
+					question_sets: [{ id: 11, title: 'Physics' }]
+				}
+			}
+		} as any);
+
+		expect(result.result).toEqual(mockResult);
+		expect(getSubmittedResultExtras).not.toHaveBeenCalled();
+	});
+
 	it('should return error message when backend returns 400', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 

@@ -154,5 +154,6 @@
 	"Section": "Section",
 	"Attempt any {count} of {total}": "Attempt any {count} of {total}",
 	"Partially Correct": "Partially Correct",
-	"Attempt Rate": "Attempt Rate"
+	"Attempt Rate": "Attempt Rate",
+	"Section summary": "Section summary"
 }
