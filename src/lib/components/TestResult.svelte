@@ -1,26 +1,14 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
-	import {
-		buildQuestionSetGroups,
-		getQuestionSetQuestionCount,
-		normalizeTestQuestions
-	} from '$lib/helpers/questionSetHelpers';
-	import {
-		getCorrectSelectedCount,
-		getPartialMarks,
-		getQuestionResult
-	} from '$lib/helpers/feedbackHelpers';
 	import { t } from 'svelte-i18n';
-	import type { TResultData, TFeedback, TTestQuestionsResponse } from '$lib/types';
+	import type { TResultData } from '$lib/types';
 	import { CircleCheck, CircleX, CircleMinus, CircleDashed } from '@lucide/svelte';
 	import RichText from './RichText.svelte';
 
 	let {
 		resultData,
 		testDetails,
-		feedback = null,
-		testQuestions = null,
 		onViewFeedback = () => {}
 	}: {
 		resultData: TResultData | null;
@@ -30,102 +18,35 @@
 			completion_message?: string | null;
 			show_feedback_on_completion?: boolean;
 		};
-		feedback?: TFeedback[] | null;
-		testQuestions?: TTestQuestionsResponse | null;
-		onViewFeedback?: () => void;
+		// May be async: the answer review is fetched when the button is clicked.
+		onViewFeedback?: () => void | Promise<void>;
 	} = $props();
 
-	const totalQuestions = resultData?.total_questions ?? 0;
-	const attempted = resultData
-		? (resultData.correct_answer ?? 0) + (resultData.incorrect_answer ?? 0)
-		: 0;
-	const notAttempted = totalQuestions - attempted;
-	const normalizedTestQuestions = $derived(normalizeTestQuestions(testQuestions));
-	const feedbackByQuestionId = $derived(
-		new Map((feedback ?? []).map((entry) => [entry.question_revision_id, entry]))
+	const notAttempted = $derived(
+		(resultData?.mandatory_not_attempted ?? 0) + (resultData?.optional_not_attempted ?? 0)
 	);
-	/**
-	 * Classify a question's answer using the same helper the per-question badges
-	 * use, so the section tallies cannot drift from what the candidate is shown.
-	 */
-	const resultFor = (question: (typeof normalizedTestQuestions.questions)[number]) => {
-		const entry = feedbackByQuestionId.get(question.id);
-		if (!entry) return 'unattempted';
-		return getQuestionResult(
-			question.question_type,
-			entry.submitted_answer,
-			entry.correct_answer,
-			question.marking_scheme
-		);
-	};
-	// The result payload has no partial count -- the backend tallies a partially
-	// correct answer under `correct` -- so derive it from the per-question
-	// feedback and subtract it back out of the Correct row.
-	const partialTotal = $derived(
-		normalizedTestQuestions.questions.filter((q) => resultFor(q) === 'partially-correct').length
-	);
-	const fullyCorrect = $derived(Math.max(0, (resultData?.correct_answer ?? 0) - partialTotal));
-
-	const sectionSummaries = $derived(
-		buildQuestionSetGroups(
-			normalizedTestQuestions.questions,
-			normalizedTestQuestions.questionSets
-		).map((group) => {
-			const attemptedCount = group.questions.filter((question) => {
-				const entry = feedbackByQuestionId.get(question.id);
-				if (!entry) return false;
-				if (typeof entry.submitted_answer === 'string') {
-					return entry.submitted_answer.trim().length > 0;
-				}
-				return entry.submitted_answer.length > 0;
-			}).length;
-			const results = group.questions.map((question) => resultFor(question));
-			const correctCount = results.filter((r) => r === 'correct').length;
-			const partialCount = results.filter((r) => r === 'partially-correct').length;
-
-			const scheme = group.section.marking_scheme;
-			const wrongCount = results.filter((r) => r === 'incorrect').length;
-			const allowedCount = group.section.max_questions_allowed_to_attempt;
-			// Mirrors the backend's per-set arithmetic: full marks per correct, the
-			// matching rung per partial, and the wrong mark per incorrect.
-			const marksScored = scheme
-				? correctCount * (scheme.correct ?? 0) +
-					wrongCount * (scheme.wrong ?? 0) +
-					group.questions.reduce((sum, question) => {
-						if (resultFor(question) !== 'partially-correct') return sum;
-						const entry = feedbackByQuestionId.get(question.id);
-						const selected = getCorrectSelectedCount(
-							question.question_type,
-							entry?.submitted_answer,
-							entry?.correct_answer
-						);
-						return sum + (selected == null ? 0 : (getPartialMarks(scheme, selected) ?? 0));
-					}, 0)
-				: null;
-
-			return {
-				title: group.section.title,
-				questionCount: getQuestionSetQuestionCount(group.section),
-				attemptedCount,
-				correctCount,
-				partialCount,
-				marksScored,
-				attemptRate: allowedCount > 0 ? Math.round((attemptedCount / allowedCount) * 100) : null,
-				allowedCount,
-				// A partial answer counts as half, matching Quiz Engine's
-				// (correct + 0.5 * partial) / answered -- counting it in full would
-				// report 100% for a section where nothing was fully correct.
-				accuracy:
-					attemptedCount > 0
-						? Math.round(((correctCount + 0.5 * partialCount) / attemptedCount) * 100)
-						: null
-			};
-		})
-	);
+	const partiallyCorrect = $derived(resultData?.partially_correct ?? 0);
+	const sections = $derived(resultData?.sections ?? []);
 
 	// Hide a column no section can fill, rather than a row of dashes.
-	const anySectionHasMarks = $derived(sectionSummaries.some((s) => s.marksScored !== null));
-	const anySectionHasPartial = $derived(sectionSummaries.some((s) => s.partialCount > 0));
+	const anySectionHasMarks = $derived(sections.some((s) => s.marks_maximum !== null));
+	const anySectionHasPartial = $derived(sections.some((s) => s.partially_correct > 0));
+
+	let isLoadingFeedback = $state(false);
+	let feedbackError = $state<string | null>(null);
+
+	async function handleViewFeedback() {
+		isLoadingFeedback = true;
+		feedbackError = null;
+
+		try {
+			await onViewFeedback();
+		} catch {
+			feedbackError = $t('Failed to load your answers. Please try again.');
+		} finally {
+			isLoadingFeedback = false;
+		}
+	}
 
 	let isDownloading = $state(false);
 	let downloadError = $state<string | null>(null);
@@ -201,18 +122,19 @@
 						<CircleCheck class="text-success h-5 w-5" />
 						<span class="text-foreground text-sm">{$t('Correct')}</span>
 					</div>
-					<span class="text-foreground text-sm font-semibold">{pad(fullyCorrect)}</span>
+					<span class="text-foreground text-sm font-semibold">{pad(resultData.correct_answer)}</span
+					>
 				</div>
 
 				<!-- Only shown when partial credit was actually earned, so tests that
 				     cannot earn it keep the three familiar rows. -->
-				{#if partialTotal > 0}
+				{#if partiallyCorrect > 0}
 					<div class="flex items-center justify-between py-4">
 						<div class="flex items-center gap-3">
 							<CircleDashed class="text-warning h-5 w-5" />
 							<span class="text-foreground text-sm">{$t('Partially Correct')}</span>
 						</div>
-						<span class="text-foreground text-sm font-semibold">{pad(partialTotal)}</span>
+						<span class="text-foreground text-sm font-semibold">{pad(partiallyCorrect)}</span>
 					</div>
 				{/if}
 
@@ -240,12 +162,20 @@
 					<p class="text-destructive text-sm">{downloadError}</p>
 				{/if}
 
-				{#if testDetails.show_feedback_on_completion && feedback}
+				{#if feedbackError}
+					<p class="text-destructive text-sm">{feedbackError}</p>
+				{/if}
+
+				{#if testDetails.show_feedback_on_completion}
 					<Button
 						variant="outline"
 						class="border-primary text-primary hover:bg-primary/10 hover:text-primary w-full"
-						onclick={onViewFeedback}
+						onclick={handleViewFeedback}
+						disabled={isLoadingFeedback}
 					>
+						{#if isLoadingFeedback}
+							<Spinner />
+						{/if}
 						{$t('View All Answers')}
 					</Button>
 				{/if}
@@ -262,7 +192,7 @@
 		{/if}
 	</div>
 
-	{#if sectionSummaries.length > 0}
+	{#if sections.length > 0}
 		<div class="w-full max-w-4xl">
 			<h3 class="text-muted-foreground mb-4 text-xs font-bold tracking-wider uppercase">
 				{$t('Section summary')}
@@ -284,30 +214,37 @@
 							{#if anySectionHasPartial}
 								<th class="py-3 pr-4 pl-2 text-right font-semibold">{$t('Partially Correct')}</th>
 							{/if}
+							<th class="py-3 pr-4 pl-2 text-right font-semibold">{$t('Incorrect')}</th>
 							<th class="py-3 pr-4 pl-2 text-right font-semibold">{$t('Attempt Rate')}</th>
 							<th class="py-3 pr-4 pl-2 text-right font-semibold">{$t('Accuracy')}</th>
 						</tr>
 					</thead>
 					<tbody class="divide-border divide-y">
-						{#each sectionSummaries as section (`${section.title}-${section.questionCount}`)}
+						{#each sections as section (section.question_set_id)}
 							<tr>
 								<td class="text-card-foreground px-4 py-3 font-medium">{section.title}</td>
 								{#if anySectionHasMarks}
 									<td class="text-foreground py-3 pr-4 pl-2 text-right font-semibold">
-										{section.marksScored ?? '--'}
+										{section.marks_obtained === null || section.marks_maximum === null
+											? '--'
+											: `${section.marks_obtained}/${section.marks_maximum}`}
 									</td>
 								{/if}
-								<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.questionCount}</td>
-								<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.attemptedCount}</td>
-								<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.correctCount}</td>
+								<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.total_questions}</td>
+								<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.attempted}</td>
+								<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.correct_answer}</td>
 								{#if anySectionHasPartial}
-									<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.partialCount}</td>
+									<td class="text-foreground py-3 pr-4 pl-2 text-right">
+										{section.partially_correct}
+									</td>
 								{/if}
+								<td class="text-foreground py-3 pr-4 pl-2 text-right">{section.incorrect_answer}</td
+								>
 								<td class="text-muted-foreground py-3 pr-4 pl-2 text-right">
-									{section.attemptRate === null ? '--' : `${section.attemptRate}%`}
+									{section.attempt_rate}%
 								</td>
 								<td class="text-muted-foreground py-3 pr-4 pl-2 text-right">
-									{section.accuracy === null ? '--' : `${section.accuracy}%`}
+									{section.attempted === 0 ? '--' : `${section.accuracy}%`}
 								</td>
 							</tr>
 						{/each}

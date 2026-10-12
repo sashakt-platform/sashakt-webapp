@@ -192,14 +192,34 @@ export type TForm = {
 
 export type TFormResponses = Record<string, unknown>;
 
-export type TResultData = {
+export type TSectionResult = {
+	question_set_id: number;
+	title: string;
+	display_order: number;
+	marks_obtained: number | null;
+	marks_maximum: number | null;
+	total_questions: number;
+	attempted: number;
 	correct_answer: number;
+	partially_correct: number;
+	incorrect_answer: number;
+	// Whole-number percentages (0-100); 0 when the denominator is 0.
+	attempt_rate: number;
+	accuracy: number;
+};
+
+export type TResultData = {
+	// Fully correct answers only; partially correct ones are counted separately.
+	correct_answer: number;
+	partially_correct: number;
 	incorrect_answer: number;
 	mandatory_not_attempted: number;
 	optional_not_attempted: number;
 	marks_obtained: number | null;
 	marks_maximum: number | null;
 	total_questions: number;
+	// Per-section summaries in display order; null/absent for tests without sections.
+	sections?: TSectionResult[] | null;
 	certificate_download_url?: string;
 	external_identifier?: string | null;
 };

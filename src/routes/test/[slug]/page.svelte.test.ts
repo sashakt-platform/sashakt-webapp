@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import Page from './+page.svelte';
 import {
@@ -8,6 +8,7 @@ import {
 	mockResultData,
 	mockTestQuestionsResponse
 } from '$lib/test-utils';
+import { navState } from '$lib/navState.svelte';
 
 // Mock SvelteKit modules
 vi.mock('$app/forms', () => ({
@@ -282,113 +283,105 @@ describe('Test Page - Feedback flow', () => {
 		}
 	];
 
+	const reviewResponse = () =>
+		({
+			ok: true,
+			json: () =>
+				Promise.resolve({
+					success: true,
+					feedback: mockFeedback,
+					testQuestions: mockTestQuestionsResponse
+				})
+		}) as Response;
+
 	const testDataWithFeedback = {
 		...mockTestData,
 		completion_message: null,
 		show_feedback_on_completion: true
 	};
 
-	const baseData = {
-		testData: testDataWithFeedback,
-		timeToBegin: 300
-	};
-
-	it('should show View Feedback button when feedback is available and setting is on', () => {
+	const renderResult = (testData = testDataWithFeedback) =>
 		render(Page, {
 			props: {
-				data: {
-					...baseData,
-					candidate: mockCandidate,
-					testQuestions: null
-				},
-				form: {
-					submitTest: true,
-					result: mockResultData,
-					feedback: mockFeedback,
-					testQuestions: mockTestQuestionsResponse,
-					candidate: mockCandidate
-				}
+				data: { testData, timeToBegin: 300, candidate: mockCandidate, testQuestions: null },
+				form: { submitTest: true, result: mockResultData, candidate: mockCandidate }
 			}
 		});
+
+	beforeEach(() => {
+		vi.mocked(fetch).mockReset();
+	});
+
+	it('should show View All Answers when the setting is on, without fetching the review', () => {
+		renderResult();
 
 		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
 		expect(screen.getByText('View All Answers')).toBeInTheDocument();
+		expect(fetch).not.toHaveBeenCalled();
 	});
 
-	it('should NOT show View Feedback button when show_feedback_on_completion is false', () => {
-		const testDataNoFeedback = { ...testDataWithFeedback, show_feedback_on_completion: false };
-
-		render(Page, {
-			props: {
-				data: {
-					testData: testDataNoFeedback,
-					timeToBegin: 300,
-					candidate: mockCandidate,
-					testQuestions: null
-				},
-				form: {
-					submitTest: true,
-					result: mockResultData,
-					feedback: mockFeedback,
-					testQuestions: mockTestQuestionsResponse,
-					candidate: mockCandidate
-				}
-			}
-		});
+	it('should NOT show View All Answers when show_feedback_on_completion is false', () => {
+		renderResult({ ...testDataWithFeedback, show_feedback_on_completion: false });
 
 		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
 		expect(screen.queryByText('View All Answers')).not.toBeInTheDocument();
+		expect(fetch).not.toHaveBeenCalled();
 	});
 
-	it('should NOT show View Feedback button when feedback is null', () => {
-		render(Page, {
-			props: {
-				data: {
-					...baseData,
-					candidate: mockCandidate,
-					testQuestions: null
-				},
-				form: {
-					submitTest: true,
-					result: mockResultData,
-					feedback: null,
-					testQuestions: null,
-					candidate: mockCandidate
-				}
-			}
-		});
+	it('should fetch the review and switch to ViewFeedback when the button is clicked', async () => {
+		vi.mocked(fetch).mockResolvedValueOnce(reviewResponse());
+		renderResult();
 
-		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
-		expect(screen.queryByText('View All Answers')).not.toBeInTheDocument();
-	});
-
-	it('should switch to ViewFeedback when View Feedback button is clicked', async () => {
-		render(Page, {
-			props: {
-				data: {
-					...baseData,
-					candidate: mockCandidate,
-					testQuestions: null
-				},
-				form: {
-					submitTest: true,
-					result: mockResultData,
-					feedback: mockFeedback,
-					testQuestions: mockTestQuestionsResponse,
-					candidate: mockCandidate
-				}
-			}
-		});
-
-		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
-
-		const button = screen.getByText('View All Answers');
-		await fireEvent.click(button);
+		await fireEvent.click(screen.getByText('View All Answers'));
 
 		await vi.waitFor(() => {
 			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
 		});
 
+		expect(fetch).toHaveBeenCalledTimes(1);
+		expect(fetch).toHaveBeenCalledWith('/api/review-feedback', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ candidate: mockCandidate })
+		});
 		expect(screen.queryByText('Submitted Successfully')).not.toBeInTheDocument();
+	});
+
+	it('should not fetch the review again when it is reopened', async () => {
+		vi.mocked(fetch).mockResolvedValueOnce(reviewResponse());
+		renderResult();
+
+		await fireEvent.click(screen.getByText('View All Answers'));
+		await vi.waitFor(() => {
+			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+		});
+
+		// ViewFeedback registers its back handler on the nav bar; go back to the result.
+		navState.onBack?.();
+		await vi.waitFor(() => {
+			expect(screen.getByText('View All Answers')).toBeInTheDocument();
+		});
+
+		await fireEvent.click(screen.getByText('View All Answers'));
+		await vi.waitFor(() => {
+			expect(screen.getByText(mockQuestions[0].question_text)).toBeInTheDocument();
+		});
+
+		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
+	it('should stay on the result page and show an error when the review fails to load', async () => {
+		vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 502 } as Response);
+		renderResult();
+
+		await fireEvent.click(screen.getByText('View All Answers'));
+
+		await vi.waitFor(() => {
+			expect(
+				screen.getByText('Failed to load your answers. Please try again.')
+			).toBeInTheDocument();
+		});
+		expect(screen.getByText(/Submitted/)).toBeInTheDocument();
+		expect(screen.queryByText(mockQuestions[0].question_text)).not.toBeInTheDocument();
 	});
 });

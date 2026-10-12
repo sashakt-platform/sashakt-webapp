@@ -6,7 +6,7 @@ import {
 	mockTestData
 } from '$lib/test-utils';
 import { getCandidate } from '$lib/helpers/getCandidate';
-import { getSubmittedResultExtras, getTestQuestions, getTimeLeft } from '$lib/server/test';
+import { getTestQuestions, getTimeLeft } from '$lib/server/test';
 import { load, actions } from './+page.server';
 
 // Mock environment variables
@@ -26,8 +26,7 @@ vi.mock('$lib/helpers/getCandidate', () => ({
 vi.mock('$lib/server/test', () => ({
 	getTestQuestions: vi.fn(),
 	getTimeLeft: vi.fn(),
-	getStates: vi.fn().mockResolvedValue([]),
-	getSubmittedResultExtras: vi.fn()
+	getStates: vi.fn().mockResolvedValue([])
 }));
 
 // Mock SvelteKit functions
@@ -51,8 +50,6 @@ describe('Page Server - load function', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', vi.fn());
 		vi.clearAllMocks();
-		// Tests that care about the review payload override this.
-		vi.mocked(getSubmittedResultExtras).mockResolvedValue({ feedback: null, testQuestions: null });
 	});
 
 	afterEach(() => {
@@ -129,6 +126,9 @@ describe('Page Server - load function', () => {
 		expect(result.testQuestions).toBeNull();
 		expect(getTimeLeft).not.toHaveBeenCalled();
 		expect(getTestQuestions).not.toHaveBeenCalled();
+		// Only the result is fetched; the answer review waits for the button.
+		expect(mockFetch).toHaveBeenCalledTimes(1);
+		expect(mockFetch.mock.calls[0][0]).toContain('/candidate/result/');
 	});
 
 	it('should fetch questions when time_left is null (unlimited)', async () => {
@@ -682,33 +682,20 @@ describe('Page Server - submitTest action', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', vi.fn());
 		vi.clearAllMocks();
-		// Tests that care about the review payload override this.
-		vi.mocked(getSubmittedResultExtras).mockResolvedValue({ feedback: null, testQuestions: null });
 	});
 
 	afterEach(() => {
 		vi.unstubAllGlobals();
 	});
 
-	it('should pass the review payload through to the result page', async () => {
+	it('should return the result without fetching the answer review', async () => {
 		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
 
 		const mockResult = { score: 85, passed: true };
-		const mockQuestionData = { question_revisions: [], question_pagination: 5 };
-		const mockFeedback = [
-			{ question_revision_id: 1, submitted_answer: [102], correct_answer: [102] }
-		];
-
-		vi.mocked(getSubmittedResultExtras).mockResolvedValue({
-			feedback: mockFeedback,
-			testQuestions: mockQuestionData
-		});
-
 		const mockFetch = vi
 			.fn()
 			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
 			.mockResolvedValueOnce(createMockResponse(mockResult));
-
 		const mockCookies = createMockCookies();
 
 		const result = await actions.submitTest({
@@ -719,13 +706,12 @@ describe('Page Server - submitTest action', () => {
 
 		expect(result.submitTest).toBe(true);
 		expect(result.result).toEqual(mockResult);
-		expect(result.feedback).toEqual(mockFeedback);
-		expect(result.testQuestions).toEqual(mockQuestionData);
-		expect(getSubmittedResultExtras).toHaveBeenCalledWith(
-			mockCandidate.candidate_test_id,
-			mockCandidate.candidate_uuid,
-			mockFetch
-		);
+		expect(result.candidate).toEqual(mockCandidate);
+		expect(result).not.toHaveProperty('feedback');
+		expect(result).not.toHaveProperty('testQuestions');
+		// Submit and result only; the review is fetched when the candidate opens it.
+		expect(mockFetch).toHaveBeenCalledTimes(2);
+		expect(getTestQuestions).not.toHaveBeenCalled();
 		expect(mockCookies.delete).toHaveBeenCalledWith('sashakt-candidate', expect.any(Object));
 	});
 
@@ -750,32 +736,6 @@ describe('Page Server - submitTest action', () => {
 		expect(result.submitTest).toBe(true);
 		expect(result.result).toEqual(mockResult);
 		expect(mockCookies.delete).not.toHaveBeenCalled();
-	});
-
-	it('should not fetch feedback when show_feedback_on_completion is false', async () => {
-		vi.mocked(getCandidate).mockReturnValue(mockCandidate);
-
-		const mockResult = { score: 85, passed: true };
-
-		const mockFetch = vi
-			.fn()
-			.mockResolvedValueOnce(createMockResponse({ success: true }, { status: 200 }))
-			.mockResolvedValueOnce(createMockResponse(mockResult));
-
-		const mockCookies = createMockCookies();
-
-		const result = await actions.submitTest({
-			cookies: mockCookies,
-			fetch: mockFetch,
-			locals: { testData: { ...mockTestData, show_feedback_on_completion: false } }
-		} as any);
-
-		expect(result.submitTest).toBe(true);
-		expect(result.result).toEqual(mockResult);
-		expect(result.feedback).toBeNull();
-		expect(result.testQuestions).toBeNull();
-		expect(mockFetch).toHaveBeenCalledTimes(2);
-		expect(getTestQuestions).not.toHaveBeenCalled();
 	});
 
 	it('should return error message when backend returns 400', async () => {
