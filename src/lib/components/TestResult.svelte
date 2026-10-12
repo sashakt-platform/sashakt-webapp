@@ -2,14 +2,13 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
 	import { t } from 'svelte-i18n';
-	import type { TResultData, TFeedback } from '$lib/types';
+	import type { TResultData } from '$lib/types';
 	import { CircleCheck, CircleX, CircleMinus, CircleDashed } from '@lucide/svelte';
 	import RichText from './RichText.svelte';
 
 	let {
 		resultData,
 		testDetails,
-		feedback = null,
 		onViewFeedback = () => {}
 	}: {
 		resultData: TResultData | null;
@@ -19,8 +18,8 @@
 			completion_message?: string | null;
 			show_feedback_on_completion?: boolean;
 		};
-		feedback?: TFeedback[] | null;
-		onViewFeedback?: () => void;
+		// May be async: the answer review is fetched when the button is clicked.
+		onViewFeedback?: () => void | Promise<void>;
 	} = $props();
 
 	const notAttempted = $derived(
@@ -32,6 +31,22 @@
 	// Hide a column no section can fill, rather than a row of dashes.
 	const anySectionHasMarks = $derived(sections.some((s) => s.marks_maximum !== null));
 	const anySectionHasPartial = $derived(sections.some((s) => s.partially_correct > 0));
+
+	let isLoadingFeedback = $state(false);
+	let feedbackError = $state<string | null>(null);
+
+	async function handleViewFeedback() {
+		isLoadingFeedback = true;
+		feedbackError = null;
+
+		try {
+			await onViewFeedback();
+		} catch {
+			feedbackError = $t('Failed to load your answers. Please try again.');
+		} finally {
+			isLoadingFeedback = false;
+		}
+	}
 
 	let isDownloading = $state(false);
 	let downloadError = $state<string | null>(null);
@@ -147,12 +162,20 @@
 					<p class="text-destructive text-sm">{downloadError}</p>
 				{/if}
 
-				{#if testDetails.show_feedback_on_completion && feedback}
+				{#if feedbackError}
+					<p class="text-destructive text-sm">{feedbackError}</p>
+				{/if}
+
+				{#if testDetails.show_feedback_on_completion}
 					<Button
 						variant="outline"
 						class="border-primary text-primary hover:bg-primary/10 hover:text-primary w-full"
-						onclick={onViewFeedback}
+						onclick={handleViewFeedback}
+						disabled={isLoadingFeedback}
 					>
+						{#if isLoadingFeedback}
+							<Spinner />
+						{/if}
 						{$t('View All Answers')}
 					</Button>
 				{/if}

@@ -149,57 +149,30 @@ describe('TestResult', () => {
 });
 
 describe('TestResult - View Feedback button', () => {
-	const mockFeedback = [
-		{ question_revision_id: 1, submitted_answer: [101], correct_answer: [102] }
-	];
+	const withFeedback = { ...mockTestData, show_feedback_on_completion: true };
 
-	it('should show View All Answers button when show_feedback_on_completion is true and feedback exists', () => {
-		const testDetails = { ...mockTestData, show_feedback_on_completion: true };
-
-		render(TestResult, {
-			props: {
-				resultData: mockResultData,
-				testDetails,
-				feedback: mockFeedback
-			}
-		});
+	it('should show View All Answers when show_feedback_on_completion is true', () => {
+		render(TestResult, { props: { resultData: mockResultData, testDetails: withFeedback } });
 
 		expect(screen.getByText('View All Answers')).toBeInTheDocument();
 	});
 
-	it('should NOT show View All Answers button when show_feedback_on_completion is false', () => {
-		const testDetails = { ...mockTestData, show_feedback_on_completion: false };
-
+	it('should NOT show View All Answers when show_feedback_on_completion is false', () => {
 		render(TestResult, {
 			props: {
 				resultData: mockResultData,
-				testDetails,
-				feedback: mockFeedback
+				testDetails: { ...mockTestData, show_feedback_on_completion: false }
 			}
 		});
 
 		expect(screen.queryByText('View All Answers')).not.toBeInTheDocument();
 	});
 
-	it('should NOT show View All Answers button when feedback is null', () => {
-		const testDetails = { ...mockTestData, show_feedback_on_completion: true };
-
+	it('should NOT show View All Answers when the setting is absent', () => {
 		render(TestResult, {
 			props: {
 				resultData: mockResultData,
-				testDetails,
-				feedback: null
-			}
-		});
-
-		expect(screen.queryByText('View All Answers')).not.toBeInTheDocument();
-	});
-
-	it('should NOT show View All Answers button when neither prop is provided', () => {
-		render(TestResult, {
-			props: {
-				resultData: mockResultData,
-				testDetails: mockTestData
+				testDetails: { ...mockTestData, show_feedback_on_completion: undefined }
 			}
 		});
 
@@ -207,22 +180,65 @@ describe('TestResult - View Feedback button', () => {
 	});
 
 	it('should call onViewFeedback when button is clicked', async () => {
-		const testDetails = { ...mockTestData, show_feedback_on_completion: true };
 		const onViewFeedback = vi.fn();
 
 		render(TestResult, {
-			props: {
-				resultData: mockResultData,
-				testDetails,
-				feedback: mockFeedback,
-				onViewFeedback
-			}
+			props: { resultData: mockResultData, testDetails: withFeedback, onViewFeedback }
 		});
 
-		const button = screen.getByText('View All Answers');
-		await fireEvent.click(button);
+		await fireEvent.click(screen.getByText('View All Answers'));
 
 		expect(onViewFeedback).toHaveBeenCalledOnce();
+	});
+
+	it('should disable the button while the review is loading', async () => {
+		let finish: () => void;
+		const onViewFeedback = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+
+		render(TestResult, {
+			props: { resultData: mockResultData, testDetails: withFeedback, onViewFeedback }
+		});
+
+		fireEvent.click(screen.getByText('View All Answers'));
+
+		await waitFor(() => {
+			expect(screen.getByText('View All Answers').closest('button')).toBeDisabled();
+		});
+
+		finish!();
+
+		await waitFor(() => {
+			expect(screen.getByText('View All Answers').closest('button')).not.toBeDisabled();
+		});
+	});
+
+	it('should show an error when the review fails to load and allow a retry', async () => {
+		const onViewFeedback = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('boom'))
+			.mockResolvedValueOnce(undefined);
+
+		render(TestResult, {
+			props: { resultData: mockResultData, testDetails: withFeedback, onViewFeedback }
+		});
+
+		await fireEvent.click(screen.getByText('View All Answers'));
+
+		await waitFor(() => {
+			expect(
+				screen.getByText('Failed to load your answers. Please try again.')
+			).toBeInTheDocument();
+		});
+		expect(screen.getByRole('button', { name: 'View All Answers' })).not.toBeDisabled();
+
+		await fireEvent.click(screen.getByText('View All Answers'));
+
+		await waitFor(() => {
+			expect(
+				screen.queryByText('Failed to load your answers. Please try again.')
+			).not.toBeInTheDocument();
+		});
+		expect(onViewFeedback).toHaveBeenCalledTimes(2);
 	});
 });
 
@@ -680,7 +696,7 @@ describe('handleDownloadCertificate', () => {
 			expect(
 				screen.getByText('Failed to download certificate. Please try again.')
 			).toBeInTheDocument();
-			expect(screen.getByRole('button')).not.toBeDisabled();
+			expect(screen.getByRole('button', { name: 'Download Certificate' })).not.toBeDisabled();
 		});
 	});
 });

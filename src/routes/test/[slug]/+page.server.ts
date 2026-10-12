@@ -1,13 +1,7 @@
 import { BACKEND_URL } from '$env/static/private';
 import { dev } from '$app/environment';
 import { getCandidate } from '$lib/helpers/getCandidate';
-import {
-	getSubmittedResultExtras,
-	getTestQuestions,
-	getTimeLeft,
-	getStates,
-	type TState
-} from '$lib/server/test';
+import { getTestQuestions, getTimeLeft, getStates, type TState } from '$lib/server/test';
 import { validateForm } from '$lib/components/form/validation';
 import type { TTestDetails } from '$lib/types';
 import { error, fail, redirect, type Cookies } from '@sveltejs/kit';
@@ -108,28 +102,15 @@ export const load: PageServerLoad = async ({ locals, cookies, url, fetch }) => {
 		} catch (error) {
 			console.error('Error fetching submitted result:', error);
 		}
-		// Reloading an already-submitted test must show the same page as the
-		// moment of submission, so fetch the review payload the result page needs
-		// instead of dropping "View All Answers".
-		let feedback = null;
-		let testQuestions = null;
-		if (result && testData.show_feedback_on_completion) {
-			({ feedback, testQuestions } = await getSubmittedResultExtras(
-				candidate.candidate_test_id,
-				candidate.candidate_uuid,
-				fetch
-			));
-		}
-
 		return {
 			candidate,
 			testData,
 			submitted: true,
 			result,
-			feedback,
 			// null (not 0) so the layout TestTimer does not render / auto-submit.
 			timeLeft: null,
-			testQuestions,
+			// The answer review is fetched when the candidate opens it.
+			testQuestions: null,
 			locations
 		};
 	}
@@ -323,17 +304,6 @@ export const actions = {
 				if (!result.ok) return fail(400, { result: false, submitTest: true });
 
 				const resultData = await result.json();
-				let feedback = null;
-				let testQuestions = null;
-
-				if (testData.show_feedback_on_completion) {
-					({ feedback, testQuestions } = await getSubmittedResultExtras(
-						candidate.candidate_test_id,
-						candidate.candidate_uuid,
-						fetch
-					));
-				}
-
 				// For external (portal) launches, keep the cookie and mark it
 				// submitted so a refresh shows the result instead of dropping back to
 				// the landing page (where a new attempt could start) or re-rendering
@@ -347,7 +317,7 @@ export const actions = {
 					});
 				}
 
-				return { result: resultData, feedback, testQuestions, submitTest: true, candidate };
+				return { result: resultData, submitTest: true, candidate };
 			}
 
 			return { submitTest: false };

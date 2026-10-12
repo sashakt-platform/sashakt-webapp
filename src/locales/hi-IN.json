@@ -157,5 +157,6 @@
 	"Attempt any {count} of {total}": "{total} में से किसी {count} का प्रयास करें",
 	"Partially Correct": "आंशिक रूप से सही",
 	"Attempt Rate": "प्रयास दर",
-	"Section summary": "अनुभाग सारांश"
+	"Section summary": "अनुभाग सारांश",
+	"Failed to load your answers. Please try again.": "आपके उत्तर लोड नहीं हो सके। कृपया पुनः प्रयास करें।"
 }
