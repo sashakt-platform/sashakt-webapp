@@ -6,6 +6,8 @@
 	import OmrSheet from '$lib/components/OmrSheet.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
 	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
+	import type { TFeedbackEntry } from '$lib/helpers/feedbackHelpers';
+	import type { TTestQuestionsResponse } from '$lib/types';
 	import type { PageProps } from './$types';
 	import { locale } from 'svelte-i18n';
 	import { t } from 'svelte-i18n';
@@ -31,7 +33,10 @@
 		normalizeTestQuestions(data.testQuestions).questions.length > 0
 	);
 	// The answer review is fetched on first open and kept for later opens.
-	let review = $state<{ feedback: unknown; testQuestions: unknown } | null>(null);
+	let review = $state<{
+		feedback: TFeedbackEntry[];
+		testQuestions: TTestQuestionsResponse;
+	} | null>(null);
 
 	$effect(() => {
 		form;

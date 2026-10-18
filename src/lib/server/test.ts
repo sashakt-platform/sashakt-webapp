@@ -1,5 +1,6 @@
 import { BACKEND_URL } from '$env/static/private';
 import { normalizeFeedbackEntry, type TFeedbackEntry } from '$lib/helpers/feedbackHelpers';
+import type { TTestQuestionsResponse } from '$lib/types';
 
 export type TState = {
 	id: number;
@@ -111,7 +112,10 @@ export const getReviewPayload = async (
 	// The caller's event fetch, so this keeps using the same fetch the inline
 	// version did rather than silently switching to the global one.
 	eventFetch: typeof fetch = fetch
-): Promise<{ feedback: TFeedbackEntry[] | null; testQuestions: unknown | null }> => {
+): Promise<{
+	feedback: TFeedbackEntry[] | null;
+	testQuestions: TTestQuestionsResponse | null;
+}> => {
 	try {
 		const [feedbackResponse, testQuestions] = await Promise.all([
 			eventFetch(
