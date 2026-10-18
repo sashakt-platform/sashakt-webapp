@@ -1,11 +1,6 @@
+import { json } from '@sveltejs/kit';
 import { getReviewPayload } from '$lib/server/test';
 import type { RequestHandler } from './$types';
-
-const json = (body: unknown, status: number) =>
-	new Response(JSON.stringify(body), {
-		status,
-		headers: { 'Content-Type': 'application/json' }
-	});
 
 /**
  * The answer review behind "View All Answers", fetched when the candidate opens
@@ -17,10 +12,10 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
 	try {
 		({ candidate } = (await request.json()) ?? {});
 	} catch {
-		return json({ success: false, error: 'Invalid or missing JSON body' }, 400);
+		return json({ success: false, error: 'Invalid or missing JSON body' }, { status: 400 });
 	}
 	if (!candidate?.candidate_test_id || !candidate?.candidate_uuid) {
-		return json({ success: false, error: 'Invalid candidate data' }, 400);
+		return json({ success: false, error: 'Invalid candidate data' }, { status: 400 });
 	}
 
 	const { feedback, testQuestions } = await getReviewPayload(
@@ -30,8 +25,8 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
 	);
 
 	if (!feedback || !testQuestions) {
-		return json({ success: false, error: 'Failed to load the answer review' }, 502);
+		return json({ success: false, error: 'Failed to load the answer review' }, { status: 502 });
 	}
 
-	return json({ success: true, feedback, testQuestions }, 200);
+	return json({ success: true, feedback, testQuestions });
 };
