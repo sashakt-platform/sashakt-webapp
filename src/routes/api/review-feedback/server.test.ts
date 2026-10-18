@@ -43,6 +43,25 @@ describe('POST /api/review-feedback', () => {
 		expect(getReviewPayload).not.toHaveBeenCalled();
 	});
 
+	it('should return 400 when the body is not valid JSON', async () => {
+		const response = await POST({
+			request: { json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')) },
+			fetch: mockFetch
+		} as any);
+		const data = await response.json();
+
+		expect(response.status).toBe(400);
+		expect(data).toEqual({ success: false, error: 'Invalid or missing JSON body' });
+		expect(getReviewPayload).not.toHaveBeenCalled();
+	});
+
+	it('should return 400 when the body is JSON null', async () => {
+		const response = await call(null);
+
+		expect(response.status).toBe(400);
+		expect(getReviewPayload).not.toHaveBeenCalled();
+	});
+
 	it('should return 400 when candidate is null', async () => {
 		const response = await call({ candidate: null });
 

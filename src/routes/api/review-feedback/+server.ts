@@ -13,7 +13,12 @@ const json = (body: unknown, status: number) =>
  * submit clears the cookie; the backend verifies the candidate uuid.
  */
 export const POST: RequestHandler = async ({ request, fetch }) => {
-	const { candidate } = await request.json();
+	let candidate;
+	try {
+		({ candidate } = (await request.json()) ?? {});
+	} catch {
+		return json({ success: false, error: 'Invalid or missing JSON body' }, 400);
+	}
 	if (!candidate?.candidate_test_id || !candidate?.candidate_uuid) {
 		return json({ success: false, error: 'Invalid candidate data' }, 400);
 	}
