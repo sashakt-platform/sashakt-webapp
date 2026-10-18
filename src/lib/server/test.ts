@@ -1,5 +1,6 @@
 import { BACKEND_URL } from '$env/static/private';
 import { normalizeFeedbackEntry, type TFeedbackEntry } from '$lib/helpers/feedbackHelpers';
+import type { TTestQuestionsResponse } from '$lib/types';
 
 export type TState = {
 	id: number;
@@ -99,19 +100,22 @@ export const getTestQuestions = async (
 };
 
 /**
- * The answer review and question data a submitted result page needs.
+ * The answer review and question data behind "View All Answers".
  *
- * Needed by the submit action and by a plain reload of an already-submitted
- * test, so both show the same page. Returns nulls rather than throwing: the
- * result is still worth showing if the review payload cannot be fetched.
+ * Fetched on demand, when the candidate opens the review, rather than with the
+ * result. Returns nulls rather than throwing; the caller decides how to report
+ * a payload that could not be fetched.
  */
-export const getSubmittedResultExtras = async (
+export const getReviewPayload = async (
 	candidate_test_id: number,
 	candidate_uuid: string,
 	// The caller's event fetch, so this keeps using the same fetch the inline
 	// version did rather than silently switching to the global one.
 	eventFetch: typeof fetch = fetch
-): Promise<{ feedback: TFeedbackEntry[] | null; testQuestions: unknown | null }> => {
+): Promise<{
+	feedback: TFeedbackEntry[] | null;
+	testQuestions: TTestQuestionsResponse | null;
+}> => {
 	try {
 		const [feedbackResponse, testQuestions] = await Promise.all([
 			eventFetch(

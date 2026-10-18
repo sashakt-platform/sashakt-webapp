@@ -6,6 +6,8 @@
 	import OmrSheet from '$lib/components/OmrSheet.svelte';
 	import TestResult from '$lib/components/TestResult.svelte';
 	import { normalizeTestQuestions } from '$lib/helpers/questionSetHelpers';
+	import type { TFeedbackEntry } from '$lib/helpers/feedbackHelpers';
+	import type { TTestQuestionsResponse } from '$lib/types';
 	import type { PageProps } from './$types';
 	import { locale } from 'svelte-i18n';
 	import { t } from 'svelte-i18n';
@@ -30,21 +32,35 @@
 	const hasRenderableQuestions = $derived(
 		normalizeTestQuestions(data.testQuestions).questions.length > 0
 	);
+	// The answer review is fetched on first open and kept for later opens.
+	let review = $state<{
+		feedback: TFeedbackEntry[];
+		testQuestions: TTestQuestionsResponse;
+	} | null>(null);
+
 	$effect(() => {
 		form;
 		showFeedbackView = false;
+		review = null;
 	});
 
 	// Review is reachable straight after submitting (form data) and on a reload of
-	// an already-submitted test (load data), so take whichever is present.
-	const feedbackView = $derived.by(() => {
-		const candidate = form?.candidate ?? data.candidate;
-		const feedback = form?.feedback ?? data.feedback;
-		if (!candidate || !feedback) return null;
-		return { candidate, feedback, testQuestions: form?.testQuestions ?? data.testQuestions };
-	});
+	// an already-submitted test (load data), so take whichever candidate is present.
+	const reviewCandidate = $derived(form?.candidate ?? data.candidate);
 
-	function handleViewFeedback() {
+	// Throws when the review cannot be loaded; TestResult shows the error.
+	async function handleViewFeedback() {
+		if (!review) {
+			const response = await fetch('/api/review-feedback', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ candidate: reviewCandidate })
+			});
+			if (!response.ok) throw new Error('Failed to load the answer review');
+
+			const { feedback, testQuestions } = await response.json();
+			review = { feedback, testQuestions };
+		}
 		showFeedbackView = true;
 	}
 
@@ -59,11 +75,11 @@
 </script>
 
 <section>
-	{#if showFeedbackView && feedbackView}
+	{#if showFeedbackView && review && reviewCandidate}
 		<ViewFeedback
-			candidate={feedbackView.candidate}
-			feedback={feedbackView.feedback}
-			testQuestions={feedbackView.testQuestions}
+			candidate={reviewCandidate}
+			feedback={review.feedback}
+			testQuestions={review.testQuestions}
 			onBack={handleBackToResults}
 		/>
 	{:else if data.candidate === undefined}
@@ -72,8 +88,6 @@
 		<TestResult
 			resultData={form.result}
 			testDetails={data.testData}
-			feedback={form.feedback}
-			testQuestions={form.testQuestions}
 			onViewFeedback={handleViewFeedback}
 		/>
 	{:else if data.submitted}
@@ -81,8 +95,6 @@
 			<TestResult
 				resultData={data.result}
 				testDetails={data.testData}
-				feedback={data.feedback}
-				testQuestions={data.testQuestions}
 				onViewFeedback={handleViewFeedback}
 			/>
 		{:else}
