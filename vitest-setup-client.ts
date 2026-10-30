@@ -43,6 +43,7 @@ Object.defineProperty(window, 'localStorage', {
 
 // Mock scrollTo
 window.scrollTo = vi.fn();
+Element.prototype.scrollIntoView = vi.fn();
 
 // Mock ResizeObserver
 class ResizeObserverMock {

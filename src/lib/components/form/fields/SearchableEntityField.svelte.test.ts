@@ -206,6 +206,7 @@ describe('SearchableEntityField dropdown interaction', () => {
 		await fireEvent.click(screen.getByRole('combobox'));
 		await waitFor(() => expect(screen.getByText('XYZ Academy (Maharashtra)')).toBeInTheDocument());
 		await fireEvent.click(screen.getByText('XYZ Academy (Maharashtra)'));
+		await vi.advanceTimersByTimeAsync(50);
 
 		expect(screen.getByRole('combobox')).toHaveTextContent('XYZ Academy (Maharashtra)');
 	});
