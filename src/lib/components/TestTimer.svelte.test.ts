@@ -326,6 +326,7 @@ describe('TestTimer', () => {
 			// bits-ui Dialog.Close wraps Button, so there may be nested button elements — pick the innermost
 			const okayButtons = screen.getAllByRole('button', { name: /okay/i });
 			okayButtons[0].click();
+			await vi.advanceTimersByTimeAsync(50);
 
 			await waitFor(() => {
 				expect(screen.queryByText('10 mins left!')).not.toBeInTheDocument();
@@ -352,6 +353,7 @@ describe('TestTimer', () => {
 
 			const okayButtons = screen.getAllByRole('button', { name: /okay/i });
 			okayButtons[0].click();
+			await vi.advanceTimersByTimeAsync(50);
 			await waitFor(() => {
 				expect(screen.queryByText('10 mins left!')).not.toBeInTheDocument();
 			});

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import SelectField from './SelectField.svelte';
 import type { TFormField } from '$lib/types';
 import { initializeI18nForTests, setLocaleForTests } from '$lib/test-utils';
@@ -94,7 +94,7 @@ describe('SelectField dropdown interaction', () => {
 		await fireEvent.click(screen.getByRole('combobox'));
 		await fireEvent.click(screen.getByText('Mumbai'));
 
-		expect(screen.getByRole('combobox')).toHaveTextContent('Mumbai');
+		await waitFor(() => expect(screen.getByRole('combobox')).toHaveTextContent('Mumbai'));
 	});
 
 	it('renders nothing in dropdown when options is null', async () => {
