@@ -44,7 +44,7 @@ describe('GET /api/entity', () => {
 
 		expect(data.items).toEqual(mockItems);
 		expect(fetch).toHaveBeenCalledWith(
-			expect.stringContaining('http://test-backend.com/entity/'),
+			expect.stringContaining('http://test-backend.com/entity'),
 			expect.objectContaining({ method: 'GET' })
 		);
 

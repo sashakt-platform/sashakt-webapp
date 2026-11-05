@@ -23,7 +23,7 @@ async function getAccessToken(request: APIRequestContext): Promise<TokenResponse
 			'E2E_USERNAME and E2E_PASSWORD are required to discover a test slug — set them in .env'
 		);
 	}
-	const res = await request.post(`${BACKEND_URL}/login/access-token/`, {
+	const res = await request.post(`${BACKEND_URL}/login/access-token`, {
 		form: { username: E2E_USERNAME, password: E2E_PASSWORD }
 	});
 	if (!res.ok()) {
@@ -102,7 +102,7 @@ export async function getSeededTestSlug(request: APIRequestContext): Promise<str
 	const { access_token } = await getAccessToken(request);
 	const auth = { Authorization: `Bearer ${access_token}` };
 
-	const listRes = await request.get(`${BACKEND_URL}/test/?is_template=false&page=1&size=1`, {
+	const listRes = await request.get(`${BACKEND_URL}/test?is_template=false&page=1&size=1`, {
 		headers: auth
 	});
 	if (!listRes.ok()) {
@@ -151,7 +151,7 @@ export async function createDisposableTest(request: APIRequestContext): Promise<
 	await ensureOpenTestingWindow(request, me.organization_id);
 	const suffix = uniqueSuffix();
 
-	const formRes = await request.post(`${BACKEND_URL}/form/`, {
+	const formRes = await request.post(`${BACKEND_URL}/form`, {
 		headers,
 		data: { name: `E2E Disposable Form ${suffix}`, is_active: true }
 	});
@@ -161,7 +161,7 @@ export async function createDisposableTest(request: APIRequestContext): Promise<
 	const form = (await formRes.json()) as { id: number };
 
 	const textFieldName = `e2e_text_${suffix.replace(/-/g, '_')}`;
-	const fieldRes = await request.post(`${BACKEND_URL}/form/${form.id}/field/`, {
+	const fieldRes = await request.post(`${BACKEND_URL}/form/${form.id}/field`, {
 		headers,
 		data: {
 			field_type: 'text',
@@ -180,7 +180,7 @@ export async function createDisposableTest(request: APIRequestContext): Promise<
 		{ id: correctOptionId, key: 'A', value: 'Correct answer' },
 		{ id: 2, key: 'B', value: 'Wrong answer' }
 	];
-	const questionRes = await request.post(`${BACKEND_URL}/questions/`, {
+	const questionRes = await request.post(`${BACKEND_URL}/questions`, {
 		headers,
 		data: {
 			organization_id: me.organization_id,
@@ -203,7 +203,7 @@ export async function createDisposableTest(request: APIRequestContext): Promise<
 		latest_question_revision_id: number;
 	};
 
-	const testRes = await request.post(`${BACKEND_URL}/test/`, {
+	const testRes = await request.post(`${BACKEND_URL}/test`, {
 		headers,
 		data: {
 			name: `E2E Disposable Test ${suffix}`,

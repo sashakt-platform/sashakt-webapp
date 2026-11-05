@@ -13,7 +13,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		if (entityTypeId) params.set('entity_type_id', entityTypeId);
 		if (testLink) params.set('test_link', testLink);
 
-		const response = await fetch(`${BACKEND_URL}/entity/?${params.toString()}`, {
+		const response = await fetch(`${BACKEND_URL}/entity?${params.toString()}`, {
 			method: 'GET',
 			headers: { accept: 'application/json' }
 		});

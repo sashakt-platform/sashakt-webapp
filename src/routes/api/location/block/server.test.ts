@@ -38,7 +38,7 @@ describe('GET /api/location/block', () => {
 
 		expect(data.items).toEqual(mockItems);
 		expect(fetch).toHaveBeenCalledWith(
-			expect.stringContaining('http://test-backend.com/location/block/'),
+			expect.stringContaining('http://test-backend.com/location/block'),
 			expect.objectContaining({ method: 'GET' })
 		);
 
