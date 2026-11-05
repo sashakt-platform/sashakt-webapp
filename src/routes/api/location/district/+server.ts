@@ -13,7 +13,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		if (stateIds) params.set('state_ids', stateIds);
 		if (testId) params.set('test_id', testId);
 
-		const response = await fetch(`${BACKEND_URL}/location/district/?${params.toString()}`, {
+		const response = await fetch(`${BACKEND_URL}/location/district?${params.toString()}`, {
 			method: 'GET',
 			headers: { accept: 'application/json' }
 		});

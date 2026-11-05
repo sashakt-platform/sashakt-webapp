@@ -13,7 +13,7 @@ export type TState = {
 export const getStates = async (testId: number): Promise<TState[]> => {
 	try {
 		const response = await fetch(
-			`${BACKEND_URL}/location/state/?test_id=${testId}&page=1&size=100`,
+			`${BACKEND_URL}/location/state?test_id=${testId}&page=1&size=100`,
 			{
 				method: 'GET',
 				headers: { accept: 'application/json' }
